@@ -1,4 +1,6 @@
 package bogomolov.aa.anochat.core
 
-class Message {
-}
+data class Message(
+    var id : Long,
+    var text : String
+)
