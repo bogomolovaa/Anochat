@@ -20,7 +20,8 @@ private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Message>() {
 
 }
 
-class MessagesPagedAdapter : PagedListAdapter<Message, MessagesPagedAdapter.MessageViewHolder>(DIFF_CALLBACK) {
+class MessagesPagedAdapter :
+    PagedListAdapter<Message, MessagesPagedAdapter.MessageViewHolder>(DIFF_CALLBACK) {
 
     val selectedIds: MutableSet<Long> = HashSet()
     private var checkMode = false
@@ -33,8 +34,9 @@ class MessagesPagedAdapter : PagedListAdapter<Message, MessagesPagedAdapter.Mess
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
-        val binding = MessageLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        val cv = binding.trackCardView
+        val binding =
+            MessageLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val cv = binding.messageCardView
         return MessageViewHolder(cv, binding)
     }
 
@@ -51,12 +53,18 @@ class MessagesPagedAdapter : PagedListAdapter<Message, MessagesPagedAdapter.Mess
     inner class MessageViewHolder(val cardView: CardView, val binding: MessageLayoutBinding) :
         RecyclerView.ViewHolder(cardView), View.OnClickListener, View.OnLongClickListener {
         init {
-            cardView.setOnClickListener(this)
-            cardView.setOnLongClickListener(this)
+            //cardView.setOnClickListener(this)
+            //cardView.setOnLongClickListener(this)
         }
 
         fun bind(message: Message?) {
-            //binding.
+            if (message != null) {
+                if (message.senderId == 0L) {
+                    binding.messageTextMy.text = message.text
+                } else {
+                    binding.messageTextNotMy.text = message.text
+                }
+            }
         }
 
         override fun onClick(v: View) {

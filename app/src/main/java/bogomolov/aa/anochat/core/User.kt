@@ -1,4 +1,3 @@
 package bogomolov.aa.anochat.core
 
-class User {
-}
+data class User(var id : Long, var name: String)

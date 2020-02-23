@@ -11,6 +11,7 @@ import androidx.databinding.DataBindingUtil
 
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
+import bogomolov.aa.anochat.databinding.FragmentUsersBinding
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -26,7 +27,7 @@ class UsersFragment : Fragment() {
     //search: https://stackoverflow.com/questions/34291453/adding-searchview-in-fragment
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val binding = DataBindingUtil.inflate<>(inflater,R.layout.fragment_users,container,false)
+        val binding = DataBindingUtil.inflate<FragmentUsersBinding>(inflater,R.layout.fragment_users,container,false)
         val view = binding.root
 
         return view

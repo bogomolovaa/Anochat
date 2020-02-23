@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat
 
 import android.app.Application
+import bogomolov.aa.anochat.dagger.DaggerAppComponent
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector

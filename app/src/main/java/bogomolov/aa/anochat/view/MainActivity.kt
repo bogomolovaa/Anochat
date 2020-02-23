@@ -25,6 +25,6 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
 
         val binding = DataBindingUtil.setContentView<ActivityMainBinding>(this,R.layout.activity_main)
         val navController = Navigation.findNavController(this, R.id.nav_host_fragment)
-        NavigationUI.setupWithNavController(binding.navView, navController)
+
     }
 }
