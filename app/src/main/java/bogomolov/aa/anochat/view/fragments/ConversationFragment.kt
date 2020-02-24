@@ -2,34 +2,41 @@ package bogomolov.aa.anochat.view.fragments
 
 
 import android.content.Context
+import android.content.DialogInterface
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.edit
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.observe
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
-
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.view.MessagesPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationViewModel
-import dagger.android.support.AndroidSupportInjection
-import javax.inject.Inject
-
-import android.content.DialogInterface
-import android.util.Log
-
-import android.widget.Toast
-
-import android.widget.EditText
-import android.widget.LinearLayout
-import androidx.appcompat.app.AlertDialog
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.iid.FirebaseInstanceId
+import dagger.android.support.AndroidSupportInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import java.lang.Exception
+import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 
 class ConversationFragment : Fragment() {
@@ -64,40 +71,70 @@ class ConversationFragment : Fragment() {
         viewModel.loadMessages(conversationId)
         viewModel.pagedListLiveData.observe(viewLifecycleOwner) {
             adapter.submitList(it)
+            binding.recyclerView.scrollToPosition(it.size - 1);
+        }
+        binding.recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+            if (bottom < oldBottom) {
+                binding.recyclerView.postDelayed({
+                    binding.recyclerView.smoothScrollToPosition(adapter.itemCount - 1);
+                }, 100)
+            }
         }
 
         binding.messageInputLayout.setEndIconOnClickListener { v ->
             val text = binding.messageInputText.text
             if (text != null) {
-                viewModel.onNewMessage(text.toString())
+                Log.i("test", "message text: $text")
+                //viewModel.onNewMessage(text.toString())
                 binding.messageInputText.setText("")
+                testMessage(text.toString())
             }
         }
 
-        signIn(inflater)
+        //signInDialog(inflater)
 
 
         return view
     }
 
-    fun testDb(){
-        val database = FirebaseDatabase.getInstance()
-        val myRef = database.getReference("message")
-
-        myRef.setValue("Hello, World!")
-
-        /*
-            DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference();
-            DatabaseReference cineIndustryRef = rootRef.child("cineIndustry").push();
-            String key = cineIndustryRef.getKey();
-            Map<String, Object> map = new HashMap<>();
-            map.put(key, "Hollywood");
-            //and os on
-            cineIndustryRef.updateChildren(map);
-         */
+    fun testMessage(message: String) {
+        val uid = "LX4U2yR5ZJUsN5hivvDvF9NUHXJ3"
+        val token =
+            "dtJant07QZk:APA91bGiAIP5GiGb_LH4R13Jmz1F8njD5QXNcsr886I39btTCsgEjHYz1nP2ets45wWCCxLoGwfh8zOdlncS-HBKxahD0g-JEdfaQEvgY7b_siANa24HA5DMn9VRVD7XXAN_nL6tZqar";
+        val myRef = FirebaseDatabase.getInstance().reference
+        myRef.child("messages").push()
+            .setValue(mapOf("message" to message, "dest" to uid, "source" to token))
     }
 
-    fun testUser(email: String, password: String) {
+    fun updateTokenAndUid(email: String, password: String) {
+        GlobalScope.launch(Dispatchers.IO) {
+            val uid = userSignIn(email, password)
+            PreferenceManager.getDefaultSharedPreferences(context).edit { putString("uid", uid) }
+            val token = getToken()
+            ConversationFragment.updateTokenAndUid(token, uid)
+        }
+    }
+
+    companion object {
+        fun updateTokenAndUid(token: String, uid: String) {
+            val myRef = FirebaseDatabase.getInstance().reference
+            myRef.child("users").child(uid).setValue(token)
+            myRef.child("users").child(token).setValue(uid)
+        }
+    }
+
+    private suspend fun getToken(): String = suspendCoroutine {
+        FirebaseInstanceId.getInstance().instanceId
+            .addOnCompleteListener(OnCompleteListener { task ->
+                if (!task.isSuccessful)
+                    it.resumeWithException(Exception("getInstanceId failed"))
+                val token = task.result!!.token
+                Log.d("test", "token $token")
+                it.resume(token)
+            })
+    }
+
+    private suspend fun userSignIn(email: String, password: String): String = suspendCoroutine {
         val auth = FirebaseAuth.getInstance()
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(activity!!) { task ->
@@ -108,7 +145,7 @@ class ConversationFragment : Fragment() {
                         "test",
                         "Authentication succeeded name: ${user!!.displayName} email: ${user.email} uid: ${user.uid}"
                     )
-                    testDb();
+                    it.resume(user.uid)
                 } else {
                     Toast.makeText(
                         context, "Authentication failed.",
@@ -118,7 +155,7 @@ class ConversationFragment : Fragment() {
             }
     }
 
-    fun signIn(inflater: LayoutInflater) {
+    fun signInDialog(inflater: LayoutInflater) {
         val alert: AlertDialog.Builder = AlertDialog.Builder(context!!)
         val view = inflater.inflate(R.layout.test_sign_in, null)
         alert.setView(view)
@@ -126,7 +163,7 @@ class ConversationFragment : Fragment() {
             override fun onClick(dialog: DialogInterface, whichButton: Int) {
                 val inputEmail = view.findViewById<EditText>(R.id.email_input)
                 val inputPassword = view.findViewById<EditText>(R.id.password_input)
-                testUser(inputEmail.text.toString(), inputPassword.text.toString())
+                updateTokenAndUid(inputEmail.text.toString(), inputPassword.text.toString())
             }
         })
         alert.setNegativeButton(
