@@ -2,16 +2,20 @@
 <layout xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         xmlns:android="http://schemas.android.com/apk/res/android">
-<FrameLayout
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             tools:context=".view.fragments.ConversationsListFragment">
+    <data>
+        <variable
+                name="viewModel"
+                type="bogomolov.aa.anochat.viewmodel.ConversationListViewModel" />
+    </data>
+    <FrameLayout
+                 android:layout_width="match_parent"
+                 android:layout_height="match_parent"
+                 tools:context=".view.fragments.ConversationsListFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="@string/hello_blank_fragment"/>
+        <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
 
-</FrameLayout>
+    </FrameLayout>
 </layout>
