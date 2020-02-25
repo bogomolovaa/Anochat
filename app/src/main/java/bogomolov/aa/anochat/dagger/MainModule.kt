@@ -21,6 +21,10 @@ abstract class MainModule {
         @JvmStatic
         @Provides
         fun providesAppDatabase(application: Application): AppDatabase =
-            Room.databaseBuilder(application, AppDatabase::class.java, DB_NAME).build()
+            Room.databaseBuilder(
+                application,
+                AppDatabase::class.java,
+                DB_NAME
+            ).fallbackToDestructiveMigration().build()
     }
 }

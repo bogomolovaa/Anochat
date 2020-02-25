@@ -74,7 +74,7 @@ class ConversationFragment : Fragment() {
             binding.recyclerView.scrollToPosition(it.size - 1);
         }
         binding.recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-            if (bottom < oldBottom) {
+            if (bottom < oldBottom&&adapter.itemCount>0) {
                 binding.recyclerView.postDelayed({
                     binding.recyclerView.smoothScrollToPosition(adapter.itemCount - 1);
                 }, 100)
@@ -118,8 +118,7 @@ class ConversationFragment : Fragment() {
     companion object {
         fun updateTokenAndUid(token: String, uid: String) {
             val myRef = FirebaseDatabase.getInstance().reference
-            myRef.child("users").child(uid).setValue(token)
-            myRef.child("users").child(token).setValue(uid)
+            myRef.child("users").child(uid).setValue(mapOf("token" to token))
         }
     }
 
