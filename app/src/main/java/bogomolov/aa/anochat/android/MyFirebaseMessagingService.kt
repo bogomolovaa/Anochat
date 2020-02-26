@@ -69,7 +69,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
     override fun onNewToken(token: String) {
         Log.d("test", "Refreshed token: $token")
         val uid = PreferenceManager.getDefaultSharedPreferences(baseContext).getString("uid","")!!
-        ConversationFragment.updateTokenAndUid(token, uid)
+        ConversationFragment.updateToken(token, uid)
     }
 
     private fun sendNotification(message: Message) {

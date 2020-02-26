@@ -25,7 +25,10 @@ import bogomolov.aa.anochat.view.MessagesPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationViewModel
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.iid.FirebaseInstanceId
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.coroutines.Dispatchers
@@ -74,7 +77,7 @@ class ConversationFragment : Fragment() {
             binding.recyclerView.scrollToPosition(it.size - 1);
         }
         binding.recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-            if (bottom < oldBottom&&adapter.itemCount>0) {
+            if (bottom < oldBottom && adapter.itemCount > 0) {
                 binding.recyclerView.postDelayed({
                     binding.recyclerView.smoothScrollToPosition(adapter.itemCount - 1);
                 }, 100)
@@ -91,10 +94,34 @@ class ConversationFragment : Fragment() {
             }
         }
 
-        //signInDialog(inflater)
+        signInDialog(inflater)
 
 
         return view
+    }
+
+
+    fun findUser(input: String) {
+        Log.i("test", "findUser $input")
+        val query = FirebaseDatabase.getInstance().getReference("users")
+            .orderByChild("name")
+            .startAt(input)
+        query.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                Log.i("test", "snapshot $snapshot")
+                if (snapshot.exists()) {
+                    for (user in snapshot.children) {
+                        val uid = user.key
+                        val name = user.child("name").value
+                        Log.i("test", "uid $uid name $name")
+                    }
+                }
+            }
+
+            override fun onCancelled(p0: DatabaseError) {
+                Log.i("test", "DatabaseError $p0")
+            }
+        })
     }
 
     fun testMessage(message: String) {
@@ -111,14 +138,21 @@ class ConversationFragment : Fragment() {
             val uid = userSignIn(email, password)
             PreferenceManager.getDefaultSharedPreferences(context).edit { putString("uid", uid) }
             val token = getToken()
-            ConversationFragment.updateTokenAndUid(token, uid)
+            updateNameTokenAndUid(token, uid)
+            findUser("user")
         }
     }
 
     companion object {
-        fun updateTokenAndUid(token: String, uid: String) {
+        fun updateNameTokenAndUid(token: String, uid: String) {
             val myRef = FirebaseDatabase.getInstance().reference
-            myRef.child("users").child(uid).setValue(mapOf("token" to token))
+            myRef.child("users").child(uid).setValue(mapOf("name" to "user1"))
+            myRef.child("user_tokens").child(uid).setValue(mapOf("token" to token))
+        }
+
+        fun updateToken(token: String, uid: String) {
+            val myRef = FirebaseDatabase.getInstance().reference
+            myRef.child("user_tokens").child(uid).setValue(mapOf("token" to token))
         }
     }
 
