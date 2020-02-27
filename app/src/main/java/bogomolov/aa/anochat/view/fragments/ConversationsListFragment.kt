@@ -10,6 +10,8 @@ import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.observe
+import androidx.navigation.Navigation
+import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
 
 import bogomolov.aa.anochat.R
@@ -41,6 +43,9 @@ class ConversationsListFragment : Fragment() {
         viewModel.pagedListLiveData.observe(viewLifecycleOwner){
             adapter.submitList(it)
         }
+
+        val navController = Navigation.findNavController(activity!!, R.id.nav_host_fragment)
+        NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         return view
     }

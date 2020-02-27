@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.core.Message
+import bogomolov.aa.anochat.repository.FirebaseRepository
 import bogomolov.aa.anochat.repository.Repository
 import bogomolov.aa.anochat.view.MainActivity
 import bogomolov.aa.anochat.view.fragments.ConversationFragment
@@ -67,9 +68,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
     }
 
     override fun onNewToken(token: String) {
-        Log.d("test", "Refreshed token: $token")
-        val uid = PreferenceManager.getDefaultSharedPreferences(baseContext).getString("uid","")!!
-        ConversationFragment.updateToken(token, uid)
     }
 
     private fun sendNotification(message: Message) {

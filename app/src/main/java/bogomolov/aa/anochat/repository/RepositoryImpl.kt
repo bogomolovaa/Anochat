@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Singleton
 class RepositoryImpl
-@Inject constructor(private val db: AppDatabase) : Repository {
+@Inject constructor(private val db: AppDatabase, private val firebase: FirebaseRepository) : Repository {
 
     override fun addMessage(message: Message) {
         message.id = db.messageDao().insert(modelToEntity(message))

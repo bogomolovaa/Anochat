@@ -1,11 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:app="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/nav_graph.xml"
-        app:startDestination="@id/conversationFragment">
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/nav_graph.xml"
+        app:startDestination="@id/conversationsListFragment">
 
     <fragment
             android:id="@+id/conversationFragment"
             android:name="bogomolov.aa.anochat.view.fragments.ConversationFragment"
             android:label="ConversationFragment" />
+    <fragment
+            android:id="@+id/conversationsListFragment"
+            android:name="bogomolov.aa.anochat.view.fragments.ConversationsListFragment"
+            android:label="ConversationsListFragment" >
+        <action
+                android:id="@+id/action_conversationsListFragment_to_conversationFragment"
+                app:destination="@id/conversationFragment" />
+        <action
+                android:id="@+id/action_conversationsListFragment_to_usersFragment"
+                app:destination="@id/usersFragment" />
+    </fragment>
+    <fragment
+            android:id="@+id/usersFragment"
+            android:name="bogomolov.aa.anochat.view.fragments.UsersFragment"
+            android:label="UsersFragment" />
+    <fragment
+            android:id="@+id/signInFragment"
+            android:name="bogomolov.aa.anochat.view.fragments.SignInFragment"
+            android:label="fragment_sign_in"
+            tools:layout="@layout/fragment_sign_in" >
+        <action
+                android:id="@+id/action_signInFragment_to_signUpFragment"
+                app:destination="@id/signUpFragment" />
+    </fragment>
+    <fragment
+            android:id="@+id/signUpFragment"
+            android:name="bogomolov.aa.anochat.view.fragments.SignUpFragment"
+            android:label="fragment_sign_up"
+            tools:layout="@layout/fragment_sign_up" />
 </navigation>

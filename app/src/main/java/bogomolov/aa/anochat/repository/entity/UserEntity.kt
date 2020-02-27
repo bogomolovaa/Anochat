@@ -9,10 +9,12 @@ class UserEntity() {
     var id: Long = 0
     var uid: String = ""
     var name: String = ""
+    var changed: Long = 0
 
-    constructor(id: Long, uid: String, name: String): this() {
+    constructor(id: Long, uid: String, name: String, changed: Long): this() {
         this.id = id
         this.uid = uid
         this.name = name
+        this.changed = changed
     }
 }

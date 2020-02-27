@@ -16,6 +16,8 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.observe
+import androidx.navigation.Navigation
+import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
@@ -67,6 +69,9 @@ class ConversationFragment : Fragment() {
         viewModel = ViewModelProvider(this, viewModelFactory).get(ConversationViewModel::class.java)
         binding.viewModel = viewModel
 
+        val navController = Navigation.findNavController(activity!!, R.id.nav_host_fragment)
+        NavigationUI.setupWithNavController(binding.toolbar, navController)
+
         val conversationId = 0L;
         val adapter = MessagesPagedAdapter()
         binding.recyclerView.adapter = adapter
@@ -90,103 +95,20 @@ class ConversationFragment : Fragment() {
                 Log.i("test", "message text: $text")
                 //viewModel.onNewMessage(text.toString())
                 binding.messageInputText.setText("")
-                testMessage(text.toString())
+                //testMessage(text.toString())
             }
         }
 
-        signInDialog(inflater)
+        //signInDialog(inflater)
 
 
         return view
     }
 
 
-    fun findUser(input: String) {
-        Log.i("test", "findUser $input")
-        val query = FirebaseDatabase.getInstance().getReference("users")
-            .orderByChild("name")
-            .startAt(input)
-        query.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                Log.i("test", "snapshot $snapshot")
-                if (snapshot.exists()) {
-                    for (user in snapshot.children) {
-                        val uid = user.key
-                        val name = user.child("name").value
-                        Log.i("test", "uid $uid name $name")
-                    }
-                }
-            }
 
-            override fun onCancelled(p0: DatabaseError) {
-                Log.i("test", "DatabaseError $p0")
-            }
-        })
-    }
 
-    fun testMessage(message: String) {
-        val uid = "LX4U2yR5ZJUsN5hivvDvF9NUHXJ3"
-        val token =
-            "dtJant07QZk:APA91bGiAIP5GiGb_LH4R13Jmz1F8njD5QXNcsr886I39btTCsgEjHYz1nP2ets45wWCCxLoGwfh8zOdlncS-HBKxahD0g-JEdfaQEvgY7b_siANa24HA5DMn9VRVD7XXAN_nL6tZqar";
-        val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("messages").push()
-            .setValue(mapOf("message" to message, "dest" to uid, "source" to token))
-    }
 
-    fun updateTokenAndUid(email: String, password: String) {
-        GlobalScope.launch(Dispatchers.IO) {
-            val uid = userSignIn(email, password)
-            PreferenceManager.getDefaultSharedPreferences(context).edit { putString("uid", uid) }
-            val token = getToken()
-            updateNameTokenAndUid(token, uid)
-            findUser("user")
-        }
-    }
-
-    companion object {
-        fun updateNameTokenAndUid(token: String, uid: String) {
-            val myRef = FirebaseDatabase.getInstance().reference
-            myRef.child("users").child(uid).setValue(mapOf("name" to "user1"))
-            myRef.child("user_tokens").child(uid).setValue(mapOf("token" to token))
-        }
-
-        fun updateToken(token: String, uid: String) {
-            val myRef = FirebaseDatabase.getInstance().reference
-            myRef.child("user_tokens").child(uid).setValue(mapOf("token" to token))
-        }
-    }
-
-    private suspend fun getToken(): String = suspendCoroutine {
-        FirebaseInstanceId.getInstance().instanceId
-            .addOnCompleteListener(OnCompleteListener { task ->
-                if (!task.isSuccessful)
-                    it.resumeWithException(Exception("getInstanceId failed"))
-                val token = task.result!!.token
-                Log.d("test", "token $token")
-                it.resume(token)
-            })
-    }
-
-    private suspend fun userSignIn(email: String, password: String): String = suspendCoroutine {
-        val auth = FirebaseAuth.getInstance()
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(activity!!) { task ->
-                if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    Toast.makeText(context, "Authentication succeeded", Toast.LENGTH_SHORT).show()
-                    Log.i(
-                        "test",
-                        "Authentication succeeded name: ${user!!.displayName} email: ${user.email} uid: ${user.uid}"
-                    )
-                    it.resume(user.uid)
-                } else {
-                    Toast.makeText(
-                        context, "Authentication failed.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-    }
 
     fun signInDialog(inflater: LayoutInflater) {
         val alert: AlertDialog.Builder = AlertDialog.Builder(context!!)
@@ -196,7 +118,7 @@ class ConversationFragment : Fragment() {
             override fun onClick(dialog: DialogInterface, whichButton: Int) {
                 val inputEmail = view.findViewById<EditText>(R.id.email_input)
                 val inputPassword = view.findViewById<EditText>(R.id.password_input)
-                updateTokenAndUid(inputEmail.text.toString(), inputPassword.text.toString())
+                //updateTokenAndUid(inputEmail.text.toString(), inputPassword.text.toString())
             }
         })
         alert.setNegativeButton(
