@@ -72,7 +72,7 @@ class ConversationFragment : Fragment() {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        val conversationId = 0L;
+        val conversationId = arguments?.get("id") as Long
         val adapter = MessagesPagedAdapter()
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
@@ -99,32 +99,9 @@ class ConversationFragment : Fragment() {
             }
         }
 
-        //signInDialog(inflater)
-
 
         return view
     }
 
-
-    fun signInDialog(inflater: LayoutInflater) {
-        val alert: AlertDialog.Builder = AlertDialog.Builder(requireContext())
-        val view = inflater.inflate(R.layout.test_sign_in, null)
-        alert.setView(view)
-        alert.setPositiveButton("Ok", object : DialogInterface.OnClickListener {
-            override fun onClick(dialog: DialogInterface, whichButton: Int) {
-                val inputEmail = view.findViewById<EditText>(R.id.email_input)
-                val inputPassword = view.findViewById<EditText>(R.id.password_input)
-                //updateTokenAndUid(inputEmail.text.toString(), inputPassword.text.toString())
-            }
-        })
-        alert.setNegativeButton(
-            "Cancel",
-            object : DialogInterface.OnClickListener {
-                override fun onClick(dialog: DialogInterface, whichButton: Int) {
-                    dialog.cancel()
-                }
-            })
-        alert.show()
-    }
 
 }

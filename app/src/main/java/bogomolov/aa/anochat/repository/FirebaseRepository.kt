@@ -43,6 +43,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     //TODO: turn on caching
 
     init {
+        signOut()
         GlobalScope.launch {
             token = getToken()
         }
@@ -114,12 +115,14 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             return false
         } else {
             if (FirebaseAuth.getInstance().currentUser == null) {
+                Log.i("test","FirebaseAuth.getInstance().currentUser null")
                 val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
                 val email = sharedPreferences.getString("email", "")!!
                 val password = sharedPreferences.getString("password", "")!!
                 if (email != "" && password != "")
                     return userSignIn(email, password) != null
             }
+            Log.i("test","FirebaseAuth.getInstance().currentUser NOT null")
             return true
         }
     }

@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.dagger
 
 import android.app.Application
+import android.content.Context
 import androidx.room.Room
 import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.DB_NAME
@@ -26,5 +27,9 @@ abstract class MainModule {
                 AppDatabase::class.java,
                 DB_NAME
             ).fallbackToDestructiveMigration().build()
+
+        @JvmStatic
+        @Provides
+        fun providesContext(application: Application): Context = application
     }
 }

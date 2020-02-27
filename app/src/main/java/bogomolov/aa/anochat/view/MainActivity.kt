@@ -2,11 +2,14 @@ package bogomolov.aa.anochat.view
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.viewModels
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.Navigation
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
+import bogomolov.aa.anochat.databinding.ActivityMainBinding
 import bogomolov.aa.anochat.viewmodel.MainActivityViewModel
 import dagger.android.AndroidInjection
 import dagger.android.AndroidInjector
@@ -19,7 +22,6 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity(), HasAndroidInjector {
     @Inject
     internal lateinit var androidInjector: DispatchingAndroidInjector<Any>
-
     override fun androidInjector(): AndroidInjector<Any> = androidInjector
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
@@ -29,12 +31,15 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         AndroidInjection.inject(this)
         super.onCreate(savedInstanceState)
 
-        //val binding = DataBindingUtil.setContentView<ActivityMainBinding>(this,R.layout.activity_main)
+        val binding = DataBindingUtil.setContentView<ActivityMainBinding>(this,R.layout.activity_main)
+
         val navController = Navigation.findNavController(this, R.id.nav_host_fragment)
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
             if (destination.id != R.id.signInFragment && destination.id != R.id.signUpFragment) {
                 viewModel.viewModelScope.launch(Dispatchers.IO) {
-                    if (!viewModel.isSignedIn()) controller.navigate(R.id.signInFragment)
+                    val signedIn = viewModel.isSignedIn()
+                    Log.i("test","signedIn $signedIn")
+                    if (!signedIn) controller.navigate(R.id.signInFragment)
                 }
             }
         }

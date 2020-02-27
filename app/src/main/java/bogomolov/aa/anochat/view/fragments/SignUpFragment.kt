@@ -24,6 +24,7 @@ class SignUpFragment : Fragment() {
             container,
             false
         )
+
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
