@@ -14,6 +14,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.edit
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.observe
 import androidx.navigation.Navigation
@@ -47,7 +48,7 @@ import kotlin.coroutines.suspendCoroutine
 class ConversationFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    lateinit var viewModel: ConversationViewModel
+    val viewModel: ConversationViewModel by activityViewModels { viewModelFactory }
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -66,10 +67,9 @@ class ConversationFragment : Fragment() {
             false
         )
         val view = binding.root
-        viewModel = ViewModelProvider(this, viewModelFactory).get(ConversationViewModel::class.java)
         binding.viewModel = viewModel
 
-        val navController = Navigation.findNavController(activity!!, R.id.nav_host_fragment)
+        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         val conversationId = 0L;
@@ -106,12 +106,8 @@ class ConversationFragment : Fragment() {
     }
 
 
-
-
-
-
     fun signInDialog(inflater: LayoutInflater) {
-        val alert: AlertDialog.Builder = AlertDialog.Builder(context!!)
+        val alert: AlertDialog.Builder = AlertDialog.Builder(requireContext())
         val view = inflater.inflate(R.layout.test_sign_in, null)
         alert.setView(view)
         alert.setPositiveButton("Ok", object : DialogInterface.OnClickListener {

@@ -27,9 +27,20 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 
-class FirebaseRepository @Inject constructor(val context: Context) {
+interface IFirebaseRepository {
+    fun findUsers(startWith: String): List<User>
+    fun sendMessage(message: String, user: User)
+    fun updateUser(user: User)
+    suspend fun signUp(name: String, email: String, password: String): Boolean
+    suspend fun signIn(email: String, password: String): Boolean
+    fun signOut()
+    suspend fun isSignedIn(): Boolean
+}
+
+class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRepository {
     private lateinit var token: String
     //  "dtJant07QZk:APA91bGiAIP5GiGb_LH4R13Jmz1F8njD5QXNcsr886I39btTCsgEjHYz1nP2ets45wWCCxLoGwfh8zOdlncS-HBKxahD0g-JEdfaQEvgY7b_siANa24HA5DMn9VRVD7XXAN_nL6tZqar";
+    //TODO: turn on caching
 
     init {
         GlobalScope.launch {
@@ -37,7 +48,7 @@ class FirebaseRepository @Inject constructor(val context: Context) {
         }
     }
 
-    fun findUsers(startWith: String): List<User> {
+    override fun findUsers(startWith: String): List<User> {
         val users = ArrayList<User>()
         val query = FirebaseDatabase.getInstance().getReference("users")
             .orderByChild("name")
@@ -63,34 +74,62 @@ class FirebaseRepository @Inject constructor(val context: Context) {
         return users
     }
 
-    fun sendMessage(message: String, user: User) {
+    override fun sendMessage(message: String, user: User) {
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("messages").push()
             .setValue(mapOf("message" to message, "dest" to user.uid, "source" to token))
     }
 
-    fun updateUser(user: User) {
+    override fun updateUser(user: User) {
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("users").child(user.uid).setValue(mapOf("changed" to user.changed))
         myRef.child("users").child(user.uid).setValue(mapOf("name" to user.name))
     }
 
-    fun signUp(name: String, email: String, password: String) {
-        GlobalScope.launch {
-            val uid = userSignUp(email, password)
-            val user = User(name = name, uid = uid, changed = System.currentTimeMillis())
-            updateUser(user)
-            saveUidAndToken(uid, token)
+    override suspend fun signUp(name: String, email: String, password: String): Boolean {
+        val uid = userSignUp(email, password)
+        if (uid == null) return false
+        saveEmailAndPassword(email, password)
+        val user = User(name = name, uid = uid, changed = System.currentTimeMillis())
+        updateUser(user)
+        saveUidAndToken(uid, token)
+        return true
+    }
+
+    override suspend fun signIn(email: String, password: String): Boolean {
+        val uid = userSignIn(email, password)
+        if (uid == null) return false
+        saveUidAndToken(uid, token)
+        return true
+    }
+
+    override fun signOut() {
+        FirebaseAuth.getInstance().signOut()
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        sharedPreferences.edit { putString("uid", "") }
+    }
+
+    override suspend fun isSignedIn(): Boolean {
+        if (PreferenceManager.getDefaultSharedPreferences(context).getString("uid", "") == "") {
+            return false
+        } else {
+            if (FirebaseAuth.getInstance().currentUser == null) {
+                val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+                val email = sharedPreferences.getString("email", "")!!
+                val password = sharedPreferences.getString("password", "")!!
+                if (email != "" && password != "")
+                    return userSignIn(email, password) != null
+            }
+            return true
         }
     }
 
-    fun signIn(email: String, password: String) {
-        GlobalScope.launch {
-            val uid = userSignIn(email, password)
-            saveUidAndToken(uid, token)
-        }
+    private fun saveEmailAndPassword(email: String, password: String) {
+        //TODO: encrypt password
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        sharedPreferences.edit { putString("email", email) }
+        sharedPreferences.edit { putString("password", password) }
     }
-
 
     private fun saveUidAndToken(uid: String, token: String) {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -107,7 +146,7 @@ class FirebaseRepository @Inject constructor(val context: Context) {
         }
     }
 
-    private suspend fun userSignUp(email: String, password: String): String = suspendCoroutine {
+    private suspend fun userSignUp(email: String, password: String): String? = suspendCoroutine {
         val auth = FirebaseAuth.getInstance()
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -120,11 +159,12 @@ class FirebaseRepository @Inject constructor(val context: Context) {
                     it.resume(user.uid)
                 } else {
                     Log.i("test", "User NOT created")
+                    it.resume(null)
                 }
             }
     }
 
-    private suspend fun userSignIn(email: String, password: String): String = suspendCoroutine {
+    private suspend fun userSignIn(email: String, password: String): String? = suspendCoroutine {
         val auth = FirebaseAuth.getInstance()
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -136,6 +176,7 @@ class FirebaseRepository @Inject constructor(val context: Context) {
                     )
                     it.resume(user.uid)
                 } else {
+                    it.resume(null)
                     Log.i("test", "Authentication failed ")
                 }
             }

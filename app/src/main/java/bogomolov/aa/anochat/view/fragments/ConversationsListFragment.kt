@@ -37,6 +37,8 @@ class ConversationsListFragment : Fragment() {
         val view = binding.root
         val viewModel = ViewModelProvider(this,viewModelFactory).get(ConversationListViewModel::class.java)
 
+
+
         val adapter = ConversationsPagedAdapter()
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
@@ -44,7 +46,7 @@ class ConversationsListFragment : Fragment() {
             adapter.submitList(it)
         }
 
-        val navController = Navigation.findNavController(activity!!, R.id.nav_host_fragment)
+        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         return view

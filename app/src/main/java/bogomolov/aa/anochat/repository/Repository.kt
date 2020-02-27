@@ -4,8 +4,9 @@ import androidx.paging.DataSource
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
+import bogomolov.aa.anochat.core.User
 
-interface Repository {
+interface Repository : IFirebaseRepository{
     fun addMessage(message: Message)
 
     fun loadMessages(conversationId: Long): DataSource.Factory<Int, Message>
@@ -13,4 +14,6 @@ interface Repository {
     fun loadConversations(): DataSource.Factory<Int, Conversation>
 
     fun addConversation(conversation: Conversation)
+
+
 }

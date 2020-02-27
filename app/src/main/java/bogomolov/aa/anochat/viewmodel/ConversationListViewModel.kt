@@ -15,5 +15,4 @@ class ConversationListViewModel
 @Inject constructor(val repository: Repository) : ViewModel() {
     val pagedListLiveData = LivePagedListBuilder(repository.loadConversations(), 10).build()
 
-
 }
