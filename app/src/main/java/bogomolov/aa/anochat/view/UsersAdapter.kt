@@ -3,28 +3,13 @@ package bogomolov.aa.anochat.view
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.cardview.widget.CardView
-import androidx.paging.PagedListAdapter
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.databinding.UserLayoutBinding
 
-private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<User>() {
-    override fun areItemsTheSame(
-        user1: User,
-        user2: User
-    ): Boolean =
-        user1 == user2
-
-    override fun areContentsTheSame(
-        user1: User,
-        user2: User
-    ): Boolean =
-        user1 == user2
-
-}
-class UsersPagedAdapter:
-    PagedListAdapter<User, UsersPagedAdapter.UserViewHolder>(DIFF_CALLBACK) {
+class UsersAdapter :
+    RecyclerView.Adapter<UsersAdapter.UserViewHolder>() {
+    val users = ArrayList<User>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
         val binding =
@@ -33,8 +18,16 @@ class UsersPagedAdapter:
         return UserViewHolder(cv, binding)
     }
 
+    fun submitList(list: List<User>) {
+        users.clear()
+        users.addAll(list)
+        notifyDataSetChanged()
+    }
+
+    override fun getItemCount(): Int = users.size
+
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(users[position])
     }
 
     inner class UserViewHolder(
@@ -42,13 +35,10 @@ class UsersPagedAdapter:
         val binding: UserLayoutBinding
     ) : RecyclerView.ViewHolder(cardView) {
         fun bind(user: User?) {
-            if (user != null) {
+            if (user != null)
                 binding.user = user
-            }
         }
     }
-
-
 
 
 }

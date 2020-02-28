@@ -5,8 +5,6 @@ import androidx.paging.DataSource
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
-import bogomolov.aa.anochat.repository.entity.ConversationEntity
-import bogomolov.aa.anochat.repository.entity.UserEntity
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,7 +23,7 @@ class RepositoryImpl
         }
 
     override fun loadConversations(): DataSource.Factory<Int, Conversation> =
-        db.conversationDao().loadAll().map {
+        db.conversationDao().loadConversations().map {
             entityToModel(it)
         }
 

@@ -28,8 +28,8 @@ private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Conversation>() {
 class ConversationsPagedAdapter :
     PagedListAdapter<Conversation, ConversationsPagedAdapter.ConversationViewHolder>(DIFF_CALLBACK) {
 
-    val selectedIds: MutableSet<Long> = HashSet()
-    private var checkMode = false
+    //val selectedIds: MutableSet<Long> = HashSet()
+    //private var checkMode = false
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationViewHolder {
@@ -41,8 +41,8 @@ class ConversationsPagedAdapter :
 
     override fun onBindViewHolder(holder: ConversationViewHolder, position: Int) {
         val conversation = getItem(position)
-        val cardView = holder.cardView as MaterialCardView
-        if (conversation != null) cardView.isChecked = selectedIds.contains(conversation.id)
+        //val cardView = holder.cardView as MaterialCardView
+        //if (conversation != null) cardView.isChecked = selectedIds.contains(conversation.id)
         holder.bind(conversation)
     }
 
@@ -51,9 +51,8 @@ class ConversationsPagedAdapter :
         val binding: ConversationLayoutBinding
     ) : RecyclerView.ViewHolder(cardView) {
         fun bind(conversation: Conversation?) {
-            if (conversation != null) {
+            if (conversation != null)
                 binding.conversation = conversation
-            }
         }
     }
 }

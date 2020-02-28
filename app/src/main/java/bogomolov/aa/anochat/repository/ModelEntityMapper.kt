@@ -3,9 +3,7 @@ package bogomolov.aa.anochat.repository
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
-import bogomolov.aa.anochat.repository.entity.ConversationEntity
-import bogomolov.aa.anochat.repository.entity.MessageEntity
-import bogomolov.aa.anochat.repository.entity.UserEntity
+import bogomolov.aa.anochat.repository.entity.*
 
 fun entityToModel(from: MessageEntity?): Message? =
     if (from != null)
@@ -22,13 +20,13 @@ fun entityToModel(from: UserEntity?): User? =
 
 fun modelToEntity(from: User) = UserEntity(from.id, from.uid, from.name, from.changed)
 
-fun entityToModel(from: ConversationEntity?): Conversation? =
+fun entityToModel(from: ConversationJoined?): Conversation? =
     if (from != null)
-        Conversation(from.id, from.userId, from.lastMessage, from.lastTime)
+        Conversation(from.conversation.id, entityToModel(from.user)!!, entityToModel(from.lastMessage)!!)
     else null
 
 fun modelToEntity(from: Conversation) =
-    ConversationEntity(from.id, from.userId, from.lastMessage, from.lastTime)
+    ConversationEntity(from.id, from.user.id, from.lastMessage.id)
 
 
 inline fun <reified T> entityToModel(fromList: List<*>): List<T> {

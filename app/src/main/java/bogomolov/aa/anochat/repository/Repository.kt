@@ -5,6 +5,7 @@ import androidx.paging.PagedList
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
+import bogomolov.aa.anochat.repository.entity.ConversationAndUser
 
 interface Repository : IFirebaseRepository{
     fun addMessage(message: Message)

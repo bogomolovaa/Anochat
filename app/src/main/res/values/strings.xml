@@ -17,4 +17,7 @@
     <string name="login_email">email</string>
     <string name="login_password">password</string>
     <string name="wrong_password">Wrong password</string>
+    <string name="register_failed">Register failed</string>
+    <string name="user_name">user name</string>
+    <string name="search">search</string>
 </resources>

@@ -28,7 +28,7 @@ import kotlin.coroutines.suspendCoroutine
 
 
 interface IFirebaseRepository {
-    fun findUsers(startWith: String): List<User>
+    suspend fun findUsers(startWith: String): List<User>
     fun sendMessage(message: String, user: User)
     fun updateUser(user: User)
     suspend fun signUp(name: String, email: String, password: String): Boolean
@@ -49,7 +49,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         }
     }
 
-    override fun findUsers(startWith: String): List<User> {
+    override suspend fun findUsers(startWith: String): List<User> = suspendCoroutine{
         val users = ArrayList<User>()
         val query = FirebaseDatabase.getInstance().getReference("users")
             .orderByChild("name")
@@ -66,13 +66,14 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
                         Log.i("test", "uid $uid name $name changed ${Date(changed)}")
                     }
                 }
+                it.resume(users)
             }
 
             override fun onCancelled(p0: DatabaseError) {
+                it.resumeWithException(Exception("DatabaseError $p0"))
                 Log.i("test", "DatabaseError $p0")
             }
         })
-        return users
     }
 
     override fun sendMessage(message: String, user: User) {
