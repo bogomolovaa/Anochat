@@ -1,7 +1,6 @@
 package bogomolov.aa.anochat.view
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.cardview.widget.CardView
 import androidx.paging.PagedListAdapter
@@ -11,50 +10,39 @@ import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import com.google.android.material.card.MaterialCardView
 
-private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Message>() {
-    override fun areItemsTheSame(message1: Message, message2: Message): Boolean =
-        message1 == message2
+class MessagesPagedAdapter(private val helper: AdapterHelper<Message, MessageLayoutBinding> = AdapterHelper()) :
+    PagedListAdapter<Message, AdapterHelper<Message, MessageLayoutBinding>.VH>(
+        helper.DIFF_CALLBACK
+    ), AdapterSelectable<Message, MessageLayoutBinding> {
 
-    override fun areContentsTheSame(message1: Message, message2: Message): Boolean =
-        message1 == message2
+    init {
+        helper.adapter = this
+    }
 
-}
-
-class MessagesPagedAdapter :
-    PagedListAdapter<Message, MessagesPagedAdapter.MessageViewHolder>(DIFF_CALLBACK) {
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): AdapterHelper<Message, MessageLayoutBinding>.VH {
         val binding =
             MessageLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        val cv = binding.messageCardView
-        return MessageViewHolder(cv, binding)
+        val cv = binding.root
+        return helper.VH(cv, binding)
     }
 
-    override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
-        val message = getItem(position)
-        val cardView = holder.cardView as MaterialCardView
-        holder.bind(message)
-    }
+    override fun onBindViewHolder(
+        holder: AdapterHelper<Message, MessageLayoutBinding>.VH,
+        position: Int
+    ) = helper.onBindViewHolder(holder, position)
 
-    inner class MessageViewHolder(val cardView: CardView, val binding: MessageLayoutBinding) :
-        RecyclerView.ViewHolder(cardView) {
+    override fun getItem(position: Int) = super.getItem(position)
 
+    override fun getId(item: Message) = item.id
 
-        fun bind(message: Message?) {
-            if (message != null) {
-                if (message.senderId == 0L) {
-                    binding.messageTextMy.text = message.text
-                } else {
-                    binding.messageTextNotMy.text = message.text
-                }
-            }
+    override fun bind(item: Message?, binding: MessageLayoutBinding) {
+        if (item != null) {
+            binding.message = item
         }
-
-
     }
-}
 
-class MessagesPagedAdapter2(val helper: RecyclerAdapterHelper<Message>) :
-    PagedListAdapter<Message, RecyclerAdapterHelper<Message>.HelperViewHolder>(DIFF_CALLBACK),
-    AdapterWithViewHolder<Message> by helper
+}
 

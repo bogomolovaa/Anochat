@@ -12,5 +12,8 @@ data class Message(
     val senderId: Long = 0L
 ){
     @SuppressLint("SimpleDateFormat")
-    fun timeString():String = SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(Date(time))
+    fun timeString():String = SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(time))
+
+    @SuppressLint("SimpleDateFormat")
+    fun shortTimeString():String = SimpleDateFormat("HH:mm").format(Date(time))
 }

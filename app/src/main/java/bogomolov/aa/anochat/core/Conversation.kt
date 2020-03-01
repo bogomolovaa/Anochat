@@ -1,7 +1,7 @@
 package bogomolov.aa.anochat.core
 
 data class Conversation(
-    var id: Long,
+    var id: Long = 0,
     val user: User,
-    var lastMessage: Message
+    var lastMessage: Message? = null
 )

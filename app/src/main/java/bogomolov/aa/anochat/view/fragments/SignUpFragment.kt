@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.observe
@@ -42,6 +43,7 @@ class SignUpFragment : Fragment() {
             false
         )
         binding.viewModel = viewModel
+        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 

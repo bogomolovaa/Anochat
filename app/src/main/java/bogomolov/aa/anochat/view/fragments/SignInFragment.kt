@@ -2,13 +2,13 @@ package bogomolov.aa.anochat.view.fragments
 
 import android.content.Context
 import android.os.Bundle
+import android.view.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.observe
+import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 
@@ -24,6 +24,7 @@ class SignInFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     val viewModel: SignInViewModel by activityViewModels { viewModelFactory }
+    lateinit var navController: NavController
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -40,14 +41,16 @@ class SignInFragment : Fragment() {
             container,
             false
         )
+        setHasOptionsMenu(true)
         binding.viewModel = viewModel
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
+        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        viewModel.loginStateLiveData.observe(viewLifecycleOwner){
-            if(it == LoginState.LOGGED){
+        viewModel.loginStateLiveData.observe(viewLifecycleOwner) {
+            if (it == LoginState.LOGGED) {
                 navController.navigate(R.id.conversationsListFragment)
-            }else{
+            } else {
                 binding.passwordInputLayout.error = getString(R.string.wrong_password)
             }
         }
@@ -55,4 +58,13 @@ class SignInFragment : Fragment() {
         return binding.root
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.signup_menu, menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.action_to_sign_up) navController.navigate(R.id.signUpFragment)
+        return true
+    }
 }
