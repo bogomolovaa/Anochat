@@ -12,10 +12,14 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.observe
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.core.Conversation
+import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
+import bogomolov.aa.anochat.view.AdapterHelper
 import bogomolov.aa.anochat.view.UsersAdapter
 import bogomolov.aa.anochat.viewmodel.UsersViewModel
 import dagger.android.support.AndroidSupportInjection
@@ -44,17 +48,27 @@ class UsersFragment : Fragment() {
             container,
             false
         )
+        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
+        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        NavigationUI.setupWithNavController(binding.toolbar, navController)
+
         val view = binding.root
         recyclerView = binding.recyclerView
-        val adapter = UsersAdapter()
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        val adapter = UsersAdapter(AdapterHelper {
+            viewModel.createConversation(it) { conversationId ->
+                navController.navigate(
+                    R.id.conversationFragment,
+                    Bundle().apply { putLong("id", conversationId) })
+            }
+        })
         recyclerView.adapter = adapter
         viewModel.usersLiveData.observe(viewLifecycleOwner) {
             adapter.submitList(it)
         }
         setHasOptionsMenu(true)
 
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
-        NavigationUI.setupWithNavController(binding.toolbar, navController)
+
 
         return view
     }

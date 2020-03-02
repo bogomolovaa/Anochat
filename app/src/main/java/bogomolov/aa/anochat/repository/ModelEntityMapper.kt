@@ -22,11 +22,16 @@ fun modelToEntity(from: User) = UserEntity(from.id, from.uid, from.name, from.ch
 
 fun entityToModel(from: ConversationJoined?): Conversation? =
     if (from != null)
-        Conversation(from.conversation.id, entityToModel(from.user)!!, entityToModel(from.lastMessage)!!)
+        Conversation(
+            from.conversation.id,
+            entityToModel(from.user)!!,
+            entityToModel(from.lastMessage)
+        )
     else null
 
+
 fun modelToEntity(from: Conversation) =
-    ConversationEntity(from.id, from.user.id, from.lastMessage.id)
+    ConversationEntity(from.id, from.user.id, from.lastMessage?.id ?: 0)
 
 
 inline fun <reified T> entityToModel(fromList: List<*>): List<T> {

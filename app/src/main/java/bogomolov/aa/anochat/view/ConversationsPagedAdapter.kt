@@ -10,49 +10,37 @@ import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.databinding.ConversationLayoutBinding
 import com.google.android.material.card.MaterialCardView
 
-private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Conversation>() {
-    override fun areItemsTheSame(
-        conversation1: Conversation,
-        conversation2: Conversation
-    ): Boolean =
-        conversation1 == conversation2
+class ConversationsPagedAdapter(private val helper: AdapterHelper<Conversation, ConversationLayoutBinding> = AdapterHelper()) :
+    PagedListAdapter<Conversation, AdapterHelper<Conversation, ConversationLayoutBinding>.VH>(
+        helper.DIFF_CALLBACK
+    ), AdapterSelectable<Conversation, ConversationLayoutBinding> {
 
-    override fun areContentsTheSame(
-        conversation1: Conversation,
-        conversation2: Conversation
-    ): Boolean =
-        conversation1 == conversation2
+    init {
+        helper.adapter = this
+    }
 
-}
-
-class ConversationsPagedAdapter :
-    PagedListAdapter<Conversation, ConversationsPagedAdapter.ConversationViewHolder>(DIFF_CALLBACK) {
-
-    //val selectedIds: MutableSet<Long> = HashSet()
-    //private var checkMode = false
-
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): AdapterHelper<Conversation, ConversationLayoutBinding>.VH {
         val binding =
             ConversationLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.messageCardView
-        return ConversationViewHolder(cv, binding)
+        return helper.VH(cv, binding)
     }
 
-    override fun onBindViewHolder(holder: ConversationViewHolder, position: Int) {
-        val conversation = getItem(position)
-        //val cardView = holder.cardView as MaterialCardView
-        //if (conversation != null) cardView.isChecked = selectedIds.contains(conversation.id)
-        holder.bind(conversation)
+    override fun onBindViewHolder(
+        holder: AdapterHelper<Conversation, ConversationLayoutBinding>.VH,
+        position: Int
+    ) = helper.onBindViewHolder(holder, position)
+
+    override fun getItem(position: Int) = super.getItem(position)
+
+    override fun getId(item: Conversation) = item.id
+
+    override fun bind(item: Conversation?, binding: ConversationLayoutBinding) {
+        if (item != null)
+            binding.conversation = item
     }
 
-    inner class ConversationViewHolder(
-        val cardView: CardView,
-        val binding: ConversationLayoutBinding
-    ) : RecyclerView.ViewHolder(cardView) {
-        fun bind(conversation: Conversation?) {
-            if (conversation != null)
-                binding.conversation = conversation
-        }
-    }
 }

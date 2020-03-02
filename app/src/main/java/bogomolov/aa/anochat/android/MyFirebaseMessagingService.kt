@@ -5,24 +5,22 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
-import android.content.SharedPreferences
-import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.core.Message
-import bogomolov.aa.anochat.repository.FirebaseRepository
 import bogomolov.aa.anochat.repository.Repository
 import bogomolov.aa.anochat.view.MainActivity
-import bogomolov.aa.anochat.view.fragments.ConversationFragment
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.android.AndroidInjection
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -49,18 +47,17 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         if (remoteMessage.data.isNotEmpty()) {
             Log.d("test", "Message data payload: " + remoteMessage.data);
             val data = remoteMessage.data;
-            val message = Message(
-                text = data.get("body")!!,
-                time = System.currentTimeMillis(),
-                conversationId = 0
-            );
-            repository.addMessage(message)
-            val inBackground = (application as AnochatAplication).inBackground
-            if (inBackground) sendNotification(message)
+            val text = data["body"] ?: ""
+            val uid = data["source"]
+            GlobalScope.launch(Dispatchers.IO) {
+                val message = repository.receiveMessage(text, uid)
+                if (message != null && (application as AnochatAplication).inBackground)
+                    sendNotification(message)
+            }
         }
 
         // Check if message contains a notification payload.
-        if (remoteMessage.getNotification() != null) {
+        if (remoteMessage.notification != null) {
             val body = remoteMessage.notification?.body;
             Log.d("test", "Message Notification Body: $body")
         }

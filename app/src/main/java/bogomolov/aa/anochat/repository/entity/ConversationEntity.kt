@@ -14,7 +14,10 @@ data class ConversationEntity(
 )
 
 data class ConversationJoined(
-    @Embedded val conversation: ConversationEntity,
-    @Embedded val user: UserEntity,
-    @Embedded val lastMessage: MessageEntity
+    @Embedded(prefix = "conversation_")
+    val conversation: ConversationEntity,
+    @Embedded(prefix = "user_")
+    val user: UserEntity,
+    @Embedded(prefix = "message_")
+    val lastMessage: MessageEntity?
 )

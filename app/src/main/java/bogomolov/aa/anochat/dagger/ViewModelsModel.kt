@@ -2,10 +2,7 @@ package bogomolov.aa.anochat.dagger
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import bogomolov.aa.anochat.viewmodel.ConversationListViewModel
-import bogomolov.aa.anochat.viewmodel.ConversationViewModel
-import bogomolov.aa.anochat.viewmodel.MainActivityViewModel
-import bogomolov.aa.anochat.viewmodel.SignInViewModel
+import bogomolov.aa.anochat.viewmodel.*
 import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoMap
@@ -33,6 +30,15 @@ abstract class ViewModelsModule {
     @ViewModelKey(SignInViewModel::class)
     abstract fun bindSignInViewModel(signInViewModel: SignInViewModel): ViewModel
 
+    @Binds
+    @IntoMap
+    @ViewModelKey(SignUpViewModel::class)
+    abstract fun bindSignUpViewModel(signUpViewModel : SignUpViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(UsersViewModel::class)
+    abstract fun bindUsersViewModel(usersViewModel: UsersViewModel): ViewModel
 
     @Binds
     abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory

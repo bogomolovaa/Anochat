@@ -1,27 +1,24 @@
 package bogomolov.aa.anochat.repository
 
-import android.app.Application
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Environment
 import android.util.Log
-import android.widget.Toast
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.core.User
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.iid.FirebaseInstanceId
-import kotlinx.coroutines.Dispatchers
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import java.lang.Exception
-import java.util.*
+import java.io.File
 import javax.inject.Inject
-import kotlin.collections.ArrayList
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -29,7 +26,6 @@ import kotlin.coroutines.suspendCoroutine
 
 interface IFirebaseRepository {
     suspend fun findUsers(startWith: String): List<User>
-    fun sendMessage(message: String, user: User)
     fun updateUser(user: User)
     suspend fun signUp(name: String, email: String, password: String): Boolean
     suspend fun signIn(email: String, password: String): Boolean
@@ -43,43 +39,88 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     //TODO: turn on caching
 
     init {
-        signOut()
+        //signOut()
         GlobalScope.launch {
             token = getToken()
         }
+        testUpload(context)
     }
 
-    override suspend fun findUsers(startWith: String): List<User> = suspendCoroutine{
+    fun testDownload(context: Context){
+        Log.i("test","start downloading")
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference
+        val fileRef = storageRef.child("ok_icon.png")
+        val dir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val localFile = File(dir,"ok_icon.png")
+        fileRef.getFile(localFile).addOnSuccessListener {
+            Log.i("test","downloaded")
+        }.addOnFailureListener {
+            Log.i("test","NOT downloaded")
+        }
+    }
+
+    fun testUpload(context: Context){
+        Log.i("test","start uploading")
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference
+        val fileRef = storageRef.child("ok_icon5.png")
+        val dir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val localFile = File(dir,"ok_icon.png")
+
+        fileRef.putFile(Uri.fromFile(localFile)).addOnSuccessListener {
+            Log.i("test","uploaded")
+        }.addOnFailureListener {
+            Log.i("test","NOT uploaded")
+            it.printStackTrace()
+        }
+
+    }
+
+    suspend fun getUser(uid: String): User = suspendCoroutine{
+        val ref = FirebaseDatabase.getInstance().getReference("users/$uid")
+        ref.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                it.resume(userFromRef(snapshot))
+            }
+
+            override fun onCancelled(p0: DatabaseError) {
+                it.resumeWithException(Exception("DatabaseError $p0"))
+            }
+        })
+    }
+
+    private fun userFromRef(snapshot: DataSnapshot): User {
+        val uid = snapshot.key!!
+        val name = snapshot.child("name").value.toString()
+        val changed = snapshot.child("changed").value.toString().toLong()
+        return User(uid = uid, name = name, changed = changed)
+    }
+
+    override suspend fun findUsers(startWith: String): List<User> = suspendCoroutine {
         val users = ArrayList<User>()
         val query = FirebaseDatabase.getInstance().getReference("users")
             .orderByChild("name")
             .startAt(startWith)
+        Log.i("test", "findUsers")
         query.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 Log.i("test", "snapshot $snapshot")
-                if (snapshot.exists()) {
-                    for (user in snapshot.children) {
-                        val uid = user.key!!
-                        val name = user.child("name").value.toString()
-                        val changed = user.child("changed").value.toString().toLong()
-                        users += User(uid = uid, name = name, changed = changed)
-                        Log.i("test", "uid $uid name $name changed ${Date(changed)}")
-                    }
-                }
+                if (snapshot.exists())
+                    for (user in snapshot.children) users += userFromRef(user)
                 it.resume(users)
             }
 
             override fun onCancelled(p0: DatabaseError) {
                 it.resumeWithException(Exception("DatabaseError $p0"))
-                Log.i("test", "DatabaseError $p0")
             }
         })
     }
 
-    override fun sendMessage(message: String, user: User) {
+    fun sendMessage(message: String, uid: String) {
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("messages").push()
-            .setValue(mapOf("message" to message, "dest" to user.uid, "source" to token))
+            .setValue(mapOf("message" to message, "dest" to uid, "source" to token))
     }
 
     override fun updateUser(user: User) {
@@ -116,14 +157,14 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             return false
         } else {
             if (FirebaseAuth.getInstance().currentUser == null) {
-                Log.i("test","FirebaseAuth.getInstance().currentUser null")
+                Log.i("test", "FirebaseAuth.getInstance().currentUser null")
                 val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
                 val email = sharedPreferences.getString("email", "")!!
                 val password = sharedPreferences.getString("password", "")!!
                 if (email != "" && password != "")
                     return userSignIn(email, password) != null
             }
-            Log.i("test","FirebaseAuth.getInstance().currentUser NOT null")
+            Log.i("test", "FirebaseAuth.getInstance().currentUser NOT null")
             return true
         }
     }

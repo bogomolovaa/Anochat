@@ -9,8 +9,11 @@ import bogomolov.aa.anochat.repository.entity.UserEntity
 interface UserDao {
 
     @Insert
-    fun insert(user: UserEntity): Long
+    fun add(user: UserEntity): Long
 
     @Query("select * from UserEntity where id = :id")
     fun getUser(id : Long): UserEntity?
+
+    @Query("select * from UserEntity where uid = :uid")
+    fun findByUid(uid : String): UserEntity?
 }
