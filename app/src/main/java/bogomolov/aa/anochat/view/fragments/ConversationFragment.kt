@@ -66,7 +66,6 @@ class ConversationFragment : Fragment() {
             container,
             false
         )
-        val view = binding.root
         binding.viewModel = viewModel
 
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
@@ -100,7 +99,7 @@ class ConversationFragment : Fragment() {
         }
 
 
-        return view
+        return binding.root
     }
 
 

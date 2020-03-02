@@ -33,8 +33,6 @@ class UsersFragment : Fragment() {
         super.onAttach(context)
     }
 
-    //search: https://stackoverflow.com/questions/34291453/adding-searchview-in-fragment
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
