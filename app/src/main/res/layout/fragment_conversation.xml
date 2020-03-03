@@ -43,7 +43,7 @@
                 android:layout_height="59dp"
                 app:boxBackgroundColor="#FFFFFF"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/fab"
+                app:layout_constraintEnd_toStartOf="@+id/fab_layout"
                 app:layout_constraintStart_toStartOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -54,6 +54,25 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <RelativeLayout
+                android:id="@+id/fab_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/message_input_layout"
+                app:layout_constraintTop_toBottomOf="@+id/recyclerView">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fab1"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_marginStart="6dp"
+                android:visibility="invisible"
+                android:layout_marginEnd="6dp"
+                android:clickable="true"
+                app:srcCompat="@drawable/search_icon" />
+
         <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fab"
                 android:layout_width="wrap_content"
@@ -61,12 +80,9 @@
                 android:layout_marginStart="6dp"
                 android:layout_marginEnd="6dp"
                 android:clickable="true"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/message_input_layout"
-                app:layout_constraintTop_toBottomOf="@+id/recyclerView"
                 app:srcCompat="@drawable/send_arrow" />
 
+        </RelativeLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

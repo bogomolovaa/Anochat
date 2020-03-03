@@ -11,6 +11,8 @@ data class Message(
     val conversationId: Long = 0L,
     val senderId: Long = 0L
 ) {
+    var dateDelimiter: String? = null
+
     @SuppressLint("SimpleDateFormat")
     fun timeString(): String = SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(time))
 
@@ -21,5 +23,5 @@ data class Message(
 
     fun isMine() = senderId == 0L
 
-    fun isTimeMessage() = time == 0L
+    fun isTimeMessage() = dateDelimiter != null
 }

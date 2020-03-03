@@ -27,30 +27,22 @@ class ConversationViewModel
         }
         return LivePagedListBuilder(repository.loadMessages(conversationId).mapByPage {
             if (it != null) {
-                val list: MutableList<Message> = ArrayList()
                 var lastDay = -1
                 for ((i, message) in it.listIterator().withIndex()) {
                     val day = GregorianCalendar().apply { time = Date(message.time) }
                         .get(Calendar.DAY_OF_YEAR)
                     if (i > 0) {
                         if (lastDay != day) {
-                            list.add(
-                                Message(
-                                    text = SimpleDateFormat(
-                                        "dd MMMM yyyy",
-                                        ConfigurationCompat.getLocales(repository.getContext().resources.configuration)[0]
-                                    ).format(Date(message.time))
-                                )
-                            )
+                            message.dateDelimiter = SimpleDateFormat(
+                                "dd MMMM yyyy",
+                                ConfigurationCompat.getLocales(repository.getContext().resources.configuration)[0]
+                            ).format(Date(message.time))
                         }
                     }
-                    list.add(message)
                     lastDay = day
                 }
-                list
-            }else {
-                null
             }
+            it
         }, 10).build()
     }
 
@@ -68,5 +60,6 @@ class ConversationViewModel
             }
         }
     }
+
 
 }

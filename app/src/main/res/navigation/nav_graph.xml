@@ -8,7 +8,11 @@
     <fragment
             android:id="@+id/conversationFragment"
             android:name="bogomolov.aa.anochat.view.fragments.ConversationFragment"
-            android:label="ConversationFragment" />
+            android:label="ConversationFragment" >
+        <action
+                android:id="@+id/action_conversationFragment_to_sendMediaFragment"
+                app:destination="@id/sendMediaFragment" />
+    </fragment>
     <fragment
             android:id="@+id/conversationsListFragment"
             android:name="bogomolov.aa.anochat.view.fragments.ConversationsListFragment"
@@ -43,4 +47,8 @@
             android:name="bogomolov.aa.anochat.view.fragments.SignUpFragment"
             android:label="fragment_sign_up"
             tools:layout="@layout/fragment_sign_up" />
+    <fragment
+            android:id="@+id/sendMediaFragment"
+            android:name="bogomolov.aa.anochat.view.fragments.SendMediaFragment"
+            android:label="SendMediaFragment" />
 </navigation>
