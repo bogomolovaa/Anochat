@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.repository
 
+import android.content.Context
 import androidx.paging.DataSource
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
@@ -17,5 +18,7 @@ interface Repository : IFirebaseRepository{
     suspend fun getConversation(user: User): Long
 
     suspend fun receiveMessage(text: String?, uid: String?):Message?
+
+    fun getContext(): Context
 
 }

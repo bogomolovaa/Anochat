@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.repository
 
+import android.content.Context
 import android.util.Log
 import androidx.paging.DataSource
 import bogomolov.aa.anochat.core.Conversation
@@ -12,8 +13,10 @@ import javax.inject.Singleton
 
 @Singleton
 class RepositoryImpl
-@Inject constructor(private val db: AppDatabase, private val firebase: FirebaseRepository) :
+@Inject constructor(private val db: AppDatabase, private val firebase: FirebaseRepository, private val context: Context) :
     Repository, IFirebaseRepository by firebase {
+
+    override fun getContext() = context
 
     override suspend fun getConversation(id: Long): Conversation =
         entityToModel(db.conversationDao().loadConversation(id))!!
@@ -68,6 +71,7 @@ class RepositoryImpl
         db.conversationDao().loadConversations().map {
             entityToModel(it)
         }
+
 
     override suspend fun getConversation(user: User): Long =
         getOrAddConversation(user.uid) { user }.id

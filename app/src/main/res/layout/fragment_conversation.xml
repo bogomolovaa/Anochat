@@ -42,9 +42,6 @@
                 android:layout_width="0dp"
                 android:layout_height="59dp"
                 app:boxBackgroundColor="#FFFFFF"
-                app:endIconContentDescription="enter text"
-                app:endIconDrawable="@drawable/send_arrow"
-                app:endIconMode="custom"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/fab"
                 app:layout_constraintStart_toStartOf="parent">

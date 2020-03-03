@@ -21,7 +21,7 @@ interface ConversationDao {
     @Transaction
     @Query("SELECT * FROM ConversationEntity as conversation_ " +
             "LEFT JOIN UserEntity as user_ ON conversation_.userId = user_.id " +
-            "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id where conversation_.id = :conversationId"
+            "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id where conversation_.id = :conversationId order by message_.time desc"
     )
     fun loadConversation(conversationId: Long): ConversationJoined
 

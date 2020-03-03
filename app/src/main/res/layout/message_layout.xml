@@ -16,51 +16,52 @@
     </data>
 
     <RelativeLayout
-            android:gravity="@{message.senderId==0?Gravity.RIGHT:Gravity.LEFT}"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-    <com.google.android.material.card.MaterialCardView
-            android:id="@+id/messageCardView"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="4dp"
-            android:checkable="true"
-            card_view:cardBackgroundColor="@{message.senderId==0?@color/my_message_color:@color/not_my_message_color}"
-            card_view:cardElevation="4dp">
+            android:gravity="@{message.isTimeMessage? Gravity.CENTER : message.isMine? Gravity.RIGHT : Gravity.LEFT}">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+        <com.google.android.material.card.MaterialCardView
+                android:id="@+id/messageCardView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:checkable="true"
+                card_view:cardBackgroundColor="@{message.isTimeMessage? @color/time_message_color : message.isMine? @color/my_message_color : @color/not_my_message_color}"
+                card_view:cardElevation="4dp">
 
-            <TextView
-                    android:id="@+id/message_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="6dp"
-                    android:text="@{message.text}"
-                    card_view:layout_constraintStart_toStartOf="parent"
-                    card_view:layout_constraintTop_toTopOf="parent"
-                    tools:text="message text" />
+            <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
 
-            <TextView
-                    android:id="@+id/time_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
-                    android:layout_marginEnd="6dp"
-                    android:text="@{message.shortTimeString()}"
-                    android:textSize="12sp"
-                    card_view:layout_constraintBottom_toBottomOf="parent"
-                    card_view:layout_constraintEnd_toEndOf="parent"
-                    card_view:layout_constraintStart_toEndOf="@+id/message_text"
-                    card_view:layout_constraintTop_toBottomOf="@+id/message_text"
-                    tools:text="15:20" />
+                <TextView
+                        android:id="@+id/message_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="6dp"
+                        android:text="@{message.text}"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        card_view:layout_constraintTop_toTopOf="parent"
+                        tools:text="message text" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                        android:id="@+id/time_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|end"
+                        android:layout_marginEnd="6dp"
+                        android:text="@{message.shortTimeString()}"
+                        android:textSize="12sp"
+                        android:visibility="@{message.isTimeMessage? View.INVISIBLE : View.VISIBLE}"
+                        card_view:layout_constraintBottom_toBottomOf="parent"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        card_view:layout_constraintStart_toEndOf="@+id/message_text"
+                        card_view:layout_constraintTop_toBottomOf="@+id/message_text"
+                        tools:text="15:20" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-    </com.google.android.material.card.MaterialCardView>
+        </com.google.android.material.card.MaterialCardView>
 
     </RelativeLayout>
 

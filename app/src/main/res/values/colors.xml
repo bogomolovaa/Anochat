@@ -6,5 +6,6 @@
 
     <color name="my_message_color">#CFEBF8</color>
     <color name="not_my_message_color">#DDFADB</color>
+    <color name="time_message_color">#E4E4E4</color>
 
 </resources>

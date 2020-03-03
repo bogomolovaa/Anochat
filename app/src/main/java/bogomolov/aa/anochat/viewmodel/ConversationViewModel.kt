@@ -1,59 +1,67 @@
 package bogomolov.aa.anochat.viewmodel
 
 import android.util.Log
+import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.*
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
+import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
-import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.repository.Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 import javax.inject.Inject
 
 class ConversationViewModel
 @Inject constructor(val repository: Repository) : ViewModel() {
-    private val pagedListLiveData = MediatorLiveData<PagedList<Message>>()
-    var conversation: Conversation? = null
+    var conversationLiveData = MutableLiveData<Conversation>()
 
-    fun loadMessages_(conversationId: Long) {
-        Log.i("test","load messages conversationId ${conversationId}")
+    fun loadMessages(conversationId: Long): LiveData<PagedList<Message>> {
+        Log.i("test", "load messages conversationId ${conversationId}")
         viewModelScope.launch(Dispatchers.IO) {
-            conversation = repository.getConversation(conversationId)
-            val dataSource = repository.loadMessages(conversationId)
-            val liveData = LivePagedListBuilder(dataSource, 10).build()
-            launch(Dispatchers.Main) {
-                pagedListLiveData.addSource(liveData) {
-                    pagedListLiveData.value = it
+            conversationLiveData.postValue(repository.getConversation(conversationId))
+        }
+        return LivePagedListBuilder(repository.loadMessages(conversationId).mapByPage {
+            if (it != null) {
+                var lastDay = -1
+                for ((i, message) in it.listIterator().withIndex()) {
+                    val day = GregorianCalendar().apply { time = Date(message.time) }
+                        .get(Calendar.DAY_OF_YEAR)
+                    if (i > 0) {
+                        if (lastDay != day) {
+                            it.add(
+                                i - 1,
+                                Message(
+                                    text = SimpleDateFormat(
+                                        "dd MMMM yyyy",
+                                        ConfigurationCompat.getLocales(repository.getContext().resources.configuration)[0]
+                                    ).format(Date(message.time))
+                                )
+                            )
+                        }
+                    }
+                    lastDay = day
                 }
             }
-
-        }
-    }
-
-    fun loadMessages(conversationId: Long) : LiveData<PagedList<Message>>{
-        Log.i("test","load messages conversationId ${conversationId}")
-        viewModelScope.launch(Dispatchers.IO) {
-            conversation = repository.getConversation(conversationId)
-        }
-        return LivePagedListBuilder(repository.loadMessages(conversationId),10).build()
-    }
-
-    fun clearMessages(){
-        pagedListLiveData.postValue(null)
+            it
+        }, 10).build()
     }
 
 
     fun sendMessage(messageText: String) {
-        val conversation = this.conversation!!
         viewModelScope.launch(Dispatchers.IO) {
-            val message = Message(
-                text = messageText,
-                time = System.currentTimeMillis(),
-                conversationId = conversation.id
-            )
-            repository.sendMessage(message, conversation)
+            val conversation = conversationLiveData.value
+            if (conversation != null) {
+                val message = Message(
+                    text = messageText,
+                    time = System.currentTimeMillis(),
+                    conversationId = conversation.id
+                )
+                repository.sendMessage(message, conversation)
+            }
         }
     }
 

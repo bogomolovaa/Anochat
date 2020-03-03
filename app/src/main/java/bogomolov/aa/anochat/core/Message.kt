@@ -7,13 +7,19 @@ import java.util.*
 data class Message(
     var id: Long = 0L,
     val text: String,
-    val time: Long,
-    val conversationId: Long,
+    val time: Long = 0L,
+    val conversationId: Long = 0L,
     val senderId: Long = 0L
-){
+) {
     @SuppressLint("SimpleDateFormat")
-    fun timeString():String = SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(time))
+    fun timeString(): String = SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(time))
 
     @SuppressLint("SimpleDateFormat")
-    fun shortTimeString():String = SimpleDateFormat("HH:mm").format(Date(time))
+    fun shortTimeString(): String = SimpleDateFormat("HH:mm").format(Date(time))
+
+    fun shortText(): String = text.take(20)
+
+    fun isMine() = senderId == 0L
+
+    fun isTimeMessage() = time == 0L
 }

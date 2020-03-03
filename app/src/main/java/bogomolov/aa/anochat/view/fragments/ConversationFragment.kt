@@ -31,12 +31,6 @@ import com.google.android.material.card.MaterialCardView
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
-/*
-@BindingAdapter("android:gravity")
-fun setGravity(view: MaterialCardView, g: Int) {
-
-}
-*/
 
 class ConversationFragment : Fragment() {
     @Inject
@@ -65,6 +59,9 @@ class ConversationFragment : Fragment() {
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
+        viewModel.conversationLiveData.observe(viewLifecycleOwner){
+            (activity as AppCompatActivity).supportActionBar!!.title = it.user.name
+        }
 
         val conversationId = arguments?.get("id") as Long
         val adapter = MessagesPagedAdapter()
@@ -84,7 +81,7 @@ class ConversationFragment : Fragment() {
             }
         }
 
-        binding.messageInputLayout.setEndIconOnClickListener { v ->
+        binding.fab.setOnClickListener { v ->
             val text = binding.messageInputText.text
             if (!text.isNullOrEmpty()) {
                 Log.i("test", "message text: $text")
@@ -92,8 +89,6 @@ class ConversationFragment : Fragment() {
                 binding.messageInputText.setText("")
             }
         }
-
-
 
         return view
     }
