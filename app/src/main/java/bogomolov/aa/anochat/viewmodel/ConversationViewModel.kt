@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
+import kotlin.collections.ArrayList
 
 class ConversationViewModel
 @Inject constructor(val repository: Repository) : ViewModel() {
@@ -26,14 +27,14 @@ class ConversationViewModel
         }
         return LivePagedListBuilder(repository.loadMessages(conversationId).mapByPage {
             if (it != null) {
+                val list: MutableList<Message> = ArrayList()
                 var lastDay = -1
                 for ((i, message) in it.listIterator().withIndex()) {
                     val day = GregorianCalendar().apply { time = Date(message.time) }
                         .get(Calendar.DAY_OF_YEAR)
                     if (i > 0) {
                         if (lastDay != day) {
-                            it.add(
-                                i - 1,
+                            list.add(
                                 Message(
                                     text = SimpleDateFormat(
                                         "dd MMMM yyyy",
@@ -43,10 +44,13 @@ class ConversationViewModel
                             )
                         }
                     }
+                    list.add(message)
                     lastDay = day
                 }
+                list
+            }else {
+                null
             }
-            it
         }, 10).build()
     }
 
