@@ -1,22 +1,26 @@
 package bogomolov.aa.anochat.view.fragments
 
 
+import android.Manifest
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.RelativeLayout
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.cardview.widget.CardView
-import androidx.databinding.BindingAdapter
+import androidx.core.widget.doOnTextChanged
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -24,15 +28,17 @@ import androidx.lifecycle.observe
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.android.getPath
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
+import bogomolov.aa.anochat.view.MainActivity
 import bogomolov.aa.anochat.view.MessagesPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationViewModel
-import com.google.android.material.card.MaterialCardView
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
+
+const val FILE_CHOOSER_CODE: Int = 0
 
 
 class ConversationFragment : Fragment() {
@@ -45,9 +51,6 @@ class ConversationFragment : Fragment() {
         super.onAttach(context)
     }
 
-    //https://stackoverflow.com/questions/30699302/android-design-support-library-expandable-floating-action-buttonfab-menu
-
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -59,16 +62,18 @@ class ConversationFragment : Fragment() {
             container,
             false
         )
+        val mainActivity = activity as MainActivity
         val view = binding.root
         binding.viewModel = viewModel
-        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
+        mainActivity.setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         viewModel.conversationLiveData.observe(viewLifecycleOwner) {
-            (activity as AppCompatActivity).supportActionBar!!.title = it.user.name
+            mainActivity.supportActionBar!!.title = it.user.name
         }
 
         val conversationId = arguments?.get("id") as Long
+        mainActivity.conversationId = conversationId
         val adapter = MessagesPagedAdapter()
         val recyclerView = binding.recyclerView
         recyclerView.adapter = adapter
@@ -86,6 +91,8 @@ class ConversationFragment : Fragment() {
             }
         }
 
+        var fabExpanded = false
+        var textEntered = false
         val sendMessageAction = {
             val text = binding.messageInputText.text
             if (!text.isNullOrEmpty()) {
@@ -94,8 +101,17 @@ class ConversationFragment : Fragment() {
                 binding.messageInputText.setText("")
             }
         }
-        var fabExpanded = false
-        var textEntered = false
+        var hideFabs = {
+            binding.fab1.animate()
+                .translationY(0f).setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(var1: Animator) {
+                        binding.fab1.visibility = View.INVISIBLE
+                        fabExpanded = false
+
+                    }
+                }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+            binding.fab.setImageResource(R.drawable.plus_icon)
+        }
         binding.fab.setOnClickListener {
             if (textEntered) {
                 sendMessageAction()
@@ -104,32 +120,92 @@ class ConversationFragment : Fragment() {
                 if (!fabExpanded) {
                     binding.fab1.visibility = View.VISIBLE
                     binding.fab1.animate()
-                        .translationY(50f).setListener(object : AnimatorListenerAdapter() {
+                        .translationY(-200f).setListener(object : AnimatorListenerAdapter() {
                             override fun onAnimationEnd(var1: Animator) {
                                 fabExpanded = true
-                                binding.fab.setImageResource(R.drawable.plus_icon)
+                                binding.fab.setImageResource(R.drawable.clear_icon)
                             }
                         }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
 
                 } else {
-                    binding.fab1.animate()
-                        .translationY(0f).setListener(object : AnimatorListenerAdapter() {
-                            override fun onAnimationEnd(var1: Animator) {
-                                binding.fab1.visibility = View.INVISIBLE
-                                fabExpanded = false
-                                binding.fab.setImageResource(R.drawable.send_arrow)
-                            }
-                        }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+                    hideFabs()
                 }
+            }
+        }
+        binding.messageInputText.doOnTextChanged { text, start, count, after ->
+            hideFabs()
+            if (!text.isNullOrEmpty()) {
+                binding.fab.setImageResource(R.drawable.send_icon)
+                textEntered = true
+            } else {
+                binding.fab.setImageResource(R.drawable.plus_icon)
+                textEntered = false
             }
         }
 
         binding.fab1.setOnClickListener {
-            //select media
-
+            requestReadPermissions()
         }
 
         return view
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+        Log.i("test", "onActivityResult $resultCode $intent requestCode $requestCode")
+        when (requestCode) {
+            FILE_CHOOSER_CODE -> if (resultCode == Activity.RESULT_OK) {
+                if (intent != null) {
+                    val uri = intent.data
+                    if (uri != null) {
+                        Log.i("test", "File Uri: $uri")
+                        val path = getPath(requireContext(), uri)
+                        Log.i("test", "File Path: $path")
+                    }
+                }
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, intent)
+    }
+
+
+    private fun startFileChooser() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "image/*"
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+
+        try {
+            startActivityForResult(
+                Intent.createChooser(intent, getString(R.string.select_file)),
+                FILE_CHOOSER_CODE
+            )
+        } catch (ex: ActivityNotFoundException) {
+            Log.w("ConversationFragment", "File manager not installed")
+        }
+
+    }
+
+    private fun requestReadPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(arrayOf(READ_PERMISSION), ALL_PERMISSIONS_RESULT)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == ALL_PERMISSIONS_RESULT) {
+            if (grantResults[0] == PERMISSION_GRANTED) {
+                startFileChooser()
+            } else {
+                Log.i("test","perm not granted")
+            }
+        }
+    }
+
+    companion object {
+        private const val READ_PERMISSION = Manifest.permission.READ_EXTERNAL_STORAGE
+        private const val ALL_PERMISSIONS_RESULT = 1011
+    }
 }

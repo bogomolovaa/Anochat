@@ -43,7 +43,6 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         GlobalScope.launch {
             token = getToken()
         }
-        testUpload(context)
     }
 
     fun testDownload(context: Context){

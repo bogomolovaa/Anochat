@@ -9,6 +9,7 @@ import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.repository.Repository
+import bogomolov.aa.anochat.view.MessageView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -20,29 +21,33 @@ class ConversationViewModel
 @Inject constructor(val repository: Repository) : ViewModel() {
     var conversationLiveData = MutableLiveData<Conversation>()
 
-    fun loadMessages(conversationId: Long): LiveData<PagedList<Message>> {
+    fun loadMessages(conversationId: Long): LiveData<PagedList<MessageView>> {
         Log.i("test", "load messages conversationId ${conversationId}")
         viewModelScope.launch(Dispatchers.IO) {
             conversationLiveData.postValue(repository.getConversation(conversationId))
         }
         return LivePagedListBuilder(repository.loadMessages(conversationId).mapByPage {
+            val list: MutableList<MessageView> = ArrayList()
             if (it != null) {
                 var lastDay = -1
                 for ((i, message) in it.listIterator().withIndex()) {
+                    val messageView = MessageView(message)
                     val day = GregorianCalendar().apply { time = Date(message.time) }
                         .get(Calendar.DAY_OF_YEAR)
                     if (i > 0) {
                         if (lastDay != day) {
-                            message.dateDelimiter = SimpleDateFormat(
+                            val dateString = SimpleDateFormat(
                                 "dd MMMM yyyy",
                                 ConfigurationCompat.getLocales(repository.getContext().resources.configuration)[0]
                             ).format(Date(message.time))
+                            messageView.dateDelimiter = dateString
                         }
                     }
                     lastDay = day
+                    list.add(messageView)
                 }
             }
-            it
+            list
         }, 10).build()
     }
 

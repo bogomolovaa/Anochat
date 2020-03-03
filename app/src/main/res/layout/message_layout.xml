@@ -11,7 +11,7 @@
 
         <variable
                 name="message"
-                type="bogomolov.aa.anochat.core.Message" />
+                type="bogomolov.aa.anochat.view.MessageView" />
 
     </data>
 
@@ -77,7 +77,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_margin="6dp"
-                            android:text="@{message.text}"
+                            android:text="@{message.message.text}"
                             card_view:layout_constraintStart_toStartOf="parent"
                             card_view:layout_constraintTop_toTopOf="parent"
                             tools:text="message text" />
@@ -88,7 +88,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="bottom|end"
                             android:layout_marginEnd="6dp"
-                            android:text="@{message.shortTimeString()}"
+                            android:text="@{message.message.shortTimeString()}"
                             android:textSize="12sp"
                             card_view:layout_constraintBottom_toBottomOf="parent"
                             card_view:layout_constraintEnd_toEndOf="parent"
