@@ -19,7 +19,7 @@ interface Repository : IFirebaseRepository{
 
     suspend fun getConversation(user: User): Long
 
-    suspend fun receiveMessage(text: String?, uid: String?):Message?
+    suspend fun receiveMessage(text: String?, uid: String?, image: String?):Message?
 
     fun getContext(): Context
 

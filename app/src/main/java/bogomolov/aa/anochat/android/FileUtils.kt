@@ -18,7 +18,7 @@ const val MAX_IMAGE_DIM = 1024
 
 fun resizeImage(path: String? = null, bitmap: Bitmap? = null, context: Context): File {
     val btmp = bitmap ?: BitmapFactory.decodeFile(path)
-    val newFileName = getRandomString(20) + ".jpg"
+    val newFileName = getRandomString(20)
     var ratio = MAX_IMAGE_DIM / max(btmp.width, btmp.height).toFloat()
     if (ratio > 1) ratio = 1.0f
     val resized = Bitmap.createScaledBitmap(

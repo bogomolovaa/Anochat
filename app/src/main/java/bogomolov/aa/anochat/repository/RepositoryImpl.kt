@@ -35,14 +35,15 @@ class RepositoryImpl
         db.conversationDao().updateLastMessage(message.id, conversationId)
     }
 
-    override suspend fun receiveMessage(text: String?, uid: String?): Message? {
-        if (text != null && uid != null) {
+    override suspend fun receiveMessage(text: String?, uid: String?, image: String?): Message? {
+        if (uid != null) {
             val conversationEntity = getOrAddConversation(uid) { firebase.getUser(uid) }
             val message = Message(
-                text = text,
+                text = text ?: "",
                 time = System.currentTimeMillis(),
                 conversationId = conversationEntity.id,
-                senderId = conversationEntity.userId
+                senderId = conversationEntity.userId,
+                image = image
             )
             saveMessage(message, conversationEntity.id)
             return message

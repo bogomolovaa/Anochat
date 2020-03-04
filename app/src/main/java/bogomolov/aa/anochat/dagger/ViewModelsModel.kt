@@ -12,6 +12,11 @@ abstract class ViewModelsModule {
 
     @Binds
     @IntoMap
+    @ViewModelKey(SendMediaViewModel::class)
+    abstract fun bindSendMediaViewModel(sendMediaViewModel: SendMediaViewModel): ViewModel
+
+    @Binds
+    @IntoMap
     @ViewModelKey(ConversationViewModel::class)
     abstract fun bindConversationViewModel(tagSelectionViewModel: ConversationViewModel): ViewModel
 

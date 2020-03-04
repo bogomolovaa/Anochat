@@ -49,8 +49,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
             val data = remoteMessage.data;
             val text = data["body"] ?: ""
             val uid = data["source"]
+            var image = data["image"]
+            if (image.isNullOrEmpty()) image = null
             GlobalScope.launch(Dispatchers.IO) {
-                val message = repository.receiveMessage(text, uid)
+                val message = repository.receiveMessage(text, uid, image)
                 if (message != null) {
                     val inBackground = (application as AnochatAplication).inBackground
                     if (message.image != null) repository.downloadFile(message.image)
