@@ -13,6 +13,7 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.android.resizeImage
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
 import bogomolov.aa.anochat.viewmodel.SendMediaViewModel
@@ -48,7 +49,7 @@ class SendMediaFragment : Fragment() {
         mediaPath = arguments?.getString("path")!!
         conversationId = arguments?.getLong("conversationId")!!
 
-        val resizedImage = viewModel.resizeImage(mediaPath)
+        val resizedImage = resizeImage(path = mediaPath,context = requireContext())
         binding.imageView.setImageBitmap(BitmapFactory.decodeFile(resizedImage.path))
         binding.messageInputLayout.setEndIconOnClickListener {
             val text = binding.messageInputText.text?.let { toString() } ?: ""

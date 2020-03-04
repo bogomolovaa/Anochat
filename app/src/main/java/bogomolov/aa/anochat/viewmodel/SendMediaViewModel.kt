@@ -22,29 +22,6 @@ import kotlin.math.max
 class SendMediaViewModel
 @Inject constructor(val repository: Repository) : ViewModel() {
 
-    fun resizeImage(path: String): File {
-        val newFileName = getRandomString(20) + ".jpg"
-        val bitmap = BitmapFactory.decodeFile(path)
-        var ratio = MAX_IMAGE_DIM / max(bitmap.width, bitmap.height).toFloat()
-        if (ratio > 1) ratio = 1.0f
-        val resized = Bitmap.createScaledBitmap(
-            bitmap,
-            (ratio * bitmap.width).toInt(),
-            (ratio * bitmap.height).toInt(),
-            true
-        )
-        val file = File(getFilesDir(repository.getContext()), "$newFileName.jpg")
-        try {
-            val stream = FileOutputStream(file)
-            resized.compress(Bitmap.CompressFormat.JPEG, 80, stream)
-            stream.flush()
-            stream.close()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        return file
-    }
-
     fun sendMessage(imageFileName: String, messageText: String, conversationId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             val message = Message(

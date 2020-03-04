@@ -35,6 +35,7 @@ interface IFirebaseRepository {
     suspend fun isSignedIn(): Boolean
     suspend fun sendMessage(message: Message, uid: String)
     suspend fun uploadFile(fileName: String): Boolean
+    suspend fun downloadFile(fileName: String):Boolean
 }
 
 class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRepository {
@@ -48,17 +49,16 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         }
     }
 
-    fun testDownload(context: Context) {
-        Log.i("test", "start downloading")
-        val storage = FirebaseStorage.getInstance()
-        val storageRef = storage.reference
-        val fileRef = storageRef.child("ok_icon.png")
-        val dir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        val localFile = File(dir, "ok_icon.png")
+    override suspend fun downloadFile(fileName: String):Boolean = suspendCoroutine { continuation ->
+        Log.i("test", "start downloading: $fileName")
+        val fileRef = FirebaseStorage.getInstance().reference.child(fileName)
+        val localFile = File(getFilesDir(context), fileName)
         fileRef.getFile(localFile).addOnSuccessListener {
-            Log.i("test", "downloaded")
+            Log.i("test", "downloaded $fileName")
+            continuation.resume(true)
         }.addOnFailureListener {
-            Log.i("test", "NOT downloaded")
+            Log.i("test", "NOT downloaded $fileName")
+            continuation.resume(false)
         }
     }
 

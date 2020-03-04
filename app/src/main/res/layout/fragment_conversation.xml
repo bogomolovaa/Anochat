@@ -65,7 +65,7 @@
                 app:layout_constraintStart_toEndOf="@+id/message_input_layout">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fab1"
+                    android:id="@+id/fabFile"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="false"
@@ -75,6 +75,18 @@
                     android:visibility="invisible"
                     app:fabSize="mini"
                     app:srcCompat="@drawable/attach_icon" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/fabCamera"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="false"
+                    android:layout_alignParentBottom="false"
+                    android:layout_centerHorizontal="true"
+                    android:clickable="true"
+                    android:visibility="invisible"
+                    app:fabSize="mini"
+                    app:srcCompat="@drawable/search_icon" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/fab"

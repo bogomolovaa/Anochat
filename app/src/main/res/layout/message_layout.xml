@@ -16,15 +16,15 @@
     </data>
 
     <LinearLayout
-            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <RelativeLayout
-                android:visibility="@{message.isTimeMessage? View.VISIBLE : View.INVISIBLE}"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center">
+                android:gravity="center"
+                android:visibility="@{message.isTimeMessage? View.VISIBLE : View.INVISIBLE}">
 
             <com.google.android.material.card.MaterialCardView
                     android:id="@+id/delimiterCardView"
@@ -72,14 +72,26 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent">
 
+                    <ImageView
+                            android:id="@+id/imageView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="6dp"
+                            android:visibility="@{message.hasImage()? View.VISIBLE : View.INVISIBLE}"
+                            card_view:layout_constraintEnd_toEndOf="parent"
+                            card_view:layout_constraintStart_toStartOf="parent"
+                            card_view:layout_constraintTop_toTopOf="parent"
+                            card_view:srcCompat="@drawable/ok_icon" />
+
                     <TextView
                             android:id="@+id/message_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_margin="6dp"
                             android:text="@{message.message.text}"
+                            card_view:layout_constraintEnd_toStartOf="@+id/time_text"
                             card_view:layout_constraintStart_toStartOf="parent"
-                            card_view:layout_constraintTop_toTopOf="parent"
+                            card_view:layout_constraintTop_toBottomOf="@+id/imageView"
                             tools:text="message text" />
 
                     <TextView
@@ -92,8 +104,6 @@
                             android:textSize="12sp"
                             card_view:layout_constraintBottom_toBottomOf="parent"
                             card_view:layout_constraintEnd_toEndOf="parent"
-                            card_view:layout_constraintStart_toEndOf="@+id/message_text"
-                            card_view:layout_constraintTop_toBottomOf="@+id/message_text"
                             tools:text="15:20" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>

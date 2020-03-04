@@ -20,4 +20,5 @@ data class Message(
 
     fun shortText(): String = if (text.length > 30) text.take(30) + "..." else text
 
+
 }

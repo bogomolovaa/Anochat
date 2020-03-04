@@ -3,17 +3,45 @@ package bogomolov.aa.anochat.android
 import android.content.ContentUris
 import android.content.Context
 import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import kotlin.math.max
 
 const val MAX_IMAGE_DIM = 1024
 
+fun resizeImage(path: String? = null, bitmap: Bitmap? = null, context: Context): File {
+    val btmp = bitmap ?: BitmapFactory.decodeFile(path)
+    val newFileName = getRandomString(20) + ".jpg"
+    var ratio = MAX_IMAGE_DIM / max(btmp.width, btmp.height).toFloat()
+    if (ratio > 1) ratio = 1.0f
+    val resized = Bitmap.createScaledBitmap(
+        btmp,
+        (ratio * btmp.width).toInt(),
+        (ratio * btmp.height).toInt(),
+        true
+    )
+    val file = File(getFilesDir(context), "$newFileName.jpg")
+    try {
+        val stream = FileOutputStream(file)
+        resized.compress(Bitmap.CompressFormat.JPEG, 80, stream)
+        stream.flush()
+        stream.close()
+    } catch (e: IOException) {
+        e.printStackTrace()
+    }
+    return file
+}
+
 fun getFilesDir(context: Context) = context.cacheDir
 
-fun getRandomString(length: Int) : String {
+fun getRandomString(length: Int): String {
     val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz1234567890"
     return (1..length)
         .map { allowedChars.random() }
@@ -51,7 +79,7 @@ fun getPath(context: Context, uri: Uri): String? {
                 contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
             }
             val selection = "_id=?"
-            val selectionArgs:Array<String?> = arrayOf(
+            val selectionArgs: Array<String?> = arrayOf(
                 split[1]
             )
             return getDataColumn(context, contentUri, selection, selectionArgs)

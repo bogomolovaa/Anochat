@@ -5,21 +5,20 @@ import android.Manifest
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.app.Activity
-import android.app.AlertDialog
+import android.app.Activity.RESULT_OK
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
-import android.net.Uri
+import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doOnTextChanged
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
@@ -37,8 +36,6 @@ import bogomolov.aa.anochat.view.MessagesPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationViewModel
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
-
-const val FILE_CHOOSER_CODE: Int = 0
 
 
 class ConversationFragment : Fragment() {
@@ -74,7 +71,7 @@ class ConversationFragment : Fragment() {
 
         val conversationId = arguments?.get("id") as Long
         mainActivity.conversationId = conversationId
-        val adapter = MessagesPagedAdapter()
+        val adapter = MessagesPagedAdapter(context = requireContext())
         val recyclerView = binding.recyclerView
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(context)
@@ -102,15 +99,39 @@ class ConversationFragment : Fragment() {
             }
         }
         var hideFabs = {
-            binding.fab1.animate()
+            binding.fabFile.animate()
                 .translationY(0f).setListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(var1: Animator) {
-                        binding.fab1.visibility = View.INVISIBLE
+                        binding.fabFile.visibility = View.INVISIBLE
                         fabExpanded = false
 
                     }
                 }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+            binding.fabCamera.animate()
+                .translationY(0f).setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(var1: Animator) {
+                        binding.fabCamera.visibility = View.INVISIBLE
+                        fabExpanded = false
+                    }
+                }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
             binding.fab.setImageResource(R.drawable.plus_icon)
+        }
+        var expandFabs = {
+            binding.fabFile.visibility = View.VISIBLE
+            binding.fabFile.animate()
+                .translationY(-200f).setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(var1: Animator) {
+                        fabExpanded = true
+                        binding.fab.setImageResource(R.drawable.clear_icon)
+                    }
+                }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+            binding.fabCamera.visibility = View.VISIBLE
+            binding.fabCamera.animate()
+                .translationY(-400f).setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(var1: Animator) {
+                        fabExpanded = true
+                    }
+                }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
         }
         binding.fab.setOnClickListener {
             if (textEntered) {
@@ -118,15 +139,7 @@ class ConversationFragment : Fragment() {
                 textEntered = false
             } else {
                 if (!fabExpanded) {
-                    binding.fab1.visibility = View.VISIBLE
-                    binding.fab1.animate()
-                        .translationY(-200f).setListener(object : AnimatorListenerAdapter() {
-                            override fun onAnimationEnd(var1: Animator) {
-                                fabExpanded = true
-                                binding.fab.setImageResource(R.drawable.clear_icon)
-                            }
-                        }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
-
+                    expandFabs()
                 } else {
                     hideFabs()
                 }
@@ -143,8 +156,11 @@ class ConversationFragment : Fragment() {
             }
         }
 
-        binding.fab1.setOnClickListener {
-            requestReadPermissions()
+        binding.fabFile.setOnClickListener {
+            requestReadPermission()
+        }
+        binding.fabCamera.setOnClickListener {
+            requestCameraPermission()
         }
 
         return view
@@ -152,9 +168,9 @@ class ConversationFragment : Fragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         Log.i("test", "onActivityResult $resultCode $intent requestCode $requestCode")
-        when (requestCode) {
-            FILE_CHOOSER_CODE -> if (resultCode == Activity.RESULT_OK) {
-                if (intent != null) {
+        if (resultCode == RESULT_OK && intent != null)
+            when (requestCode) {
+                FILE_CHOOSER_CODE -> {
                     val uri = intent.data
                     if (uri != null) {
                         Log.i("test", "File Uri: $uri")
@@ -162,8 +178,11 @@ class ConversationFragment : Fragment() {
                         Log.i("test", "File Path: $path")
                     }
                 }
+                CAMERA_CODE -> {
+                    val bitmap = intent.extras?.get("data") as Bitmap
+
+                }
             }
-        }
         super.onActivityResult(requestCode, resultCode, intent)
     }
 
@@ -184,10 +203,19 @@ class ConversationFragment : Fragment() {
 
     }
 
-    private fun requestReadPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(arrayOf(READ_PERMISSION), ALL_PERMISSIONS_RESULT)
-        }
+    private fun takePictureFromCamera() {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, CAMERA_CODE);
+    }
+
+    private fun requestReadPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            requestPermissions(arrayOf(READ_PERMISSION), READ_PERMISSIONS_CODE)
+    }
+
+    private fun requestCameraPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            requestPermissions(arrayOf(READ_PERMISSION), READ_PERMISSIONS_CODE)
     }
 
     override fun onRequestPermissionsResult(
@@ -195,17 +223,32 @@ class ConversationFragment : Fragment() {
         permissions: Array<String>,
         grantResults: IntArray
     ) {
-        if (requestCode == ALL_PERMISSIONS_RESULT) {
-            if (grantResults[0] == PERMISSION_GRANTED) {
-                startFileChooser()
-            } else {
-                Log.i("test","perm not granted")
+        when (requestCode) {
+            READ_PERMISSIONS_CODE -> {
+                if (grantResults[0] == PERMISSION_GRANTED) {
+                    startFileChooser()
+                } else {
+                    Log.i("test", "read perm not granted")
+                }
+            }
+            CAMERA_PERMISSIONS_CODE -> {
+                if (grantResults[0] == PERMISSION_GRANTED) {
+                    takePictureFromCamera()
+                } else {
+                    Log.i("test", "camera perm not granted")
+                }
             }
         }
     }
 
     companion object {
-        private const val READ_PERMISSION = Manifest.permission.READ_EXTERNAL_STORAGE
-        private const val ALL_PERMISSIONS_RESULT = 1011
+        const val FILE_CHOOSER_CODE: Int = 0
+        const val CAMERA_CODE: Int = 1
+        private const val READ_PERMISSION = Manifest.permission.WRITE_EXTERNAL_STORAGE
+        private const val CAMERA_PERMISSION = Manifest.permission.CAMERA
+        private const val READ_PERMISSIONS_CODE = 1001
+        private const val CAMERA_PERMISSIONS_CODE = 1002
     }
+
+
 }

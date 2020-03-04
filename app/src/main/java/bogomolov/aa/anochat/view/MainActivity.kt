@@ -1,8 +1,10 @@
 package bogomolov.aa.anochat.view
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -24,6 +26,7 @@ import dagger.android.HasAndroidInjector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity(), HasAndroidInjector {
@@ -58,6 +61,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
 
 
     }
+
 
 
 
