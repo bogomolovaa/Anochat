@@ -13,7 +13,11 @@ import javax.inject.Singleton
 
 @Singleton
 class RepositoryImpl
-@Inject constructor(private val db: AppDatabase, private val firebase: FirebaseRepository, private val context: Context) :
+@Inject constructor(
+    private val db: AppDatabase,
+    private val firebase: FirebaseRepository,
+    private val context: Context
+) :
     Repository, IFirebaseRepository by firebase {
 
     override fun getContext() = context
@@ -21,14 +25,14 @@ class RepositoryImpl
     override suspend fun getConversation(id: Long): Conversation =
         entityToModel(db.conversationDao().loadConversation(id))!!
 
-    override suspend fun sendMessage(message: Message, conversation: Conversation) {
-        saveMessage(message)
-        firebase.sendMessage(message.text, conversation.user.uid)
-        db.conversationDao().updateLastMessage(message.id, conversation.id)
+    override suspend fun saveAndSendMessage(message: Message, conversation: Conversation) {
+        saveMessage(message, conversation.id)
+        firebase.sendMessage(message, conversation.user.uid)
     }
 
-    private fun saveMessage(message: Message) {
+    override suspend fun saveMessage(message: Message, conversationId: Long) {
         message.id = db.messageDao().insert(modelToEntity(message))
+        db.conversationDao().updateLastMessage(message.id, conversationId)
     }
 
     override suspend fun receiveMessage(text: String?, uid: String?): Message? {
@@ -40,8 +44,7 @@ class RepositoryImpl
                 conversationId = conversationEntity.id,
                 senderId = conversationEntity.userId
             )
-            saveMessage(message)
-            db.conversationDao().updateLastMessage(message.id, conversationEntity.id)
+            saveMessage(message, conversationEntity.id)
             return message
         }
         return null

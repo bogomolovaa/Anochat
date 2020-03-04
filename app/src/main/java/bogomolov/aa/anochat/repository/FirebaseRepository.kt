@@ -7,6 +7,8 @@ import android.os.Environment
 import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
+import bogomolov.aa.anochat.android.getFilesDir
+import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -31,11 +33,12 @@ interface IFirebaseRepository {
     suspend fun signIn(email: String, password: String): Boolean
     fun signOut()
     suspend fun isSignedIn(): Boolean
+    suspend fun sendMessage(message: Message, uid: String)
+    suspend fun uploadFile(fileName: String): Boolean
 }
 
 class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRepository {
     private lateinit var token: String
-    //  "dtJant07QZk:APA91bGiAIP5GiGb_LH4R13Jmz1F8njD5QXNcsr886I39btTCsgEjHYz1nP2ets45wWCCxLoGwfh8zOdlncS-HBKxahD0g-JEdfaQEvgY7b_siANa24HA5DMn9VRVD7XXAN_nL6tZqar";
     //TODO: turn on caching
 
     init {
@@ -45,38 +48,35 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         }
     }
 
-    fun testDownload(context: Context){
-        Log.i("test","start downloading")
+    fun testDownload(context: Context) {
+        Log.i("test", "start downloading")
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
         val fileRef = storageRef.child("ok_icon.png")
         val dir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        val localFile = File(dir,"ok_icon.png")
+        val localFile = File(dir, "ok_icon.png")
         fileRef.getFile(localFile).addOnSuccessListener {
-            Log.i("test","downloaded")
+            Log.i("test", "downloaded")
         }.addOnFailureListener {
-            Log.i("test","NOT downloaded")
+            Log.i("test", "NOT downloaded")
         }
     }
 
-    fun testUpload(context: Context){
-        Log.i("test","start uploading")
-        val storage = FirebaseStorage.getInstance()
-        val storageRef = storage.reference
-        val fileRef = storageRef.child("ok_icon5.png")
-        val dir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        val localFile = File(dir,"ok_icon.png")
-
+    override suspend fun uploadFile(fileName: String): Boolean = suspendCoroutine { continuation ->
+        Log.i("test", "start uploading $fileName")
+        val fileRef = FirebaseStorage.getInstance().reference.child(fileName)
+        val localFile = File(getFilesDir(context), fileName)
         fileRef.putFile(Uri.fromFile(localFile)).addOnSuccessListener {
-            Log.i("test","uploaded")
+            Log.i("test", "uploaded $fileName")
+            continuation.resume(true)
         }.addOnFailureListener {
-            Log.i("test","NOT uploaded")
+            continuation.resume(false)
+            Log.i("test", "NOT uploaded $fileName")
             it.printStackTrace()
         }
-
     }
 
-    suspend fun getUser(uid: String): User = suspendCoroutine{
+    suspend fun getUser(uid: String): User = suspendCoroutine {
         val ref = FirebaseDatabase.getInstance().getReference("users/$uid")
         ref.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -116,10 +116,17 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         })
     }
 
-    fun sendMessage(message: String, uid: String) {
+    override suspend fun sendMessage(message: Message, uid: String) {
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("messages").push()
-            .setValue(mapOf("message" to message, "dest" to uid, "source" to token))
+            .setValue(
+                mapOf(
+                    "message" to message.text,
+                    "image" to message.image,
+                    "dest" to uid,
+                    "source" to token
+                )
+            )
     }
 
     override fun updateUser(user: User) {

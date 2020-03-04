@@ -20,5 +20,37 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+        <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/message_input_layout"
+                android:layout_width="0dp"
+                android:layout_height="59dp"
+                app:boxBackgroundColor="#FFFFFF"
+                app:endIconDrawable="@drawable/send_icon"
+                app:endIconMode="custom"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:placeholderText="@string/enter_message">
+
+
+            <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/message_input_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toTopOf="@+id/message_input_layout"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/toolbar"
+                app:layout_constraintVertical_bias="0.0"
+                android:contentDescription="@string/selected_image" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

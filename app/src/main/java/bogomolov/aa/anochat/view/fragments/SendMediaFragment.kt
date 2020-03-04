@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.view.fragments
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -23,7 +24,7 @@ class SendMediaFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     val viewModel: SendMediaViewModel by activityViewModels { viewModelFactory }
-    lateinit var mediaLocation: String
+    lateinit var mediaPath: String
     var conversationId = 0L
 
     override fun onAttach(context: Context) {
@@ -44,8 +45,16 @@ class SendMediaFragment : Fragment() {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        mediaLocation = arguments?.getString("location")!!
+        mediaPath = arguments?.getString("path")!!
         conversationId = arguments?.getLong("conversationId")!!
+
+        val resizedImage = viewModel.resizeImage(mediaPath)
+        binding.imageView.setImageBitmap(BitmapFactory.decodeFile(resizedImage.path))
+        binding.messageInputLayout.setEndIconOnClickListener {
+            val text = binding.messageInputText.text?.let { toString() } ?: ""
+            viewModel.sendMessage(resizedImage.name, text, conversationId)
+            navController.popBackStack()
+        }
 
         return binding.root
     }

@@ -9,7 +9,9 @@ import bogomolov.aa.anochat.core.User
 interface Repository : IFirebaseRepository{
     suspend fun getConversation(id: Long): Conversation
 
-    suspend fun sendMessage(message: Message, conversation: Conversation)
+    suspend fun saveMessage(message: Message, conversationId: Long)
+
+    suspend fun saveAndSendMessage(message: Message, conversation: Conversation)
 
     fun loadMessages(conversationId: Long): DataSource.Factory<Int, Message>
 

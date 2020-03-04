@@ -11,4 +11,6 @@ data class MessageView (val message: Message){
     fun isMine() = message.senderId == 0L
 
     fun isTimeMessage() = dateDelimiter != null
+
+    fun hasImage() = message.image != null
 }

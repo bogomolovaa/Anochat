@@ -5,7 +5,6 @@ import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.*
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
-import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.repository.Repository
@@ -61,7 +60,7 @@ class ConversationViewModel
                     time = System.currentTimeMillis(),
                     conversationId = conversation.id
                 )
-                repository.sendMessage(message, conversation)
+                repository.saveAndSendMessage(message, conversation)
             }
         }
     }

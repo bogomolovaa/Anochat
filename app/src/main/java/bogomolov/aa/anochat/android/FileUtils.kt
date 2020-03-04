@@ -9,6 +9,16 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 
+const val MAX_IMAGE_DIM = 1024
+
+fun getFilesDir(context: Context) = context.cacheDir
+
+fun getRandomString(length: Int) : String {
+    val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz1234567890"
+    return (1..length)
+        .map { allowedChars.random() }
+        .joinToString("")
+}
 
 fun getPath(context: Context, uri: Uri): String? {
     val isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
