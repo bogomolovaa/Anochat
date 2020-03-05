@@ -1,22 +1,17 @@
 package bogomolov.aa.anochat.repository
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
-import android.os.Environment
 import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.android.getFilesDir
-import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -36,6 +31,7 @@ interface IFirebaseRepository {
     suspend fun uploadFile(fileName: String): Boolean
     suspend fun downloadFile(fileName: String): Boolean
     suspend fun sendReport(messageId: String, received: Int, viewed: Int)
+    suspend fun deleteRemoteMessage(messageId: String)
 }
 
 class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRepository {
@@ -44,13 +40,41 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
     init {
         //signOut()
-        GlobalScope.launch {
+        GlobalScope.launch(Dispatchers.IO) {
             token = getToken()
+            onlineStatus()
         }
     }
 
+    private fun onlineStatus() {
+        val uid = getUid()
+        if (uid!=null) {
+            val database = FirebaseDatabase.getInstance()
+            val userRef = database.getReference("users/${uid}")
+            userRef.child("lastOnline").onDisconnect().setValue(ServerValue.TIMESTAMP)
+            userRef.child("online").onDisconnect().setValue(0)
+            val connectedRef = database.getReference(".info/connected")
+            connectedRef.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val connected = snapshot.getValue(Boolean::class.java) ?: false
+                    if (connected)
+                        userRef.child("online").onDisconnect().setValue(1)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                }
+            })
+        }
+    }
+
+    override suspend fun deleteRemoteMessage(messageId: String) {
+        Log.i("test", "deleteRemoteMessage messageId $messageId")
+        val myRef = FirebaseDatabase.getInstance().reference
+        myRef.child("messages").child(messageId).removeValue()
+    }
+
     override suspend fun sendReport(messageId: String, received: Int, viewed: Int) {
-        Log.i("test","sendReport messageId $messageId");
+        Log.i("test", "sendReport messageId $messageId")
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("messages").child(messageId)
             .updateChildren(mapOf("received" to received.toString(), "viewed" to viewed.toString()))
@@ -63,6 +87,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             val localFile = File(getFilesDir(context), fileName)
             fileRef.getFile(localFile).addOnSuccessListener {
                 Log.i("test", "downloaded $fileName")
+                fileRef.delete()
                 continuation.resume(true)
             }.addOnFailureListener {
                 Log.i("test", "NOT downloaded $fileName")
@@ -166,22 +191,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         sharedPreferences.edit { putString("uid", "") }
     }
 
-    override suspend fun isSignedIn(): Boolean {
-        if (PreferenceManager.getDefaultSharedPreferences(context).getString("uid", "") == "") {
-            return false
-        } else {
-            if (FirebaseAuth.getInstance().currentUser == null) {
-                Log.i("test", "FirebaseAuth.getInstance().currentUser null")
-                val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-                val email = sharedPreferences.getString("email", "")!!
-                val password = sharedPreferences.getString("password", "")!!
-                if (email != "" && password != "")
-                    return userSignIn(email, password) != null
-            }
-            Log.i("test", "FirebaseAuth.getInstance().currentUser NOT null")
-            return true
-        }
-    }
+    override suspend fun isSignedIn() = getUid() != null
 
     private fun saveEmailAndPassword(email: String, password: String) {
         //TODO: encrypt password
@@ -222,6 +232,8 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
                 }
             }
     }
+
+    private fun getUid() = FirebaseAuth.getInstance().currentUser?.uid
 
     private suspend fun userSignIn(email: String, password: String): String? = suspendCoroutine {
         val auth = FirebaseAuth.getInstance()
