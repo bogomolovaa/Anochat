@@ -22,12 +22,24 @@ class RepositoryImpl
 
     override fun getContext() = context
 
+    override suspend fun reportAsViewed(conversationId: Long) {
+        val messages = db.messageDao().loadNotViewed(conversationId)
+        for (message in messages) firebase.sendReport(message.messageId, 1, 1)
+        db.messageDao().updateAsViewed(conversationId)
+    }
+
     override suspend fun getConversation(id: Long): Conversation =
         entityToModel(db.conversationDao().loadConversation(id))!!
 
     override suspend fun saveAndSendMessage(message: Message, conversation: Conversation) {
+        message.messageId = firebase.sendMessage(message.text, message.image, conversation.user.uid)
         saveMessage(message, conversation.id)
-        firebase.sendMessage(message, conversation.user.uid)
+    }
+
+    override suspend fun sendMessage(message: Message) {
+        val conversation = getConversation(message.conversationId)
+        message.messageId = firebase.sendMessage(message.text, message.image, conversation.user.uid)
+        db.messageDao().updateMessageId(message.id, message.messageId)
     }
 
     override suspend fun saveMessage(message: Message, conversationId: Long) {
@@ -35,20 +47,28 @@ class RepositoryImpl
         db.conversationDao().updateLastMessage(message.id, conversationId)
     }
 
-    override suspend fun receiveMessage(text: String?, uid: String?, image: String?): Message? {
-        if (uid != null) {
-            val conversationEntity = getOrAddConversation(uid) { firebase.getUser(uid) }
-            val message = Message(
-                text = text ?: "",
-                time = System.currentTimeMillis(),
-                conversationId = conversationEntity.id,
-                senderId = conversationEntity.userId,
-                image = image
-            )
-            saveMessage(message, conversationEntity.id)
-            return message
-        }
-        return null
+    override fun receiveReport(messageId: String, received: Int, viewed: Int) {
+        db.messageDao().updateReport(messageId, received, viewed)
+    }
+
+    override suspend fun receiveMessage(
+        text: String?,
+        uid: String,
+        messageId: String,
+        image: String?
+    ): Message? {
+        val conversationEntity = getOrAddConversation(uid) { firebase.getUser(uid) }
+        val message = Message(
+            text = text ?: "",
+            time = System.currentTimeMillis(),
+            conversationId = conversationEntity.id,
+            senderId = conversationEntity.userId,
+            messageId = messageId,
+            image = image
+        )
+        saveMessage(message, conversationEntity.id)
+        firebase.sendReport(messageId, 1, 0)
+        return message
     }
 
     private suspend fun getOrAddConversation(

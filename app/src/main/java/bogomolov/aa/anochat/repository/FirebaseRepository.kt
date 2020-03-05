@@ -33,9 +33,9 @@ interface IFirebaseRepository {
     suspend fun signIn(email: String, password: String): Boolean
     fun signOut()
     suspend fun isSignedIn(): Boolean
-    suspend fun sendMessage(message: Message, uid: String)
     suspend fun uploadFile(fileName: String): Boolean
-    suspend fun downloadFile(fileName: String):Boolean
+    suspend fun downloadFile(fileName: String): Boolean
+    suspend fun sendReport(messageId: String, received: Int, viewed: Int)
 }
 
 class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRepository {
@@ -49,18 +49,25 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         }
     }
 
-    override suspend fun downloadFile(fileName: String):Boolean = suspendCoroutine { continuation ->
-        Log.i("test", "start downloading: $fileName")
-        val fileRef = FirebaseStorage.getInstance().reference.child(fileName)
-        val localFile = File(getFilesDir(context), fileName)
-        fileRef.getFile(localFile).addOnSuccessListener {
-            Log.i("test", "downloaded $fileName")
-            continuation.resume(true)
-        }.addOnFailureListener {
-            Log.i("test", "NOT downloaded $fileName")
-            continuation.resume(false)
-        }
+    override suspend fun sendReport(messageId: String, received: Int, viewed: Int) {
+        val myRef = FirebaseDatabase.getInstance().reference
+        myRef.child("messaged").child(messageId)
+            .setValue(mapOf("received" to received.toString(), "viewed" to viewed.toString()))
     }
+
+    override suspend fun downloadFile(fileName: String): Boolean =
+        suspendCoroutine { continuation ->
+            Log.i("test", "start downloading: $fileName")
+            val fileRef = FirebaseStorage.getInstance().reference.child(fileName)
+            val localFile = File(getFilesDir(context), fileName)
+            fileRef.getFile(localFile).addOnSuccessListener {
+                Log.i("test", "downloaded $fileName")
+                continuation.resume(true)
+            }.addOnFailureListener {
+                Log.i("test", "NOT downloaded $fileName")
+                continuation.resume(false)
+            }
+        }
 
     override suspend fun uploadFile(fileName: String): Boolean = suspendCoroutine { continuation ->
         Log.i("test", "start uploading $fileName")
@@ -116,17 +123,17 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         })
     }
 
-    override suspend fun sendMessage(message: Message, uid: String) {
-        val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("messages").push()
-            .setValue(
-                mapOf(
-                    "message" to message.text,
-                    "image" to message.image,
-                    "dest" to uid,
-                    "source" to token
-                )
+    fun sendMessage(text: String?, image: String?, uid: String): String {
+        val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
+        ref.setValue(
+            mapOf(
+                "message" to text,
+                "image" to image,
+                "dest" to uid,
+                "source" to token
             )
+        )
+        return ref.key!!
     }
 
     override fun updateUser(user: User) {

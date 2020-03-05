@@ -11,5 +11,8 @@ data class MessageEntity(
     var time: Long = 0,
     var conversationId: Long = 0,
     var senderId: Long = 0,
-    var image: String? = null
+    val messageId: String = "",
+    var image: String? = null,
+    val received: Int = 0,
+    val viewed: Int = 0
 )

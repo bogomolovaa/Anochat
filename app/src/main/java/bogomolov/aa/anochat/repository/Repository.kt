@@ -7,7 +7,8 @@ import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
 
 interface Repository : IFirebaseRepository{
-    suspend fun getConversation(id: Long): Conversation
+
+    suspend fun sendMessage(message: Message)
 
     suspend fun saveMessage(message: Message, conversationId: Long)
 
@@ -17,10 +18,17 @@ interface Repository : IFirebaseRepository{
 
     fun loadConversations(): DataSource.Factory<Int, Conversation>
 
+    suspend fun getConversation(id: Long): Conversation
+
     suspend fun getConversation(user: User): Long
 
-    suspend fun receiveMessage(text: String?, uid: String?, image: String?):Message?
+    suspend fun receiveMessage(text: String?, uid: String, messageId: String, image: String?):Message?
+
+    suspend fun reportAsViewed(conversationId: Long)
 
     fun getContext(): Context
+
+    fun receiveReport(messageId: String, received: Int, viewed: Int)
+
 
 }

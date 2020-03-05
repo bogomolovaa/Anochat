@@ -7,11 +7,31 @@ import bogomolov.aa.anochat.repository.entity.*
 
 fun entityToModel(from: MessageEntity?): Message? =
     if (from != null)
-        Message(from.id, from.text, from.time, from.conversationId, from.senderId, from.image)
+        Message(
+            from.id,
+            from.text,
+            from.time,
+            from.conversationId,
+            from.senderId,
+            from.messageId,
+            from.image,
+            from.received,
+            from.viewed
+        )
     else null
 
 fun modelToEntity(from: Message) =
-    MessageEntity(from.id, from.text, from.time, from.conversationId, from.senderId, from.image)
+    MessageEntity(
+        from.id,
+        from.text,
+        from.time,
+        from.conversationId,
+        from.senderId,
+        from.messageId,
+        from.image,
+        from.received,
+        from.viewed
+    )
 
 fun entityToModel(from: UserEntity?): User? =
     if (from != null)

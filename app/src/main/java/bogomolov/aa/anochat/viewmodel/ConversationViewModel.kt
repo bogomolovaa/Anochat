@@ -23,7 +23,10 @@ class ConversationViewModel
     fun loadMessages(conversationId: Long): LiveData<PagedList<MessageView>> {
         Log.i("test", "load messages conversationId ${conversationId}")
         viewModelScope.launch(Dispatchers.IO) {
-            conversationLiveData.postValue(repository.getConversation(conversationId))
+            val conversation = repository.getConversation(conversationId)
+            if (conversation.lastMessage?.isMine() == false)
+                repository.reportAsViewed(conversationId)
+            conversationLiveData.postValue(conversation)
         }
         return LivePagedListBuilder(repository.loadMessages(conversationId).mapByPage {
             val list: MutableList<MessageView> = ArrayList()

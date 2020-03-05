@@ -32,7 +32,7 @@ class SendMediaViewModel
             )
             repository.saveMessage(message, conversationId)
             if (repository.uploadFile(imageFileName)) {
-                repository.sendMessage(message, repository.getConversation(conversationId).user.uid)
+                repository.sendMessage(message)
             } else {
                 Log.i("test", "Not uploaded")
             }

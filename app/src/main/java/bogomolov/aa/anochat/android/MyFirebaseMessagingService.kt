@@ -23,6 +23,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val TYPE_MESSAGE = "message"
+private const val TYPE_READ_REPORT = "report"
 
 class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjector {
 
@@ -46,17 +48,29 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         // Check if message contains a data payload.
         if (remoteMessage.data.isNotEmpty()) {
             Log.d("test", "Message data payload: " + remoteMessage.data);
-            val data = remoteMessage.data;
-            val text = data["body"] ?: ""
-            val uid = data["source"]
-            var image = data["image"]
-            if (image.isNullOrEmpty()) image = null
-            GlobalScope.launch(Dispatchers.IO) {
-                val message = repository.receiveMessage(text, uid, image)
-                if (message != null) {
-                    val inBackground = (application as AnochatAplication).inBackground
-                    if (message.image != null) repository.downloadFile(message.image)
-                    if (inBackground) sendNotification(message)
+            val data = remoteMessage.data
+            val type = data["type"] ?: TYPE_MESSAGE
+            val messageId = data["messageId"]
+            when (type) {
+                TYPE_MESSAGE -> {
+                    val text = data["body"] ?: ""
+                    val uid = data["source"]
+                    var image = data["image"]
+                    if (image.isNullOrEmpty()) image = null
+                    if (uid != null && messageId != null)
+                        GlobalScope.launch(Dispatchers.IO) {
+                            val message = repository.receiveMessage(text, uid, messageId, image)
+                            if (message != null) {
+                                val inBackground = (application as AnochatAplication).inBackground
+                                if (message.image != null) repository.downloadFile(message.image)
+                                if (inBackground) sendNotification(message)
+                            }
+                        }
+                }
+                TYPE_READ_REPORT -> {
+                    val received = data["read"]?.toInt() ?: 0
+                    val viewed = data["viewed"]?.toInt() ?: 0
+                    if (messageId != null) repository.receiveReport(messageId, received, viewed)
                 }
             }
         }

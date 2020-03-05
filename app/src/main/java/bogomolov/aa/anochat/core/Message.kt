@@ -10,7 +10,10 @@ data class Message(
     val time: Long = 0L,
     val conversationId: Long = 0L,
     val senderId: Long = 0L,
-    val image: String? = null
+    var messageId: String = "",
+    val image: String? = null,
+    var received: Int = 0,
+    var viewed: Int = 0
 ) {
     @SuppressLint("SimpleDateFormat")
     fun timeString(): String = SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(time))
@@ -20,5 +23,6 @@ data class Message(
 
     fun shortText(): String = if (text.length > 30) text.take(30) + "..." else text
 
+    fun isMine() = senderId == 0L
 
 }
