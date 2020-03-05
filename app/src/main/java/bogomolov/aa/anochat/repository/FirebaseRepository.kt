@@ -50,9 +50,10 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     }
 
     override suspend fun sendReport(messageId: String, received: Int, viewed: Int) {
+        Log.i("test","sendReport messageId $messageId");
         val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("messaged").child(messageId)
-            .setValue(mapOf("received" to received.toString(), "viewed" to viewed.toString()))
+        myRef.child("messages").child(messageId)
+            .updateChildren(mapOf("received" to received.toString(), "viewed" to viewed.toString()))
     }
 
     override suspend fun downloadFile(fileName: String): Boolean =

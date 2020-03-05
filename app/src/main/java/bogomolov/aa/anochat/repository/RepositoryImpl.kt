@@ -57,6 +57,7 @@ class RepositoryImpl
         messageId: String,
         image: String?
     ): Message? {
+        Log.i("test","getOrAddConversation")
         val conversationEntity = getOrAddConversation(uid) { firebase.getUser(uid) }
         val message = Message(
             text = text ?: "",
@@ -66,6 +67,7 @@ class RepositoryImpl
             messageId = messageId,
             image = image
         )
+        Log.i("test","saveMessage")
         saveMessage(message, conversationEntity.id)
         firebase.sendReport(messageId, 1, 0)
         return message

@@ -59,6 +59,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                     if (image.isNullOrEmpty()) image = null
                     if (uid != null && messageId != null)
                         GlobalScope.launch(Dispatchers.IO) {
+                            Log.i("test","receiveMessage");
                             val message = repository.receiveMessage(text, uid, messageId, image)
                             if (message != null) {
                                 val inBackground = (application as AnochatAplication).inBackground
@@ -68,8 +69,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                         }
                 }
                 TYPE_READ_REPORT -> {
-                    val received = data["read"]?.toInt() ?: 0
+                    val received = data["received"]?.toInt() ?: 0
                     val viewed = data["viewed"]?.toInt() ?: 0
+                    Log.i("test","receiveReport received $received");
                     if (messageId != null) repository.receiveReport(messageId, received, viewed)
                 }
             }
