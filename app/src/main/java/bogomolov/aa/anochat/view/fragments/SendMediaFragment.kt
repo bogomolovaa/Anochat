@@ -44,6 +44,7 @@ class SendMediaFragment : Fragment() {
             container,
             false
         )
+        binding.lifecycleOwner = this
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 

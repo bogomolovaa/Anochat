@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.viewmodel
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.*
@@ -18,15 +19,38 @@ import kotlin.collections.ArrayList
 
 class ConversationViewModel
 @Inject constructor(val repository: Repository) : ViewModel() {
-    var conversationLiveData = MutableLiveData<Conversation>()
+    val conversationLiveData = MutableLiveData<Conversation>()
+    val onlineStatus = MutableLiveData<String>()
+    private var removeStatusListener: (() -> Unit)? = null
+    private var userOnline = false
 
+    override fun onCleared() {
+        super.onCleared()
+        removeStatusListener?.invoke()
+    }
+
+    @SuppressLint("SimpleDateFormat")
     fun loadMessages(conversationId: Long): LiveData<PagedList<MessageView>> {
         Log.i("test", "load messages conversationId ${conversationId}")
         viewModelScope.launch(Dispatchers.IO) {
             val conversation = repository.getConversation(conversationId)
+            conversationLiveData.postValue(conversation)
+            removeStatusListener =
+                repository.addUserStatusListener(
+                    uid = conversation.user.uid,
+                    isOnline = { online ->
+                        userOnline = online
+                        if (online) onlineStatus.postValue("online")
+                    },
+                    lastTimeOnline = { lastTime ->
+                        if (lastTime > 0 && !userOnline)
+                            onlineStatus.postValue(
+                                SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(lastTime))
+                            )
+                    })
             if (conversation.lastMessage?.isMine() == false)
                 repository.reportAsViewed(conversationId)
-            conversationLiveData.postValue(conversation)
+
         }
         return LivePagedListBuilder(repository.loadMessages(conversationId).mapByPage {
             val list: MutableList<MessageView> = ArrayList()

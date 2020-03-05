@@ -32,6 +32,7 @@ interface IFirebaseRepository {
     suspend fun downloadFile(fileName: String): Boolean
     suspend fun sendReport(messageId: String, received: Int, viewed: Int)
     suspend fun deleteRemoteMessage(messageId: String)
+    suspend fun addUserStatusListener(uid: String, isOnline: (Boolean) -> Unit, lastTimeOnline: (Long) -> Unit): () -> Unit
 }
 
 class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRepository {
@@ -42,16 +43,48 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         //signOut()
         GlobalScope.launch(Dispatchers.IO) {
             token = getToken()
-            onlineStatus()
+            updateOnlineStatus()
         }
     }
 
-    private fun onlineStatus() {
+    override suspend fun addUserStatusListener(uid: String, isOnline: (Boolean) -> Unit, lastTimeOnline: (Long) -> Unit): () -> Unit {
+        val userRef = FirebaseDatabase.getInstance().getReference("users/${uid}")
+
+        val onlineListener =
+            userRef.child("online").addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val online = snapshot.getValue(Int::class.java) ?: false
+                    isOnline(online == 1)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+
+                }
+            })
+        val lastOnlineListener =
+            userRef.child("lastOnline").addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val lastOnline = snapshot.getValue(Long::class.java) ?: 0L
+                    lastTimeOnline(lastOnline)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+
+                }
+            })
+        return {
+            userRef.removeEventListener(onlineListener)
+            userRef.removeEventListener(lastOnlineListener)
+        }
+    }
+
+    private fun updateOnlineStatus() {
         val uid = getUid()
-        if (uid!=null) {
+        if (uid != null) {
             val database = FirebaseDatabase.getInstance()
             val userRef = database.getReference("users/${uid}")
             userRef.child("lastOnline").onDisconnect().setValue(ServerValue.TIMESTAMP)
+            userRef.child("online").setValue(1)
             userRef.child("online").onDisconnect().setValue(0)
             val connectedRef = database.getReference(".info/connected")
             connectedRef.addValueEventListener(object : ValueEventListener {
@@ -62,6 +95,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
                 }
 
                 override fun onCancelled(error: DatabaseError) {
+                    Log.i("test", ".info/connected canceled")
                 }
             })
         }

@@ -43,6 +43,7 @@ class SignInFragment : Fragment() {
         )
         setHasOptionsMenu(true)
         binding.viewModel = viewModel
+        binding.lifecycleOwner = this
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)

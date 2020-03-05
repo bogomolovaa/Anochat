@@ -48,11 +48,11 @@ class UsersFragment : Fragment() {
             container,
             false
         )
+        binding.lifecycleOwner = this
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        val view = binding.root
         recyclerView = binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
         val adapter = UsersAdapter(AdapterHelper {
@@ -70,7 +70,7 @@ class UsersFragment : Fragment() {
 
 
 
-        return view
+        return binding.root
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

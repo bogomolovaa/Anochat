@@ -43,6 +43,7 @@ class SignUpFragment : Fragment() {
             false
         )
         binding.viewModel = viewModel
+        binding.lifecycleOwner = this
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
