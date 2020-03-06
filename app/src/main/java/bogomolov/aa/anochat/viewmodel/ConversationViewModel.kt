@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.viewmodel
 
 import android.annotation.SuppressLint
+import android.os.Parcelable
 import android.util.Log
 import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.*
@@ -23,6 +24,7 @@ class ConversationViewModel
     val onlineStatus = MutableLiveData<String>()
     private var removeStatusListener: (() -> Unit)? = null
     private var userOnline = false
+    var recyclerViewState: Parcelable? = null
 
     override fun onCleared() {
         super.onCleared()
@@ -31,6 +33,7 @@ class ConversationViewModel
 
     @SuppressLint("SimpleDateFormat")
     fun loadMessages(conversationId: Long): LiveData<PagedList<MessageView>> {
+        if (conversationId != conversationLiveData.value?.id) recyclerViewState = null
         Log.i("test", "load messages conversationId ${conversationId}")
         viewModelScope.launch(Dispatchers.IO) {
             val conversation = repository.getConversation(conversationId)

@@ -3,6 +3,7 @@ package bogomolov.aa.anochat.view.fragments
 import android.graphics.BitmapFactory
 import androidx.transition.TransitionInflater
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -51,8 +52,8 @@ class ImageViewFragment : Fragment() {
         binding.imageView.transitionName = imageName
         binding.imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath))
         binding.imageView.setOnClickListener {
-            binding.toolbar.visibility = if (expanded) View.INVISIBLE else View.VISIBLE
             expanded = !expanded
+            binding.toolbar.visibility = if (expanded) View.INVISIBLE else View.VISIBLE
         }
 
         return binding.root

@@ -1,25 +1,23 @@
 package bogomolov.aa.anochat.view
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
 import bogomolov.aa.anochat.viewmodel.MainActivityViewModel
+import com.vanniktech.emoji.EmojiManager
+import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.android.AndroidInjection
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -44,6 +42,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
 
         navController = Navigation.findNavController(this, R.id.nav_host_fragment)
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
+            /*
             if (destination.id != R.id.signInFragment && destination.id != R.id.signUpFragment) {
                 viewModel.viewModelScope.launch(Dispatchers.IO) {
                     val signedIn = viewModel.isSignedIn()
@@ -51,12 +50,14 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
                     if (!signedIn) controller.navigate(R.id.signInFragment)
                 }
             }
+             */
         }
     }
 
     private fun emojiSupport() {
         val config = BundledEmojiCompatConfig(this)
         EmojiCompat.init(config)
+        EmojiManager.install(IosEmojiProvider())
     }
 
 }

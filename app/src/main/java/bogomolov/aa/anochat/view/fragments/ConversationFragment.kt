@@ -5,6 +5,7 @@ import android.Manifest
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -22,8 +23,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
+import android.view.inputmethod.InputMethodManager
+import androidx.activity.addCallback
 import androidx.core.content.FileProvider
-import androidx.core.view.setMargins
+import androidx.core.view.*
 import androidx.core.widget.doOnTextChanged
 import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
@@ -42,7 +45,9 @@ import bogomolov.aa.anochat.view.MainActivity
 import bogomolov.aa.anochat.view.MessagesPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationViewModel
 import com.google.android.material.card.MaterialCardView
+import com.vanniktech.emoji.EmojiPopup
 import dagger.android.support.AndroidSupportInjection
+import kotlinx.android.synthetic.main.fragment_conversations_list.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -56,6 +61,7 @@ class ConversationFragment : Fragment() {
     lateinit var navController: NavController
     var conversationId = 0L
     private var photoPath: String? = null
+    private lateinit var emojiPopup: EmojiPopup
 
 
     override fun onAttach(context: Context) {
@@ -85,31 +91,39 @@ class ConversationFragment : Fragment() {
 
         conversationId = arguments?.get("id") as Long
         mainActivity.conversationId = conversationId
-        val adapter = MessagesPagedAdapter(activity = requireActivity())
         val recyclerView = binding.recyclerView
+        val adapter = MessagesPagedAdapter(activity = requireActivity()) {
+            viewModel.recyclerViewState =
+                recyclerView.layoutManager?.onSaveInstanceState()
+        }
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(context)
         viewModel.loadMessages(conversationId).observe(viewLifecycleOwner) {
             Log.i("test", "pagedListLiveData observed from conversationId ${conversationId}")
             adapter.submitList(it)
-            binding.recyclerView.scrollToPosition(it.size - 1);
+
+            if (viewModel.recyclerViewState != null) {
+                Log.i("test", "onRestoreInstanceState")
+                recyclerView.layoutManager?.onRestoreInstanceState(viewModel.recyclerViewState)
+                viewModel.recyclerViewState = null
+            } else {
+                binding.recyclerView.scrollToPosition(it.size - 1);
+            }
+            recyclerView.doOnPreDraw {
+                startPostponedEnterTransition()
+            }
         }
+
         recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (bottom < oldBottom && adapter.itemCount > 0) {
                 binding.recyclerView.postDelayed({
-                    binding.recyclerView.smoothScrollToPosition(adapter.itemCount - 1);
+                    Log.i("test", "addOnLayoutChangeListener scrollToPosition")
+                    binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
                 }, 100)
             }
         }
 
-        recyclerView.viewTreeObserver.addOnPreDrawListener(
-            object : ViewTreeObserver.OnPreDrawListener {
-                override fun onPreDraw(): Boolean {
-                    recyclerView.viewTreeObserver.removeOnPreDrawListener(this)
-                    startPostponedEnterTransition()
-                    return true
-                }
-            })
+
         postponeEnterTransition()
 
 
@@ -188,10 +202,23 @@ class ConversationFragment : Fragment() {
             requestCameraPermission()
         }
 
-        //binding.messageInputText.inputType =
-        //   InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
 
+        emojiPopup = EmojiPopup.Builder.fromRootView(view).build(binding.messageInputText)
+        binding.emojiIcon.setOnClickListener {
+            emojiPopup.toggle()
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            emojiPopup.dismiss()
+        }
         return view
+    }
+
+    override fun onPause() {
+        super.onPause()
+        emojiPopup.dismiss()
+        val imm =
+            requireContext().getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(requireView().windowToken, 0)
     }
 
     private fun redirectToSendMediaFragment(uri: Uri? = null, path: String? = null) {

@@ -80,14 +80,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_margin="6dp"
-                            android:transitionName='@{message.message.image}'
+                            android:transitionName="@{message.message.image}"
                             android:visibility="@{message.hasImage()? View.VISIBLE : View.INVISIBLE}"
                             card_view:layout_constraintEnd_toEndOf="parent"
                             card_view:layout_constraintStart_toStartOf="parent"
                             card_view:layout_constraintTop_toTopOf="parent"
                             card_view:srcCompat="@drawable/ok_icon" />
 
-                    <androidx.emoji.widget.EmojiAppCompatTextView
+                    <com.vanniktech.emoji.EmojiTextView
                             android:id="@+id/message_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.cardview.widget.CardView
@@ -16,12 +17,20 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
+import bogomolov.aa.anochat.viewmodel.ConversationViewModel
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MessagesPagedAdapter(
     private val activity: Activity,
-    private val helper: AdapterHelper<MessageView, MessageLayoutBinding> = AdapterHelper()
+    private val helper: AdapterHelper<MessageView, MessageLayoutBinding> = AdapterHelper(),
+    private val setRecyclerViewState: () -> Unit
 ) :
     PagedListAdapter<MessageView, AdapterHelper<MessageView, MessageLayoutBinding>.VH>(
         helper.DIFF_CALLBACK
@@ -64,11 +73,13 @@ class MessagesPagedAdapter(
                         val extras = FragmentNavigator.Extras.Builder()
                             .addSharedElement(binding.imageView, binding.imageView.transitionName)
                             .build()
+                        setRecyclerViewState()
                         navController.navigate(
                             R.id.imageViewFragment,
                             Bundle().apply { putString("image", file.name) },
                             null,
-                            extras)
+                            extras
+                        )
                     }
                 }
             }
