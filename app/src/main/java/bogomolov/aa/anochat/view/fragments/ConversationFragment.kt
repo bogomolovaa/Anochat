@@ -19,9 +19,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
 import androidx.core.content.FileProvider
+import androidx.core.view.setMargins
 import androidx.core.widget.doOnTextChanged
+import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -37,6 +40,7 @@ import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.view.MainActivity
 import bogomolov.aa.anochat.view.MessagesPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationViewModel
+import com.google.android.material.card.MaterialCardView
 import dagger.android.support.AndroidSupportInjection
 import java.io.File
 import java.text.SimpleDateFormat
@@ -96,6 +100,18 @@ class ConversationFragment : Fragment() {
                 }, 100)
             }
         }
+/*
+        recyclerView.viewTreeObserver.addOnPreDrawListener(
+            object : ViewTreeObserver.OnPreDrawListener {
+                override fun onPreDraw(): Boolean {
+                    recyclerView.viewTreeObserver.removeOnPreDrawListener(this)
+                    startPostponedEnterTransition()
+                    return true
+                }
+            })
+        postponeEnterTransition()
+        
+ */
 
         var fabExpanded = false
         var textEntered = false
@@ -288,4 +304,11 @@ class ConversationFragment : Fragment() {
     }
 
 
+}
+
+@BindingAdapter(value = ["android:layout_marginLeft","android:layout_marginRight"])
+fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
+        val p = view.layoutParams as ViewGroup.MarginLayoutParams
+        p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin);
+        view.requestLayout();
 }

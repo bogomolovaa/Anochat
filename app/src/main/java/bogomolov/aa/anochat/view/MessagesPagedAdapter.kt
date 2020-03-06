@@ -65,7 +65,7 @@ class MessagesPagedAdapter(
                             .build()
                         navController.navigate(
                             R.id.imageViewFragment,
-                            Bundle().apply { putString("path", file.path) },
+                            Bundle().apply { putString("image", file.name) },
                             null,
                             extras)
                     }
