@@ -80,7 +80,7 @@ class ConversationFragment : Fragment() {
 
         conversationId = arguments?.get("id") as Long
         mainActivity.conversationId = conversationId
-        val adapter = MessagesPagedAdapter(context = requireContext())
+        val adapter = MessagesPagedAdapter(activity = requireActivity())
         val recyclerView = binding.recyclerView
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(context)

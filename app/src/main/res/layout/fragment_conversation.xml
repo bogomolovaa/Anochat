@@ -82,6 +82,12 @@
                     android:id="@+id/message_input_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    android:lines="2"
+                    android:maxLines="5"
+                    android:minLines="2"
+                    android:maxLength="1000"
+                    android:scrollbars="vertical"
                     android:text="" />
 
         </com.google.android.material.textfield.TextInputLayout>
