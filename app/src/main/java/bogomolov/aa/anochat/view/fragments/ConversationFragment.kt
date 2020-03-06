@@ -15,6 +15,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -100,7 +101,7 @@ class ConversationFragment : Fragment() {
                 }, 100)
             }
         }
-/*
+
         recyclerView.viewTreeObserver.addOnPreDrawListener(
             object : ViewTreeObserver.OnPreDrawListener {
                 override fun onPreDraw(): Boolean {
@@ -110,8 +111,7 @@ class ConversationFragment : Fragment() {
                 }
             })
         postponeEnterTransition()
-        
- */
+
 
         var fabExpanded = false
         var textEntered = false
@@ -187,6 +187,9 @@ class ConversationFragment : Fragment() {
         binding.fabCamera.setOnClickListener {
             requestCameraPermission()
         }
+
+        //binding.messageInputText.inputType =
+        //   InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
 
         return view
     }
@@ -306,9 +309,9 @@ class ConversationFragment : Fragment() {
 
 }
 
-@BindingAdapter(value = ["android:layout_marginLeft","android:layout_marginRight"])
+@BindingAdapter(value = ["android:layout_marginLeft", "android:layout_marginRight"])
 fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
-        val p = view.layoutParams as ViewGroup.MarginLayoutParams
-        p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin);
-        view.requestLayout();
+    val p = view.layoutParams as ViewGroup.MarginLayoutParams
+    p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin);
+    view.requestLayout();
 }

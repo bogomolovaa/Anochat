@@ -1,17 +1,12 @@
 package bogomolov.aa.anochat.view
 
-import android.Manifest
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.emoji.bundled.BundledEmojiCompatConfig
+import androidx.emoji.text.EmojiCompat
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
@@ -26,7 +21,6 @@ import dagger.android.HasAndroidInjector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity(), HasAndroidInjector {
@@ -43,6 +37,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
     override fun onCreate(savedInstanceState: Bundle?) {
         AndroidInjection.inject(this)
         super.onCreate(savedInstanceState)
+        emojiSupport()
 
         val binding =
             DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
@@ -57,13 +52,17 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
                 }
             }
         }
-
-
-
     }
 
-
-
-
+    private fun emojiSupport() {
+        val config = BundledEmojiCompatConfig(this)
+        EmojiCompat.init(config)
+    }
 
 }
+
+
+
+
+
+

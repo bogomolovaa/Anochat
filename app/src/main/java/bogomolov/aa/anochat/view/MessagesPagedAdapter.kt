@@ -54,6 +54,7 @@ class MessagesPagedAdapter(
         if (item != null) {
             binding.message = item
             if (item.message.image != null) {
+                //Char.isSurrogate()
                 val file = File(getFilesDir(activity), item.message.image)
                 if (file.exists()) {
                     binding.imageView.setImageBitmap(BitmapFactory.decodeFile(file.path))
