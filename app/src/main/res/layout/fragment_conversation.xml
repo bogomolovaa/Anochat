@@ -68,6 +68,44 @@
                 app:layout_constraintTop_toBottomOf="@+id/toolbar"
                 app:layout_constraintVertical_bias="1.0" />
 
+        <RelativeLayout
+                android:id="@+id/reply_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toTopOf="@+id/message_input_text"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
+
+            <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/delimiterCardView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"
+                    android:checkable="true"
+                    app:cardBackgroundColor="@color/time_message_color"
+                    app:cardElevation="4dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                    <TextView
+                            android:id="@+id/reply_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="6dp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            tools:text="Reply message" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </RelativeLayout>
+
 
         <com.vanniktech.emoji.EmojiEditText
                 android:id="@+id/message_input_text"

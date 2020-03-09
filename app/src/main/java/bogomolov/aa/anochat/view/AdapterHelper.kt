@@ -5,7 +5,6 @@ import android.view.*
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import bogomolov.aa.anochat.core.User
 import com.google.android.material.card.MaterialCardView
 
 interface AdapterSelectable<T, R> {
@@ -74,21 +73,20 @@ class AdapterHelper<T, R> constructor(
 
     fun onBindViewHolder(holder: VH, position: Int) {
         val item = adapter.getItem(position)
-        val cardView = holder.cardView
         if (item != null) {
             val selected = selectedIds.contains(adapter.getId(item))
-            //cardView.isChecked = selected
+            holder.cardView.isChecked = selected
         }
         holder.bindItem(item)
     }
 
-    inner class VH(val cardView: View, val binding: R) :
-        RecyclerView.ViewHolder(cardView),
+    inner class VH(viewHolder: View, val cardView: MaterialCardView, val binding: R) :
+        RecyclerView.ViewHolder(viewHolder),
         View.OnClickListener, View.OnLongClickListener {
 
         init {
-            if(onClick!=null) cardView.setOnClickListener(this)
-            if(actionsMap!=null) cardView.setOnLongClickListener(this)
+            if(onClick!=null) viewHolder.setOnClickListener(this)
+            if(actionsMap!=null) viewHolder.setOnLongClickListener(this)
         }
 
         fun bindItem(item: T?) {

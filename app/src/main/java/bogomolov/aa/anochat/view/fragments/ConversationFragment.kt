@@ -92,7 +92,14 @@ class ConversationFragment : Fragment() {
         conversationId = arguments?.get("id") as Long
         mainActivity.conversationId = conversationId
         val recyclerView = binding.recyclerView
-        val adapter = MessagesPagedAdapter(activity = requireActivity()) {
+        val adapter = MessagesPagedAdapter(activity = requireActivity(),
+            onReply = {
+                binding.replyLayout.visibility = View.VISIBLE
+                binding.replyText.text = it.text
+                val lastPosition = recyclerView.adapter?.itemCount ?: 0 - 1
+                Log.i("test","lastPosition $lastPosition")
+                if (lastPosition > 0) recyclerView.smoothScrollToPosition(lastPosition)
+            }) {
             viewModel.recyclerViewState =
                 recyclerView.layoutManager?.onSaveInstanceState()
         }
@@ -135,6 +142,7 @@ class ConversationFragment : Fragment() {
                 Log.i("test", "message text: $text")
                 viewModel.sendMessage(text.toString())
                 binding.messageInputText.setText("")
+                binding.replyLayout.visibility = View.INVISIBLE
             }
         }
         var hideFabs = {
@@ -209,6 +217,7 @@ class ConversationFragment : Fragment() {
         }
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             emojiPopup.dismiss()
+            navController.navigateUp()
         }
         return view
     }

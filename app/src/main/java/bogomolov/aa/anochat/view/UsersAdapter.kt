@@ -22,8 +22,8 @@ class UsersAdapter(private val helper: AdapterHelper<User, UserLayoutBinding> = 
     ): AdapterHelper<User, UserLayoutBinding>.VH {
         val binding =
             UserLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        val cv = binding.messageCardView
-        return helper.VH(cv, binding)
+        val cv = binding.cardView
+        return helper.VH(cv,cv, binding)
     }
 
     override fun onBindViewHolder(

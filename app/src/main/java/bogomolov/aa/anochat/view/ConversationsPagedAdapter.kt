@@ -25,8 +25,8 @@ class ConversationsPagedAdapter(private val helper: AdapterHelper<Conversation, 
     ): AdapterHelper<Conversation, ConversationLayoutBinding>.VH {
         val binding =
             ConversationLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        val cv = binding.messageCardView
-        return helper.VH(cv, binding)
+        val cv = binding.cardView
+        return helper.VH(cv,cv, binding)
     }
 
     override fun onBindViewHolder(
