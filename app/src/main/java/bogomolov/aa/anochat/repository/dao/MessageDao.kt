@@ -16,8 +16,12 @@ interface MessageDao {
 
     @Transaction
     @Query(
-        "SELECT * FROM MessageEntity " +
-                "LEFT JOIN MessageEntity as reply_ ON replyMessageId = reply_.id where conversationId = :conversationId"
+        "SELECT m.id as id, m.text as text, m.time as time, m.conversationId as conversationId, m.senderId as senderId, " +
+                "m.messageId as messageId, m.replyMessageId as replyMessageId, m.image as image, m.received as received, m.viewed as viewed, " +
+                "r.id as reply_id, r.text as reply_text, r.time as reply_time, r.conversationId as reply_conversationId, r.senderId as reply_senderId, " +
+                "r.messageId as reply_messageId, r.replyMessageId as reply_replyMessageId, r.image as reply_image, r.received as reply_received, r.viewed as reply_viewed " +
+                "FROM MessageEntity as m " +
+                "LEFT JOIN MessageEntity as r ON m.replyMessageId = r.messageId where m.conversationId = :conversationId"
     )
     fun loadAll(conversationId: Long): DataSource.Factory<Int, MessageJoined>
 

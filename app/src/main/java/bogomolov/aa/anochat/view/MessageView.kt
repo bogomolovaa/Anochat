@@ -20,4 +20,6 @@ data class MessageView(val message: Message) {
 
     fun hasReplyMessage() = message.replyMessage != null
 
+    fun getReplyText() = message.replyMessage?.text ?: ""
+
 }

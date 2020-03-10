@@ -91,6 +91,7 @@ class ConversationViewModel
                     conversationId = conversation.id,
                     replyMessage = if (replyMessageId != null) Message(messageId = replyMessageId) else null
                 )
+                Log.i("test","sendMessage message.replyMessage ${message.replyMessage?.messageId}")
                 repository.saveAndSendMessage(message, conversation)
             }
         }

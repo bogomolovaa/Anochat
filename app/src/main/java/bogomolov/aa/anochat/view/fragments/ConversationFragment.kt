@@ -100,6 +100,7 @@ class ConversationFragment : Fragment() {
                 binding.replyImage.visibility = View.INVISIBLE
                 binding.replyText.text = it.text
                 replyMessageId = it.messageId
+                Log.i("test","onReply replyMessageId $replyMessageId")
                 val lastPosition = recyclerView.adapter?.itemCount ?: 0 - 1
                 Log.i("test", "lastPosition $lastPosition")
                 if (lastPosition > 0) recyclerView.smoothScrollToPosition(lastPosition)
