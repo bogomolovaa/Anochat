@@ -25,7 +25,7 @@ import java.io.File
 
 class MessagesPagedAdapter(
     private val activity: Activity,
-    private val onReply: (Message)->Unit,
+    private val onReply: (Message) -> Unit,
     private val helper: AdapterHelper<MessageView, MessageLayoutBinding> = AdapterHelper(),
     private val setRecyclerViewState: () -> Unit
 ) :
@@ -60,9 +60,9 @@ class MessagesPagedAdapter(
     override fun bind(item: MessageView?, binding: MessageLayoutBinding) {
         if (item != null) {
             binding.message = item
-            if (item.message.image != null) {
+            if (item.hasImage()) {
                 //Char.isSurrogate()
-                val file = File(getFilesDir(activity), item.message.image)
+                val file = File(getFilesDir(activity), item.message.image!!)
                 if (file.exists()) {
                     binding.imageView.setImageBitmap(BitmapFactory.decodeFile(file.path))
                     binding.imageView.setOnClickListener {
@@ -80,6 +80,11 @@ class MessagesPagedAdapter(
                         )
                     }
                 }
+            }
+            if (item.hasReplyMessageImage()) {
+                val file = File(getFilesDir(activity), item.message.replyMessage?.image!!)
+                if (file.exists())
+                    binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
             }
 
             val detector =
@@ -117,32 +122,6 @@ class MessagesPagedAdapter(
                 detector.onTouchEvent(event)
                 true
             }
-/*
-            binding.messageCardView.setOnTouchListener { view, event ->
-                GestureDetectorCompat(activity, object : GestureDetector.SimpleOnGestureListener() {
-                    override fun onDown(event: MotionEvent): Boolean {
-                        Log.d("test", "onDown: $event")
-                        return true
-                    }
-
-                    override fun onFling(
-                        event1: MotionEvent,
-                        event2: MotionEvent,
-                        velocityX: Float,
-                        velocityY: Float
-                    ): Boolean {
-                        Log.d(
-                            "test",
-                            "onFling: $event1 $event2 velocityX $velocityX velocityY $velocityY"
-                        )
-
-
-                        return true
-                    }
-                }).onTouchEvent(event)
-                true
-            }
-             */
         }
 
 

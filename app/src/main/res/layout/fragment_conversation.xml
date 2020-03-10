@@ -73,7 +73,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="start"
-                android:visibility="invisible"
+                android:visibility="visible"
                 app:layout_constraintBottom_toTopOf="@+id/message_input_text"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent">
@@ -91,14 +91,34 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent">
 
-                    <TextView
+                    <ImageView
+                            android:id="@+id/removeReply"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:backgroundTint="#FFFFFF"
+                            android:tint="#E91E63"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:srcCompat="@drawable/clear_icon" />
+
+                    <ImageView
+                            android:id="@+id/replyImage"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_margin="6dp"
+                            android:duplicateParentState="true"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    <com.vanniktech.emoji.EmojiTextView
                             android:id="@+id/reply_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_margin="6dp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintStart_toEndOf="@+id/replyImage"
                             app:layout_constraintTop_toTopOf="parent"
                             tools:text="Reply message" />
 

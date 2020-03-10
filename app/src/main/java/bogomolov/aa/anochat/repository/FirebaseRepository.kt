@@ -183,11 +183,12 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         })
     }
 
-    fun sendMessage(text: String?, image: String?, uid: String): String {
+    fun sendMessage(text: String?, replyId: String?,image: String?, uid: String): String {
         val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
         ref.setValue(
             mapOf(
                 "message" to text,
+                "reply" to replyId,
                 "image" to image,
                 "dest" to uid,
                 "source" to token

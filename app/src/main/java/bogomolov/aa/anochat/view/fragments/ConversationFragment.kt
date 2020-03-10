@@ -11,6 +11,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -38,6 +39,7 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.android.getPath
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
@@ -62,6 +64,7 @@ class ConversationFragment : Fragment() {
     var conversationId = 0L
     private var photoPath: String? = null
     private lateinit var emojiPopup: EmojiPopup
+    private var replyMessageId: String? = null
 
 
     override fun onAttach(context: Context) {
@@ -94,15 +97,28 @@ class ConversationFragment : Fragment() {
         val recyclerView = binding.recyclerView
         val adapter = MessagesPagedAdapter(activity = requireActivity(),
             onReply = {
-                binding.replyLayout.visibility = View.VISIBLE
+                binding.replyImage.visibility = View.INVISIBLE
                 binding.replyText.text = it.text
+                replyMessageId = it.messageId
                 val lastPosition = recyclerView.adapter?.itemCount ?: 0 - 1
-                Log.i("test","lastPosition $lastPosition")
+                Log.i("test", "lastPosition $lastPosition")
                 if (lastPosition > 0) recyclerView.smoothScrollToPosition(lastPosition)
-            }) {
-            viewModel.recyclerViewState =
-                recyclerView.layoutManager?.onSaveInstanceState()
-        }
+                if (it.image != null) {
+                    val file = File(getFilesDir(requireContext()), it.image)
+                    if (file.exists()) {
+                        binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
+                        binding.replyImage.visibility = View.VISIBLE
+                    }
+                }
+                binding.removeReply.setOnClickListener {
+                    removeReply(binding)
+                }
+                binding.replyLayout.visibility = View.VISIBLE
+            },
+            setRecyclerViewState = {
+                viewModel.recyclerViewState =
+                    recyclerView.layoutManager?.onSaveInstanceState()
+            })
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(context)
         viewModel.loadMessages(conversationId).observe(viewLifecycleOwner) {
@@ -140,9 +156,9 @@ class ConversationFragment : Fragment() {
             val text = binding.messageInputText.text
             if (!text.isNullOrEmpty()) {
                 Log.i("test", "message text: $text")
-                viewModel.sendMessage(text.toString())
+                viewModel.sendMessage(text.toString(), replyMessageId)
                 binding.messageInputText.setText("")
-                binding.replyLayout.visibility = View.INVISIBLE
+                removeReply(binding)
             }
         }
         var hideFabs = {
@@ -220,6 +236,11 @@ class ConversationFragment : Fragment() {
             navController.navigateUp()
         }
         return view
+    }
+
+    private fun removeReply(binding: FragmentConversationBinding){
+        binding.replyLayout.visibility = View.INVISIBLE
+        replyMessageId = null
     }
 
     override fun onPause() {

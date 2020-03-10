@@ -8,12 +8,28 @@ import bogomolov.aa.anochat.repository.entity.*
 fun entityToModel(from: MessageEntity?): Message? =
     if (from != null)
         Message(
+            id = from.id,
+            text = from.text,
+            time = from.time,
+            conversationId = from.conversationId,
+            senderId = from.senderId,
+            messageId = from.messageId,
+            image = from.image,
+            received = from.received,
+            viewed = from.viewed
+        )
+    else null
+
+fun entityToModel(from: MessageJoined?): Message? =
+    if (from != null)
+        Message(
             from.id,
             from.text,
             from.time,
             from.conversationId,
             from.senderId,
             from.messageId,
+            entityToModel(from.replyMessage),
             from.image,
             from.received,
             from.viewed
@@ -28,6 +44,7 @@ fun modelToEntity(from: Message) =
         from.conversationId,
         from.senderId,
         from.messageId,
+        from.replyMessage?.messageId,
         from.image,
         from.received,
         from.viewed

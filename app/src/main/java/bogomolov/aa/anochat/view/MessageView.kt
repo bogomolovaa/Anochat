@@ -16,4 +16,8 @@ data class MessageView(val message: Message) {
 
     fun viewed() = message.viewed == 1
 
+    fun hasReplyMessageImage() = message.replyMessage?.image != null
+
+    fun hasReplyMessage() = message.replyMessage != null
+
 }

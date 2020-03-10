@@ -32,13 +32,23 @@ class RepositoryImpl
         entityToModel(db.conversationDao().loadConversation(id))!!
 
     override suspend fun saveAndSendMessage(message: Message, conversation: Conversation) {
-        message.messageId = firebase.sendMessage(message.text, message.image, conversation.user.uid)
+        message.messageId = firebase.sendMessage(
+            message.text,
+            message.replyMessage?.messageId,
+            message.image,
+            conversation.user.uid
+        )
         saveMessage(message, conversation.id)
     }
 
     override suspend fun sendMessage(message: Message) {
         val conversation = getConversation(message.conversationId)
-        message.messageId = firebase.sendMessage(message.text, message.image, conversation.user.uid)
+        message.messageId = firebase.sendMessage(
+            message.text,
+            message.replyMessage?.messageId,
+            message.image,
+            conversation.user.uid
+        )
         db.messageDao().updateMessageId(message.id, message.messageId)
     }
 
@@ -55,9 +65,10 @@ class RepositoryImpl
         text: String?,
         uid: String,
         messageId: String,
+        replyId: String?,
         image: String?
     ): Message? {
-        Log.i("test","getOrAddConversation")
+        Log.i("test", "getOrAddConversation")
         val conversationEntity = getOrAddConversation(uid) { firebase.getUser(uid) }
         val message = Message(
             text = text ?: "",
@@ -65,9 +76,10 @@ class RepositoryImpl
             conversationId = conversationEntity.id,
             senderId = conversationEntity.userId,
             messageId = messageId,
+            replyMessage = if (replyId != null) entityToModel(db.messageDao().getByMessageId(replyId)) else null,
             image = image
         )
-        Log.i("test","saveMessage")
+        Log.i("test", "saveMessage")
         saveMessage(message, conversationEntity.id)
         firebase.sendReport(messageId, 1, 0)
         return message

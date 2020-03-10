@@ -81,14 +81,15 @@ class ConversationViewModel
     }
 
 
-    fun sendMessage(messageText: String) {
+    fun sendMessage(messageText: String, replyMessageId: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             val conversation = conversationLiveData.value
             if (conversation != null) {
                 val message = Message(
                     text = messageText,
                     time = System.currentTimeMillis(),
-                    conversationId = conversation.id
+                    conversationId = conversation.id,
+                    replyMessage = if (replyMessageId != null) Message(messageId = replyMessageId) else null
                 )
                 repository.saveAndSendMessage(message, conversation)
             }

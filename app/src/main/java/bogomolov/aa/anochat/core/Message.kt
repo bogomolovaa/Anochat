@@ -6,11 +6,12 @@ import java.util.*
 
 data class Message(
     var id: Long = 0L,
-    val text: String,
+    val text: String = "",
     val time: Long = 0L,
     val conversationId: Long = 0L,
     val senderId: Long = 0L,
     var messageId: String = "",
+    val replyMessage: Message? = null,
     val image: String? = null,
     var received: Int = 0,
     var viewed: Int = 0
