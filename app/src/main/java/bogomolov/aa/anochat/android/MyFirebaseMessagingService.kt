@@ -72,7 +72,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                 TYPE_READ_REPORT -> {
                     val received = data["received"]?.toInt() ?: 0
                     val viewed = data["viewed"]?.toInt() ?: 0
-                    Log.i("test", "receiveReport received $received");
                     if (messageId != null) {
                         repository.receiveReport(messageId, received, viewed)
                         if (viewed == 1)

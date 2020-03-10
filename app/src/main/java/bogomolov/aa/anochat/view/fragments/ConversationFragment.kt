@@ -12,22 +12,22 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.graphics.BitmapFactory
+import android.media.MediaPlayer
+import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.addCallback
 import androidx.core.content.FileProvider
-import androidx.core.view.*
+import androidx.core.view.doOnPreDraw
 import androidx.core.widget.doOnTextChanged
 import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
@@ -49,7 +49,6 @@ import bogomolov.aa.anochat.viewmodel.ConversationViewModel
 import com.google.android.material.card.MaterialCardView
 import com.vanniktech.emoji.EmojiPopup
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.main.fragment_conversations_list.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -65,6 +64,8 @@ class ConversationFragment : Fragment() {
     private var photoPath: String? = null
     private lateinit var emojiPopup: EmojiPopup
     private var replyMessageId: String? = null
+    private var recorder: MediaRecorder? = null
+    private lateinit var binding: FragmentConversationBinding
 
 
     override fun onAttach(context: Context) {
@@ -77,7 +78,7 @@ class ConversationFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val binding = DataBindingUtil.inflate<FragmentConversationBinding>(
+        binding = DataBindingUtil.inflate<FragmentConversationBinding>(
             inflater,
             R.layout.fragment_conversation,
             container,
@@ -95,12 +96,13 @@ class ConversationFragment : Fragment() {
         conversationId = arguments?.get("id") as Long
         mainActivity.conversationId = conversationId
         val recyclerView = binding.recyclerView
+        recyclerView.setItemViewCacheSize(20);
         val adapter = MessagesPagedAdapter(activity = requireActivity(),
             onReply = {
                 binding.replyImage.visibility = View.INVISIBLE
                 binding.replyText.text = it.text
                 replyMessageId = it.messageId
-                Log.i("test","onReply replyMessageId $replyMessageId")
+                Log.i("test", "onReply replyMessageId $replyMessageId")
                 val lastPosition = recyclerView.adapter?.itemCount ?: 0 - 1
                 Log.i("test", "lastPosition $lastPosition")
                 if (lastPosition > 0) recyclerView.smoothScrollToPosition(lastPosition)
@@ -150,65 +152,7 @@ class ConversationFragment : Fragment() {
 
         postponeEnterTransition()
 
-
-        var fabExpanded = false
-        var textEntered = false
-        val sendMessageAction = {
-            val text = binding.messageInputText.text
-            if (!text.isNullOrEmpty()) {
-                Log.i("test", "message text: $text")
-                viewModel.sendMessage(text.toString(), replyMessageId)
-                binding.messageInputText.setText("")
-                removeReply(binding)
-            }
-        }
-        var hideFabs = {
-            binding.fabFile.animate()
-                .translationY(0f).setListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(var1: Animator) {
-                        binding.fabFile.visibility = View.INVISIBLE
-                        fabExpanded = false
-
-                    }
-                }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
-            binding.fabCamera.animate()
-                .translationY(0f).setListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(var1: Animator) {
-                        binding.fabCamera.visibility = View.INVISIBLE
-                        fabExpanded = false
-                    }
-                }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
-            binding.fab.setImageResource(R.drawable.plus_icon)
-        }
-        var expandFabs = {
-            binding.fabFile.visibility = View.VISIBLE
-            binding.fabFile.animate()
-                .translationY(-200f).setListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(var1: Animator) {
-                        fabExpanded = true
-                        binding.fab.setImageResource(R.drawable.clear_icon)
-                    }
-                }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
-            binding.fabCamera.visibility = View.VISIBLE
-            binding.fabCamera.animate()
-                .translationY(-400f).setListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(var1: Animator) {
-                        fabExpanded = true
-                    }
-                }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
-        }
-        binding.fab.setOnClickListener {
-            if (textEntered) {
-                sendMessageAction()
-                textEntered = false
-            } else {
-                if (!fabExpanded) {
-                    expandFabs()
-                } else {
-                    hideFabs()
-                }
-            }
-        }
+        setFabDefaultOnClickListener()
         binding.messageInputText.doOnTextChanged { text, start, count, after ->
             hideFabs()
             if (!text.isNullOrEmpty()) {
@@ -220,10 +164,16 @@ class ConversationFragment : Fragment() {
             }
         }
 
+        binding.fabMic.setOnClickListener {
+            hideFabs()
+            requestMicrophonePermission()
+        }
         binding.fabFile.setOnClickListener {
+            hideFabs()
             requestReadPermission()
         }
         binding.fabCamera.setOnClickListener {
+            hideFabs()
             requestCameraPermission()
         }
 
@@ -239,7 +189,87 @@ class ConversationFragment : Fragment() {
         return view
     }
 
-    private fun removeReply(binding: FragmentConversationBinding){
+    private var fabExpanded = false
+    private var textEntered = false
+
+    private fun sendMessageAction() {
+        val text = binding.messageInputText.text
+        if (!text.isNullOrEmpty()) {
+            Log.i("test", "message text: $text")
+            viewModel.sendMessage(text.toString(), replyMessageId)
+            binding.messageInputText.setText("")
+            removeReply(binding)
+        }
+    }
+
+    private fun hideFabs() {
+        binding.fabMic.animate()
+            .translationY(0f).setListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(var1: Animator) {
+                    binding.fabMic.visibility = View.INVISIBLE
+                    fabExpanded = false
+                }
+            }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+        binding.fabFile.animate()
+            .translationY(0f).setListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(var1: Animator) {
+                    binding.fabFile.visibility = View.INVISIBLE
+                    fabExpanded = false
+
+                }
+            }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+        binding.fabCamera.animate()
+            .translationY(0f).setListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(var1: Animator) {
+                    binding.fabCamera.visibility = View.INVISIBLE
+                    fabExpanded = false
+                }
+            }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+        binding.fab.setImageResource(R.drawable.plus_icon)
+    }
+
+    private fun expandFabs () {
+        binding.fabMic.visibility = View.VISIBLE
+        binding.fabMic.animate()
+            .translationY(-600f).setListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(var1: Animator) {
+                    fabExpanded = true
+                    binding.fab.setImageResource(R.drawable.clear_icon)
+                }
+            }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+        binding.fabFile.visibility = View.VISIBLE
+        binding.fabFile.animate()
+            .translationY(-200f).setListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(var1: Animator) {
+                    fabExpanded = true
+                    binding.fab.setImageResource(R.drawable.clear_icon)
+                }
+            }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+        binding.fabCamera.visibility = View.VISIBLE
+        binding.fabCamera.animate()
+            .translationY(-400f).setListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(var1: Animator) {
+                    fabExpanded = true
+                }
+            }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+    }
+
+    private fun setFabDefaultOnClickListener(){
+        binding.fab.setOnClickListener {
+            if (textEntered) {
+                sendMessageAction()
+                textEntered = false
+            } else {
+                if (!fabExpanded) {
+                    expandFabs()
+                } else {
+                    hideFabs()
+                }
+            }
+        }
+    }
+
+    private fun removeReply(binding: FragmentConversationBinding) {
         binding.replyLayout.visibility = View.INVISIBLE
         replyMessageId = null
     }
@@ -298,6 +328,39 @@ class ConversationFragment : Fragment() {
 
     }
 
+    private fun startRecording() {
+        binding.fab.setImageResource(R.drawable.stop_icon)
+        binding.fab.setOnClickListener {
+            stopRecording()
+        }
+        val recorder = MediaRecorder()
+        recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+        recorder.setOutputFile(File(getFilesDir(requireContext()), "last_record.3gp").path)
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+        recorder.prepare()
+        recorder.start()
+        this.recorder = recorder
+    }
+
+    private fun stopRecording() {
+        if (recorder != null) {
+            recorder!!.stop()
+            recorder!!.release()
+        }
+        recorder = null
+        binding.fab.setImageResource(R.drawable.plus_icon)
+        setFabDefaultOnClickListener()
+        startPlaying()
+    }
+
+    private fun startPlaying() {
+        val player = MediaPlayer()
+        player.setDataSource(File(getFilesDir(requireContext()), "last_record.3gp").path);
+        player.prepare();
+        player.start();
+    }
+
     @SuppressLint("SimpleDateFormat")
     private fun createTempImageFile(): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date());
@@ -332,6 +395,11 @@ class ConversationFragment : Fragment() {
             requestPermissions(arrayOf(CAMERA_PERMISSION), CAMERA_PERMISSIONS_CODE)
     }
 
+    private fun requestMicrophonePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            requestPermissions(arrayOf(MICROPHONE_PERMISSION), MICROPHONE_PERMISSIONS_CODE)
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
@@ -352,6 +420,13 @@ class ConversationFragment : Fragment() {
                     Log.i("test", "camera perm not granted")
                 }
             }
+            MICROPHONE_PERMISSIONS_CODE -> {
+                if (grantResults[0] == PERMISSION_GRANTED) {
+                    startRecording()
+                } else {
+                    Log.i("test", "camera perm not granted")
+                }
+            }
         }
     }
 
@@ -360,8 +435,10 @@ class ConversationFragment : Fragment() {
         const val CAMERA_CODE: Int = 1
         private const val READ_PERMISSION = Manifest.permission.READ_EXTERNAL_STORAGE
         private const val CAMERA_PERMISSION = Manifest.permission.CAMERA
+        private const val MICROPHONE_PERMISSION = Manifest.permission.RECORD_AUDIO
         private const val READ_PERMISSIONS_CODE = 1001
         private const val CAMERA_PERMISSIONS_CODE = 1002
+        private const val MICROPHONE_PERMISSIONS_CODE = 1003
     }
 
 

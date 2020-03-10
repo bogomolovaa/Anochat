@@ -143,16 +143,26 @@
                 app:layout_constraintStart_toEndOf="@+id/emojiIcon" />
 
 
-
-
         <RelativeLayout
                 android:id="@+id/fab_layout"
                 android:layout_width="wrap_content"
-                android:layout_height="245dp"
+                android:layout_height="300dp"
                 android:gravity="bottom|right"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/message_input_layout">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/fabMic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="false"
+                    android:layout_alignParentBottom="false"
+                    android:layout_centerHorizontal="true"
+                    android:clickable="true"
+                    android:visibility="invisible"
+                    app:fabSize="mini"
+                    app:srcCompat="@drawable/mic_icon" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/fabFile"
@@ -176,7 +186,7 @@
                     android:clickable="true"
                     android:visibility="invisible"
                     app:fabSize="mini"
-                    app:srcCompat="@drawable/search_icon" />
+                    app:srcCompat="@drawable/camera_icon" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/fab"

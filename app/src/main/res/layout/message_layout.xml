@@ -24,7 +24,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:visibility="@{message.isTimeMessage? View.VISIBLE : View.INVISIBLE}">
+                android:visibility="@{message.isTimeMessage? View.VISIBLE : View.GONE}">
 
             <com.google.android.material.card.MaterialCardView
                     android:id="@+id/delimiterCardView"
@@ -62,7 +62,7 @@
             <com.google.android.material.card.MaterialCardView
                     android:id="@+id/messageCardView"
                     android:layout_width="wrap_content"
-                    android:layout_height="100dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginLeft="@{message.message.isMine? @dimen/message_margin1 : @dimen/message_margin0}"
                     android:layout_marginTop="4dp"
                     android:layout_marginRight="@{message.message.isMine? @dimen/message_margin0 : @dimen/message_margin1}"
@@ -72,15 +72,16 @@
                     app:cardElevation="4dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="150dp">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                             android:id="@+id/reply_layout"
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:background="#EEEDED"
-                            android:visibility="@{message.hasReplyMessage()? View.VISIBLE : View.INVISIBLE}"
+                            android:visibility="@{message.hasReplyMessage()? View.VISIBLE : View.GONE}"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent">
@@ -90,7 +91,7 @@
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
                                 android:layout_margin="6dp"
-                                android:visibility="@{message.hasReplyMessageImage()? View.VISIBLE : View.INVISIBLE}"
+                                android:visibility="@{message.hasReplyMessageImage()? View.VISIBLE : View.GONE}"
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintStart_toStartOf="parent"
                                 app:layout_constraintTop_toTopOf="parent" />
@@ -103,6 +104,7 @@
                                 android:text="@{message.getReplyText()}"
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintHorizontal_bias="0.0"
                                 app:layout_constraintStart_toEndOf="@+id/replyImage"
                                 app:layout_constraintTop_toTopOf="parent"
                                 tools:text="Reply message" />
@@ -114,25 +116,30 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_margin="6dp"
-                            android:layout_marginTop="17dp"
                             android:duplicateParentState="true"
                             android:transitionName="@{message.message.image}"
-                            android:visibility="@{message.hasImage()? View.VISIBLE : View.INVISIBLE}"
+                            android:visibility="@{message.hasImage()? View.VISIBLE : View.GONE}"
                             app:layout_constraintBottom_toTopOf="@+id/message_text"
                             app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintHeight_max="300dp"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@+id/reply_layout" />
+                            app:layout_constraintTop_toBottomOf="@id/reply_layout"
+                            app:layout_constraintWidth_min="200dp"
+                            tools:srcCompat="@drawable/ic_launcher_background" />
 
                     <com.vanniktech.emoji.EmojiTextView
                             android:id="@+id/message_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_margin="6dp"
+                            android:layout_marginTop="4dp"
                             android:text="@{message.message.text}"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toStartOf="@+id/time_text"
+                            app:layout_constraintHorizontal_bias="0.0"
                             app:layout_constraintStart_toStartOf="parent"
-                            tools:text="message text" />
+                            app:layout_constraintTop_toBottomOf="@+id/imageView"
+                            tools:text="text" />
 
                     <TextView
                             android:id="@+id/time_text"
@@ -140,6 +147,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="bottom|end"
                             android:layout_marginEnd="6dp"
+                            android:layout_marginBottom="4dp"
                             android:text="@{message.message.shortTimeString()}"
                             android:textSize="12sp"
                             app:layout_constraintBottom_toBottomOf="parent"
@@ -150,8 +158,10 @@
                             android:id="@+id/status_layout"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_marginBottom="4dp"
                             android:orientation="horizontal"
-                            android:visibility="@{message.message.isMine? View.VISIBLE : View.INVISIBLE}"
+                            android:visibility="@{message.message.isMine? View.VISIBLE : View.GONE}"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent">
 

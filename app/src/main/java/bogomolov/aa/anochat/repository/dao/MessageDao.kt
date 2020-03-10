@@ -21,7 +21,7 @@ interface MessageDao {
                 "r.id as reply_id, r.text as reply_text, r.time as reply_time, r.conversationId as reply_conversationId, r.senderId as reply_senderId, " +
                 "r.messageId as reply_messageId, r.replyMessageId as reply_replyMessageId, r.image as reply_image, r.received as reply_received, r.viewed as reply_viewed " +
                 "FROM MessageEntity as m " +
-                "LEFT JOIN MessageEntity as r ON m.replyMessageId = r.messageId where m.conversationId = :conversationId"
+                "LEFT JOIN MessageEntity as r ON (m.replyMessageId = r.messageId and m.conversationId = r.conversationId) where m.conversationId = :conversationId"
     )
     fun loadAll(conversationId: Long): DataSource.Factory<Int, MessageJoined>
 

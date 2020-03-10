@@ -17,6 +17,7 @@ import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.FragmentNavigator
 import androidx.paging.PagedListAdapter
+import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.core.Message
@@ -58,6 +59,7 @@ class MessagesPagedAdapter(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun bind(item: MessageView?, binding: MessageLayoutBinding) {
+        Log.i("test","bind $item")
         if (item != null) {
             binding.message = item
             if (item.hasImage()) {
