@@ -55,7 +55,9 @@ class RepositoryImpl
     }
 
     override suspend fun saveMessage(message: Message, conversationId: Long) {
-        message.id = db.messageDao().insert(modelToEntity(message))
+        val entity = modelToEntity(message)
+        message.id = db.messageDao().insert(entity)
+        Log.i("test","save message $entity")
         db.conversationDao().updateLastMessage(message.id, conversationId)
     }
 

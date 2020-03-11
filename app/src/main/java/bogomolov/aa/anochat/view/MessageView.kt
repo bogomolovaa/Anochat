@@ -24,4 +24,8 @@ data class MessageView(val message: Message) {
 
     fun getReplyText() = message.replyMessage?.text ?: ""
 
+    fun getReplyAudio() = message.replyMessage?.audio
+
+    fun hasReplyAudio() = message.replyMessage?.audio != null
+
 }

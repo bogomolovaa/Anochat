@@ -17,7 +17,7 @@ interface MessageDao {
     @Transaction
     @Query(
         "SELECT m.id as id, m.text as text, m.time as time, m.conversationId as conversationId, m.senderId as senderId, " +
-                "m.messageId as messageId, m.replyMessageId as replyMessageId, m.image as image,m.audio as audio, m.received as received, m.viewed as viewed, " +
+                "m.messageId as messageId, m.replyMessageId as replyMessageId, m.image as image, m.audio as audio, m.received as received, m.viewed as viewed, " +
                 "r.id as reply_id, r.text as reply_text, r.time as reply_time, r.conversationId as reply_conversationId, r.senderId as reply_senderId, " +
                 "r.messageId as reply_messageId, r.replyMessageId as reply_replyMessageId, r.image as reply_image, r.audio as reply_audio, r.received as reply_received, r.viewed as reply_viewed " +
                 "FROM MessageEntity as m " +

@@ -59,6 +59,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                     var audio = data["audio"]
                     val replyId = data["reply"]
                     if (image.isNullOrEmpty()) image = null
+                    if (audio.isNullOrEmpty()) audio = null
                     if (uid != null && messageId != null)
                         GlobalScope.launch(Dispatchers.IO) {
                             Log.i("test", "receiveMessage");
