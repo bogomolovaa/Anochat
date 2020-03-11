@@ -22,7 +22,7 @@ interface Repository : IFirebaseRepository{
 
     suspend fun getConversation(user: User): Long
 
-    suspend fun receiveMessage(text: String?, uid: String, messageId: String, replyId: String?, image: String?):Message?
+    suspend fun receiveMessage(text: String?, uid: String, messageId: String, replyId: String?, image: String?, audio: String?):Message?
 
     suspend fun reportAsViewed(conversationId: Long)
 

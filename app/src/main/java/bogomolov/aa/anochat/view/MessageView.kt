@@ -12,6 +12,8 @@ data class MessageView(val message: Message) {
 
     fun hasImage() = message.image != null
 
+    fun hasAudio() = message.audio != null
+
     fun received() = message.received == 1
 
     fun viewed() = message.viewed == 1

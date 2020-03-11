@@ -13,6 +13,7 @@ data class Message(
     var messageId: String = "",
     val replyMessage: Message? = null,
     val image: String? = null,
+    val audio: String? = null,
     var received: Int = 0,
     var viewed: Int = 0
 ) {

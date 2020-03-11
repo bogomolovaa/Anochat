@@ -36,6 +36,7 @@ class RepositoryImpl
             message.text,
             message.replyMessage?.messageId,
             message.image,
+            message.audio,
             conversation.user.uid
         )
         saveMessage(message, conversation.id)
@@ -47,6 +48,7 @@ class RepositoryImpl
             message.text,
             message.replyMessage?.messageId,
             message.image,
+            message.audio,
             conversation.user.uid
         )
         db.messageDao().updateMessageId(message.id, message.messageId)
@@ -66,7 +68,8 @@ class RepositoryImpl
         uid: String,
         messageId: String,
         replyId: String?,
-        image: String?
+        image: String?,
+        audio: String?
     ): Message? {
         val conversationEntity = getOrAddConversation(uid) { firebase.getUser(uid) }
         val message = Message(
@@ -76,7 +79,8 @@ class RepositoryImpl
             senderId = conversationEntity.userId,
             messageId = messageId,
             replyMessage = if (replyId != null) entityToModel(db.messageDao().getByMessageId(replyId)) else null,
-            image = image
+            image = image,
+            audio = audio
         )
         saveMessage(message, conversationEntity.id)
         firebase.sendReport(messageId, 1, 0)

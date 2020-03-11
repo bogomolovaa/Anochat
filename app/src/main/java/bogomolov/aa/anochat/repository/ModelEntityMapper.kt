@@ -15,6 +15,7 @@ fun entityToModel(from: MessageEntity?): Message? =
             senderId = from.senderId,
             messageId = from.messageId,
             image = from.image,
+            audio = from.audio,
             received = from.received,
             viewed = from.viewed
         )
@@ -31,6 +32,7 @@ fun entityToModel(from: MessageJoined?): Message? =
             from.messageId,
             entityToModel(from.replyMessage),
             from.image,
+            from.audio,
             from.received,
             from.viewed
         )
@@ -46,6 +48,7 @@ fun modelToEntity(from: Message) =
         from.messageId,
         from.replyMessage?.messageId,
         from.image,
+        from.audio,
         from.received,
         from.viewed
     )

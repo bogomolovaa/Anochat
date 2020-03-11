@@ -25,7 +25,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" >
+                app:layout_constraintTop_toTopOf="parent">
 
             <LinearLayout
                     android:layout_width="wrap_content"
@@ -53,8 +53,6 @@
             </LinearLayout>
 
         </androidx.appcompat.widget.Toolbar>
-
-
 
 
         <androidx.recyclerview.widget.RecyclerView
@@ -106,8 +104,8 @@
                             android:layout_width="40dp"
                             android:layout_height="40dp"
                             android:layout_margin="6dp"
-                            android:visibility="invisible"
                             android:duplicateParentState="true"
+                            android:visibility="invisible"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
@@ -126,21 +124,6 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
         </RelativeLayout>
-
-
-        <com.vanniktech.emoji.EmojiEditText
-                android:id="@+id/message_input_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:inputType="textShortMessage|textMultiLine"
-                android:maxLength="1000"
-                android:maxLines="5"
-                android:minHeight="55dp"
-                android:minLines="1"
-                android:scrollbars="vertical"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/fab_layout"
-                app:layout_constraintStart_toEndOf="@+id/emojiIcon" />
 
 
         <RelativeLayout
@@ -198,14 +181,80 @@
 
         </RelativeLayout>
 
-        <ImageView
-                android:id="@+id/emojiIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/audioLayout"
+                android:layout_width="348dp"
+                android:layout_height="53dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/recyclerView"
-                app:srcCompat="@drawable/emoji_icon" />
+                tools:visibility="gone">
+
+            <ImageView
+                    android:id="@+id/imageView2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/mic_icon" />
+
+            <TextView
+                    android:id="@+id/textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/audio_message"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/imageView2"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                    android:id="@+id/audio_length_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toEndOf="@+id/textView"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:text="0:15" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/textLayout"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/fab_layout"
+                app:layout_constraintStart_toStartOf="parent">
+
+            <com.vanniktech.emoji.EmojiEditText
+                    android:id="@+id/message_input_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:inputType="textShortMessage|textMultiLine"
+                    android:maxLength="1000"
+                    android:maxLines="5"
+                    android:minHeight="55dp"
+                    android:minLines="1"
+                    android:scrollbars="vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/emojiIcon"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                    android:id="@+id/emojiIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/emoji_icon" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

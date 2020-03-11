@@ -18,6 +18,7 @@ data class MessageEntity(
     @ColumnInfo(index = true)
     val replyMessageId: String? = null,
     var image: String? = null,
+    var audio: String? = null,
     val received: Int = 0,
     val viewed: Int = 0
 )
@@ -32,6 +33,7 @@ data class MessageJoined(
     @Embedded(prefix = "reply_")
     val replyMessage: MessageEntity?,
     var image: String? = null,
+    var audio: String? = null,
     val received: Int = 0,
     val viewed: Int = 0
 )

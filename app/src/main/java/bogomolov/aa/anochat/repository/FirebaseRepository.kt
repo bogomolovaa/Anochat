@@ -32,7 +32,11 @@ interface IFirebaseRepository {
     suspend fun downloadFile(fileName: String): Boolean
     suspend fun sendReport(messageId: String, received: Int, viewed: Int)
     suspend fun deleteRemoteMessage(messageId: String)
-    suspend fun addUserStatusListener(uid: String, isOnline: (Boolean) -> Unit, lastTimeOnline: (Long) -> Unit): () -> Unit
+    suspend fun addUserStatusListener(
+        uid: String,
+        isOnline: (Boolean) -> Unit,
+        lastTimeOnline: (Long) -> Unit
+    ): () -> Unit
 }
 
 class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRepository {
@@ -47,7 +51,11 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         }
     }
 
-    override suspend fun addUserStatusListener(uid: String, isOnline: (Boolean) -> Unit, lastTimeOnline: (Long) -> Unit): () -> Unit {
+    override suspend fun addUserStatusListener(
+        uid: String,
+        isOnline: (Boolean) -> Unit,
+        lastTimeOnline: (Long) -> Unit
+    ): () -> Unit {
         val userRef = FirebaseDatabase.getInstance().getReference("users/${uid}")
 
         val onlineListener =
@@ -183,13 +191,20 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         })
     }
 
-    fun sendMessage(text: String?, replyId: String?,image: String?, uid: String): String {
+    fun sendMessage(
+        text: String?,
+        replyId: String?,
+        image: String?,
+        audio: String?,
+        uid: String
+    ): String {
         val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
         ref.setValue(
             mapOf(
                 "message" to text,
                 "reply" to replyId,
                 "image" to image,
+                "audio" to audio,
                 "dest" to uid,
                 "source" to token
             )
