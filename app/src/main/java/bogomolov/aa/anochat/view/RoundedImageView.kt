@@ -11,15 +11,15 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import bogomolov.aa.anochat.R
 
 
-class RoundedImageView(context: Context, attrs: AttributeSet, defStyleAttr: Int) :
-    FrameLayout(context, attrs, defStyleAttr) {
+class RoundedImageView(context: Context, attrs: AttributeSet) :
+    FrameLayout(context, attrs) {
 
     init {
-        ConstraintLayout.inflate(context, R.layout.play_audio_layout, this)
+        ConstraintLayout.inflate(context, R.layout.rounded_image_layout, this)
 
-        val a = context.obtainStyledAttributes(attrs, R.styleable.RoundedImageView, defStyleAttr, 0)
+        val a = context.obtainStyledAttributes(attrs, R.styleable.RoundedImageView, 0, 0)
 
-        val tintColor = a.getColor(R.styleable.RoundedImageView_background, Color.BLACK)
+        val tintColor = a.getColor(R.styleable.RoundedImageView_foregroundColor, Color.BLACK)
         val roundFg: ImageView = findViewById(R.id.round_fg_image)
         roundFg.setColorFilter(tintColor)
 

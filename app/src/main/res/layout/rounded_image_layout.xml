@@ -2,7 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ImageView
             android:id="@+id/round_image"
@@ -14,7 +15,7 @@
             android:id="@+id/round_fg_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:srcCompat="@drawable/rounded_fg" />
+            app:srcCompat="@drawable/rounded_fg" />
 
 
 </FrameLayout>

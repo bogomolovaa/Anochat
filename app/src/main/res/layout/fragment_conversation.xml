@@ -37,11 +37,11 @@
                         android:id="@+id/user_photo"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:background="#FFFFFF"
+                        app:foregroundColor="@color/colorPrimary"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:src="@drawable/user_icon" />
+                        app:src="@drawable/ic_launcher_background" />
 
 
                 <TextView
