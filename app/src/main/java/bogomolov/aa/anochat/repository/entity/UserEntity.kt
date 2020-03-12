@@ -9,5 +9,6 @@ data class UserEntity(
     var id: Long = 0,
     var uid: String = "",
     var name: String = "",
+    var photo: String? = null,
     var changed: Long = 0
 )

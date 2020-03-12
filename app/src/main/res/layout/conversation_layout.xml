@@ -38,26 +38,36 @@
                     android:id="@+id/last_message"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginBottom="16dp"
                     android:text="@{conversation.lastMessage.shortText()}"
                     card_view:layout_constraintBottom_toBottomOf="parent"
-                    card_view:layout_constraintStart_toStartOf="parent"
-                    card_view:layout_constraintTop_toBottomOf="@+id/user_name"
+                    card_view:layout_constraintStart_toEndOf="@+id/user_photo"
                     tools:text="message text" />
 
             <TextView
                     android:id="@+id/user_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginTop="12dp"
                     android:text="@{conversation.user.name}"
                     android:textStyle="bold"
-                    card_view:layout_constraintStart_toStartOf="parent"
+                    card_view:layout_constraintStart_toEndOf="@+id/user_photo"
                     card_view:layout_constraintTop_toTopOf="parent"
                     tools:text="username" />
+
+            <ImageView
+                    android:id="@+id/user_photo"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    card_view:layout_constraintBottom_toBottomOf="parent"
+                    card_view:layout_constraintStart_toStartOf="parent"
+                    card_view:layout_constraintTop_toTopOf="parent"
+                    card_view:srcCompat="@drawable/user_icon" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </com.google.android.material.card.MaterialCardView>

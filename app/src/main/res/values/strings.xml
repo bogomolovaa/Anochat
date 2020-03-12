@@ -25,4 +25,5 @@
     <string name="enter_message">enter message</string>
     <string name="selected_image">selected_image</string>
     <string name="audio_message">Audio message:</string>
+    <string name="settings">Settings</string>
 </resources>

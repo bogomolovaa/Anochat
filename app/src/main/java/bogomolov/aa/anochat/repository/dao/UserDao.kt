@@ -12,8 +12,15 @@ interface UserDao {
     fun add(user: UserEntity): Long
 
     @Query("select * from UserEntity where id = :id")
-    fun getUser(id : Long): UserEntity?
+    fun getUser(id: Long): UserEntity?
 
     @Query("select * from UserEntity where uid = :uid")
-    fun findByUid(uid : String): UserEntity?
+    fun findByUid(uid: String): UserEntity?
+
+    @Query("update UserEntity set photo = :photo where uid = :uid")
+    fun updatePhoto(photo: String?, uid: String)
+
+    @Query("update UserEntity set name = :name where uid = :uid")
+    fun updateName(name: String?, uid: String)
+
 }

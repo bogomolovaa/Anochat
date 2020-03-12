@@ -3,29 +3,23 @@ package bogomolov.aa.anochat.view.fragments
 
 import android.content.Context
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.observe
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
-
-import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
 import bogomolov.aa.anochat.view.AdapterHelper
 import bogomolov.aa.anochat.view.ConversationsPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationListViewModel
-import bogomolov.aa.anochat.viewmodel.UsersViewModel
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
+import bogomolov.aa.anochat.R
 
 class ConversationsListFragment : Fragment() {
     @Inject
@@ -51,6 +45,7 @@ class ConversationsListFragment : Fragment() {
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
+        setHasOptionsMenu(true)
 
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         val adapter = ConversationsPagedAdapter(AdapterHelper {
@@ -66,10 +61,23 @@ class ConversationsListFragment : Fragment() {
 
 
         NavigationUI.setupWithNavController(binding.toolbar, navController)
-        binding.fab.setOnClickListener{
+        binding.fab.setOnClickListener {
             navController.navigate(R.id.usersFragment)
         }
         return binding.root
     }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        menu.clear()
+        inflater.inflate(R.menu.main_menu, menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        return (NavigationUI.onNavDestinationSelected(item, navController)
+                || super.onOptionsItemSelected(item))
+    }
+
 
 }

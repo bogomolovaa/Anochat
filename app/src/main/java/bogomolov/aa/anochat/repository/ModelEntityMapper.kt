@@ -55,10 +55,10 @@ fun modelToEntity(from: Message) =
 
 fun entityToModel(from: UserEntity?): User? =
     if (from != null)
-        User(from.id, from.uid, from.name, from.changed)
+        User(from.id, from.uid, from.name, from.photo, from.changed)
     else null
 
-fun modelToEntity(from: User) = UserEntity(from.id, from.uid, from.name, from.changed)
+fun modelToEntity(from: User) = UserEntity(from.id, from.uid, from.name, from.photo, from.changed)
 
 fun entityToModel(from: ConversationJoined?): Conversation? =
     if (from != null)
