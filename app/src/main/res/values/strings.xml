@@ -27,4 +27,8 @@
     <string name="audio_message">Audio message:</string>
     <string name="settings">Settings</string>
     <string name="no_status">No status</string>
+    <string name="enter_new_name">Enter new name</string>
+    <string name="enter_new_status">Enter new status</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
 </resources>

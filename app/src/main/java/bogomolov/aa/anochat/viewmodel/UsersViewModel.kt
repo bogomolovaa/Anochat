@@ -16,7 +16,9 @@ class UsersViewModel
 
     fun search(startWith: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            usersLiveData.postValue(repository.findUsers(startWith))
+            val users = repository.findUsers(startWith)
+            for (user in users) repository.updateUserFrom(user)
+            usersLiveData.postValue(users)
         }
     }
 

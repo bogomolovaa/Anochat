@@ -21,6 +21,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
+import androidx.preference.PreferenceManager
 
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getPath
@@ -48,7 +49,7 @@ class SettingsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = DataBindingUtil.inflate<FragmentSettingsBinding>(
+        binding = DataBindingUtil.inflate(
             inflater,
             R.layout.fragment_settings,
             container,
@@ -59,12 +60,30 @@ class SettingsFragment : Fragment() {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        val uid = sharedPreferences.getString("uid", "")
+        viewModel.loadUser(uid!!)
+
         binding.editPhoto.setOnClickListener {
             requestReadPermission()
         }
 
         binding.editUsername.setOnClickListener {
+            val bottomSheetFragment = EditUserBottomDialogFragment(
+                requireContext().resources.getString(R.string.enter_new_name)
+            ) {
+                if(it.isNotEmpty()) viewModel.updateName(it)
+            }
+            bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
+        }
 
+        binding.editStatus.setOnClickListener {
+            val bottomSheetFragment = EditUserBottomDialogFragment(
+                requireContext().resources.getString(R.string.enter_new_status)
+            ) {
+                if(it.isNotEmpty()) viewModel.updateStatus(it)
+            }
+            bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
         }
 
         return binding.root

@@ -27,8 +27,8 @@ interface IFirebaseRepository {
     suspend fun signIn(email: String, password: String): Boolean
     fun signOut()
     suspend fun isSignedIn(): Boolean
-    suspend fun uploadFile(fileName: String): Boolean
-    suspend fun downloadFile(fileName: String): Boolean
+    suspend fun uploadFile(fileName: String, uid: String? = null): Boolean
+    suspend fun downloadFile(fileName: String, uid: String? = null): Boolean
     suspend fun sendReport(messageId: String, received: Int, viewed: Int)
     suspend fun deleteRemoteMessage(messageId: String)
     suspend fun addUserStatusListener(
@@ -121,10 +121,11 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             .updateChildren(mapOf("received" to received.toString(), "viewed" to viewed.toString()))
     }
 
-    override suspend fun downloadFile(fileName: String): Boolean =
+    override suspend fun downloadFile(fileName: String, uid: String?): Boolean =
         suspendCoroutine { continuation ->
             Log.i("test", "start downloading: $fileName")
-            val fileRef = FirebaseStorage.getInstance().reference.child(fileName)
+            val fileRef = FirebaseStorage.getInstance()
+                .getReference(if (uid != null) "/user/{$uid}/" else "/files/").child(fileName)
             val localFile = File(getFilesDir(context), fileName)
             fileRef.getFile(localFile).addOnSuccessListener {
                 Log.i("test", "downloaded $fileName")
@@ -136,19 +137,21 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             }
         }
 
-    override suspend fun uploadFile(fileName: String): Boolean = suspendCoroutine { continuation ->
-        Log.i("test", "start uploading $fileName")
-        val fileRef = FirebaseStorage.getInstance().reference.child(fileName)
-        val localFile = File(getFilesDir(context), fileName)
-        fileRef.putFile(Uri.fromFile(localFile)).addOnSuccessListener {
-            Log.i("test", "uploaded $fileName")
-            continuation.resume(true)
-        }.addOnFailureListener {
-            continuation.resume(false)
-            Log.i("test", "NOT uploaded $fileName")
-            it.printStackTrace()
+    override suspend fun uploadFile(fileName: String, uid: String?): Boolean =
+        suspendCoroutine { continuation ->
+            Log.i("test", "start uploading $fileName")
+            val fileRef = FirebaseStorage.getInstance()
+                .getReference(if (uid != null) "/user/{$uid}/" else "/files/").child(fileName)
+            val localFile = File(getFilesDir(context), fileName)
+            fileRef.putFile(Uri.fromFile(localFile)).addOnSuccessListener {
+                Log.i("test", "uploaded $fileName")
+                continuation.resume(true)
+            }.addOnFailureListener {
+                continuation.resume(false)
+                Log.i("test", "NOT uploaded $fileName")
+                it.printStackTrace()
+            }
         }
-    }
 
     suspend fun getUser(uid: String): User = suspendCoroutine {
         val ref = FirebaseDatabase.getInstance().getReference("users/$uid")
@@ -166,7 +169,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     private fun userFromRef(snapshot: DataSnapshot): User {
         val uid = snapshot.key!!
         val name = snapshot.child("name").value.toString()
-        val photo = snapshot.child("photo").value.toString()
+        val photo = snapshot.child("photo").value?.toString()
         return User(uid = uid, name = name, photo = photo)
     }
 
@@ -179,6 +182,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         query.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 Log.i("test", "snapshot $snapshot")
+
                 if (snapshot.exists())
                     for (user in snapshot.children) users += userFromRef(user)
                 it.resume(users)

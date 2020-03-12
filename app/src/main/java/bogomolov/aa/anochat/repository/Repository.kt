@@ -18,7 +18,9 @@ interface Repository : IFirebaseRepository{
 
     suspend fun findUser(uid: String): User?
 
-    suspend fun updateUser(user: User)
+    suspend fun updateUserTo(user: User)
+
+    suspend fun updateUserFrom(user: User)
 
     fun loadConversations(): DataSource.Factory<Int, Conversation>
 

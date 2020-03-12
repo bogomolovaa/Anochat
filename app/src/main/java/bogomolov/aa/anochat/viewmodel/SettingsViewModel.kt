@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,17 +15,40 @@ class SettingsViewModel
     val userLiveData = MutableLiveData<User>()
 
     fun loadUser(uid: String) {
+        Log.i("test","load user $uid")
         viewModelScope.launch(Dispatchers.IO) {
             userLiveData.postValue(repository.findUser(uid))
         }
     }
 
+    private fun updateUser(user: User) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updateUserTo(user)
+        }
+    }
+
     fun updatePhoto(photo: String) {
         val user = userLiveData.value
-        if (user != null)
-            viewModelScope.launch(Dispatchers.IO) {
-                user.photo = photo
-                repository.updateUser(user)
-            }
+        if (user != null) {
+            user.photo = photo
+            updateUser(user)
+        }
+    }
+
+    fun updateName(name: String) {
+        val user = userLiveData.value
+        Log.i("test","updateName $user name to $name")
+        if (user != null) {
+            user.name = name
+            updateUser(user)
+        }
+    }
+
+    fun updateStatus(status: String) {
+        val user = userLiveData.value
+        if (user != null) {
+            user.status = status
+            updateUser(user)
+        }
     }
 }

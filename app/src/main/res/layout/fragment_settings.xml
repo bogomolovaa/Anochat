@@ -35,13 +35,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
-            <ImageView
-                    android:id="@+id/edit_photo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintEnd_toEndOf="@+id/user_photo"
-                    app:layout_constraintTop_toTopOf="@+id/user_photo"
-                    app:srcCompat="@drawable/edit_icon" />
+
 
             <bogomolov.aa.anochat.view.RoundedImageView
                     android:id="@+id/user_photo"
@@ -54,10 +48,16 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:src="@drawable/user_icon"
-                    app:srcFile="@{viewModel.userLiveData.photo}">
+                    app:srcDrawable="@drawable/user_icon"
+                    app:srcFile="@{viewModel.userLiveData.photo}"/>
 
-            </bogomolov.aa.anochat.view.RoundedImageView>
+            <ImageView
+                    android:id="@+id/edit_photo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintEnd_toEndOf="@+id/user_photo"
+                    app:layout_constraintTop_toTopOf="@+id/user_photo"
+                    app:srcCompat="@drawable/edit_icon" />
 
 
             <TextView

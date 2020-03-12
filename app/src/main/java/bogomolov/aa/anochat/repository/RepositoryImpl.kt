@@ -3,10 +3,12 @@ package bogomolov.aa.anochat.repository
 import android.content.Context
 import android.util.Log
 import androidx.paging.DataSource
+import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.repository.entity.ConversationEntity
+import java.io.File
 import java.lang.Exception
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -91,7 +93,7 @@ class RepositoryImpl
 
     override suspend fun findUser(uid: String): User? = entityToModel(db.userDao().findByUid(uid))
 
-    override suspend fun updateUser(user: User) {
+    override suspend fun updateUserTo(user: User) {
         val savedUser = db.userDao().getUser(user.id)
         if (savedUser != null) {
             if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
@@ -99,6 +101,18 @@ class RepositoryImpl
             if (user.photo != null && user.photo != savedUser.photo)
                 firebase.updatePhoto(user.uid, user.photo!!)
             db.userDao().updateUser(user.uid, user.name, user.photo, user.status)
+        }
+    }
+
+    override suspend fun updateUserFrom(user: User) {
+        val savedUser = db.userDao().getUser(user.id)
+        if (savedUser != null) {
+            if ((user.photo != savedUser.photo && user.photo != null))
+                firebase.downloadFile(user.photo!!, user.uid)
+            db.userDao().updateUser(user.uid, user.name, user.photo, user.status)
+        } else {
+            if (user.photo != null && !File(getFilesDir(context), user.photo!!).exists())
+                firebase.downloadFile(user.photo!!, user.uid)
         }
     }
 
