@@ -19,7 +19,7 @@ import javax.inject.Inject
 import kotlin.collections.ArrayList
 
 class ConversationViewModel
-@Inject constructor(val repository: Repository) : ViewModel() {
+@Inject constructor(private val repository: Repository) : ViewModel() {
     val conversationLiveData = MutableLiveData<Conversation>()
     val onlineStatus = MutableLiveData<String>()
     private var removeStatusListener: (() -> Unit)? = null

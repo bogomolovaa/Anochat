@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class UsersViewModel
-@Inject constructor(val repository: Repository) : ViewModel() {
+@Inject constructor(private val repository: Repository) : ViewModel() {
     val usersLiveData = MutableLiveData<List<User>>()
 
     fun search(startWith: String) {

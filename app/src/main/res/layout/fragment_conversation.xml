@@ -27,30 +27,49 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-            <LinearLayout
-                    android:layout_width="wrap_content"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
                     tools:layout_editor_absoluteX="16dp"
                     tools:layout_editor_absoluteY="8dp">
+
+                <bogomolov.aa.anochat.view.RoundedImageView
+                        android:id="@+id/user_photo"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="#FFFFFF"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:src="@drawable/user_icon" />
+
 
                 <TextView
                         android:id="@+id/username_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
                         android:text="@{viewModel.conversationLiveData.user.name}"
                         android:textSize="20sp"
                         android:textStyle="bold"
+                        app:layout_constraintStart_toEndOf="@+id/user_photo"
+                        app:layout_constraintTop_toTopOf="parent"
                         tools:text="Username" />
 
                 <TextView
                         android:id="@+id/status_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginBottom="4dp"
                         android:text="@{viewModel.onlineStatus}"
                         android:textSize="12sp"
+                        app:layout_constraintBottom_toBottomOf="@+id/user_photo"
+                        app:layout_constraintStart_toEndOf="@+id/user_photo"
                         tools:text="online" />
-            </LinearLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
 
         </androidx.appcompat.widget.Toolbar>
 
@@ -205,7 +224,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:layout_marginEnd="16dp"
-                    android:visibility="gone"/>
+                    android:visibility="gone" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/textLayout"
@@ -290,6 +309,7 @@
                         app:srcCompat="@drawable/record_icon" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </FrameLayout>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

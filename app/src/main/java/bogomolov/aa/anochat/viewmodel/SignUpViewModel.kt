@@ -12,7 +12,7 @@ import javax.inject.Inject
 enum class RegisterState { REGISTERED, NOT_REGISTERED }
 
 class SignUpViewModel
-@Inject constructor(val repository: Repository): ViewModel(){
+@Inject constructor(private val repository: Repository): ViewModel(){
     val registerStateLiveData = MutableLiveData<RegisterState>()
 
     fun signUp(name: String, email: String, password: String) {

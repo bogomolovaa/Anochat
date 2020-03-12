@@ -20,7 +20,7 @@ import javax.inject.Inject
 import kotlin.math.max
 
 class SendMediaViewModel
-@Inject constructor(val repository: Repository) : ViewModel() {
+@Inject constructor(private val repository: Repository) : ViewModel() {
 
     fun sendMessage(imageFileName: String, messageText: String, conversationId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
