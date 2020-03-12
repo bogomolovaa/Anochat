@@ -81,7 +81,7 @@ class ConversationViewModel
     }
 
 
-    fun sendMessage(messageText: String, replyMessageId: String?) {
+    fun sendMessage(messageText: String, replyMessageId: String?, audio: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             val conversation = conversationLiveData.value
             if (conversation != null) {
@@ -89,10 +89,20 @@ class ConversationViewModel
                     text = messageText,
                     time = System.currentTimeMillis(),
                     conversationId = conversation.id,
-                    replyMessage = if (replyMessageId != null) Message(messageId = replyMessageId) else null
+                    replyMessage = if (replyMessageId != null) Message(messageId = replyMessageId) else null,
+                    audio = audio
                 )
-                Log.i("test","sendMessage message.replyMessage ${message.replyMessage?.messageId}")
-                repository.saveAndSendMessage(message, conversation)
+                Log.i("test", "sendMessage message.replyMessage ${message.replyMessage?.messageId}")
+                if (audio == null) {
+                    repository.saveAndSendMessage(message, conversation)
+                } else {
+                    repository.saveMessage(message, conversation.id)
+                    if (repository.uploadFile(audio)) {
+                        repository.sendMessage(message)
+                    } else {
+                        Log.i("test", "Not uploaded")
+                    }
+                }
             }
         }
     }

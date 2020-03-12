@@ -33,6 +33,7 @@ import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
@@ -41,6 +42,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.android.getPath
+import bogomolov.aa.anochat.android.getRandomString
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.view.MainActivity
@@ -49,6 +51,9 @@ import bogomolov.aa.anochat.viewmodel.ConversationViewModel
 import com.google.android.material.card.MaterialCardView
 import com.vanniktech.emoji.EmojiPopup
 import dagger.android.support.AndroidSupportInjection
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -66,6 +71,7 @@ class ConversationFragment : Fragment() {
     private var replyMessageId: String? = null
     private var recorder: MediaRecorder? = null
     private lateinit var binding: FragmentConversationBinding
+    private var audioFileName: String? = null
 
 
     override fun onAttach(context: Context) {
@@ -100,6 +106,7 @@ class ConversationFragment : Fragment() {
         val adapter = MessagesPagedAdapter(activity = requireActivity(),
             onReply = {
                 binding.replyImage.visibility = View.INVISIBLE
+                binding.replayAudio.visibility = View.INVISIBLE
                 binding.replyText.text = it.text
                 replyMessageId = it.messageId
                 Log.i("test", "onReply replyMessageId $replyMessageId")
@@ -112,6 +119,10 @@ class ConversationFragment : Fragment() {
                         binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
                         binding.replyImage.visibility = View.VISIBLE
                     }
+                }
+                if (it.audio != null) {
+                    binding.replayAudio.setFile(it.audio)
+                    binding.replayAudio.visibility = View.VISIBLE
                 }
                 binding.removeReply.setOnClickListener {
                     removeReply(binding)
@@ -186,17 +197,33 @@ class ConversationFragment : Fragment() {
             emojiPopup.dismiss()
             navController.navigateUp()
         }
+        binding.playAudioInput.setOnClose {
+            binding.fab.setImageResource(R.drawable.plus_icon)
+            textEntered = false
+            binding.playAudioInput.visibility = View.GONE
+            binding.textLayout.visibility = View.VISIBLE
+            if (audioFileName != null) {
+                File(getFilesDir(requireContext()), audioFileName!!).delete()
+                audioFileName = null
+            }
+        }
         return view
     }
+
 
     private var fabExpanded = false
     private var textEntered = false
 
     private fun sendMessageAction() {
         val text = binding.messageInputText.text
-        if (!text.isNullOrEmpty()) {
+        if (audioFileName != null) {
+            Log.i("test", "message audio: $audioFileName")
+            viewModel.sendMessage(text.toString(), replyMessageId, audioFileName)
+            binding.playAudioInput.visibility = View.GONE
+            binding.textLayout.visibility = View.VISIBLE
+        } else if (!text.isNullOrEmpty()) {
             Log.i("test", "message text: $text")
-            viewModel.sendMessage(text.toString(), replyMessageId)
+            viewModel.sendMessage(text.toString(), replyMessageId, null)
             binding.messageInputText.setText("")
             removeReply(binding)
         }
@@ -228,7 +255,7 @@ class ConversationFragment : Fragment() {
         binding.fab.setImageResource(R.drawable.plus_icon)
     }
 
-    private fun expandFabs () {
+    private fun expandFabs() {
         binding.fabMic.visibility = View.VISIBLE
         binding.fabMic.animate()
             .translationY(-600f).setListener(object : AnimatorListenerAdapter() {
@@ -254,7 +281,7 @@ class ConversationFragment : Fragment() {
             }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
     }
 
-    private fun setFabDefaultOnClickListener(){
+    private fun setFabDefaultOnClickListener() {
         binding.fab.setOnClickListener {
             if (textEntered) {
                 sendMessageAction()
@@ -328,15 +355,31 @@ class ConversationFragment : Fragment() {
 
     }
 
+    @SuppressLint("SimpleDateFormat")
     private fun startRecording() {
+        audioFileName = getRandomString(20) + ".3gp"
+        binding.textLayout.visibility = View.GONE
+        binding.audioLayout.visibility = View.VISIBLE
+        val startTime = System.currentTimeMillis()
+        val job = lifecycleScope.launch {
+            while (true) {
+                val time = System.currentTimeMillis() - startTime
+                val timeString = SimpleDateFormat("mm:ss").format(Date(time))
+                binding.audioLengthText.text = timeString
+                delay(1000)
+            }
+        }
+
+
         binding.fab.setImageResource(R.drawable.stop_icon)
         binding.fab.setOnClickListener {
+            job.cancel()
             stopRecording()
         }
         val recorder = MediaRecorder()
         recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
         recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-        recorder.setOutputFile(File(getFilesDir(requireContext()), "last_record.3gp").path)
+        recorder.setOutputFile(File(getFilesDir(requireContext()), audioFileName!!).path)
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
         recorder.prepare()
         recorder.start()
@@ -344,6 +387,7 @@ class ConversationFragment : Fragment() {
     }
 
     private fun stopRecording() {
+        binding.audioLayout.visibility = View.GONE
         if (recorder != null) {
             recorder!!.stop()
             recorder!!.release()
@@ -351,14 +395,10 @@ class ConversationFragment : Fragment() {
         recorder = null
         binding.fab.setImageResource(R.drawable.plus_icon)
         setFabDefaultOnClickListener()
-        startPlaying()
-    }
-
-    private fun startPlaying() {
-        val player = MediaPlayer()
-        player.setDataSource(File(getFilesDir(requireContext()), "last_record.3gp").path);
-        player.prepare();
-        player.start();
+        binding.playAudioInput.setFile(audioFileName!!)
+        binding.playAudioInput.visibility = View.VISIBLE
+        binding.fab.setImageResource(R.drawable.send_icon)
+        textEntered = true
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -448,5 +488,5 @@ class ConversationFragment : Fragment() {
 fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
     val p = view.layoutParams as ViewGroup.MarginLayoutParams
     p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin);
-    view.requestLayout();
+    view.requestLayout()
 }
