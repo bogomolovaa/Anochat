@@ -16,6 +16,10 @@ interface Repository : IFirebaseRepository{
 
     fun loadMessages(conversationId: Long): DataSource.Factory<Int, Message>
 
+    suspend fun findUser(uid: String): User?
+
+    suspend fun updateUser(user: User)
+
     fun loadConversations(): DataSource.Factory<Int, Conversation>
 
     suspend fun getConversation(id: Long): Conversation

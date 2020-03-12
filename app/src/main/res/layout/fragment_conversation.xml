@@ -41,7 +41,8 @@
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:src="@drawable/ic_launcher_background" />
+                        app:srcDrawable="@drawable/user_icon"
+                        app:srcFile="@{viewModel.conversationLiveData.user.photo}" />
 
 
                 <TextView
@@ -50,6 +51,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:text="@{viewModel.conversationLiveData.user.name}"
+                        android:textColor="#000000"
                         android:textSize="20sp"
                         android:textStyle="bold"
                         app:layout_constraintStart_toEndOf="@+id/user_photo"

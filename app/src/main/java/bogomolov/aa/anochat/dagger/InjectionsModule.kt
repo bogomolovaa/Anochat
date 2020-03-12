@@ -31,6 +31,9 @@ abstract class InjectionsModule {
     abstract fun bindSendMediaFragment(): SendMediaFragment
 
     @ContributesAndroidInjector
+    abstract fun bindSettingsFragment(): SettingsFragment
+
+    @ContributesAndroidInjector
     abstract fun bindMyFirebaseMessagingService(): MyFirebaseMessagingService
 
 }

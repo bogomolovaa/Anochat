@@ -17,10 +17,7 @@ interface UserDao {
     @Query("select * from UserEntity where uid = :uid")
     fun findByUid(uid: String): UserEntity?
 
-    @Query("update UserEntity set photo = :photo where uid = :uid")
-    fun updatePhoto(photo: String?, uid: String)
-
-    @Query("update UserEntity set name = :name where uid = :uid")
-    fun updateName(name: String?, uid: String)
+    @Query("update UserEntity set name = :name, photo = :photo, status = :status  where uid = :uid")
+    fun updateUser(uid: String, name: String?, photo: String?, status: String?)
 
 }

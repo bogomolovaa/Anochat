@@ -207,6 +207,8 @@ class ConversationFragment : Fragment() {
                 audioFileName = null
             }
         }
+
+
         return view
     }
 
@@ -471,8 +473,8 @@ class ConversationFragment : Fragment() {
     }
 
     companion object {
-        const val FILE_CHOOSER_CODE: Int = 0
-        const val CAMERA_CODE: Int = 1
+        private const val FILE_CHOOSER_CODE: Int = 0
+        private const val CAMERA_CODE: Int = 1
         private const val READ_PERMISSION = Manifest.permission.READ_EXTERNAL_STORAGE
         private const val CAMERA_PERMISSION = Manifest.permission.CAMERA
         private const val MICROPHONE_PERMISSION = Manifest.permission.RECORD_AUDIO

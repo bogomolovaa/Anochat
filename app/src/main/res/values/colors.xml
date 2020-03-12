@@ -11,5 +11,7 @@
     <color name="report_message_color1">#03A9F4</color>
     <color name="report_message_color0">#939393</color>
 
+    <color name="white">#ffffff</color>
+
 
 </resources>

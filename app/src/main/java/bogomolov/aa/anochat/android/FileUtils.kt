@@ -16,7 +16,7 @@ import kotlin.math.max
 
 const val MAX_IMAGE_DIM = 1024
 
-fun resizeImage(path: String? = null, bitmap: Bitmap? = null, context: Context): File {
+fun resizeImage(path: String? = null, bitmap: Bitmap? = null, context: Context): String {
     val btmp = bitmap ?: BitmapFactory.decodeFile(path)
     val newFileName = getRandomString(20)
     var ratio = MAX_IMAGE_DIM / max(btmp.width, btmp.height).toFloat()
@@ -27,17 +27,19 @@ fun resizeImage(path: String? = null, bitmap: Bitmap? = null, context: Context):
         (ratio * btmp.height).toInt(),
         true
     )
-    val file = File(getFilesDir(context), "$newFileName.jpg")
+    val fileName = "$newFileName.jpg"
     try {
-        val stream = FileOutputStream(file)
+        val stream = FileOutputStream(getFilePath(context,fileName))
         resized.compress(Bitmap.CompressFormat.JPEG, 80, stream)
         stream.flush()
         stream.close()
     } catch (e: IOException) {
         e.printStackTrace()
     }
-    return file
+    return fileName
 }
+
+fun getFilePath(context: Context, fileName: String) = File(getFilesDir(context), fileName).path
 
 fun getFilesDir(context: Context) = context.cacheDir
 
@@ -92,7 +94,7 @@ fun getPath(context: Context, uri: Uri): String? {
     return null
 }
 
-fun getDataColumn(
+private fun getDataColumn(
     context: Context, uri: Uri?, selection: String?,
     selectionArgs: Array<String?>?
 ): String? {
@@ -116,14 +118,14 @@ fun getDataColumn(
     return null
 }
 
-fun isExternalStorageDocument(uri: Uri): Boolean {
+private fun isExternalStorageDocument(uri: Uri): Boolean {
     return "com.android.externalstorage.documents" == uri.authority
 }
 
-fun isDownloadsDocument(uri: Uri): Boolean {
+private fun isDownloadsDocument(uri: Uri): Boolean {
     return "com.android.providers.downloads.documents" == uri.authority
 }
 
-fun isMediaDocument(uri: Uri): Boolean {
+private fun isMediaDocument(uri: Uri): Boolean {
     return "com.android.providers.media.documents" == uri.authority
 }

@@ -2,6 +2,7 @@
 <resources>
     <declare-styleable name="RoundedImageView">
         <attr name="foregroundColor" format="color" />
-        <attr name="src" format="reference" />
+        <attr name="srcDrawable" format="reference" />
+        <attr name="srcFile" format="string" />
     </declare-styleable>
 </resources>

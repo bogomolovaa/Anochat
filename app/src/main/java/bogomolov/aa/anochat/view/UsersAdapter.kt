@@ -1,13 +1,20 @@
 package bogomolov.aa.anochat.view
 
+import android.app.Activity
+import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
+import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.databinding.UserLayoutBinding
+import java.io.File
 
-class UsersAdapter(private val helper: AdapterHelper<User, UserLayoutBinding> = AdapterHelper()) :
+class UsersAdapter(
+    private val activity: Activity,
+    private val helper: AdapterHelper<User, UserLayoutBinding> = AdapterHelper()
+) :
     RecyclerView.Adapter<AdapterHelper<User, UserLayoutBinding>.VH>(),
     AdapterSelectable<User, UserLayoutBinding> {
     val users = ArrayList<User>()
@@ -23,7 +30,7 @@ class UsersAdapter(private val helper: AdapterHelper<User, UserLayoutBinding> = 
         val binding =
             UserLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.cardView
-        return helper.VH(cv,cv, binding)
+        return helper.VH(cv, cv, binding)
     }
 
     override fun onBindViewHolder(
@@ -36,7 +43,9 @@ class UsersAdapter(private val helper: AdapterHelper<User, UserLayoutBinding> = 
     override fun getId(item: User) = item.id
 
     override fun bind(item: User?, binding: UserLayoutBinding) {
-        if (item != null) binding.user = item
+        if (item != null) {
+            binding.user = item
+        }
     }
 
     override fun getItemCount() = users.size

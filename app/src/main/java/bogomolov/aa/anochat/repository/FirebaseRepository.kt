@@ -23,7 +23,6 @@ import kotlin.coroutines.suspendCoroutine
 
 interface IFirebaseRepository {
     suspend fun findUsers(startWith: String): List<User>
-    fun updateUser(user: User)
     suspend fun signUp(name: String, email: String, password: String): Boolean
     suspend fun signIn(email: String, password: String): Boolean
     fun signOut()
@@ -167,8 +166,8 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     private fun userFromRef(snapshot: DataSnapshot): User {
         val uid = snapshot.key!!
         val name = snapshot.child("name").value.toString()
-        val changed = snapshot.child("changed").value.toString().toLong()
-        return User(uid = uid, name = name, changed = changed)
+        val photo = snapshot.child("photo").value.toString()
+        return User(uid = uid, name = name, photo = photo)
     }
 
     override suspend fun findUsers(startWith: String): List<User> = suspendCoroutine {
@@ -212,18 +211,28 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         return ref.key!!
     }
 
-    override fun updateUser(user: User) {
+    fun renameUser(uid: String, name: String) {
         val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("users").child(user.uid).setValue(mapOf("changed" to user.changed))
-        myRef.child("users").child(user.uid).setValue(mapOf("name" to user.name))
+        myRef.child("users").child(uid).setValue(mapOf("name" to name))
+    }
+
+    fun updateStatus(uid: String, status: String?) {
+        val myRef = FirebaseDatabase.getInstance().reference
+        myRef.child("users").child(uid).setValue(mapOf("status" to status))
+    }
+
+    suspend fun updatePhoto(uid: String, photo: String) {
+        val myRef = FirebaseDatabase.getInstance().reference
+        myRef.child("users").child(uid).setValue(mapOf("photo" to photo))
+        uploadFile(photo)
     }
 
     override suspend fun signUp(name: String, email: String, password: String): Boolean {
         val uid = userSignUp(email, password)
         if (uid == null) return false
         saveEmailAndPassword(email, password)
-        val user = User(name = name, uid = uid, changed = System.currentTimeMillis())
-        updateUser(user)
+        val user = User(name = name, uid = uid)
+        renameUser(user.uid, user.name)
         saveUidAndToken(uid, token)
         return true
     }

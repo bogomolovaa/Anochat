@@ -57,7 +57,7 @@ class RepositoryImpl
     override suspend fun saveMessage(message: Message, conversationId: Long) {
         val entity = modelToEntity(message)
         message.id = db.messageDao().insert(entity)
-        Log.i("test","save message $entity")
+        Log.i("test", "save message $entity")
         db.conversationDao().updateLastMessage(message.id, conversationId)
     }
 
@@ -87,6 +87,19 @@ class RepositoryImpl
         saveMessage(message, conversationEntity.id)
         firebase.sendReport(messageId, 1, 0)
         return message
+    }
+
+    override suspend fun findUser(uid: String): User? = entityToModel(db.userDao().findByUid(uid))
+
+    override suspend fun updateUser(user: User) {
+        val savedUser = db.userDao().getUser(user.id)
+        if (savedUser != null) {
+            if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
+            if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
+            if (user.photo != null && user.photo != savedUser.photo)
+                firebase.updatePhoto(user.uid, user.photo!!)
+            db.userDao().updateUser(user.uid, user.name, user.photo, user.status)
+        }
     }
 
     private suspend fun getOrAddConversation(

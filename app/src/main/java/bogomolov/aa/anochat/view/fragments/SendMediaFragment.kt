@@ -15,6 +15,7 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.android.getFilePath
 import bogomolov.aa.anochat.android.resizeImage
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
@@ -54,11 +55,11 @@ class SendMediaFragment : Fragment() {
         conversationId = arguments?.getLong("conversationId")!!
 
         val resizedImage = resizeImage(path = mediaPath,context = requireContext())
-        binding.imageView.setImageBitmap(BitmapFactory.decodeFile(resizedImage.path))
+        binding.imageView.setImageBitmap(BitmapFactory.decodeFile(getFilePath(requireContext(), resizedImage)))
         binding.messageInputLayout.setEndIconOnClickListener {
             val text = binding.messageInputText.text?.toString() ?: ""
             Log.i("test","send message: $text")
-            viewModel.sendMessage(resizedImage.name, text, conversationId)
+            viewModel.sendMessage(resizedImage, text, conversationId)
             navController.popBackStack()
         }
 

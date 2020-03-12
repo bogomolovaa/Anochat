@@ -55,7 +55,7 @@ class UsersFragment : Fragment() {
 
         recyclerView = binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
-        val adapter = UsersAdapter(AdapterHelper {
+        val adapter = UsersAdapter(requireActivity(), AdapterHelper {
             viewModel.createConversation(it) { conversationId ->
                 navController.navigate(
                     R.id.conversationFragment,

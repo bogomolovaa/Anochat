@@ -3,6 +3,13 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools">
 
+    <data>
+
+        <variable
+                name="viewModel"
+                type="bogomolov.aa.anochat.viewmodel.SettingsViewModel" />
+    </data>
+
     <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -29,16 +36,29 @@
                 app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
             <ImageView
+                    android:id="@+id/edit_photo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintEnd_toEndOf="@+id/user_photo"
+                    app:layout_constraintTop_toTopOf="@+id/user_photo"
+                    app:srcCompat="@drawable/edit_icon" />
+
+            <bogomolov.aa.anochat.view.RoundedImageView
                     android:id="@+id/user_photo"
                     android:layout_width="100dp"
                     android:layout_height="100dp"
                     android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="8dp"
+                    app:foregroundColor="@color/white"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/user_icon" />
+                    app:src="@drawable/user_icon"
+                    app:srcFile="@{viewModel.userLiveData.photo}">
+
+            </bogomolov.aa.anochat.view.RoundedImageView>
+
 
             <TextView
                     android:id="@+id/username_text"
@@ -46,6 +66,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
                     android:layout_marginTop="16dp"
+                    android:text="@{viewModel.userLiveData.name}"
                     android:textSize="24sp"
                     android:textStyle="bold"
                     app:layout_constraintStart_toEndOf="@+id/user_photo"
@@ -58,10 +79,11 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
                     android:layout_marginTop="24dp"
+                    android:text="@{viewModel.userLiveData.status ?? @string/no_status}"
+                    tools:text="Status"
                     android:textSize="16sp"
                     app:layout_constraintStart_toEndOf="@+id/user_photo"
-                    app:layout_constraintTop_toBottomOf="@+id/username_text"
-                    tools:text="Status" />
+                    app:layout_constraintTop_toBottomOf="@+id/username_text" />
 
             <ImageView
                     android:id="@+id/edit_username"
@@ -81,18 +103,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="@+id/status_text" />
 
-            <ImageView
-                    android:id="@+id/round_fg"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:tint="#FFFFFF"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/rounded_fg" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
