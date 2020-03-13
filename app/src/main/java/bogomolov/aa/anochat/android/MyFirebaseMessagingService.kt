@@ -122,11 +122,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
             .setComponentName(MainActivity::class.java)
             .setGraph(R.navigation.nav_graph)
             .setDestination(R.id.conversationFragment)
-            .setArguments(Bundle().apply{putLong("id",message.conversationId)})
+            .setArguments(Bundle().apply { putLong("id", message.conversationId) })
             .createPendingIntent()
         val channelId = "anochat channel"
-        val title =
-            applicationContext.resources.getString(R.string.new_message, conversation.user.name)
+        val title = conversation.user.name
         val notificationBuilder: NotificationCompat.Builder =
             NotificationCompat.Builder(this, channelId)
                 .setContentTitle(title)

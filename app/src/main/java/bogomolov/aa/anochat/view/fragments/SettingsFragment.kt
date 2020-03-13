@@ -61,6 +61,9 @@ class SettingsFragment : Fragment() {
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         val uid = getSetting<String>(requireContext(), UID)
+        //val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        //val uid = sharedPreferences.getString("uid", null)
+        Log.i("test","uid $uid")
         viewModel.loadUser(uid!!)
 
         binding.editPhoto.setOnClickListener {
@@ -86,11 +89,11 @@ class SettingsFragment : Fragment() {
         }
 
         binding.notificationsSwitch.isChecked =
-            getSetting<Boolean>(requireContext(), NOTIFICATIONS)!!
+            getSetting<Boolean>(requireContext(), NOTIFICATIONS)!=null
         binding.soundSwitch.isChecked =
-            getSetting<Boolean>(requireContext(), SOUND)!!
+            getSetting<Boolean>(requireContext(), SOUND)!=null
         binding.vibrationSwitch.isChecked =
-            getSetting<Boolean>(requireContext(), VIBRATION)!!
+            getSetting<Boolean>(requireContext(), VIBRATION)!=null
 
         binding.notificationsSwitch.setOnCheckedChangeListener { _, isChecked ->
             setSetting(requireContext(), NOTIFICATIONS, isChecked)

@@ -9,6 +9,8 @@ import androidx.emoji.text.EmojiCompat
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.android.UID
+import bogomolov.aa.anochat.android.setSetting
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
 import bogomolov.aa.anochat.viewmodel.MainActivityViewModel
@@ -52,6 +54,9 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
             }
              */
         }
+
+        setSetting(this, UID,"LX4U2yR5ZJUsN5hivvDvF9NUHXJ3")
+
     }
 
     private fun emojiSupport() {

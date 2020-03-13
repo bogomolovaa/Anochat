@@ -34,5 +34,4 @@
     <string name="notifications">Notifications</string>
     <string name="sound">Sound</string>
     <string name="vibration">Vibration</string>
-    <string name="new_message">New message from %1$s</string>
 </resources>
