@@ -24,8 +24,7 @@ import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
 
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.android.getPath
-import bogomolov.aa.anochat.android.resizeImage
+import bogomolov.aa.anochat.android.*
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSettingsBinding
 import bogomolov.aa.anochat.viewmodel.SettingsViewModel
@@ -55,13 +54,13 @@ class SettingsFragment : Fragment() {
             container,
             false
         )
+        binding.viewModel = viewModel
         binding.lifecycleOwner = this
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val uid = sharedPreferences.getString("uid", "")
+        val uid = getSetting<String>(requireContext(), UID)
         viewModel.loadUser(uid!!)
 
         binding.editPhoto.setOnClickListener {
@@ -72,7 +71,7 @@ class SettingsFragment : Fragment() {
             val bottomSheetFragment = EditUserBottomDialogFragment(
                 requireContext().resources.getString(R.string.enter_new_name)
             ) {
-                if(it.isNotEmpty()) viewModel.updateName(it)
+                if (it.isNotEmpty()) viewModel.updateName(it)
             }
             bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
         }
@@ -81,9 +80,28 @@ class SettingsFragment : Fragment() {
             val bottomSheetFragment = EditUserBottomDialogFragment(
                 requireContext().resources.getString(R.string.enter_new_status)
             ) {
-                if(it.isNotEmpty()) viewModel.updateStatus(it)
+                if (it.isNotEmpty()) viewModel.updateStatus(it)
             }
             bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
+        }
+
+        binding.notificationsSwitch.isChecked =
+            getSetting<Boolean>(requireContext(), NOTIFICATIONS)!!
+        binding.soundSwitch.isChecked =
+            getSetting<Boolean>(requireContext(), SOUND)!!
+        binding.vibrationSwitch.isChecked =
+            getSetting<Boolean>(requireContext(), VIBRATION)!!
+
+        binding.notificationsSwitch.setOnCheckedChangeListener { _, isChecked ->
+            setSetting(requireContext(), NOTIFICATIONS, isChecked)
+        }
+
+        binding.soundSwitch.setOnCheckedChangeListener { _, isChecked ->
+            setSetting(requireContext(), SOUND, isChecked)
+        }
+
+        binding.vibrationSwitch.setOnCheckedChangeListener { _, isChecked ->
+            setSetting(requireContext(), VIBRATION, isChecked)
         }
 
         return binding.root

@@ -1,13 +1,19 @@
 package bogomolov.aa.anochat.android
 
-import android.R
 import android.app.NotificationChannel
+import android.media.AudioManager
+import bogomolov.aa.anochat.R
+
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.os.Build
+import android.os.Bundle
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.navigation.NavDeepLinkBuilder
 import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.repository.Repository
@@ -63,12 +69,21 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                     if (uid != null && messageId != null)
                         GlobalScope.launch(Dispatchers.IO) {
                             Log.i("test", "receiveMessage");
-                            val message = repository.receiveMessage(text, uid, messageId, replyId, image, audio)
+                            val message = repository.receiveMessage(
+                                text,
+                                uid,
+                                messageId,
+                                replyId,
+                                image,
+                                audio
+                            )
                             if (message != null) {
                                 val inBackground = (application as AnochatAplication).inBackground
                                 if (message.image != null) repository.downloadFile(message.image)
                                 if (message.audio != null) repository.downloadFile(message.audio)
-                                if (inBackground) sendNotification(message)
+                                val showNotification =
+                                    getSetting<Boolean>(applicationContext, NOTIFICATIONS) != null
+                                if (inBackground && showNotification) sendNotification(message)
                             }
                         }
                 }
@@ -97,18 +112,38 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
     override fun onNewToken(token: String) {
     }
 
-    private fun sendNotification(message: Message) {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT)
-        val channelId = "annochat channel"
+    private suspend fun sendNotification(message: Message) {
+        val conversation = repository.getConversation(message.conversationId)
+        val bitmap = if (conversation.user.photo != null)
+            BitmapFactory.decodeFile(getFilePath(applicationContext, conversation.user.photo!!))
+        else
+            BitmapFactory.decodeResource(applicationContext.resources, R.drawable.user_icon)
+        val pendingIntent = NavDeepLinkBuilder(applicationContext)
+            .setComponentName(MainActivity::class.java)
+            .setGraph(R.navigation.nav_graph)
+            .setDestination(R.id.conversationFragment)
+            .setArguments(Bundle().apply{putLong("id",message.conversationId)})
+            .createPendingIntent()
+        val channelId = "anochat channel"
+        val title =
+            applicationContext.resources.getString(R.string.new_message, conversation.user.name)
         val notificationBuilder: NotificationCompat.Builder =
             NotificationCompat.Builder(this, channelId)
-                .setContentTitle("You have a new message")
-                .setSmallIcon(R.mipmap.sym_def_app_icon)
-                .setContentText(message.text)
+                .setContentTitle(title)
+                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                .setLargeIcon(bitmap)
+                .setLights(Color.RED, 3000, 3000)
+                .setContentText(message.shortText())
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
+        val canVibrate = getSetting<Boolean>(applicationContext, VIBRATION) != null
+        if (canVibrate) notificationBuilder.setVibrate(longArrayOf(1000, 1000))
+        val canSound = getSetting<Boolean>(applicationContext, SOUND) != null
+        if (canSound) notificationBuilder.setSound(
+            android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,
+            AudioManager.STREAM_NOTIFICATION
+        )
+
         val notificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

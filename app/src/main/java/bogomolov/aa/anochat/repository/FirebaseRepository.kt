@@ -217,18 +217,18 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
     fun renameUser(uid: String, name: String) {
         val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("users").child(uid).setValue(mapOf("name" to name))
+        myRef.child("users").child(uid).updateChildren(mapOf("name" to name))
     }
 
     fun updateStatus(uid: String, status: String?) {
         val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("users").child(uid).setValue(mapOf("status" to status))
+        myRef.child("users").child(uid).updateChildren(mapOf("status" to status))
     }
 
     suspend fun updatePhoto(uid: String, photo: String) {
         val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("users").child(uid).setValue(mapOf("photo" to photo))
-        uploadFile(photo)
+        myRef.child("users").child(uid).updateChildren(mapOf("photo" to photo))
+        uploadFile(photo,uid)
     }
 
     override suspend fun signUp(name: String, email: String, password: String): Boolean {

@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.DialogFragment
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.UserEditLayoutBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -14,6 +15,12 @@ class EditUserBottomDialogFragment(
     private val title: String,
     val onSave: (String) -> Unit
 ) : BottomSheetDialogFragment() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setStyle(DialogFragment.STYLE_NORMAL, R.style.BottomDialogStyle)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

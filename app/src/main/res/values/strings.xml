@@ -31,4 +31,8 @@
     <string name="enter_new_status">Enter new status</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
+    <string name="notifications">Notifications</string>
+    <string name="sound">Sound</string>
+    <string name="vibration">Vibration</string>
+    <string name="new_message">New message from %1$s</string>
 </resources>
