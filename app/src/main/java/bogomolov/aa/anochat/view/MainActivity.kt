@@ -55,8 +55,8 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
              */
         }
 
-        setSetting(this, UID,"LX4U2yR5ZJUsN5hivvDvF9NUHXJ3")
-
+        //setSetting(this, UID,"LX4U2yR5ZJUsN5hivvDvF9NUHXJ3")
+        viewModel.startWorkManager()
     }
 
     private fun emojiSupport() {

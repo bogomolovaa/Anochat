@@ -9,7 +9,6 @@ import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.repository.entity.ConversationEntity
 import java.io.File
-import java.lang.Exception
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -75,7 +74,7 @@ class RepositoryImpl
         image: String?,
         audio: String?
     ): Message? {
-        val conversationEntity = getOrAddConversation(uid) { firebase.getUser(uid) }
+        val conversationEntity = getOrAddConversation(uid) { firebase.getUser(uid)!! }
         val message = Message(
             text = text ?: "",
             time = System.currentTimeMillis(),
@@ -91,7 +90,11 @@ class RepositoryImpl
         return message
     }
 
-    override suspend fun findUser(uid: String): User? = entityToModel(db.userDao().findByUid(uid))
+    override suspend fun getUser(uid: String): User? = entityToModel(db.userDao().findByUid(uid))
+
+    override suspend fun receiveUser(uid: String): User? = firebase.getUser(uid)
+
+    override suspend fun getUser(id: Long): User = entityToModel(db.userDao().getUser(id))!!
 
     override suspend fun updateUserTo(user: User) {
         val savedUser = db.userDao().getUser(user.id)
@@ -103,6 +106,9 @@ class RepositoryImpl
             db.userDao().updateUser(user.uid, user.name, user.photo, user.status)
         }
     }
+
+    override suspend fun loadConversations(): List<Conversation> =
+        entityToModel(db.conversationDao().loadAllConversations())
 
     override suspend fun updateUserFrom(user: User) {
         val savedUser = db.userDao().getUser(user.id)
@@ -136,7 +142,7 @@ class RepositoryImpl
             entityToModel(it)
         }
 
-    override fun loadConversations(): DataSource.Factory<Int, Conversation> =
+    override fun loadConversationsDataSource(): DataSource.Factory<Int, Conversation> =
         db.conversationDao().loadConversations().map {
             entityToModel(it)
         }

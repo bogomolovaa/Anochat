@@ -17,7 +17,7 @@ class SettingsViewModel
     fun loadUser(uid: String) {
         Log.i("test","load user $uid")
         viewModelScope.launch(Dispatchers.IO) {
-            userLiveData.postValue(repository.findUser(uid))
+            userLiveData.postValue(repository.getUser(uid))
         }
     }
 

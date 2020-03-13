@@ -34,6 +34,9 @@ abstract class InjectionsModule {
     abstract fun bindSettingsFragment(): SettingsFragment
 
     @ContributesAndroidInjector
+    abstract fun bindUserViewFragment(): UserViewFragment
+
+    @ContributesAndroidInjector
     abstract fun bindMyFirebaseMessagingService(): MyFirebaseMessagingService
 
 }

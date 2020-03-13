@@ -12,9 +12,6 @@
         <action
                 android:id="@+id/action_conversationFragment_to_sendMediaFragment"
                 app:destination="@id/sendMediaFragment" />
-        <action
-                android:id="@+id/action_conversationFragment_to_imageViewFragment"
-                app:destination="@id/imageViewFragment" />
     </fragment>
     <fragment
             android:id="@+id/conversationsListFragment"
@@ -65,4 +62,8 @@
             android:id="@+id/settingsFragment"
             android:name="bogomolov.aa.anochat.view.fragments.SettingsFragment"
             android:label="SettingsFragment" />
+    <fragment
+            android:id="@+id/userViewFragment"
+            android:name="bogomolov.aa.anochat.view.fragments.UserViewFragment"
+            android:label="UserViewFragment" />
 </navigation>

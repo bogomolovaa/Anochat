@@ -208,6 +208,15 @@ class ConversationFragment : Fragment() {
             }
         }
 
+        viewModel.conversationLiveData.observe(viewLifecycleOwner) { user ->
+            binding.usernameLayout.setOnClickListener {
+                navController.navigate(
+                    R.id.userViewFragment,
+                    Bundle().apply { putLong("id", user.id) })
+            }
+        }
+
+
 
         return view
     }

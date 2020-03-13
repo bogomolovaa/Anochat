@@ -12,16 +12,26 @@ interface ConversationDao {
     fun add(conversation: ConversationEntity): Long
 
     @Transaction
-    @Query("SELECT * FROM ConversationEntity as conversation_ " +
-            "LEFT JOIN UserEntity as user_ ON conversation_.userId = user_.id " +
-            "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id order by message_.time desc"
+    @Query(
+        "SELECT * FROM ConversationEntity as conversation_ " +
+                "LEFT JOIN UserEntity as user_ ON conversation_.userId = user_.id " +
+                "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id order by message_.time desc"
     )
     fun loadConversations(): DataSource.Factory<Int, ConversationJoined>
 
     @Transaction
-    @Query("SELECT * FROM ConversationEntity as conversation_ " +
-            "LEFT JOIN UserEntity as user_ ON conversation_.userId = user_.id " +
-            "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id where conversation_.id = :conversationId"
+    @Query(
+        "SELECT * FROM ConversationEntity as conversation_ " +
+                "LEFT JOIN UserEntity as user_ ON conversation_.userId = user_.id " +
+                "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id order by message_.time desc"
+    )
+    fun loadAllConversations(): List<ConversationJoined>
+
+    @Transaction
+    @Query(
+        "SELECT * FROM ConversationEntity as conversation_ " +
+                "LEFT JOIN UserEntity as user_ ON conversation_.userId = user_.id " +
+                "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id where conversation_.id = :conversationId"
     )
     fun loadConversation(conversationId: Long): ConversationJoined
 

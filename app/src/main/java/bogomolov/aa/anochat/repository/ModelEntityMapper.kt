@@ -80,5 +80,7 @@ inline fun <reified T> entityToModel(fromList: List<*>): List<T> {
         for (fromEntity in fromList) toList.add(entityToModel(fromEntity as MessageEntity) as T)
     if (T::class.java.isAssignableFrom(User::class.java))
         for (fromEntity in fromList) toList.add(entityToModel(fromEntity as UserEntity) as T)
+    if (T::class.java.isAssignableFrom(Conversation::class.java))
+        for (fromEntity in fromList) toList.add(entityToModel(fromEntity as ConversationJoined) as T)
     return toList
 }

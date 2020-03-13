@@ -59,7 +59,7 @@ class MessagesPagedAdapter(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun bind(item: MessageView?, binding: MessageLayoutBinding) {
-        Log.i("test","bind $item")
+        Log.i("test", "bind $item")
         if (item != null) {
             binding.message = item
             if (item.hasImage()) {
@@ -74,12 +74,8 @@ class MessagesPagedAdapter(
                             .addSharedElement(binding.imageView, binding.imageView.transitionName)
                             .build()
                         setRecyclerViewState()
-                        navController.navigate(
-                            R.id.imageViewFragment,
-                            Bundle().apply { putString("image", file.name) },
-                            null,
-                            extras
-                        )
+                        val bundle = Bundle().apply { putString("image", file.name) }
+                        navController.navigate(R.id.imageViewFragment, bundle, null, extras)
                     }
                 }
             }

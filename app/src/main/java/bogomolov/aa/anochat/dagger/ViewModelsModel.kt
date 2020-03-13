@@ -51,5 +51,10 @@ abstract class ViewModelsModule {
     abstract fun bindSettingsViewModel(settingsViewModel: SettingsViewModel): ViewModel
 
     @Binds
+    @IntoMap
+    @ViewModelKey(UserViewViewModel::class)
+    abstract fun bindUserViewViewModel(userViewViewModel: UserViewViewModel): ViewModel
+
+    @Binds
     abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory
 }

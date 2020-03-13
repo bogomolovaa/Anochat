@@ -153,7 +153,9 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             }
         }
 
-    suspend fun getUser(uid: String): User = suspendCoroutine {
+
+
+    suspend fun getUser(uid: String): User? = suspendCoroutine {
         val ref = FirebaseDatabase.getInstance().getReference("users/$uid")
         ref.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -161,7 +163,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             }
 
             override fun onCancelled(p0: DatabaseError) {
-                it.resumeWithException(Exception("DatabaseError $p0"))
+                it.resume(null)
             }
         })
     }
@@ -169,8 +171,9 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     private fun userFromRef(snapshot: DataSnapshot): User {
         val uid = snapshot.key!!
         val name = snapshot.child("name").value.toString()
+        val status = snapshot.child("status").value.toString()
         val photo = snapshot.child("photo").value?.toString()
-        return User(uid = uid, name = name, photo = photo)
+        return User(uid = uid, name = name, status = status, photo = photo)
     }
 
     override suspend fun findUsers(startWith: String): List<User> = suspendCoroutine {
