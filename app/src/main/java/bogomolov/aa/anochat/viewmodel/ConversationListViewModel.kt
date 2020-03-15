@@ -26,4 +26,7 @@ class ConversationListViewModel
             }, 10
     ).build()
 
+    fun signOut(){
+        repository.signOut()
+    }
 }

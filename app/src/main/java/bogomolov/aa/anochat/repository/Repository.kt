@@ -8,6 +8,8 @@ import bogomolov.aa.anochat.core.User
 
 interface Repository : IFirebaseRepository {
 
+    fun getImages(userId: Long): DataSource.Factory<Int,String>
+
     suspend fun sendMessage(message: Message)
 
     suspend fun saveMessage(message: Message, conversationId: Long)

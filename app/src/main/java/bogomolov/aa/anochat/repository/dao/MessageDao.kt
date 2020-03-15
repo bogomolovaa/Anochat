@@ -25,6 +25,9 @@ interface MessageDao {
     )
     fun loadAll(conversationId: Long): DataSource.Factory<Int, MessageJoined>
 
+    @Query("select m.image from MessageEntity as m LEFT JOIN ConversationEntity as c on m.conversationId = c.id where m.image is not null and c.userId = :userId")
+    fun getImages(userId: Long): DataSource.Factory<Int,String>
+
     @Query("select * from MessageEntity where messageId = :messageId")
     fun getByMessageId(messageId: String): MessageEntity?
 

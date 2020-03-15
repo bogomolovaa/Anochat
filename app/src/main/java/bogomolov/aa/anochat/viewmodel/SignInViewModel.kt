@@ -7,25 +7,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.repository.Repository
+import com.google.firebase.auth.PhoneAuthCredential
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class LoginState { LOGGED, NOT_LOGGED }
+enum class LoginState { LOGGED, CODE_SENT, NOT_LOGGED }
 
 class SignInViewModel
 @Inject constructor(private val repository: Repository) : ViewModel() {
     val loginStateLiveData = MutableLiveData<LoginState>()
+    var verificationId: String? = null
+    var phoneNumber: String? = null
 
-    fun getSavedEmail(context: Context): String{
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        return sharedPreferences.getString("email","")!!
-    }
-
-    fun signIn(email: String, password: String) {
-        Log.i("test","signIn $email $password")
+    fun signIn(credential: PhoneAuthCredential) {
         viewModelScope.launch(Dispatchers.IO) {
-            val state = if(repository.signIn(email, password)) LoginState.LOGGED else LoginState.NOT_LOGGED
+            val state = if (repository.signIn(
+                    phoneNumber!!,
+                    credential
+                )
+            ) LoginState.LOGGED else LoginState.NOT_LOGGED
             loginStateLiveData.postValue(state)
         }
     }

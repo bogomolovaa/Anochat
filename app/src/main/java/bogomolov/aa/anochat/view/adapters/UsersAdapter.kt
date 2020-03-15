@@ -1,15 +1,13 @@
-package bogomolov.aa.anochat.view
+package bogomolov.aa.anochat.view.adapters
 
 import android.app.Activity
-import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
-import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.databinding.UserLayoutBinding
-import java.io.File
+import bogomolov.aa.anochat.view.adapters.AdapterHelper
+import bogomolov.aa.anochat.view.adapters.AdapterSelectable
 
 class UsersAdapter(
     private val activity: Activity,
@@ -43,9 +41,7 @@ class UsersAdapter(
     override fun getId(item: User) = item.id
 
     override fun bind(item: User?, binding: UserLayoutBinding) {
-        if (item != null) {
-            binding.user = item
-        }
+        binding.user = item
     }
 
     override fun getItemCount() = users.size

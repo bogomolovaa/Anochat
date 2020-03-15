@@ -34,4 +34,9 @@
     <string name="notifications">Notifications</string>
     <string name="sound">Sound</string>
     <string name="vibration">Vibration</string>
+    <string name="sign_out">Sign out</string>
+    <string name="phone_number">phone number</string>
+    <string name="verification_code">verification code</string>
+    <string name="invalid_verification_code">invalid verification code</string>
+
 </resources>

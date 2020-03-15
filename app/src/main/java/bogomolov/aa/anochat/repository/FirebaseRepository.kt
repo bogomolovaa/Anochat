@@ -5,9 +5,12 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
+import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.core.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.database.*
 import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.storage.FirebaseStorage
@@ -24,9 +27,9 @@ import kotlin.coroutines.suspendCoroutine
 interface IFirebaseRepository {
     suspend fun findUsers(startWith: String): List<User>
     suspend fun signUp(name: String, email: String, password: String): Boolean
-    suspend fun signIn(email: String, password: String): Boolean
+    suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean
     fun signOut()
-    suspend fun isSignedIn(): Boolean
+    fun isSignedIn(): Boolean
     suspend fun uploadFile(fileName: String, uid: String? = null): Boolean
     suspend fun downloadFile(fileName: String, uid: String? = null): Boolean
     suspend fun sendReport(messageId: String, received: Int, viewed: Int)
@@ -154,7 +157,6 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         }
 
 
-
     suspend fun getUser(uid: String): User? = suspendCoroutine {
         val ref = FirebaseDatabase.getInstance().getReference("users/$uid")
         ref.addListenerForSingleValueEvent(object : ValueEventListener {
@@ -171,7 +173,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     private fun userFromRef(snapshot: DataSnapshot): User {
         val uid = snapshot.key!!
         val name = snapshot.child("name").value.toString()
-        val status = snapshot.child("status").value.toString()
+        val status = snapshot.child("status").value?.toString()
         val photo = snapshot.child("photo").value?.toString()
         return User(uid = uid, name = name, status = status, photo = photo)
     }
@@ -231,23 +233,27 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     suspend fun updatePhoto(uid: String, photo: String) {
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("users").child(uid).updateChildren(mapOf("photo" to photo))
-        uploadFile(photo,uid)
+        uploadFile(photo, uid)
     }
 
     override suspend fun signUp(name: String, email: String, password: String): Boolean {
         val uid = userSignUp(email, password)
         if (uid == null) return false
-        saveEmailAndPassword(email, password)
         val user = User(name = name, uid = uid)
         renameUser(user.uid, user.name)
-        saveUidAndToken(uid, token)
+        saveUidAndToken(uid)
         return true
     }
 
-    override suspend fun signIn(email: String, password: String): Boolean {
-        val uid = userSignIn(email, password)
+    override suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean {
+        val uid = userSignIn(credential)
         if (uid == null) return false
-        saveUidAndToken(uid, token)
+        saveUidAndToken(uid)
+        val myRef = FirebaseDatabase.getInstance().reference
+        myRef.child("user_tokens").child(uid)
+            .setValue(mapOf("token" to token))
+        myRef.child("users").child(uid)
+            .updateChildren(mapOf("phone" to phoneNumber))
         return true
     }
 
@@ -257,28 +263,13 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         sharedPreferences.edit { putString("uid", "") }
     }
 
-    override suspend fun isSignedIn() = getUid() != null
+    override fun isSignedIn() = getUid() != null
 
-    private fun saveEmailAndPassword(email: String, password: String) {
-        //TODO: encrypt password
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        sharedPreferences.edit { putString("email", email) }
-        sharedPreferences.edit { putString("password", password) }
-    }
 
-    private fun saveUidAndToken(uid: String, token: String) {
+    private fun saveUidAndToken(uid: String) {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        //user changed
-        if (uid != sharedPreferences.getString("uid", "")) {
-            sharedPreferences.edit { putString("uid", uid) }
-            sharedPreferences.edit { putString("token", "") }
-        }
-        //token changed
-        if (token != sharedPreferences.getString("token", "")) {
-            sharedPreferences.edit { putString("token", token) }
-            val myRef = FirebaseDatabase.getInstance().reference
-            myRef.child("user_tokens").child(uid).setValue(mapOf("token" to token))
-        }
+        sharedPreferences.edit { putString("uid", uid) }
+        sharedPreferences.edit { putString("token", "") }
     }
 
     private suspend fun userSignUp(email: String, password: String): String? = suspendCoroutine {
@@ -301,9 +292,9 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
     private fun getUid() = FirebaseAuth.getInstance().currentUser?.uid
 
-    private suspend fun userSignIn(email: String, password: String): String? = suspendCoroutine {
+    private suspend fun userSignIn(credential: PhoneAuthCredential): String? = suspendCoroutine {
         val auth = FirebaseAuth.getInstance()
-        auth.signInWithEmailAndPassword(email, password)
+        auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser

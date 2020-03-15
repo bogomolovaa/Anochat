@@ -55,7 +55,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/email_input_layout"
+                    android:id="@+id/phone_input_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="16dp"
@@ -63,7 +63,7 @@
                     app:boxBackgroundColor="#FFFFFF">
 
                 <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/emailInputText"
+                        android:id="@+id/phoneInputText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textEmailAddress"
@@ -72,7 +72,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/password_input_layout"
+                    android:id="@+id/code_input_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="16dp"
@@ -80,7 +80,7 @@
                     app:boxBackgroundColor="#FFFFFF">
 
                 <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/passwordInputText"
+                        android:id="@+id/codeInputText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textPassword"
@@ -97,7 +97,6 @@
                 android:layout_margin="32dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:onClick="@{()-> viewModel.signUp(nameInputText.getText().toString(), emailInputText.getText().toString(), passwordInputText.getText().toString())}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:srcCompat="@drawable/ok_icon" />

@@ -2,7 +2,9 @@ package bogomolov.aa.anochat.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.work.*
+import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.android.UpdateWorker
+import bogomolov.aa.anochat.dagger.MyWorkerFactory
 import bogomolov.aa.anochat.repository.Repository
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -21,10 +23,19 @@ class MainActivityViewModel
             .setConstraints(constraints)
             .build()
 
-        WorkManager.getInstance(repository.getContext()).enqueueUniquePeriodicWork(
+        initializeWorkManager().enqueueUniquePeriodicWork(
             "updateUsers",
             ExistingPeriodicWorkPolicy.KEEP,
             uploadWorkRequest
         )
+    }
+
+    private fun initializeWorkManager(): WorkManager {
+        val appContext = repository.getContext() as AnochatAplication
+        val factory = appContext.workManagerConfiguration.workerFactory
+                as DelegatingWorkerFactory
+        factory.addFactory(MyWorkerFactory(repository))
+
+        return WorkManager.getInstance(appContext)
     }
 }

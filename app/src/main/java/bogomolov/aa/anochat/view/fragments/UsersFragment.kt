@@ -15,12 +15,10 @@ import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.core.Conversation
-import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
-import bogomolov.aa.anochat.view.AdapterHelper
-import bogomolov.aa.anochat.view.UsersAdapter
+import bogomolov.aa.anochat.view.adapters.AdapterHelper
+import bogomolov.aa.anochat.view.adapters.UsersAdapter
 import bogomolov.aa.anochat.viewmodel.UsersViewModel
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
@@ -55,13 +53,15 @@ class UsersFragment : Fragment() {
 
         recyclerView = binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
-        val adapter = UsersAdapter(requireActivity(), AdapterHelper {
-            viewModel.createConversation(it) { conversationId ->
-                navController.navigate(
-                    R.id.conversationFragment,
-                    Bundle().apply { putLong("id", conversationId) })
-            }
-        })
+        val adapter =
+            UsersAdapter(requireActivity(),
+                AdapterHelper {
+                    viewModel.createConversation(it) { conversationId ->
+                        navController.navigate(
+                            R.id.conversationFragment,
+                            Bundle().apply { putLong("id", conversationId) })
+                    }
+                })
         recyclerView.adapter = adapter
         viewModel.usersLiveData.observe(viewLifecycleOwner) {
             adapter.submitList(it)

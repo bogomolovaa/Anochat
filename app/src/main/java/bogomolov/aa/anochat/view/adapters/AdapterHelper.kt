@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.view
+package bogomolov.aa.anochat.view.adapters
 
 import android.annotation.SuppressLint
 import android.view.*

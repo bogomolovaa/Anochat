@@ -34,7 +34,6 @@ class ConversationViewModel
     @SuppressLint("SimpleDateFormat")
     fun loadMessages(conversationId: Long): LiveData<PagedList<MessageView>> {
         if (conversationId != conversationLiveData.value?.id) recyclerViewState = null
-        Log.i("test", "load messages conversationId ${conversationId}")
         viewModelScope.launch(Dispatchers.IO) {
             val conversation = repository.getConversation(conversationId)
             conversationLiveData.postValue(conversation)

@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.util.AttributeSet
+import android.util.Log
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.appcompat.content.res.AppCompatResources
@@ -17,6 +18,7 @@ import java.io.File
 
 class RoundedImageView(context: Context, attrs: AttributeSet) :
     FrameLayout(context, attrs) {
+    var defaultDrawable: Int? = null
 
     init {
         ConstraintLayout.inflate(context, R.layout.rounded_image_layout, this)
@@ -27,16 +29,20 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
         val roundFg: ImageView = findViewById(R.id.round_fg_image)
         roundFg.setColorFilter(tintColor)
 
-        val drawableResId = a.getResourceId(R.styleable.RoundedImageView_srcDrawable, -1);
-        val imageView: ImageView = findViewById(R.id.round_image)
-        if (drawableResId != -1) {
-            val drawable = AppCompatResources.getDrawable(context, drawableResId)
-            imageView.setImageDrawable(drawable)
-        }
+        defaultDrawable = a.getResourceId(R.styleable.RoundedImageView_srcDrawable, -1);
+        setDefaultDrawable()
         val fileName = a.getString(R.styleable.RoundedImageView_srcFile)
         if (fileName != null) setFile(fileName)
 
         a.recycle()
+    }
+
+    fun setDefaultDrawable(){
+        if (defaultDrawable != -1) {
+            val imageView: ImageView = findViewById(R.id.round_image)
+            val drawable = AppCompatResources.getDrawable(context, defaultDrawable!!)
+            imageView.setImageDrawable(drawable)
+        }
     }
 
     fun setFile(fileName: String) {
@@ -45,6 +51,8 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
         imageView.setImageBitmap(BitmapFactory.decodeFile(file.path))
     }
 
+
+
 }
 
 @BindingAdapter("app:srcFile")
@@ -52,5 +60,7 @@ fun setFileName(view: RoundedImageView, fileName: String?) {
     if (!fileName.isNullOrEmpty()) {
         view.setFile(fileName)
         view.requestLayout()
+    }else{
+        view.setDefaultDrawable()
     }
 }

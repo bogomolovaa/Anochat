@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.view
+package bogomolov.aa.anochat.view.adapters
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
@@ -17,11 +17,11 @@ import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.FragmentNavigator
 import androidx.paging.PagedListAdapter
-import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
+import bogomolov.aa.anochat.view.MessageView
 import java.io.File
 
 class MessagesPagedAdapter(
@@ -32,7 +32,8 @@ class MessagesPagedAdapter(
 ) :
     PagedListAdapter<MessageView, AdapterHelper<MessageView, MessageLayoutBinding>.VH>(
         helper.DIFF_CALLBACK
-    ), AdapterSelectable<MessageView, MessageLayoutBinding> {
+    ),
+    AdapterSelectable<MessageView, MessageLayoutBinding> {
 
     init {
         helper.adapter = this
@@ -59,7 +60,6 @@ class MessagesPagedAdapter(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun bind(item: MessageView?, binding: MessageLayoutBinding) {
-        Log.i("test", "bind $item")
         if (item != null) {
             binding.message = item
             if (item.hasImage()) {

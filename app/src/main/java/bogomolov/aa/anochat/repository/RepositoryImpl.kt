@@ -8,6 +8,9 @@ import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.repository.entity.ConversationEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -89,6 +92,8 @@ class RepositoryImpl
         firebase.sendReport(messageId, 1, 0)
         return message
     }
+
+    override fun getImages(userId: Long) = db.messageDao().getImages(userId)
 
     override suspend fun getUser(uid: String): User? = entityToModel(db.userDao().findByUid(uid))
 

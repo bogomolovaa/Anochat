@@ -12,7 +12,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.graphics.BitmapFactory
-import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
@@ -46,12 +45,11 @@ import bogomolov.aa.anochat.android.getRandomString
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.view.MainActivity
-import bogomolov.aa.anochat.view.MessagesPagedAdapter
+import bogomolov.aa.anochat.view.adapters.MessagesPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationViewModel
 import com.google.android.material.card.MaterialCardView
 import com.vanniktech.emoji.EmojiPopup
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -93,7 +91,7 @@ class ConversationFragment : Fragment() {
         val mainActivity = activity as MainActivity
         val view = binding.root
         binding.viewModel = viewModel
-        binding.lifecycleOwner = this
+        binding.lifecycleOwner = viewLifecycleOwner
         mainActivity.setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
@@ -103,36 +101,37 @@ class ConversationFragment : Fragment() {
         mainActivity.conversationId = conversationId
         val recyclerView = binding.recyclerView
         recyclerView.setItemViewCacheSize(20);
-        val adapter = MessagesPagedAdapter(activity = requireActivity(),
-            onReply = {
-                binding.replyImage.visibility = View.INVISIBLE
-                binding.replayAudio.visibility = View.INVISIBLE
-                binding.replyText.text = it.text
-                replyMessageId = it.messageId
-                Log.i("test", "onReply replyMessageId $replyMessageId")
-                val lastPosition = recyclerView.adapter?.itemCount ?: 0 - 1
-                Log.i("test", "lastPosition $lastPosition")
-                if (lastPosition > 0) recyclerView.smoothScrollToPosition(lastPosition)
-                if (it.image != null) {
-                    val file = File(getFilesDir(requireContext()), it.image)
-                    if (file.exists()) {
-                        binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
-                        binding.replyImage.visibility = View.VISIBLE
+        val adapter =
+            MessagesPagedAdapter(activity = requireActivity(),
+                onReply = {
+                    binding.replyImage.visibility = View.INVISIBLE
+                    binding.replayAudio.visibility = View.INVISIBLE
+                    binding.replyText.text = it.text
+                    replyMessageId = it.messageId
+                    Log.i("test", "onReply replyMessageId $replyMessageId")
+                    val lastPosition = recyclerView.adapter?.itemCount ?: 0 - 1
+                    Log.i("test", "lastPosition $lastPosition")
+                    if (lastPosition > 0) recyclerView.smoothScrollToPosition(lastPosition)
+                    if (it.image != null) {
+                        val file = File(getFilesDir(requireContext()), it.image)
+                        if (file.exists()) {
+                            binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
+                            binding.replyImage.visibility = View.VISIBLE
+                        }
                     }
-                }
-                if (it.audio != null) {
-                    binding.replayAudio.setFile(it.audio)
-                    binding.replayAudio.visibility = View.VISIBLE
-                }
-                binding.removeReply.setOnClickListener {
-                    removeReply(binding)
-                }
-                binding.replyLayout.visibility = View.VISIBLE
-            },
-            setRecyclerViewState = {
-                viewModel.recyclerViewState =
-                    recyclerView.layoutManager?.onSaveInstanceState()
-            })
+                    if (it.audio != null) {
+                        binding.replayAudio.setFile(it.audio)
+                        binding.replayAudio.visibility = View.VISIBLE
+                    }
+                    binding.removeReply.setOnClickListener {
+                        removeReply(binding)
+                    }
+                    binding.replyLayout.visibility = View.VISIBLE
+                },
+                setRecyclerViewState = {
+                    viewModel.recyclerViewState =
+                        recyclerView.layoutManager?.onSaveInstanceState()
+                })
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(context)
         viewModel.loadMessages(conversationId).observe(viewLifecycleOwner) {

@@ -5,14 +5,25 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.work.Configuration
+import androidx.work.DelegatingWorkerFactory
 import bogomolov.aa.anochat.dagger.DaggerAppComponent
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
 import javax.inject.Inject
 
-class AnochatAplication: Application(), HasAndroidInjector, LifecycleObserver {
+class AnochatAplication: Application(), HasAndroidInjector, LifecycleObserver, Configuration.Provider {
     var inBackground = false
+
+    private val delegatingWorkerFactory = DelegatingWorkerFactory()
+
+    override fun getWorkManagerConfiguration(): Configuration {
+        return Configuration.Builder()
+            .setMinimumLoggingLevel(android.util.Log.INFO)
+            .setWorkerFactory(delegatingWorkerFactory)
+            .build()
+    }
 
     @Inject
     internal lateinit var androidInjector: DispatchingAndroidInjector<Any>
@@ -37,3 +48,4 @@ class AnochatAplication: Application(), HasAndroidInjector, LifecycleObserver {
         inBackground = false
     }
 }
+
