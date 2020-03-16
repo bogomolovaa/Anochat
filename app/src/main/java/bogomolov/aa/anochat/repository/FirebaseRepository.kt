@@ -258,15 +258,14 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
     override fun signOut() {
         FirebaseAuth.getInstance().signOut()
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        sharedPreferences.edit { putString("uid", "") }
+        setSetting(context, UID, "")
     }
 
     override fun isSignedIn() = getUid() != null
 
 
     private fun saveUidAndToken(uid: String) {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        Log.i("test","saveUidAndToken $uid")
         setSetting(context, UID, uid)
         setSetting(context, TOKEN, token)
     }
