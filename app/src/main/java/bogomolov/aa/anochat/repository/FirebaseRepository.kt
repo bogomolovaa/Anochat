@@ -6,10 +6,7 @@ import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.android.TOKEN
-import bogomolov.aa.anochat.android.UID
-import bogomolov.aa.anochat.android.getFilesDir
-import bogomolov.aa.anochat.android.setSetting
+import bogomolov.aa.anochat.android.*
 import bogomolov.aa.anochat.core.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -28,6 +25,7 @@ import kotlin.coroutines.suspendCoroutine
 
 
 interface IFirebaseRepository {
+    suspend fun getUsersByPhones(phones: List<String>): List<User>
     suspend fun findUsers(startWith: String): List<User>
     suspend fun signUp(name: String, email: String, password: String): Boolean
     suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean
@@ -199,6 +197,37 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
             override fun onCancelled(p0: DatabaseError) {
                 it.resumeWithException(Exception("DatabaseError $p0"))
+            }
+        })
+    }
+
+    override suspend fun getUsersByPhones(phones: List<String>): List<User> = suspendCoroutine {
+        val phonesMap = HashMap<String,String>()
+        for(phone in phones) phonesMap[phone] = ""
+        val ref = FirebaseDatabase.getInstance().reference.child("requests").push()
+        ref.setValue(phonesMap)
+        val requestKey = ref.key
+        Log.i("test","respRef.addValueEventListener")
+        val respRef = FirebaseDatabase.getInstance().getReference("responses/$requestKey")
+        respRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                Log.i("test","onDataChange $snapshot")
+                if(snapshot.value!=null) {
+                    val users = ArrayList<User>()
+                    for (child in snapshot.children) {
+                        val user = userFromRef(child)
+                        users.add(user)
+                        Log.i("test", "response $user")
+                    }
+                    respRef.removeEventListener(this)
+                    respRef.removeValue()
+                    //key = -M2ZVxOnfsdtB-Hx1Cn_, value = {IVmG8808LGdtVPaz95CLIYIpI2D3={phone=+79057148736, name=sasha, online=1, lastOnline=1584379350147, photo=ipDgwQNFOmVCJlIvkxuu.jpg}}
+                    it.resume(users)
+                }
+            }
+            override fun onCancelled(p0: DatabaseError) {
+                it.resume(listOf())
+                Log.i("test","onCancelled $p0")
             }
         })
     }

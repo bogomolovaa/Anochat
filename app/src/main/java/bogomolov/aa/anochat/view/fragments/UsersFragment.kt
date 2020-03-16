@@ -68,7 +68,7 @@ class UsersFragment : Fragment() {
         }
         setHasOptionsMenu(true)
 
-
+        viewModel.loadContactUsers()
 
         return binding.root
     }

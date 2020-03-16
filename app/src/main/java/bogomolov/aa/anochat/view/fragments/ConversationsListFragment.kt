@@ -1,14 +1,19 @@
 package bogomolov.aa.anochat.view.fragments
 
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.observe
+import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -26,6 +31,7 @@ class ConversationsListFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     val viewModel: ConversationListViewModel by activityViewModels { viewModelFactory }
+    private lateinit var navController: NavController
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -48,7 +54,7 @@ class ConversationsListFragment : Fragment() {
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         setHasOptionsMenu(true)
 
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         val adapter =
             ConversationsPagedAdapter(
                 AdapterHelper {
@@ -65,7 +71,7 @@ class ConversationsListFragment : Fragment() {
 
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         binding.fab.setOnClickListener {
-            navController.navigate(R.id.usersFragment)
+            requestContactsPermission()
         }
         return binding.root
     }
@@ -79,7 +85,8 @@ class ConversationsListFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.menu_sign_out) {
             viewModel.signOut()
-            Navigation.findNavController(requireActivity(), R.id.nav_host_fragment).navigate(R.id.signInFragment)
+            Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                .navigate(R.id.signInFragment)
             return true
         }
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
@@ -87,5 +94,32 @@ class ConversationsListFragment : Fragment() {
                 || super.onOptionsItemSelected(item))
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            CONTACTS_PERMISSIONS_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.i("test","PERMISSION_GRANTED")
+                    navController.navigate(R.id.usersFragment)
+                } else {
+                    Log.i("test", "contacts perm not granted")
+                }
+            }
+        }
+    }
+
+    private fun requestContactsPermission() {
+        Log.i("test","requestContactsPermission")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            requestPermissions(arrayOf(CONTACTS_PERMISSIONS), CONTACTS_PERMISSIONS_CODE)
+    }
+
+    companion object {
+        private const val CONTACTS_PERMISSIONS = Manifest.permission.READ_CONTACTS
+        private const val CONTACTS_PERMISSIONS_CODE = 1001
+    }
 
 }
