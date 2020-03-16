@@ -270,23 +270,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         setSetting(context, TOKEN, token)
     }
 
-    private suspend fun userSignUp(email: String, password: String): String? = suspendCoroutine {
-        val auth = FirebaseAuth.getInstance()
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    Log.i(
-                        "test",
-                        "User created: ${user!!.displayName} email: ${user.email} uid: ${user.uid}"
-                    )
-                    it.resume(user.uid)
-                } else {
-                    Log.i("test", "User NOT created")
-                    it.resume(null)
-                }
-            }
-    }
+
 
     private fun getUid() = FirebaseAuth.getInstance().currentUser?.uid
 
