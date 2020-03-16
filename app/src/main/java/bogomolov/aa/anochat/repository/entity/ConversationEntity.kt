@@ -10,7 +10,8 @@ data class ConversationEntity(
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0,
     var userId: Long = 0,
-    var lastMessageId: Long = 0
+    var lastMessageId: Long = 0,
+    var myUid: String
 )
 
 data class ConversationJoined(

@@ -26,7 +26,7 @@ interface Repository : IFirebaseRepository {
 
     suspend fun updateUserTo(user: User)
 
-    suspend fun updateUserFrom(user: User)
+    suspend fun updateUserFrom(user: User, saveLocal: Boolean = false)
 
     suspend fun loadConversations(): List<Conversation>
 

@@ -3,7 +3,9 @@ package bogomolov.aa.anochat.repository
 import android.content.Context
 import android.util.Log
 import androidx.paging.DataSource
+import bogomolov.aa.anochat.android.UID
 import bogomolov.aa.anochat.android.getFilesDir
+import bogomolov.aa.anochat.android.getSetting
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
@@ -95,7 +97,14 @@ class RepositoryImpl
 
     override fun getImages(userId: Long) = db.messageDao().getImages(userId)
 
-    override suspend fun getUser(uid: String): User? = entityToModel(db.userDao().findByUid(uid))
+    override suspend fun getUser(uid: String): User? {
+        var user = entityToModel(db.userDao().findByUid(uid))
+        if (user == null) {
+            user = firebase.getUser(uid)
+            updateUserFrom(user = user!!, saveLocal =  true)
+        }
+        return user
+    }
 
     override suspend fun receiveUser(uid: String): User? = firebase.getUser(uid)
 
@@ -108,20 +117,23 @@ class RepositoryImpl
             if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
             if (user.photo != null && user.photo != savedUser.photo)
                 firebase.updatePhoto(user.uid, user.photo!!)
-            db.userDao().updateUser(user.uid, user.name, user.photo, user.status)
+            db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
         }
     }
 
-    override suspend fun loadConversations(): List<Conversation> =
-        entityToModel(db.conversationDao().loadAllConversations())
+    override suspend fun loadConversations(): List<Conversation> {
+        val myUid = getSetting<String>(context, UID)!!
+        return entityToModel(db.conversationDao().loadAllConversations(myUid))
+    }
 
-    override suspend fun updateUserFrom(user: User) {
+    override suspend fun updateUserFrom(user: User, saveLocal: Boolean) {
         val savedUser = db.userDao().getUser(user.id)
         if (savedUser != null) {
             if ((user.photo != savedUser.photo && user.photo != null))
                 firebase.downloadFile(user.photo!!, user.uid)
-            db.userDao().updateUser(user.uid, user.name, user.photo, user.status)
+            db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
         } else {
+            if (saveLocal) user.id = db.userDao().add(modelToEntity(user))
             if (user.photo != null && !File(getFilesDir(context), user.photo!!).exists())
                 firebase.downloadFile(user.photo!!, user.uid)
         }
@@ -131,11 +143,12 @@ class RepositoryImpl
         uid: String,
         getUser: suspend () -> User
     ): ConversationEntity {
+        val myUid = getSetting<String>(context, UID)!!
         val userEntity = db.userDao().findByUid(uid)
         val userId = userEntity?.id ?: db.userDao().add(modelToEntity(getUser()))
-        var conversationEntity = db.conversationDao().getConversationByUser(userId)
+        var conversationEntity = db.conversationDao().getConversationByUser(userId, myUid)
         if (conversationEntity == null) {
-            conversationEntity = ConversationEntity(userId = userId)
+            conversationEntity = ConversationEntity(userId = userId, myUid = myUid)
             conversationEntity.id = db.conversationDao().add(conversationEntity)
         }
         return conversationEntity
@@ -147,11 +160,12 @@ class RepositoryImpl
             entityToModel(it)
         }
 
-    override fun loadConversationsDataSource(): DataSource.Factory<Int, Conversation> =
-        db.conversationDao().loadConversations().map {
+    override fun loadConversationsDataSource(): DataSource.Factory<Int, Conversation> {
+        val myUid = getSetting<String>(context, UID)!!
+        return db.conversationDao().loadConversations(myUid).map {
             entityToModel(it)
         }
-
+    }
 
     override suspend fun getConversation(user: User): Long =
         getOrAddConversation(user.uid) { user }.id

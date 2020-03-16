@@ -6,6 +6,7 @@ import androidx.preference.PreferenceManager
 import kotlin.reflect.KClass
 
 const val UID = "uid"
+const val TOKEN = "token"
 const val NOTIFICATIONS = "notifications"
 const val SOUND = "sound"
 const val VIBRATION = "vibration"

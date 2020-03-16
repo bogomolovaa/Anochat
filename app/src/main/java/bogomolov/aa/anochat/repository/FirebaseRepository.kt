@@ -6,7 +6,10 @@ import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.android.TOKEN
+import bogomolov.aa.anochat.android.UID
 import bogomolov.aa.anochat.android.getFilesDir
+import bogomolov.aa.anochat.android.setSetting
 import bogomolov.aa.anochat.core.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -173,9 +176,10 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     private fun userFromRef(snapshot: DataSnapshot): User {
         val uid = snapshot.key!!
         val name = snapshot.child("name").value.toString()
+        val phone = snapshot.child("phone").value.toString()
         val status = snapshot.child("status").value?.toString()
         val photo = snapshot.child("photo").value?.toString()
-        return User(uid = uid, name = name, status = status, photo = photo)
+        return User(uid = uid, phone = phone, name = name, status = status, photo = photo)
     }
 
     override suspend fun findUsers(startWith: String): List<User> = suspendCoroutine {
@@ -237,11 +241,6 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     }
 
     override suspend fun signUp(name: String, email: String, password: String): Boolean {
-        val uid = userSignUp(email, password)
-        if (uid == null) return false
-        val user = User(name = name, uid = uid)
-        renameUser(user.uid, user.name)
-        saveUidAndToken(uid)
         return true
     }
 
@@ -268,8 +267,8 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
     private fun saveUidAndToken(uid: String) {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        sharedPreferences.edit { putString("uid", uid) }
-        sharedPreferences.edit { putString("token", "") }
+        setSetting(context, UID, uid)
+        setSetting(context, TOKEN, token)
     }
 
     private suspend fun userSignUp(email: String, password: String): String? = suspendCoroutine {
@@ -300,7 +299,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
                     val user = auth.currentUser
                     Log.i(
                         "test",
-                        "Authentication succeeded name: ${user!!.displayName} email: ${user.email} uid: ${user.uid}"
+                        "Authentication succeeded name: phone: ${user!!.phoneNumber} uid: ${user.uid}"
                     )
                     it.resume(user.uid)
                 } else {

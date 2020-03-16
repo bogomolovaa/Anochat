@@ -15,17 +15,17 @@ interface ConversationDao {
     @Query(
         "SELECT * FROM ConversationEntity as conversation_ " +
                 "LEFT JOIN UserEntity as user_ ON conversation_.userId = user_.id " +
-                "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id order by message_.time desc"
+                "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id where conversation_.myUid = :myUid order by message_.time desc"
     )
-    fun loadConversations(): DataSource.Factory<Int, ConversationJoined>
+    fun loadConversations(myUid: String): DataSource.Factory<Int, ConversationJoined>
 
     @Transaction
     @Query(
         "SELECT * FROM ConversationEntity as conversation_ " +
                 "LEFT JOIN UserEntity as user_ ON conversation_.userId = user_.id " +
-                "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id order by message_.time desc"
+                "LEFT JOIN MessageEntity as message_ ON conversation_.lastMessageId = message_.id where conversation_.myUid = :myUid order by message_.time desc"
     )
-    fun loadAllConversations(): List<ConversationJoined>
+    fun loadAllConversations(myUid: String): List<ConversationJoined>
 
     @Transaction
     @Query(
@@ -35,8 +35,8 @@ interface ConversationDao {
     )
     fun loadConversation(conversationId: Long): ConversationJoined
 
-    @Query("SELECT * FROM ConversationEntity where userId = :userId LIMIT 1")
-    fun getConversationByUser(userId: Long): ConversationEntity?
+    @Query("SELECT * FROM ConversationEntity where userId = :userId and myUid = :myUid")
+    fun getConversationByUser(userId: Long, myUid: String): ConversationEntity?
 
     @Query("UPDATE ConversationEntity set lastMessageId = :lastMessageId where id = :conversationId")
     fun updateLastMessage(lastMessageId: Long, conversationId: Long)
