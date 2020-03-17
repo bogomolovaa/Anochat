@@ -51,5 +51,6 @@ interface Repository : IFirebaseRepository {
 
     fun receiveReport(messageId: String, received: Int, viewed: Int)
 
+    fun searchMessagesDataSource(search: String): DataSource.Factory<Int, Conversation>
 
 }

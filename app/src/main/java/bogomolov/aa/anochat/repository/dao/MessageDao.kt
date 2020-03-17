@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import bogomolov.aa.anochat.repository.entity.ConversationJoined
 import bogomolov.aa.anochat.repository.entity.MessageEntity
 import bogomolov.aa.anochat.repository.entity.MessageJoined
 
@@ -43,7 +44,11 @@ interface MessageDao {
     @Query("update MessageEntity set messageId = :messageId where id = :id")
     fun updateMessageId(id: Long, messageId: String)
 
-    @Query("select * from MessageEntity where text like :search and conversationId in (select id from ConversationEntity where myUid = :uid)")
-    fun searchText(search: String, uid: String): DataSource.Factory<Int, MessageEntity>
+    @Transaction
+    @Query("select * from MessageEntity as message_ " +
+            "LEFT JOIN ConversationEntity as conversation_ on message_.conversationId = conversation_.id" +
+            "LEFT JOIN UserEntity as user_ on conversation_.userId = user_.id " +
+            "where message_.text like :search and conversation_.myUid = :uid")
+    fun searchText(search: String, uid: String): DataSource.Factory<Int, ConversationJoined>
 
 }

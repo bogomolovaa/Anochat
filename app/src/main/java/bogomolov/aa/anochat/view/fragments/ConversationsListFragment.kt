@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -80,6 +81,26 @@ class ConversationsListFragment : Fragment() {
         super.onCreateOptionsMenu(menu, inflater)
         menu.clear()
         inflater.inflate(R.menu.main_menu, menu)
+
+        val searchView = SearchView(requireContext())
+        menu.findItem(R.id.action_search).apply {
+            setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW or MenuItem.SHOW_AS_ACTION_IF_ROOM)
+            actionView = searchView
+        }
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                if (query != null && query.length >= 3) {
+                    val bundle = Bundle().apply { putString("search", query) }
+                    navController.navigate(R.id.messageSearchFragment, bundle)
+                    return true
+                }
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                return false
+            }
+        })
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -102,7 +123,7 @@ class ConversationsListFragment : Fragment() {
         when (requestCode) {
             CONTACTS_PERMISSIONS_CODE -> {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.i("test","PERMISSION_GRANTED")
+                    Log.i("test", "PERMISSION_GRANTED")
                     navController.navigate(R.id.usersFragment)
                 } else {
                     Log.i("test", "contacts perm not granted")
@@ -112,7 +133,7 @@ class ConversationsListFragment : Fragment() {
     }
 
     private fun requestContactsPermission() {
-        Log.i("test","requestContactsPermission")
+        Log.i("test", "requestContactsPermission")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             requestPermissions(arrayOf(CONTACTS_PERMISSIONS), CONTACTS_PERMISSIONS_CODE)
     }

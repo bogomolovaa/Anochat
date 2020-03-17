@@ -34,6 +34,9 @@ abstract class InjectionsModule {
     abstract fun bindUserViewFragment(): UserViewFragment
 
     @ContributesAndroidInjector
+    abstract fun bindMessageSearchFragment(): MessageSearchFragment
+
+    @ContributesAndroidInjector
     abstract fun bindMyFirebaseMessagingService(): MyFirebaseMessagingService
 
 }

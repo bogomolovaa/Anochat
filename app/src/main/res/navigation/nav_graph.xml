@@ -25,6 +25,9 @@
         <action
                 android:id="@+id/action_conversationsListFragment_to_settingsFragment"
                 app:destination="@id/settingsFragment" />
+        <action
+                android:id="@+id/action_conversationsListFragment_to_messageSearchFragment"
+                app:destination="@id/messageSearchFragment" />
     </fragment>
     <fragment
             android:id="@+id/usersFragment"
@@ -54,4 +57,8 @@
     <fragment
             android:id="@+id/userViewFragment"
             android:name="bogomolov.aa.anochat.view.fragments.UserViewFragment" />
+    <fragment
+            android:id="@+id/messageSearchFragment"
+            android:name="bogomolov.aa.anochat.view.fragments.MessageSearchFragment"
+            android:label="@string/search" />
 </navigation>

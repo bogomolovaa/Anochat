@@ -174,4 +174,10 @@ class RepositoryImpl
         getOrAddConversation(user.uid) { user }.id
 
 
+    override fun searchMessagesDataSource(search: String): DataSource.Factory<Int, Conversation> {
+        val myUid = getSetting<String>(context, UID)!!
+        return db.messageDao().searchText(search,myUid).map {
+            entityToModel(it)
+        }
+    }
 }

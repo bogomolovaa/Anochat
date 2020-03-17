@@ -51,5 +51,10 @@ abstract class ViewModelsModule {
     abstract fun bindUserViewViewModel(userViewViewModel: UserViewViewModel): ViewModel
 
     @Binds
+    @IntoMap
+    @ViewModelKey(MessageSearchViewModel::class)
+    abstract fun bindMessageSearchViewModel(messageSearchViewModel: MessageSearchViewModel): ViewModel
+
+    @Binds
     abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory
 }
