@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         navController = Navigation.findNavController(this, R.id.nav_host_fragment)
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
 
-            if (destination.id != R.id.signInFragment && destination.id != R.id.signUpFragment) {
+            if (destination.id != R.id.signInFragment) {
                 viewModel.viewModelScope.launch(Dispatchers.IO) {
                     val signedIn = viewModel.isSignedIn()
                     Log.i("test", "signedIn $signedIn")

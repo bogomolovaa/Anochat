@@ -37,11 +37,6 @@ abstract class ViewModelsModule {
 
     @Binds
     @IntoMap
-    @ViewModelKey(SignUpViewModel::class)
-    abstract fun bindSignUpViewModel(signUpViewModel : SignUpViewModel): ViewModel
-
-    @Binds
-    @IntoMap
     @ViewModelKey(UsersViewModel::class)
     abstract fun bindUsersViewModel(usersViewModel: UsersViewModel): ViewModel
 
