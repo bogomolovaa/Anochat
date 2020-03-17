@@ -55,15 +55,12 @@ class SettingsFragment : Fragment() {
             false
         )
         binding.viewModel = viewModel
-        binding.lifecycleOwner = this
+        binding.lifecycleOwner = viewLifecycleOwner
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         val uid = getSetting<String>(requireContext(), UID)
-        //val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        //val uid = sharedPreferences.getString("uid", null)
-        Log.i("test","uid $uid")
         viewModel.loadUser(uid!!)
 
         binding.editPhoto.setOnClickListener {

@@ -4,6 +4,7 @@ package bogomolov.aa.anochat.view.fragments
 import android.content.Context
 import android.os.Bundle
 import android.view.*
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.databinding.DataBindingUtil
@@ -67,8 +68,8 @@ class UsersFragment : Fragment() {
             adapter.submitList(it)
         }
         setHasOptionsMenu(true)
-
         viewModel.loadContactUsers()
+
 
         return binding.root
     }
@@ -95,5 +96,10 @@ class UsersFragment : Fragment() {
                 return false
             }
         })
+        val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
+        closeButton.setOnClickListener {
+            viewModel.loadContactUsers()
+        }
+
     }
 }

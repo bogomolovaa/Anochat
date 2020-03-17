@@ -38,5 +38,7 @@
     <string name="phone_number">phone number</string>
     <string name="verification_code">verification code</string>
     <string name="invalid_verification_code">invalid verification code</string>
+    <string name="contacts">Contacts</string>
+    <string name="sign_in">Sign in</string>
 
 </resources>

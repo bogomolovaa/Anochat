@@ -7,8 +7,7 @@
 
     <fragment
             android:id="@+id/conversationFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.ConversationFragment"
-            android:label="ConversationFragment" >
+            android:name="bogomolov.aa.anochat.view.fragments.ConversationFragment">
         <action
                 android:id="@+id/action_conversationFragment_to_sendMediaFragment"
                 app:destination="@id/sendMediaFragment" />
@@ -16,7 +15,7 @@
     <fragment
             android:id="@+id/conversationsListFragment"
             android:name="bogomolov.aa.anochat.view.fragments.ConversationsListFragment"
-            android:label="ConversationsListFragment">
+            android:label="Anochat">
         <action
                 android:id="@+id/action_conversationsListFragment_to_conversationFragment"
                 app:destination="@id/conversationFragment" />
@@ -30,15 +29,12 @@
     <fragment
             android:id="@+id/usersFragment"
             android:name="bogomolov.aa.anochat.view.fragments.UsersFragment"
-            android:label="UsersFragment" />
+            android:label="@string/contacts" />
     <fragment
             android:id="@+id/signInFragment"
             android:name="bogomolov.aa.anochat.view.fragments.SignInFragment"
-            android:label="fragment_sign_in"
+            android:label="@string/sign_in"
             tools:layout="@layout/fragment_sign_in">
-        <action
-                android:id="@+id/action_signInFragment_to_signUpFragment"
-                app:destination="@id/signUpFragment" />
         <action
                 android:id="@+id/action_signInFragment_to_conversationsListFragment"
                 app:destination="@id/conversationsListFragment"
@@ -46,24 +42,16 @@
                 app:popUpToInclusive="true" />
     </fragment>
     <fragment
-            android:id="@+id/signUpFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.SignUpFragment"
-            android:label="fragment_sign_up"
-            tools:layout="@layout/fragment_sign_up" />
-    <fragment
             android:id="@+id/sendMediaFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.SendMediaFragment"
-            android:label="SendMediaFragment" />
+            android:name="bogomolov.aa.anochat.view.fragments.SendMediaFragment" />
     <fragment
             android:id="@+id/imageViewFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.ImageViewFragment"
-            android:label="ImageViewFragment" />
+            android:name="bogomolov.aa.anochat.view.fragments.ImageViewFragment" />
     <fragment
             android:id="@+id/settingsFragment"
             android:name="bogomolov.aa.anochat.view.fragments.SettingsFragment"
-            android:label="SettingsFragment" />
+            android:label="@string/settings" />
     <fragment
             android:id="@+id/userViewFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.UserViewFragment"
-            android:label="UserViewFragment" />
+            android:name="bogomolov.aa.anochat.view.fragments.UserViewFragment" />
 </navigation>

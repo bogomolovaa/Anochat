@@ -25,9 +25,6 @@ abstract class InjectionsModule {
     abstract fun bindSignInFragment(): SignInFragment
 
     @ContributesAndroidInjector
-    abstract fun bindSignUpFragment(): SignUpFragment
-
-    @ContributesAndroidInjector
     abstract fun bindSendMediaFragment(): SendMediaFragment
 
     @ContributesAndroidInjector

@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import bogomolov.aa.anochat.android.UID
+import bogomolov.aa.anochat.android.getSetting
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.repository.Repository
 import kotlinx.coroutines.Dispatchers
@@ -16,13 +18,30 @@ import javax.inject.Inject
 class UsersViewModel
 @Inject constructor(private val repository: Repository) : ViewModel() {
     val usersLiveData = MutableLiveData<List<User>>()
+    private var contactUsers: ArrayList<User>? = null
 
     fun loadContactUsers() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val contactPhones = getContacts()
-            for(phone in contactPhones) Log.i("test",phone)
-            repository.getUsersByPhones(listOf("+79057148736","+79689292630","+79031132612"))
-            Log.i("test","loadContactUsers finished")
+        if (contactUsers == null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val contactPhones = getContacts()
+                for (phone in contactPhones) Log.i("test", phone)
+                val myUid = getSetting<String>(repository.getContext(), UID)
+                val users =
+                    repository.getUsersByPhones(
+                        listOf(
+                            "+79057148736",
+                            "+79689292630",
+                            "+79031132612"
+                        )
+                    )
+                        .filter { it.uid != myUid }
+                Log.i("test", "loadContactUsers finished")
+                usersLiveData.postValue(users)
+                contactUsers = ArrayList()
+                contactUsers!!.addAll(users)
+            }
+        } else {
+            usersLiveData.postValue(contactUsers)
         }
     }
 
@@ -53,12 +72,17 @@ class UsersViewModel
         return ArrayList(phones)
     }
 
+    private fun isNotValidPhone(string: String) = string.contains("[^+0-9]".toRegex())
 
     fun search(startWith: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val users = repository.findUsers(startWith)
-            for (user in users) repository.updateUserFrom(user)
-            usersLiveData.postValue(users)
+        if (isNotValidPhone(startWith)) {
+            usersLiveData.value = contactUsers?.filter { it.name.startsWith(startWith) } ?: listOf()
+        } else {
+            viewModelScope.launch(Dispatchers.IO) {
+                val users = repository.findByPhone(startWith)
+                for (user in users) repository.updateUserFrom(user)
+                usersLiveData.postValue(users)
+            }
         }
     }
 

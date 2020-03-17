@@ -26,7 +26,7 @@ interface MessageDao {
     fun loadAll(conversationId: Long): DataSource.Factory<Int, MessageJoined>
 
     @Query("select m.image from MessageEntity as m LEFT JOIN ConversationEntity as c on m.conversationId = c.id where m.image is not null and c.userId = :userId")
-    fun getImages(userId: Long): DataSource.Factory<Int,String>
+    fun getImages(userId: Long): DataSource.Factory<Int, String>
 
     @Query("select * from MessageEntity where messageId = :messageId")
     fun getByMessageId(messageId: String): MessageEntity?
@@ -43,5 +43,7 @@ interface MessageDao {
     @Query("update MessageEntity set messageId = :messageId where id = :id")
     fun updateMessageId(id: Long, messageId: String)
 
+    @Query("select * from MessageEntity where text like :search and conversationId in (select id from ConversationEntity where myUid = :uid)")
+    fun searchText(search: String, uid: String): DataSource.Factory<Int, MessageEntity>
 
 }

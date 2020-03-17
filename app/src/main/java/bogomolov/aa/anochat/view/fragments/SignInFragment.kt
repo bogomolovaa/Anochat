@@ -134,16 +134,4 @@ class SignInFragment : Fragment() {
         }
     }
 
-
-    /*
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-        inflater.inflate(R.menu.signup_menu, menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_to_sign_up) navController.navigate(R.id.signUpFragment)
-        return true
-    }
-     */
 }

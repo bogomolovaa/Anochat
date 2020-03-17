@@ -26,7 +26,7 @@ import kotlin.coroutines.suspendCoroutine
 
 interface IFirebaseRepository {
     suspend fun getUsersByPhones(phones: List<String>): List<User>
-    suspend fun findUsers(startWith: String): List<User>
+    suspend fun findByPhone(phone: String): List<User>
     suspend fun signUp(name: String, email: String, password: String): Boolean
     suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean
     fun signOut()
@@ -180,11 +180,11 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         return User(uid = uid, phone = phone, name = name, status = status, photo = photo)
     }
 
-    override suspend fun findUsers(startWith: String): List<User> = suspendCoroutine {
+    override suspend fun findByPhone(phone: String): List<User> = suspendCoroutine {
         val users = ArrayList<User>()
         val query = FirebaseDatabase.getInstance().getReference("users")
-            .orderByChild("name")
-            .startAt(startWith)
+            .orderByChild("phone")
+            .equalTo(phone)
         Log.i("test", "findUsers")
         query.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
