@@ -2,8 +2,10 @@ package bogomolov.aa.anochat.view.fragments
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.ImageView
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
@@ -50,21 +52,20 @@ class MessageSearchFragment : Fragment() {
             container,
             false
         )
-        binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
+        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
-        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
+
         setHasOptionsMenu(true)
 
         val recyclerView = binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
-
         recyclerView.adapter = adapter
 
-        search(arguments?.getString("search")!!)
-
-
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            navController.navigateUp()
+        }
 
         return binding.root
     }
@@ -82,7 +83,8 @@ class MessageSearchFragment : Fragment() {
         menu.clear()
         inflater.inflate(R.menu.users_menu, menu)
         val searchView = SearchView(requireContext())
-        menu.findItem(R.id.action_search).apply {
+        val menuItem = menu.findItem(R.id.action_search)
+        menuItem.apply {
             setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW or MenuItem.SHOW_AS_ACTION_IF_ROOM)
             actionView = searchView
         }
@@ -105,10 +107,23 @@ class MessageSearchFragment : Fragment() {
         })
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
         closeButton.setOnClickListener {
-            navController.popBackStack()
+            navController.navigateUp()
         }
         val searchString = arguments?.getString("search")!!
-        searchView.setQuery(searchString, false)
+        menuItem.expandActionView()
+        searchView.setQuery(searchString, true)
+        searchView.clearFocus()
+
+
+        menuItem.setOnActionExpandListener(object: MenuItem.OnActionExpandListener {
+
+            override fun onMenuItemActionExpand(item: MenuItem) = true
+
+            override fun onMenuItemActionCollapse(item:MenuItem):Boolean {
+                navController.navigateUp()
+                return true
+            }
+        })
 
     }
 

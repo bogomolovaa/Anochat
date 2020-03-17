@@ -98,12 +98,12 @@ class RepositoryImpl
     override fun getImages(userId: Long) = db.messageDao().getImages(userId)
 
     override suspend fun getUser(uid: String): User? {
-        Log.i("test","getUser $uid")
+        Log.i("test", "getUser $uid")
         var user = entityToModel(db.userDao().findByUid(uid))
         if (user == null) {
             user = firebase.getUser(uid)
-            updateUserFrom(user = user!!, saveLocal =  true)
-            Log.i("test","user ${user.uid} updated")
+            updateUserFrom(user = user!!, saveLocal = true)
+            Log.i("test", "user ${user.uid} updated")
         }
         return user
     }
@@ -114,7 +114,7 @@ class RepositoryImpl
 
     override suspend fun updateUserTo(user: User) {
         val savedUser = db.userDao().getUser(user.id)
-        Log.i("test","updateUserTo $user saved: $savedUser")
+        Log.i("test", "updateUserTo $user saved: $savedUser")
         if (savedUser != null) {
             if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
             if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
@@ -176,7 +176,7 @@ class RepositoryImpl
 
     override fun searchMessagesDataSource(search: String): DataSource.Factory<Int, Conversation> {
         val myUid = getSetting<String>(context, UID)!!
-        return db.messageDao().searchText(search,myUid).map {
+        return db.messageDao().searchText("%$search%", myUid).map {
             entityToModel(it)
         }
     }

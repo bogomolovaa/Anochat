@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
@@ -37,6 +38,7 @@ class SettingsFragment : Fragment() {
     internal lateinit var viewModelFactory: ViewModelFactory
     val viewModel: SettingsViewModel by activityViewModels { viewModelFactory }
     private lateinit var binding: FragmentSettingsBinding
+    private lateinit var navController: NavController
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -57,7 +59,7 @@ class SettingsFragment : Fragment() {
         binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         val uid = getSetting<String>(requireContext(), UID)
@@ -86,11 +88,11 @@ class SettingsFragment : Fragment() {
         }
 
         binding.notificationsSwitch.isChecked =
-            getSetting<Boolean>(requireContext(), NOTIFICATIONS)!=null
+            getSetting<Boolean>(requireContext(), NOTIFICATIONS) != null
         binding.soundSwitch.isChecked =
-            getSetting<Boolean>(requireContext(), SOUND)!=null
+            getSetting<Boolean>(requireContext(), SOUND) != null
         binding.vibrationSwitch.isChecked =
-            getSetting<Boolean>(requireContext(), VIBRATION)!=null
+            getSetting<Boolean>(requireContext(), VIBRATION) != null
 
         binding.notificationsSwitch.setOnCheckedChangeListener { _, isChecked ->
             setSetting(requireContext(), NOTIFICATIONS, isChecked)
@@ -110,8 +112,10 @@ class SettingsFragment : Fragment() {
     private fun updatePhoto(uri: Uri) {
         val path = getPath(requireContext(), uri)
         val resizedImage = resizeImage(path = path, context = requireContext())
-        binding.userPhoto.setFile(resizedImage)
-        viewModel.updatePhoto(resizedImage)
+        val bundle = Bundle().apply { putString("image", resizedImage) }
+        navController.navigate(R.id.miniatureFragment, bundle)
+        //binding.userPhoto.setFile(resizedImage)
+        //viewModel.updatePhoto(resizedImage)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {

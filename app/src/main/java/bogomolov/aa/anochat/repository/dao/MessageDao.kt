@@ -46,7 +46,7 @@ interface MessageDao {
 
     @Transaction
     @Query("select * from MessageEntity as message_ " +
-            "LEFT JOIN ConversationEntity as conversation_ on message_.conversationId = conversation_.id" +
+            "LEFT JOIN ConversationEntity as conversation_ on message_.conversationId = conversation_.id " +
             "LEFT JOIN UserEntity as user_ on conversation_.userId = user_.id " +
             "where message_.text like :search and conversation_.myUid = :uid")
     fun searchText(search: String, uid: String): DataSource.Factory<Int, ConversationJoined>

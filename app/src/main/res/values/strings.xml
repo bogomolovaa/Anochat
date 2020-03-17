@@ -40,5 +40,6 @@
     <string name="invalid_verification_code">invalid verification code</string>
     <string name="contacts">Contacts</string>
     <string name="sign_in">Sign in</string>
+    <string name="set_avatar">Set avatar</string>
 
 </resources>

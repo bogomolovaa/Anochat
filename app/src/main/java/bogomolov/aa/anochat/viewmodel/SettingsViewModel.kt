@@ -22,6 +22,7 @@ class SettingsViewModel
     }
 
     private fun updateUser(user: User) {
+        userLiveData.value = user
         viewModelScope.launch(Dispatchers.IO) {
             repository.updateUserTo(user)
         }

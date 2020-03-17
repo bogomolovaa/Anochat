@@ -82,7 +82,7 @@ class ConversationFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = DataBindingUtil.inflate<FragmentConversationBinding>(
+        binding = DataBindingUtil.inflate(
             inflater,
             R.layout.fragment_conversation,
             container,
@@ -95,7 +95,6 @@ class ConversationFragment : Fragment() {
         mainActivity.setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
-        mainActivity.supportActionBar!!.title = ""
 
         conversationId = arguments?.get("id") as Long
         mainActivity.conversationId = conversationId

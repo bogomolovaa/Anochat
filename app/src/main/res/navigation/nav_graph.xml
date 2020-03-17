@@ -11,6 +11,9 @@
         <action
                 android:id="@+id/action_conversationFragment_to_sendMediaFragment"
                 app:destination="@id/sendMediaFragment" />
+        <action
+                android:id="@+id/action_conversationFragment_to_userViewFragment"
+                app:destination="@id/userViewFragment" />
     </fragment>
     <fragment
             android:id="@+id/conversationsListFragment"
@@ -53,7 +56,11 @@
     <fragment
             android:id="@+id/settingsFragment"
             android:name="bogomolov.aa.anochat.view.fragments.SettingsFragment"
-            android:label="@string/settings" />
+            android:label="@string/settings" >
+        <action
+                android:id="@+id/action_settingsFragment_to_miniatureFragment"
+                app:destination="@id/miniatureFragment" />
+    </fragment>
     <fragment
             android:id="@+id/userViewFragment"
             android:name="bogomolov.aa.anochat.view.fragments.UserViewFragment" />
@@ -61,4 +68,8 @@
             android:id="@+id/messageSearchFragment"
             android:name="bogomolov.aa.anochat.view.fragments.MessageSearchFragment"
             android:label="@string/search" />
+    <fragment
+            android:id="@+id/miniatureFragment"
+            android:name="bogomolov.aa.anochat.view.fragments.MiniatureFragment"
+            android:label="@string/set_avatar" />
 </navigation>

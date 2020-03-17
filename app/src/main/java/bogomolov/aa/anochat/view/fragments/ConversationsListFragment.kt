@@ -83,7 +83,7 @@ class ConversationsListFragment : Fragment() {
         inflater.inflate(R.menu.main_menu, menu)
 
         val searchView = SearchView(requireContext())
-        menu.findItem(R.id.action_search).apply {
+        menu.findItem(R.id.search_messages_action).apply {
             setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW or MenuItem.SHOW_AS_ACTION_IF_ROOM)
             actionView = searchView
         }
