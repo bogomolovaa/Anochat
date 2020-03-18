@@ -72,12 +72,17 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
                 width = (maskWidth / initialImageScale).toInt(),
                 height = (maskHeight / initialImageScale).toInt()
             )
+            navController.navigateUp()
+        }
+
+        relativeLayout = binding.layout
+        scaleDetector = ScaleGestureDetector(context, scaleListener)
+        binding.maskImage.setOnTouchListener(this)
+        binding.layout.setOnTouchListener { v, event ->
+            scaleDetector.onTouchEvent(event)
         }
 
 
-        binding.maskImage.setOnTouchListener(this)
-
-        relativeLayout = binding.layout
 
         return binding.root
     }
@@ -102,10 +107,14 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
             scaleFactor = Math.max(0.5f, Math.min(scaleFactor, maxScale))
             Log.i("test", "scaleFactor $scaleFactor maxScale $maxScale")
 
+            Log.i("test", "setScale $scaleFactor")
+            binding.maskImage.scaleX = scaleFactor
+            binding.maskImage.scaleY = scaleFactor
+
             return true
         }
     }
-    private val mScaleDetector = ScaleGestureDetector(context, scaleListener)
+    private lateinit var scaleDetector: ScaleGestureDetector
 
     private fun setImageRealDimensions() {
         val koef1 = bitmap.width.toFloat() / bitmap.height.toFloat()
@@ -127,12 +136,9 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(view: View, event: MotionEvent): Boolean {
-        mScaleDetector.onTouchEvent(event)
         val point = Point(event.rawX.toInt(), event.rawY.toInt())
+        scaleDetector.onTouchEvent(event)
 
-        Log.i("test", "setScale $scaleFactor")
-        view.scaleX = scaleFactor
-        view.scaleY = scaleFactor
 
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {

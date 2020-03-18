@@ -139,9 +139,9 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
     override suspend fun uploadFile(fileName: String, uid: String?): Boolean =
         suspendCoroutine { continuation ->
-            Log.i("test", "start uploading $fileName")
             val fileRef = FirebaseStorage.getInstance()
-                .getReference(if (uid != null) "/user/{$uid}/" else "/files/").child(fileName)
+                .getReference(if (uid != null) "/user/$uid/" else "/files/").child(fileName)
+            Log.i("test", "start uploading $fileName")
             val localFile = File(getFilesDir(context), fileName)
             fileRef.putFile(Uri.fromFile(localFile)).addOnSuccessListener {
                 Log.i("test", "uploaded $fileName")
@@ -261,6 +261,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     }
 
     suspend fun updatePhoto(uid: String, photo: String) {
+        Log.i("test","updatePhoto $uid $photo")
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("users").child(uid).updateChildren(mapOf("photo" to photo))
         uploadFile(photo, uid)
