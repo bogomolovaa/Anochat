@@ -5,14 +5,12 @@ import android.util.Log
 import androidx.paging.DataSource
 import bogomolov.aa.anochat.android.UID
 import bogomolov.aa.anochat.android.getFilesDir
+import bogomolov.aa.anochat.android.getMiniPhotoFileName
 import bogomolov.aa.anochat.android.getSetting
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.repository.entity.ConversationEntity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -129,16 +127,23 @@ class RepositoryImpl
         return entityToModel(db.conversationDao().loadAllConversations(myUid))
     }
 
+    private suspend fun loadPhoto(user: User, loadFullPhoto: Boolean) {
+        val photo = user.photo!!
+        val miniPhoto = getMiniPhotoFileName(context, photo)
+        if (loadFullPhoto && !File(getFilesDir(context), photo).exists())
+            firebase.downloadFile(photo, user.uid)
+        if (!File(getFilesDir(context), miniPhoto).exists())
+            firebase.downloadFile(miniPhoto, user.uid)
+    }
+
     override suspend fun updateUserFrom(user: User, saveLocal: Boolean) {
         val savedUser = db.userDao().getUser(user.id)
         if (savedUser != null) {
-            if ((user.photo != savedUser.photo && user.photo != null))
-                firebase.downloadFile(user.photo!!, user.uid)
+            if ((user.photo != savedUser.photo && user.photo != null)) loadPhoto(user, true)
             db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
         } else {
             if (saveLocal) user.id = db.userDao().add(modelToEntity(user))
-            if (user.photo != null && !File(getFilesDir(context), user.photo!!).exists())
-                firebase.downloadFile(user.photo!!, user.uid)
+            if (user.photo != null) loadPhoto(user, saveLocal)
         }
     }
 
@@ -148,7 +153,13 @@ class RepositoryImpl
     ): ConversationEntity {
         val myUid = getSetting<String>(context, UID)!!
         val userEntity = db.userDao().findByUid(uid)
-        val userId = userEntity?.id ?: db.userDao().add(modelToEntity(getUser()))
+        val userId = if (userEntity == null) {
+            val user = getUser()
+            updateUserFrom(user, true)
+            user.id
+        } else {
+            userEntity.id
+        }
         var conversationEntity = db.conversationDao().getConversationByUser(userId, myUid)
         if (conversationEntity == null) {
             conversationEntity = ConversationEntity(userId = userId, myUid = myUid)

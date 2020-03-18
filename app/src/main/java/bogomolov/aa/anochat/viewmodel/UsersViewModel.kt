@@ -33,9 +33,10 @@ class UsersViewModel
                             "+79689292630",
                             "+79031132612"
                         )
-                    )
-                        .filter { it.uid != myUid }
+                    ).filter { it.uid != myUid }
+
                 Log.i("test", "loadContactUsers finished")
+                for (user in users) repository.updateUserFrom(user)
                 usersLiveData.postValue(users)
                 contactUsers = ArrayList()
                 contactUsers!!.addAll(users)

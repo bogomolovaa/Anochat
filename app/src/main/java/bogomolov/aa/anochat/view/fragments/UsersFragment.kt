@@ -55,14 +55,13 @@ class UsersFragment : Fragment() {
         recyclerView = binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
         val adapter =
-            UsersAdapter(requireActivity(),
-                AdapterHelper {
-                    viewModel.createConversation(it) { conversationId ->
-                        navController.navigate(
-                            R.id.conversationFragment,
-                            Bundle().apply { putLong("id", conversationId) })
-                    }
-                })
+            UsersAdapter(AdapterHelper {
+                viewModel.createConversation(it) { conversationId ->
+                    navController.navigate(
+                        R.id.conversationFragment,
+                        Bundle().apply { putLong("id", conversationId) })
+                }
+            })
         recyclerView.adapter = adapter
         viewModel.usersLiveData.observe(viewLifecycleOwner) {
             adapter.submitList(it)

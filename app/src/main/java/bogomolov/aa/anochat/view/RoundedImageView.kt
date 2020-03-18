@@ -1,19 +1,17 @@
 package bogomolov.aa.anochat.view
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.util.AttributeSet
-import android.util.Log
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.databinding.BindingAdapter
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.android.getFilesDir
-import java.io.File
+import bogomolov.aa.anochat.android.getFilePath
+import bogomolov.aa.anochat.android.getMiniPhotoFileName
 
 
 class RoundedImageView(context: Context, attrs: AttributeSet) :
@@ -37,7 +35,7 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
         a.recycle()
     }
 
-    fun setDefaultDrawable(){
+    fun setDefaultDrawable() {
         if (defaultDrawable != -1) {
             val imageView: ImageView = findViewById(R.id.round_image)
             val drawable = AppCompatResources.getDrawable(context, defaultDrawable!!)
@@ -47,11 +45,9 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
 
     fun setFile(fileName: String) {
         val imageView: ImageView = findViewById(R.id.round_image)
-        val file = File(getFilesDir(context), fileName)
-        imageView.setImageBitmap(BitmapFactory.decodeFile(file.path))
+        val filePath = getFilePath(context, getMiniPhotoFileName(context,fileName))
+        imageView.setImageBitmap(BitmapFactory.decodeFile(filePath))
     }
-
-
 
 }
 
@@ -60,7 +56,7 @@ fun setFileName(view: RoundedImageView, fileName: String?) {
     if (!fileName.isNullOrEmpty()) {
         view.setFile(fileName)
         view.requestLayout()
-    }else{
+    } else {
         view.setDefaultDrawable()
     }
 }

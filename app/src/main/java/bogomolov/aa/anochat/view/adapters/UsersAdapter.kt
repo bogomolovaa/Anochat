@@ -10,7 +10,6 @@ import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.AdapterSelectable
 
 class UsersAdapter(
-    private val activity: Activity,
     private val helper: AdapterHelper<User, UserLayoutBinding> = AdapterHelper()
 ) :
     RecyclerView.Adapter<AdapterHelper<User, UserLayoutBinding>.VH>(),

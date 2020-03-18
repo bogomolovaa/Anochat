@@ -29,7 +29,7 @@ fun resizeImage(path: String? = null, bitmap: Bitmap? = null, context: Context):
     )
     val fileName = "$newFileName.jpg"
     try {
-        val stream = FileOutputStream(getFilePath(context,fileName))
+        val stream = FileOutputStream(getFilePath(context, fileName))
         resized.compress(Bitmap.CompressFormat.JPEG, 80, stream)
         stream.flush()
         stream.close()
@@ -38,6 +38,9 @@ fun resizeImage(path: String? = null, bitmap: Bitmap? = null, context: Context):
     }
     return fileName
 }
+
+fun getMiniPhotoFileName(context: Context, fileName: String) =
+    File(getFilePath(context, fileName)).nameWithoutExtension + "_mini.jpg"
 
 fun getFilePath(context: Context, fileName: String) = File(getFilesDir(context), fileName).path
 

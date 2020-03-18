@@ -3,13 +3,9 @@ package bogomolov.aa.anochat.repository
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.core.content.edit
-import androidx.preference.PreferenceManager
-import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.*
 import bogomolov.aa.anochat.core.User
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.database.*
 import com.google.firebase.iid.FirebaseInstanceId
@@ -202,17 +198,17 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     }
 
     override suspend fun getUsersByPhones(phones: List<String>): List<User> = suspendCoroutine {
-        val phonesMap = HashMap<String,String>()
-        for(phone in phones) phonesMap[phone] = ""
+        val phonesMap = HashMap<String, String>()
+        for (phone in phones) phonesMap[phone] = ""
         val ref = FirebaseDatabase.getInstance().reference.child("requests").push()
         ref.setValue(phonesMap)
         val requestKey = ref.key
-        Log.i("test","respRef.addValueEventListener")
+        Log.i("test", "respRef.addValueEventListener")
         val respRef = FirebaseDatabase.getInstance().getReference("responses/$requestKey")
         respRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                Log.i("test","onDataChange $snapshot")
-                if(snapshot.value!=null) {
+                Log.i("test", "onDataChange $snapshot")
+                if (snapshot.value != null) {
                     val users = ArrayList<User>()
                     for (child in snapshot.children) {
                         val user = userFromRef(child)
@@ -225,9 +221,10 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
                     it.resume(users)
                 }
             }
+
             override fun onCancelled(p0: DatabaseError) {
                 it.resume(listOf())
-                Log.i("test","onCancelled $p0")
+                Log.i("test", "onCancelled $p0")
             }
         })
     }
@@ -267,6 +264,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("users").child(uid).updateChildren(mapOf("photo" to photo))
         uploadFile(photo, uid)
+        uploadFile(getMiniPhotoFileName(context, photo), uid)
     }
 
     override suspend fun signUp(name: String, email: String, password: String): Boolean {
@@ -294,11 +292,10 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
 
     private fun saveUidAndToken(uid: String) {
-        Log.i("test","saveUidAndToken $uid")
+        Log.i("test", "saveUidAndToken $uid")
         setSetting(context, UID, uid)
         setSetting(context, TOKEN, token)
     }
-
 
 
     private fun getUid() = FirebaseAuth.getInstance().currentUser?.uid

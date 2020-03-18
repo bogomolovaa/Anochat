@@ -60,8 +60,9 @@ class SignInFragment : Fragment() {
         viewModel.loginStateLiveData.observe(viewLifecycleOwner) {
             binding.codeInputLayout.visibility =
                 if (it == LoginState.CODE_SENT) View.VISIBLE else View.INVISIBLE
-            if(it == LoginState.LOGGED)
-                navController.navigate(R.id.conversationsListFragment)
+            if (it == LoginState.LOGGED)
+                navController.navigate(R.id.action_signInFragment_to_conversationsListFragment)
+            //navController.navigate(R.id.conversationsListFragment)
         }
 
 

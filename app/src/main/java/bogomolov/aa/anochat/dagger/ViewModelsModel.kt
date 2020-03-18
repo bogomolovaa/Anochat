@@ -56,10 +56,5 @@ abstract class ViewModelsModule {
     abstract fun bindMessageSearchViewModel(messageSearchViewModel: MessageSearchViewModel): ViewModel
 
     @Binds
-    @IntoMap
-    @ViewModelKey(MinuatureViewModel::class)
-    abstract fun bindMinuatureViewModel(miniatureViewModel: MinuatureViewModel): ViewModel
-
-    @Binds
     abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory
 }
