@@ -13,6 +13,8 @@ import bogomolov.aa.anochat.repository.Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.FileOutputStream
+import java.lang.Integer.min
+import java.lang.Math.max
 import javax.inject.Inject
 
 class SettingsViewModel
@@ -20,9 +22,10 @@ class SettingsViewModel
     val userLiveData = MutableLiveData<User>()
 
     fun loadUser(uid: String) {
-        Log.i("test", "load user $uid")
-        viewModelScope.launch(Dispatchers.IO) {
-            userLiveData.postValue(repository.getUser(uid))
+        if (userLiveData.value == null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                userLiveData.postValue(repository.getUser(uid))
+            }
         }
     }
 
@@ -34,12 +37,17 @@ class SettingsViewModel
     }
 
     fun updatePhoto(photo: String, x: Int, y: Int, width: Int, height: Int) {
-        Log.i("test", "save mini x $x y $y width $width height $height")
         val user = userLiveData.value
         if (user != null) {
             val filePath = getFilePath(repository.getContext(), photo)
             val bitmap = BitmapFactory.decodeFile(filePath)
-            val miniBitmap = Bitmap.createBitmap(bitmap, x, y, width, height)
+            val miniBitmap = Bitmap.createBitmap(
+                bitmap,
+                max(x, 0),
+                max(y, 0),
+                Math.min(bitmap.width - max(x, 0), width),
+                Math.min(bitmap.height - max(y, 0), height)
+            )
             val miniPhotoPath = getFilePath(
                 repository.getContext(),
                 getMiniPhotoFileName(repository.getContext(), photo)
@@ -52,7 +60,6 @@ class SettingsViewModel
 
     fun updateName(name: String) {
         val user = userLiveData.value
-        Log.i("test", "updateName $user name to $name")
         if (user != null) {
             user.name = name
             updateUser(user)

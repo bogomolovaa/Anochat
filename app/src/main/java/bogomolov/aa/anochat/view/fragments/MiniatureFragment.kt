@@ -25,6 +25,7 @@ import dagger.android.support.AndroidSupportInjection
 import java.io.File
 import javax.inject.Inject
 import kotlin.math.max
+import kotlin.math.min
 
 class MiniatureFragment : Fragment(), View.OnTouchListener {
     @Inject
@@ -60,15 +61,14 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
 
         bitmap = BitmapFactory.decodeFile(imagePath)
         binding.imageView.setImageBitmap(bitmap)
-        Log.i("Test", "bitmap (${bitmap.width}, ${bitmap.height})")
 
         binding.fab.setOnClickListener {
-            val maskWidth = binding.maskImage.width
-            val maskHeight = binding.maskImage.height
+            val maskWidth = binding.maskImage.scaledWidth()
+            val maskHeight = binding.maskImage.scaledHeight()
             viewModel.updatePhoto(
                 photo = imageName,
-                x = (maskX / initialImageScale).toInt(),
-                y = (maskY / initialImageScale).toInt(),
+                x = (maskX/ initialImageScale).toInt(),
+                y = (maskY/ initialImageScale).toInt(),
                 width = (maskWidth / initialImageScale).toInt(),
                 height = (maskHeight / initialImageScale).toInt()
             )
@@ -79,7 +79,6 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         binding.maskImage.setOnTouchListener(this)
         binding.layout.setOnTouchListener { v, event ->
-            Log.i("test","binding.layout onTouch")
             scaleDetector.onTouchEvent(event)
         }
 
@@ -104,11 +103,7 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             scaleFactor *= detector.scaleFactor
 
-            // Don't let the object get too small or too large.
-            scaleFactor = Math.max(0.5f, Math.min(scaleFactor, maxScale))
-            Log.i("test", "scaleFactor $scaleFactor maxScale $maxScale")
-
-            Log.i("test", "setScale $scaleFactor")
+            scaleFactor = max(0.5f, min(scaleFactor, maxScale))
             binding.maskImage.scaleX = scaleFactor
             binding.maskImage.scaleY = scaleFactor
 
@@ -137,8 +132,9 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(view: View, event: MotionEvent): Boolean {
-        val point = Point(event.rawX.toInt(), event.rawY.toInt())
         scaleDetector.onTouchEvent(event)
+
+        val point = Point(event.rawX.toInt(), event.rawY.toInt())
 
 
         when (event.action and MotionEvent.ACTION_MASK) {
@@ -151,29 +147,33 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
                 layoutParams.leftMargin += offset.x
                 layoutParams.topMargin += offset.y
                 layoutParams.rightMargin =
-                    relativeLayout!!.measuredWidth - layoutParams.leftMargin + view.width
+                    relativeLayout!!.measuredWidth - layoutParams.leftMargin + view.scaledWidth()
                 layoutParams.bottomMargin =
-                    relativeLayout!!.measuredHeight - layoutParams.topMargin + view.height
+                    relativeLayout!!.measuredHeight - layoutParams.topMargin + view.scaledHeight()
 
-                if (layoutParams.topMargin < 0) layoutParams.topMargin = 0
-                if (layoutParams.leftMargin < 0) layoutParams.leftMargin = 0
+                val dx = (view.scaledWidth() - view.width) / 2
+                val dy = (view.scaledHeight() - view.height) / 2
+                if (layoutParams.topMargin < dy) layoutParams.topMargin = dy
+                if (layoutParams.leftMargin < dx) layoutParams.leftMargin = dx
 
                 if (imageWidth == 0 && imageHeight == 0) setImageRealDimensions()
 
-                if (layoutParams.leftMargin + view.width > imageWidth)
-                    layoutParams.leftMargin = imageWidth - view.width
-                if (layoutParams.topMargin + view.height > imageHeight)
-                    layoutParams.topMargin = imageHeight - view.height
+                if (layoutParams.leftMargin + view.width + dx > imageWidth)
+                    layoutParams.leftMargin = imageWidth - view.width - dx
+                if (layoutParams.topMargin + view.height + dy > imageHeight)
+                    layoutParams.topMargin = imageHeight - view.height - dy
 
-                maskX = layoutParams.leftMargin
-                maskY = layoutParams.topMargin
+                maskX = layoutParams.leftMargin - dx
+                maskY = layoutParams.topMargin - dy
 
                 view.layoutParams = layoutParams
                 lastPoint = point;
             }
         }
-        return false
+        return true
     }
 
+    private fun View.scaledWidth(): Int = (scaleFactor * this.width).toInt()
+    private fun View.scaledHeight(): Int = (scaleFactor * this.width).toInt()
 
 }
