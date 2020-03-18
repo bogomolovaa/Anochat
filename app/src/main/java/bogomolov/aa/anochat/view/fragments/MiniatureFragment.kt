@@ -63,8 +63,8 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         Log.i("Test", "bitmap (${bitmap.width}, ${bitmap.height})")
 
         binding.fab.setOnClickListener {
-            val maskWidth = binding.maskImage.measuredWidth
-            val maskHeight = binding.maskImage.measuredHeight
+            val maskWidth = binding.maskImage.width
+            val maskHeight = binding.maskImage.height
             viewModel.updatePhoto(
                 photo = imageName,
                 x = (maskX / initialImageScale).toInt(),
@@ -79,6 +79,7 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         binding.maskImage.setOnTouchListener(this)
         binding.layout.setOnTouchListener { v, event ->
+            Log.i("test","binding.layout onTouch")
             scaleDetector.onTouchEvent(event)
         }
 
@@ -150,19 +151,19 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
                 layoutParams.leftMargin += offset.x
                 layoutParams.topMargin += offset.y
                 layoutParams.rightMargin =
-                    relativeLayout!!.measuredWidth - layoutParams.leftMargin + view.measuredWidth
+                    relativeLayout!!.measuredWidth - layoutParams.leftMargin + view.width
                 layoutParams.bottomMargin =
-                    relativeLayout!!.measuredHeight - layoutParams.topMargin + view.measuredHeight
+                    relativeLayout!!.measuredHeight - layoutParams.topMargin + view.height
 
                 if (layoutParams.topMargin < 0) layoutParams.topMargin = 0
                 if (layoutParams.leftMargin < 0) layoutParams.leftMargin = 0
 
                 if (imageWidth == 0 && imageHeight == 0) setImageRealDimensions()
 
-                if (layoutParams.leftMargin + view.measuredWidth > imageWidth)
-                    layoutParams.leftMargin = imageWidth - view.measuredWidth
-                if (layoutParams.topMargin + view.measuredHeight > imageHeight)
-                    layoutParams.topMargin = imageHeight - view.measuredHeight
+                if (layoutParams.leftMargin + view.width > imageWidth)
+                    layoutParams.leftMargin = imageWidth - view.width
+                if (layoutParams.topMargin + view.height > imageHeight)
+                    layoutParams.topMargin = imageHeight - view.height
 
                 maskX = layoutParams.leftMargin
                 maskY = layoutParams.topMargin
@@ -171,7 +172,7 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
                 lastPoint = point;
             }
         }
-        return true
+        return false
     }
 
 
