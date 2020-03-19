@@ -1,17 +1,20 @@
 package bogomolov.aa.anochat.android
 
-import android.R.attr.password
-import android.util.Log
 import java.math.BigInteger
 import java.security.*
-import java.security.SecureRandom.getInstanceStrong
 import java.security.spec.InvalidKeySpecException
 import java.security.spec.X509EncodedKeySpec
-import javax.crypto.*
+import java.util.*
+import javax.crypto.Cipher
+import javax.crypto.KeyAgreement
+import javax.crypto.SecretKey
+import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.DHParameterSpec
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
+
+private const val AES_KEY_SIZE = 128
 
 
 fun genKeyPair512(): KeyPair? {
@@ -21,6 +24,7 @@ fun genKeyPair512(): KeyPair? {
         //paramGen.init(512)
         //val params = paramGen.generateParameters().getParameterSpec(DHParameterSpec::class.java)
         //keyGen.initialize(params)
+
 
         //Use fixed
         val g = BigInteger(
@@ -42,20 +46,25 @@ fun genKeyPair512(): KeyPair? {
     return null
 }
 
+
 fun genSharedSecretKey(
-    bytesPrivateKey: ByteArray,
+    privateKey: PrivateKey,
     bytesPeerPublicKey: ByteArray
 ): SecretKey? {
     try {
-        val x509KeySpecPrivate = X509EncodedKeySpec(bytesPrivateKey)
-        val privateKey = KeyFactory.getInstance("DH").generatePublic(x509KeySpecPrivate)
         val x509KeySpecPublic = X509EncodedKeySpec(bytesPeerPublicKey)
         val peerPublicKey = KeyFactory.getInstance("DH").generatePublic(x509KeySpecPublic)
 
         val ka = KeyAgreement.getInstance("DH")
         ka.init(privateKey)
         ka.doPhase(peerPublicKey, true)
-        return ka.generateSecret("AES")
+        val secret = ka.generateSecret()
+        val sha256 = MessageDigest.getInstance("SHA-256")
+        val bkey: ByteArray = Arrays.copyOf(
+            sha256.digest(secret), AES_KEY_SIZE / java.lang.Byte.SIZE
+        )
+        val desSpec: SecretKey = SecretKeySpec(bkey, "AES")
+        return desSpec
     } catch (e: NoSuchAlgorithmException) {
         e.printStackTrace()
     } catch (e: InvalidKeyException) {

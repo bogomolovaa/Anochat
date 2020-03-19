@@ -44,7 +44,7 @@ class TestCrypto {
         val keyPair2 = genKeyPair512()
         val publicKey2 = keyPair2!!.public
 
-        val secretKey = genSharedSecretKey(keyPair1.private.encoded, publicKey2.encoded)
+        val secretKey = genSharedSecretKey(keyPair1.private, publicKey2.encoded)
 
         val encryptedData = encrypt(secretKey!!.encoded, "test string".toByteArray())
         val decryptedData = decrypt(secretKey.encoded, encryptedData!!)
