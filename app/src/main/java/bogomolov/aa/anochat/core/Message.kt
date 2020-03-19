@@ -14,6 +14,8 @@ data class Message(
     val replyMessage: Message? = null,
     val image: String? = null,
     val audio: String? = null,
+    var publicKey: String? = null,
+    var sent: Int = 0,
     var received: Int = 0,
     var viewed: Int = 0
 ) {

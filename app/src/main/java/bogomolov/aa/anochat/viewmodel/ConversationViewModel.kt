@@ -93,7 +93,8 @@ class ConversationViewModel
                 )
                 Log.i("test", "sendMessage message.replyMessage ${message.replyMessage?.messageId}")
                 if (audio == null) {
-                    repository.saveAndSendMessage(message, conversation)
+                    repository.saveMessage(message, conversation.id)
+                    repository.sendMessage(message)
                 } else {
                     repository.saveMessage(message, conversation.id)
                     if (repository.uploadFile(audio)) {

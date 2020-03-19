@@ -11,5 +11,5 @@ data class UserEntity(
     val phone: String,
     var name: String = "",
     var photo: String? = null,
-    var status: String?
+    var status: String? = null
 )

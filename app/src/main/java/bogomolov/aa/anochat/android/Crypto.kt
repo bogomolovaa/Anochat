@@ -1,5 +1,8 @@
 package bogomolov.aa.anochat.android
 
+import android.content.Context
+import android.util.Base64.DEFAULT
+import android.util.Log
 import java.io.*
 import java.math.BigInteger
 import java.security.*
@@ -9,16 +12,14 @@ import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.KeyAgreement
 import javax.crypto.SecretKey
-import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.DHParameterSpec
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 private const val AES_KEY_SIZE = 128
 
 
-fun genKeyPair512(): KeyPair? {
+fun createKeyPair(): KeyPair? {
     try {
         //Generate params
         //val paramGen = AlgorithmParameterGenerator.getInstance("DH")
@@ -76,21 +77,24 @@ fun genSharedSecretKey(
     return null
 }
 
-fun encrypt(raw: ByteArray, clear: ByteArray): ByteArray? {
+fun encrypt(secretKey: SecretKey, clear: ByteArray): ByteArray {
+    val raw = secretKey.encoded
     val skeySpec = SecretKeySpec(raw, "AES")
     val cipher = Cipher.getInstance("AES")
     cipher.init(Cipher.ENCRYPT_MODE, skeySpec)
     return cipher.doFinal(clear)
 }
 
-fun decrypt(raw: ByteArray, encrypted: ByteArray): ByteArray? {
+fun decrypt(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
+    val raw = secretKey.encoded
     val skeySpec = SecretKeySpec(raw, "AES")
     val cipher = Cipher.getInstance("AES")
     cipher.init(Cipher.DECRYPT_MODE, skeySpec)
     return cipher.doFinal(encrypted)
 }
 
-fun encrypt2(raw: ByteArray, clear: ByteArray): ByteArray? {
+fun encrypt2(secretKey: SecretKey, clear: ByteArray): ByteArray {
+    val raw = secretKey.encoded
     val skeySpec = SecretKeySpec(raw, "AES")
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
     val spec = GCMParameterSpec(128, cipher.getIV())
@@ -98,7 +102,8 @@ fun encrypt2(raw: ByteArray, clear: ByteArray): ByteArray? {
     return cipher.doFinal(clear)
 }
 
-fun decrypt2(raw: ByteArray, encrypted: ByteArray): ByteArray? {
+fun decrypt2(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
+    val raw = secretKey.encoded
     val skeySpec = SecretKeySpec(raw, "AES")
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
     val spec = GCMParameterSpec(128, cipher.iv)
@@ -106,45 +111,68 @@ fun decrypt2(raw: ByteArray, encrypted: ByteArray): ByteArray? {
     return cipher.doFinal(encrypted)
 }
 
-fun saveSecreteKey(secretKey: SecretKey, alias: String) {
-    val keyStore = KeyStore.getInstance("AndroidKeyStore")
-    keyStore.load(null)
-    keyStore.setEntry(alias, KeyStore.SecretKeyEntry(secretKey), null)
-}
-
-fun getSecreteKey(alias: String): SecretKey {
-    val keyStore = KeyStore.getInstance("AndroidKeyStore")
-    keyStore.load(null)
-    return (keyStore.getEntry(alias, null) as KeyStore.SecretKeyEntry).secretKey
-}
-
-fun serializePrivateKey(privateKey: PrivateKey): ByteArray {
+fun <T> serializeKey(key: T): ByteArray {
     val b = ByteArrayOutputStream()
     val o = ObjectOutputStream(b)
-    o.writeObject(privateKey)
+    o.writeObject(key)
     val byteArray = b.toByteArray()
     o.close()
     b.close()
     return byteArray
 }
 
-fun deserializePrivateKey(byteArray: ByteArray): PrivateKey {
+fun <T> deserializeKey(byteArray: ByteArray): T {
     val bi = ByteArrayInputStream(byteArray)
     val oi = ObjectInputStream(bi)
-    val key = oi.readObject() as PrivateKey
+    val key = oi.readObject() as T
     oi.close()
     bi.close()
     return key
 }
 
+fun getSecretKeyName(uid1: String, uid2: String) = "${uid1}${uid2}_secret"
+
+fun getPrivateKeyName(uid1: String, uid2: String) = "${uid1}${uid2}_private"
+
+fun <T> saveKey(name: String, value: T, context: Context) {
+    val array = serializeKey(value)
+    setSetting(context, name, array)
+}
+
+fun <T> getKey(name: String, context: Context): T? {
+    val array = getSetting<ByteArray>(context, name)
+    return if (array != null) deserializeKey<T>(array) else null
+}
+
+fun byteArrayToBase64(array: ByteArray) = android.util.Base64.encodeToString(array, DEFAULT)
+
+fun base64ToByteArray(string: String) = android.util.Base64.decode(string, DEFAULT)
+
+
+
 fun test1() {
-    val salt = ByteArray(16)
-    SecureRandom().nextBytes(salt)
+    //val baos = ByteArrayOutputStream()
+    //bm.compress(Bitmap.CompressFormat.PNG, 100, baos) // bm is the bitmap object
+    //val b: ByteArray = baos.toByteArray()
 
-    val spec = PBEKeySpec("password".toCharArray(), salt, 1000, 128 * 8)
-    val secretKey = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1").generateSecret(spec)
 
-    val cipher = Cipher.getInstance("AES")
-    cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+    val keyPair1 = createKeyPair()
+    val publicKey1 = keyPair1!!.public
+    val privateKeyByteArray = serializeKey(keyPair1.private)
+
+    val keyPair2 = createKeyPair()
+    val publicKey2 = keyPair2!!.public
+
+
+    val privateKey1 = deserializeKey<PrivateKey>(privateKeyByteArray)
+    val secretKey = genSharedSecretKey(privateKey1, publicKey2.encoded)!!
+    val secretKeyArray = serializeKey(secretKey)
+    val encryptedData = encrypt(secretKey, "test string".toByteArray())
+
+
+    val loadedSecreteKey = deserializeKey<SecretKey>(secretKeyArray)
+    val decryptedData = decrypt(loadedSecreteKey, encryptedData)
+    val decryptedString = String(decryptedData)
+    Log.i("test", "decryptedData $decryptedString")
 }
 

@@ -5,8 +5,7 @@ import android.media.AudioManager
 import bogomolov.aa.anochat.R
 
 import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Intent
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Build
@@ -27,10 +26,13 @@ import dagger.android.HasAndroidInjector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.security.PrivateKey
+import javax.crypto.SecretKey
 import javax.inject.Inject
 
 private const val TYPE_MESSAGE = "message"
 private const val TYPE_READ_REPORT = "report"
+private const val TYPE_KEY = "key"
 
 class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjector {
 
@@ -48,8 +50,22 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         super.onCreate()
     }
 
+    private fun generateAndSaveSecretKey(
+        privateKey: PrivateKey,
+        publicKeyString: String,
+        myUid: String,
+        uid: String,
+        context: Context
+    ) {
+        val publicKeyByteArray = base64ToByteArray(publicKeyString)
+        val secretKey = genSharedSecretKey(privateKey, publicKeyByteArray)
+        saveKey(getSecretKeyName(myUid, uid), secretKey, context)
+    }
+
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Log.d("test", "From: " + remoteMessage.getFrom())
+        val context = repository.getContext()
+        val myUid = getSetting<String>(context, UID)!!
 
         // Check if message contains a data payload.
         if (remoteMessage.data.isNotEmpty()) {
@@ -58,8 +74,30 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
             val type = data["type"] ?: TYPE_MESSAGE
             val messageId = data["messageId"]
             when (type) {
+                TYPE_KEY -> {
+                    val uid = data["source"]
+                    val key = data["key"]
+                    if (uid != null && key != null) {
+                        GlobalScope.launch(Dispatchers.IO) {
+                            var privateKey =
+                                getKey<PrivateKey>(getPrivateKeyName(myUid, uid), context)
+                            if (privateKey != null) {
+                                Log.i("test","privateKey NOT null, send messages")
+                                generateAndSaveSecretKey(privateKey, key, myUid, uid, context)
+                                for (message in repository.getPendingMessages(uid))
+                                    repository.sendMessage(message)
+                            } else {
+                                Log.i("test","privateKey null")
+                                repository.sendKey(uid)
+                                privateKey =
+                                    getKey<PrivateKey>(getPrivateKeyName(myUid, uid), context)
+                                generateAndSaveSecretKey(privateKey!!, key, myUid, uid, context)
+                            }
+                        }
+                    }
+                }
                 TYPE_MESSAGE -> {
-                    val text = data["body"] ?: ""
+                    var text = data["body"] ?: ""
                     val uid = data["source"]
                     var image = data["image"]
                     var audio = data["audio"]
@@ -68,7 +106,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                     if (audio.isNullOrEmpty()) audio = null
                     if (uid != null && messageId != null)
                         GlobalScope.launch(Dispatchers.IO) {
-                            Log.i("test", "receiveMessage");
+                            Log.i("test", "receiveMessage")
+                            val secretKey =
+                                getKey<SecretKey>(getSecretKeyName(myUid, uid), context)!!
+                            text = String(decrypt(secretKey, base64ToByteArray(text)))
+                            //https://stackoverflow.com/questions/13261252/javax-crypto-illegalblocksizeexception-last-block-incomplete-in-decryption-de
+                            //https://stackoverflow.com/questions/18350459/javax-crypto-illegalblocksizeexception-last-block-incomplete-in-decryption-exce/20417874#20417874
                             val message = repository.receiveMessage(
                                 text,
                                 uid,

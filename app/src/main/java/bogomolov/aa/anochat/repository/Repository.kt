@@ -14,8 +14,6 @@ interface Repository : IFirebaseRepository {
 
     suspend fun saveMessage(message: Message, conversationId: Long)
 
-    suspend fun saveAndSendMessage(message: Message, conversation: Conversation)
-
     fun loadMessages(conversationId: Long): DataSource.Factory<Int, Message>
 
     suspend fun getUser(uid: String): User?
@@ -53,4 +51,7 @@ interface Repository : IFirebaseRepository {
 
     fun searchMessagesDataSource(search: String): DataSource.Factory<Int, Conversation>
 
+    suspend fun sendKey(uid: String)
+
+    suspend fun getPendingMessages(uid: String): List<Message>
 }

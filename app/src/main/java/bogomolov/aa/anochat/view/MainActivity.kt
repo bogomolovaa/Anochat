@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.view
 
+import android.content.SharedPreferences.Editor
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.viewModels
@@ -10,9 +11,8 @@ import androidx.emoji.text.EmojiCompat
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.android.UID
-import bogomolov.aa.anochat.android.setSetting
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
 import bogomolov.aa.anochat.viewmodel.MainActivityViewModel
@@ -24,6 +24,7 @@ import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
@@ -53,7 +54,11 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
                 viewModel.viewModelScope.launch(Dispatchers.IO) {
                     val signedIn = viewModel.isSignedIn()
                     Log.i("test", "signedIn $signedIn")
-                    if (!signedIn) controller.navigate(R.id.signInFragment)
+                    if (!signedIn) {
+                        //withContext(Dispatchers.Main) {
+                            controller.navigate(R.id.signInFragment)
+                        //}
+                    }
                 }
             }
 
@@ -61,6 +66,11 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
 
         //setSetting(this, UID,"LX4U2yR5ZJUsN5hivvDvF9NUHXJ3")
         viewModel.startWorkManager()
+
+        //val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        //val editor: Editor = sharedPreferences.edit()
+        //editor.clear()
+        //editor.commit()
     }
 
     private fun emojiSupport() {

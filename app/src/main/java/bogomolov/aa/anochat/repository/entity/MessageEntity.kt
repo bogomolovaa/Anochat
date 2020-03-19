@@ -19,8 +19,11 @@ data class MessageEntity(
     val replyMessageId: String? = null,
     var image: String? = null,
     var audio: String? = null,
+    val publicKey: String? = null,
+    val sent: Int = 0,
     val received: Int = 0,
-    val viewed: Int = 0
+    val viewed: Int = 0,
+    var myUid: String
 )
 
 data class MessageJoined(
@@ -34,6 +37,8 @@ data class MessageJoined(
     val replyMessage: MessageEntity?,
     var image: String? = null,
     var audio: String? = null,
+    val publicKey: String? = null,
+    val sent: Int = 0,
     val received: Int = 0,
     val viewed: Int = 0
 )

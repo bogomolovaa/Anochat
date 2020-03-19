@@ -234,7 +234,8 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         replyId: String?,
         image: String?,
         audio: String?,
-        uid: String
+        uid: String,
+        publicKey: String?
     ): String {
         val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
         ref.setValue(
@@ -244,7 +245,8 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
                 "image" to image,
                 "audio" to audio,
                 "dest" to uid,
-                "source" to token
+                "source" to token,
+                "key" to publicKey
             )
         )
         return ref.key!!
@@ -261,7 +263,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     }
 
     suspend fun updatePhoto(uid: String, photo: String) {
-        Log.i("test","updatePhoto $uid $photo")
+        Log.i("test", "updatePhoto $uid $photo")
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("users").child(uid).updateChildren(mapOf("photo" to photo))
         uploadFile(photo, uid)
@@ -289,7 +291,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         setSetting(context, UID, "")
     }
 
-    override fun isSignedIn() = getUid() != null
+    override fun isSignedIn() = getSetting<String>(context, UID) != null && getUid() != null
 
 
     private fun saveUidAndToken(uid: String) {
