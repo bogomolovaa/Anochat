@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.android
 
+import java.io.*
 import java.math.BigInteger
 import java.security.*
 import java.security.spec.InvalidKeySpecException
@@ -103,6 +104,37 @@ fun decrypt2(raw: ByteArray, encrypted: ByteArray): ByteArray? {
     val spec = GCMParameterSpec(128, cipher.iv)
     cipher.init(Cipher.DECRYPT_MODE, skeySpec, spec)
     return cipher.doFinal(encrypted)
+}
+
+fun saveSecreteKey(secretKey: SecretKey, alias: String) {
+    val keyStore = KeyStore.getInstance("AndroidKeyStore")
+    keyStore.load(null)
+    keyStore.setEntry(alias, KeyStore.SecretKeyEntry(secretKey), null)
+}
+
+fun getSecreteKey(alias: String): SecretKey {
+    val keyStore = KeyStore.getInstance("AndroidKeyStore")
+    keyStore.load(null)
+    return (keyStore.getEntry(alias, null) as KeyStore.SecretKeyEntry).secretKey
+}
+
+fun serializePrivateKey(privateKey: PrivateKey): ByteArray {
+    val b = ByteArrayOutputStream()
+    val o = ObjectOutputStream(b)
+    o.writeObject(privateKey)
+    val byteArray = b.toByteArray()
+    o.close()
+    b.close()
+    return byteArray
+}
+
+fun deserializePrivateKey(byteArray: ByteArray): PrivateKey {
+    val bi = ByteArrayInputStream(byteArray)
+    val oi = ObjectInputStream(bi)
+    val key = oi.readObject() as PrivateKey
+    oi.close()
+    bi.close()
+    return key
 }
 
 fun test1() {
