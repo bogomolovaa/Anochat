@@ -18,15 +18,15 @@ interface MessageDao {
     @Transaction
     @Query(
         "SELECT m.id as id, m.text as text, m.time as time, m.conversationId as conversationId, m.senderId as senderId, " +
-                "m.messageId as messageId, m.replyMessageId as replyMessageId, m.image as image, m.audio as audio, m.publicKey as publicKey, m.sent as sent, m.received as received, m.viewed as viewed, m.encrypted as encrypted " +
+                "m.messageId as messageId, m.replyMessageId as replyMessageId, m.image as image, m.audio as audio, m.publicKey as publicKey, m.sent as sent, m.received as received, m.viewed as viewed, " +
                 "r.id as reply_id, r.text as reply_text, r.time as reply_time, r.conversationId as reply_conversationId, r.senderId as reply_senderId, " +
-                "r.messageId as reply_messageId, r.replyMessageId as reply_replyMessageId, r.image as reply_image, r.audio as reply_audio, r.publicKey as reply_publicKey, r.sent as reply_sent, r.received as reply_received, r.viewed as reply_viewed, r.encrypted as reply_encrypted " +
+                "r.messageId as reply_messageId, r.replyMessageId as reply_replyMessageId, r.image as reply_image, r.audio as reply_audio, r.publicKey as reply_publicKey, r.sent as reply_sent, r.received as reply_received, r.viewed as reply_viewed " +
                 "FROM MessageEntity as m " +
-                "LEFT JOIN MessageEntity as r ON (m.replyMessageId = r.messageId and m.conversationId = r.conversationId) where m.conversationId = :conversationId and m.encrypted = 0"
+                "LEFT JOIN MessageEntity as r ON (m.replyMessageId = r.messageId and m.conversationId = r.conversationId) where m.conversationId = :conversationId"
     )
     fun loadAll(conversationId: Long): DataSource.Factory<Int, MessageJoined>
 
-    @Query("select m.image from MessageEntity as m LEFT JOIN ConversationEntity as c on m.conversationId = c.id where m.image is not null and c.userId = :userId and encrypted = 0")
+    @Query("select m.image from MessageEntity as m LEFT JOIN ConversationEntity as c on m.conversationId = c.id where m.image is not null and c.userId = :userId")
     fun getImages(userId: Long): DataSource.Factory<Int, String>
 
     @Query("select * from MessageEntity where messageId = :messageId")
@@ -44,9 +44,6 @@ interface MessageDao {
     @Query("update MessageEntity set messageId = :messageId, sent = :sent where id = :id")
     fun updateMessageIdAndSent(id: Long, messageId: String, sent: Int)
 
-    @Query("update MessageEntity set encrypted = 0 where id = :id")
-    fun setDecrypted(id: Long)
-
     @Transaction
     @Query(
         "select * from MessageEntity as message_ " +
@@ -59,7 +56,5 @@ interface MessageDao {
     @Query("select * from MessageEntity where myUid = :myUid and sent = 0 and conversationId in (select id from ConversationEntity where userId = :userId)")
     fun getNotSent(userId: Long, myUid: String): List<MessageEntity>
 
-    @Query("select * from MessageEntity where myUid = :myUid and encrypted = 1 and conversationId in (select id from ConversationEntity where userId = :userId)")
-    fun getNotDecrypted(userId: Long, myUid: String): List<MessageEntity>
 
 }

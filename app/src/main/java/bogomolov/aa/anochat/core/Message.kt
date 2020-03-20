@@ -17,8 +17,7 @@ data class Message(
     var publicKey: String? = null,
     var sent: Int = 0,
     var received: Int = 0,
-    var viewed: Int = 0,
-    val encrypted: Int = 0
+    var viewed: Int = 0
 ) {
     @SuppressLint("SimpleDateFormat")
     fun timeString(): String = SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(time))

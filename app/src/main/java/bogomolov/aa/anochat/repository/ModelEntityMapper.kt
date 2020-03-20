@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.repository
 
 import android.content.Context
 import bogomolov.aa.anochat.android.UID
+import bogomolov.aa.anochat.android.getMyUid
 import bogomolov.aa.anochat.android.getSetting
 import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
@@ -24,8 +25,7 @@ class ModelEntityMapper(private val context: Context) {
                 publicKey = from.publicKey,
                 sent = from.sent,
                 received = from.received,
-                viewed = from.viewed,
-                encrypted = from.encrypted
+                viewed = from.viewed
             )
         else null
 
@@ -44,8 +44,7 @@ class ModelEntityMapper(private val context: Context) {
                 from.publicKey,
                 from.sent,
                 from.received,
-                from.viewed,
-                from.encrypted
+                from.viewed
             )
         else null
 
@@ -64,8 +63,7 @@ class ModelEntityMapper(private val context: Context) {
             from.sent,
             from.received,
             from.viewed,
-            from.encrypted,
-            getSetting(context, UID)!!
+            getMyUid(context)!!
         )
 
     fun entityToModel(from: UserEntity?): User? =

@@ -30,6 +30,8 @@ import javax.inject.Inject
 private const val TYPE_MESSAGE = "message"
 private const val TYPE_READ_REPORT = "report"
 private const val TYPE_KEY = "key"
+private const val TYPE_INIT_KEY = "init_key"
+private const val TAG = "FirebaseService"
 
 class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjector {
 
@@ -59,26 +61,31 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
             val data = remoteMessage.data
             val type = data["type"] ?: TYPE_MESSAGE
             val messageId = data["messageId"]
+            val uid = data["source"]
+            val key = data["key"]
             when (type) {
                 TYPE_KEY -> {
-                    val uid = data["source"]
-                    val key = data["key"]
                     if (uid != null && key != null) {
                         GlobalScope.launch(Dispatchers.IO) {
-                            var privateKey = getPrivateKey(myUid, uid, context)
+                            val privateKey = getPrivateKey(myUid, uid, context)
                             if (privateKey != null) {
                                 Log.i("test", "privateKey NOT null, send messages")
                                 generateAndSaveSecretKey(privateKey, key, myUid, uid, context)
                                 for (message in repository.getPendingMessages(uid))
                                     repository.sendMessage(message)
-                                for (message in repository.getNotDecryptedMessages(uid))
-                                    repository.decryptMessage(message, uid)
                             } else {
-                                Log.i("test", "privateKey null")
-                                repository.sendPublicKey(uid)
-                                privateKey = getPrivateKey(myUid, uid, context)
-                                generateAndSaveSecretKey(privateKey!!, key, myUid, uid, context)
+                                Log.i(TAG, "secret key not generated: privateKey null")
                             }
+                        }
+                    }
+                }
+                TYPE_INIT_KEY -> {
+                    if (uid != null && key != null) {
+                        GlobalScope.launch(Dispatchers.IO) {
+                            Log.i("test", "privateKey null")
+                            repository.sendPublicKey(uid,false)
+                            val privateKey = getPrivateKey(myUid, uid, context)
+                            generateAndSaveSecretKey(privateKey!!, key, myUid, uid, context)
                         }
                     }
                 }
@@ -96,20 +103,28 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                         GlobalScope.launch(Dispatchers.IO) {
                             Log.i("test", "receiveMessage")
                             val secretKey = getSecretKey(myUid, uid, context)
-                            if (secretKey == null) repository.sendPublicKey(uid)
-                            val message = repository.receiveMessage(
-                                text,
-                                uid,
-                                messageId,
-                                replyId,
-                                image,
-                                audio
-                            )
-                            if (message != null) {
-                                val inBackground = (application as AnochatAplication).inBackground
-                                val showNotification =
-                                    getSetting<Boolean>(applicationContext, NOTIFICATIONS) != null
-                                if (inBackground && showNotification) sendNotification(message)
+                            if (secretKey == null) {
+                                Log.i("test", "not received message: null secretKey")
+                                repository.sendPublicKey(uid, true)
+                            } else {
+                                val message = repository.receiveMessage(
+                                    text,
+                                    uid,
+                                    messageId,
+                                    replyId,
+                                    image,
+                                    audio
+                                )
+                                if (message != null) {
+                                    val inBackground =
+                                        (application as AnochatAplication).inBackground
+                                    val showNotification =
+                                        getSetting<Boolean>(
+                                            applicationContext,
+                                            NOTIFICATIONS
+                                        ) != null
+                                    if (inBackground && showNotification) sendNotification(message)
+                                }
                             }
                         }
                 }

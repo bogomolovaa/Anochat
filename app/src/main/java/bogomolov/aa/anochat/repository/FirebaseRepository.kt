@@ -255,7 +255,8 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         image: String?,
         audio: String?,
         uid: String,
-        publicKey: String?
+        publicKey: String?,
+        initiator: Boolean = false
     ): String {
         val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
         ref.setValue(
@@ -266,7 +267,8 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
                 "audio" to audio,
                 "dest" to uid,
                 "source" to token,
-                "key" to publicKey
+                "key" to publicKey,
+                "initiator" to if (initiator) 1 else 0
             )
         )
         return ref.key!!

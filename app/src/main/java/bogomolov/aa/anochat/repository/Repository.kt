@@ -51,11 +51,8 @@ interface Repository : IFirebaseRepository {
 
     fun searchMessagesDataSource(search: String): DataSource.Factory<Int, Conversation>
 
-    suspend fun sendPublicKey(uid: String)
+    suspend fun sendPublicKey(uid: String, initiator: Boolean)
 
     suspend fun getPendingMessages(uid: String): List<Message>
 
-    suspend fun getNotDecryptedMessages(uid: String): List<Message>
-
-    suspend fun decryptMessage(message: Message, uid: String)
 }
