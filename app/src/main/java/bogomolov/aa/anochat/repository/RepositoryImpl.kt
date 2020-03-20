@@ -39,12 +39,11 @@ class RepositoryImpl
 
     override suspend fun sendPublicKey(uid: String, initiator: Boolean) {
         val myUid = getMyUid(context)!!
-        var privateKey = getPrivateKey(myUid, uid, context)
-        if (privateKey == null) {
+        if (initiator) {
             Log.i("test", "sendKey $uid")
             val keyPair = createKeyPair()
             val publicKeyByteArray = keyPair?.public?.encoded
-            privateKey = keyPair?.private
+            val privateKey = keyPair?.private
             if (publicKeyByteArray != null && privateKey != null) {
                 saveKey(getPrivateKeyName(myUid, uid), privateKey, context)
                 val publicKey = byteArrayToBase64(publicKeyByteArray)

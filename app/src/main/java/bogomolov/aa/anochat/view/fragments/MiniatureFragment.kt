@@ -30,7 +30,7 @@ import kotlin.math.min
 class MiniatureFragment : Fragment(), View.OnTouchListener {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    val viewModel: SettingsViewModel by activityViewModels { viewModelFactory }
+    private val viewModel: SettingsViewModel by activityViewModels { viewModelFactory }
     private lateinit var navController: NavController
     private lateinit var binding: FragmentMiniatureBinding
     private lateinit var bitmap: Bitmap
@@ -82,21 +82,19 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
             scaleDetector.onTouchEvent(event)
         }
 
-
-
         return binding.root
     }
 
 
-    var lastPoint: Point = Point()
-    var relativeLayout: RelativeLayout? = null
+    private var lastPoint: Point = Point()
+    private var relativeLayout: RelativeLayout? = null
     private var scaleFactor = 1f
-    var imageWidth = 0
-    var imageHeight = 0
-    var maxScale = 1f
-    var initialImageScale = 1f
-    var maskX = 0
-    var maskY = 0
+    private var imageWidth = 0
+    private var imageHeight = 0
+    private var maxScale = 1f
+    private var initialImageScale = 1f
+    private var maskX = 0
+    private var maskY = 0
 
     private val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
 

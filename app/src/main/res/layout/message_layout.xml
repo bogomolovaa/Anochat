@@ -193,6 +193,7 @@
                                 android:id="@+id/received_status"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:visibility="@{!message.error()? View.VISIBLE : View.GONE}"
                                 android:text="/"
                                 android:textColor="@{message.received()? @color/report_message_color1 : @color/report_message_color0}" />
 
@@ -200,8 +201,19 @@
                                 android:id="@+id/viewed_status"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:visibility="@{!message.error()? View.VISIBLE : View.GONE}"
                                 android:text="/"
                                 android:textColor="@{message.viewed()? @color/report_message_color1 : @color/report_message_color0}" />
+
+                        <TextView
+                                android:id="@+id/error_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="!"
+                                android:textColor="#ff0000"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:visibility="@{message.error()? View.VISIBLE : View.GONE}" />
 
                     </LinearLayout>
                 </androidx.constraintlayout.widget.ConstraintLayout>

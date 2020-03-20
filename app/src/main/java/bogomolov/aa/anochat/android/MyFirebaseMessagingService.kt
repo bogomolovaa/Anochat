@@ -83,7 +83,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                     if (uid != null && key != null) {
                         GlobalScope.launch(Dispatchers.IO) {
                             Log.i("test", "privateKey null")
-                            repository.sendPublicKey(uid,false)
+                            repository.sendPublicKey(uid, false)
                             val privateKey = getPrivateKey(myUid, uid, context)
                             generateAndSaveSecretKey(privateKey!!, key, myUid, uid, context)
                         }
@@ -105,6 +105,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                             val secretKey = getSecretKey(myUid, uid, context)
                             if (secretKey == null) {
                                 Log.i("test", "not received message: null secretKey")
+                                repository.sendReport(messageId, -1, 0)
                                 repository.sendPublicKey(uid, true)
                             } else {
                                 val message = repository.receiveMessage(
@@ -133,7 +134,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                     val viewed = data["viewed"]?.toInt() ?: 0
                     if (messageId != null) {
                         repository.receiveReport(messageId, received, viewed)
-                        if (viewed == 1)
+                        if (viewed == 1 || received == -1)
                             GlobalScope.launch(Dispatchers.IO) {
                                 repository.deleteRemoteMessage(messageId)
                             }
