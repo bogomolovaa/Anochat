@@ -33,3 +33,7 @@ inline fun <reified T> setSetting(context: Context, name: String, value: T) {
     }
 }
 
+fun getMyUid(context: Context) = getSetting<String>(context, UID)
+
+
+

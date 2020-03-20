@@ -6,7 +6,7 @@ import java.util.*
 
 data class Message(
     var id: Long = 0L,
-    val text: String = "",
+    var text: String = "",
     val time: Long = 0L,
     val conversationId: Long = 0L,
     val senderId: Long = 0L,
@@ -17,7 +17,8 @@ data class Message(
     var publicKey: String? = null,
     var sent: Int = 0,
     var received: Int = 0,
-    var viewed: Int = 0
+    var viewed: Int = 0,
+    val encrypted: Int = 0
 ) {
     @SuppressLint("SimpleDateFormat")
     fun timeString(): String = SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(time))

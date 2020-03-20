@@ -144,11 +144,48 @@ fun <T> getKey(name: String, context: Context): T? {
     return if (array != null) deserializeKey<T>(array) else null
 }
 
+fun getSecretKey(myUid: String, uid: String, context: Context) =
+    getKey<SecretKey>(getSecretKeyName(myUid, uid), context)
+
+fun getPrivateKey(myUid: String, uid: String, context: Context) =
+    getKey<PrivateKey>(getPrivateKeyName(myUid, uid), context)
+
 fun byteArrayToBase64(array: ByteArray) = android.util.Base64.encodeToString(array, DEFAULT)
 
 fun base64ToByteArray(string: String) = android.util.Base64.decode(string, DEFAULT)
 
+fun decryptFile(file: File, uid: String, context: Context) {
+    val myUid = getSetting<String>(context, UID)!!
+    val secretKey = getSecretKey(myUid, uid, context)
+    if (secretKey != null) {
+        val decryptedByteArray = decrypt(secretKey, file.readBytes())
+        file.writeBytes(decryptedByteArray)
+    }
+}
 
+fun encryptFile(file: File, uid: String, context: Context): ByteArray? {
+    val myUid = getSetting<String>(context, UID)!!
+    val secretKey = getSecretKey(myUid, uid, context)
+    return if (secretKey != null) encrypt(secretKey, file.readBytes()) else null
+}
+
+fun decryptString(secretKey: SecretKey, string: String) =
+    String(decrypt(secretKey, base64ToByteArray(string)))
+
+fun encryptString(secretKey: SecretKey, string: String) =
+    byteArrayToBase64(encrypt(secretKey, string.toByteArray()))
+
+fun generateAndSaveSecretKey(
+    privateKey: PrivateKey,
+    publicKeyString: String,
+    myUid: String,
+    uid: String,
+    context: Context
+) {
+    val publicKeyByteArray = base64ToByteArray(publicKeyString)
+    val secretKey = genSharedSecretKey(privateKey, publicKeyByteArray)
+    saveKey(getSecretKeyName(myUid, uid), secretKey, context)
+}
 
 fun test1() {
     //val baos = ByteArrayOutputStream()

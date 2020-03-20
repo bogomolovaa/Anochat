@@ -9,8 +9,6 @@ import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.repository.entity.ConversationEntity
 import java.io.File
-import java.security.PrivateKey
-import javax.crypto.SecretKey
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,6 +20,9 @@ class RepositoryImpl
     private val context: Context
 ) :
     Repository, IFirebaseRepository by firebase {
+    companion object{
+        private const val TAG = "Repository"
+    }
 
     private val mapper = ModelEntityMapper(context)
 
@@ -36,43 +37,56 @@ class RepositoryImpl
     override suspend fun getConversation(id: Long): Conversation =
         mapper.entityToModel(db.conversationDao().loadConversation(id))!!
 
-    override suspend fun sendKey(uid: String) {
-        Log.i("test","sendKey $uid")
-        val myUid = getSetting<String>(context, UID)!!
-        val keyPair = createKeyPair()
-        val publicKeyByteArray = keyPair?.public?.encoded
-        val privateKey = keyPair?.private
-        if (publicKeyByteArray != null && privateKey != null) {
-            saveKey(getPrivateKeyName(myUid, uid), privateKey, context)
-            val publicKey = byteArrayToBase64(publicKeyByteArray)
-            firebase.sendMessage(
-                null,
-                null,
-                null,
-                null,
-                uid,
-                publicKey
-            )
-        } else {
-            Log.i("test", "null keyPair")
+    override suspend fun sendPublicKey(uid: String) {
+        val myUid = getMyUid(context)!!
+        var privateKey = getPrivateKey(myUid, uid, context)
+        if (privateKey == null) {
+            Log.i("test", "sendKey $uid")
+            val keyPair = createKeyPair()
+            val publicKeyByteArray = keyPair?.public?.encoded
+            privateKey = keyPair?.private
+            if (publicKeyByteArray != null && privateKey != null) {
+                saveKey(getPrivateKeyName(myUid, uid), privateKey, context)
+                val publicKey = byteArrayToBase64(publicKeyByteArray)
+                firebase.sendMessage(
+                    null,
+                    null,
+                    null,
+                    null,
+                    uid,
+                    publicKey
+                )
+            } else {
+                Log.i(TAG, "null keyPair")
+            }
+        }else{
+            Log.i(TAG, "public key already sent")
         }
     }
 
     override suspend fun getPendingMessages(uid: String): List<Message> {
-        val myUid = getSetting<String>(context, UID)!!
+        val myUid = getMyUid(context)!!
         val userId = db.userDao().findByUid(uid)?.id
         return if (userId != null)
             mapper.entityToModel(db.messageDao().getNotSent(userId, myUid))
         else listOf()
     }
 
+    override suspend fun getNotDecryptedMessages(uid: String): List<Message> {
+        val myUid = getMyUid(context)!!
+        val userId = db.userDao().findByUid(uid)?.id
+        return if (userId != null)
+            mapper.entityToModel(db.messageDao().getNotDecrypted(userId, myUid))
+        else listOf()
+    }
+
     override suspend fun sendMessage(message: Message) {
-        Log.i("test","sendMessage message")
+        Log.i("test", "sendMessage message")
         val conversation = getConversation(message.conversationId)
-        val myUid = getSetting<String>(context, UID)!!
-        val secretKey = getKey<SecretKey>(getSecretKeyName(myUid, conversation.user.uid), context)
+        val myUid = getMyUid(context)!!
+        val secretKey = getSecretKey(myUid, conversation.user.uid, context)
         if (secretKey != null) {
-            val text = byteArrayToBase64(encrypt(secretKey, message.text.toByteArray()))
+            val text = encryptString(secretKey, message.text)
             message.messageId = firebase.sendMessage(
                 text,
                 message.replyMessage?.messageId,
@@ -83,10 +97,7 @@ class RepositoryImpl
             )
             db.messageDao().updateMessageIdAndSent(message.id, message.messageId, 1)
         } else {
-            Log.i("test","secretKey null")
-            val privateKey =
-                getKey<PrivateKey>(getPrivateKeyName(myUid, conversation.user.uid), context)
-            if (privateKey == null) sendKey(conversation.user.uid)
+            sendPublicKey(conversation.user.uid)
         }
     }
 
@@ -119,11 +130,31 @@ class RepositoryImpl
             replyMessage = if (replyId != null)
                 mapper.entityToModel(db.messageDao().getByMessageId(replyId)) else null,
             image = image,
-            audio = audio
+            audio = audio,
+            encrypted = 1
         )
         saveMessage(message, conversationEntity.id)
         firebase.sendReport(messageId, 1, 0)
+        if (message.image != null)
+            firebase.downloadFile(message.image, uid)
+        if (message.audio != null)
+            firebase.downloadFile(message.audio, uid)
+        decryptMessage(message, uid)
         return message
+    }
+
+    override suspend fun decryptMessage(message: Message, uid: String) {
+        val secretKey = getSecretKey(getMyUid(context)!!, uid, context)
+        if (secretKey != null) {
+            if (message.text.isNotEmpty()) message.text = decryptString(secretKey, message.text)
+            if (message.image != null)
+                decryptFile(File(getFilesDir(context), message.image), uid, context)
+            if (message.audio != null)
+                decryptFile(File(getFilesDir(context), message.audio), uid, context)
+            db.messageDao().setDecrypted(message.id)
+        } else {
+            Log.w(TAG, "message not decrypted: null secret key")
+        }
     }
 
     override fun getImages(userId: Long) = db.messageDao().getImages(userId)

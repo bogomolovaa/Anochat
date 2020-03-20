@@ -97,7 +97,7 @@ class ConversationViewModel
                     repository.sendMessage(message)
                 } else {
                     repository.saveMessage(message, conversation.id)
-                    if (repository.uploadFile(audio)) {
+                    if (repository.uploadFile(audio, conversation.user.uid, true)) {
                         repository.sendMessage(message)
                     } else {
                         Log.i("test", "Not uploaded")

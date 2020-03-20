@@ -24,7 +24,8 @@ class ModelEntityMapper(private val context: Context) {
                 publicKey = from.publicKey,
                 sent = from.sent,
                 received = from.received,
-                viewed = from.viewed
+                viewed = from.viewed,
+                encrypted = from.encrypted
             )
         else null
 
@@ -43,7 +44,8 @@ class ModelEntityMapper(private val context: Context) {
                 from.publicKey,
                 from.sent,
                 from.received,
-                from.viewed
+                from.viewed,
+                from.encrypted
             )
         else null
 
@@ -62,6 +64,7 @@ class ModelEntityMapper(private val context: Context) {
             from.sent,
             from.received,
             from.viewed,
+            from.encrypted,
             getSetting(context, UID)!!
         )
 

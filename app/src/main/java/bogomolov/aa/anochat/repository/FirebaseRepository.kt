@@ -13,7 +13,9 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.io.ByteArrayInputStream
 import java.io.File
+import javax.crypto.SecretKey
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -27,8 +29,18 @@ interface IFirebaseRepository {
     suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean
     fun signOut()
     fun isSignedIn(): Boolean
-    suspend fun uploadFile(fileName: String, uid: String? = null): Boolean
-    suspend fun downloadFile(fileName: String, uid: String? = null): Boolean
+    suspend fun uploadFile(
+        fileName: String,
+        uid: String? = null,
+        needEncrypt: Boolean = false
+    ): Boolean
+
+    suspend fun downloadFile(
+        fileName: String,
+        uid: String? = null,
+        needDecrypt: Boolean = false
+    ): Boolean
+
     suspend fun sendReport(messageId: String, received: Int, viewed: Int)
     suspend fun deleteRemoteMessage(messageId: String)
     suspend fun addUserStatusListener(
@@ -121,7 +133,11 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             .updateChildren(mapOf("received" to received.toString(), "viewed" to viewed.toString()))
     }
 
-    override suspend fun downloadFile(fileName: String, uid: String?): Boolean =
+    override suspend fun downloadFile(
+        fileName: String,
+        uid: String?,
+        needDecrypt: Boolean
+    ): Boolean =
         suspendCoroutine { continuation ->
             Log.i("test", "start downloading: $fileName")
             val fileRef = FirebaseStorage.getInstance()
@@ -129,6 +145,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             val localFile = File(getFilesDir(context), fileName)
             fileRef.getFile(localFile).addOnSuccessListener {
                 Log.i("test", "downloaded $fileName")
+                if (needDecrypt) decryptFile(localFile, uid!!, context)
                 fileRef.delete()
                 continuation.resume(true)
             }.addOnFailureListener {
@@ -137,13 +154,16 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             }
         }
 
-    override suspend fun uploadFile(fileName: String, uid: String?): Boolean =
+    override suspend fun uploadFile(fileName: String, uid: String?, needEncrypt: Boolean): Boolean =
         suspendCoroutine { continuation ->
             val fileRef = FirebaseStorage.getInstance()
                 .getReference(if (uid != null) "/user/$uid/" else "/files/").child(fileName)
             Log.i("test", "start uploading $fileName")
             val localFile = File(getFilesDir(context), fileName)
-            fileRef.putFile(Uri.fromFile(localFile)).addOnSuccessListener {
+            val byteArray =
+                if (needEncrypt) encryptFile(localFile, uid!!, context) else localFile.readBytes()
+            if (byteArray == null) continuation.resumeWithException(Exception("not uploaded: can't read file $fileName"))
+            fileRef.putBytes(byteArray!!).addOnSuccessListener {
                 Log.i("test", "uploaded $fileName")
                 continuation.resume(true)
             }.addOnFailureListener {

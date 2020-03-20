@@ -5,7 +5,6 @@ import android.media.AudioManager
 import bogomolov.aa.anochat.R
 
 import android.app.NotificationManager
-import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Build
@@ -26,8 +25,6 @@ import dagger.android.HasAndroidInjector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.security.PrivateKey
-import javax.crypto.SecretKey
 import javax.inject.Inject
 
 private const val TYPE_MESSAGE = "message"
@@ -50,17 +47,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         super.onCreate()
     }
 
-    private fun generateAndSaveSecretKey(
-        privateKey: PrivateKey,
-        publicKeyString: String,
-        myUid: String,
-        uid: String,
-        context: Context
-    ) {
-        val publicKeyByteArray = base64ToByteArray(publicKeyString)
-        val secretKey = genSharedSecretKey(privateKey, publicKeyByteArray)
-        saveKey(getSecretKeyName(myUid, uid), secretKey, context)
-    }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Log.d("test", "From: " + remoteMessage.getFrom())
@@ -79,23 +65,25 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                     val key = data["key"]
                     if (uid != null && key != null) {
                         GlobalScope.launch(Dispatchers.IO) {
-                            var privateKey =
-                                getKey<PrivateKey>(getPrivateKeyName(myUid, uid), context)
+                            var privateKey = getPrivateKey(myUid, uid, context)
                             if (privateKey != null) {
-                                Log.i("test","privateKey NOT null, send messages")
+                                Log.i("test", "privateKey NOT null, send messages")
                                 generateAndSaveSecretKey(privateKey, key, myUid, uid, context)
                                 for (message in repository.getPendingMessages(uid))
                                     repository.sendMessage(message)
+                                for (message in repository.getNotDecryptedMessages(uid))
+                                    repository.decryptMessage(message, uid)
                             } else {
-                                Log.i("test","privateKey null")
-                                repository.sendKey(uid)
-                                privateKey =
-                                    getKey<PrivateKey>(getPrivateKeyName(myUid, uid), context)
+                                Log.i("test", "privateKey null")
+                                repository.sendPublicKey(uid)
+                                privateKey = getPrivateKey(myUid, uid, context)
                                 generateAndSaveSecretKey(privateKey!!, key, myUid, uid, context)
                             }
                         }
                     }
                 }
+                //https://stackoverflow.com/questions/13261252/javax-crypto-illegalblocksizeexception-last-block-incomplete-in-decryption-de
+                //https://stackoverflow.com/questions/18350459/javax-crypto-illegalblocksizeexception-last-block-incomplete-in-decryption-exce/20417874#20417874
                 TYPE_MESSAGE -> {
                     var text = data["body"] ?: ""
                     val uid = data["source"]
@@ -107,11 +95,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                     if (uid != null && messageId != null)
                         GlobalScope.launch(Dispatchers.IO) {
                             Log.i("test", "receiveMessage")
-                            val secretKey =
-                                getKey<SecretKey>(getSecretKeyName(myUid, uid), context)!!
-                            text = String(decrypt(secretKey, base64ToByteArray(text)))
-                            //https://stackoverflow.com/questions/13261252/javax-crypto-illegalblocksizeexception-last-block-incomplete-in-decryption-de
-                            //https://stackoverflow.com/questions/18350459/javax-crypto-illegalblocksizeexception-last-block-incomplete-in-decryption-exce/20417874#20417874
+                            val secretKey = getSecretKey(myUid, uid, context)
+                            if (secretKey == null) repository.sendPublicKey(uid)
                             val message = repository.receiveMessage(
                                 text,
                                 uid,
@@ -122,8 +107,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                             )
                             if (message != null) {
                                 val inBackground = (application as AnochatAplication).inBackground
-                                if (message.image != null) repository.downloadFile(message.image)
-                                if (message.audio != null) repository.downloadFile(message.audio)
                                 val showNotification =
                                     getSetting<Boolean>(applicationContext, NOTIFICATIONS) != null
                                 if (inBackground && showNotification) sendNotification(message)

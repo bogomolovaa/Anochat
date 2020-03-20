@@ -23,6 +23,7 @@ data class MessageEntity(
     val sent: Int = 0,
     val received: Int = 0,
     val viewed: Int = 0,
+    val encrypted: Int = 0,
     var myUid: String
 )
 
@@ -40,5 +41,6 @@ data class MessageJoined(
     val publicKey: String? = null,
     val sent: Int = 0,
     val received: Int = 0,
+    val encrypted: Int = 0,
     val viewed: Int = 0
 )
