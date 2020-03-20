@@ -172,6 +172,6 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
     }
 
     private fun View.scaledWidth(): Int = (scaleFactor * this.width).toInt()
-    private fun View.scaledHeight(): Int = (scaleFactor * this.width).toInt()
+    private fun View.scaledHeight(): Int = (scaleFactor * this.height).toInt()
 
 }

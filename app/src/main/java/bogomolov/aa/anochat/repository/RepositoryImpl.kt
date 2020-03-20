@@ -39,8 +39,11 @@ class RepositoryImpl
 
     override suspend fun sendPublicKey(uid: String, initiator: Boolean) {
         val myUid = getMyUid(context)!!
-        if (initiator) {
+        val sentSettingName = getSentSettingName(myUid,uid)
+        val isSent = getSetting<Boolean>(context, sentSettingName)!!
+        if (initiator && !isSent) {
             Log.i("test", "sendKey $uid")
+            setSetting(context,sentSettingName,true)
             val keyPair = createKeyPair()
             val publicKeyByteArray = keyPair?.public?.encoded
             val privateKey = keyPair?.private
@@ -59,8 +62,6 @@ class RepositoryImpl
             } else {
                 Log.i(TAG, "null keyPair")
             }
-        } else {
-            Log.i(TAG, "public key already sent")
         }
     }
 

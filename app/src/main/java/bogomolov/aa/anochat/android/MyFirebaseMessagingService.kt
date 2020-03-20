@@ -71,6 +71,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                             if (privateKey != null) {
                                 Log.i("test", "privateKey NOT null, send messages")
                                 generateAndSaveSecretKey(privateKey, key, myUid, uid, context)
+                                setSetting(context, getSentSettingName(myUid, uid), false)
                                 for (message in repository.getPendingMessages(uid))
                                     repository.sendMessage(message)
                             } else {

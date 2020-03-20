@@ -13,6 +13,7 @@ import androidx.databinding.BindingAdapter
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilePath
 import bogomolov.aa.anochat.android.getMiniPhotoFileName
+import java.io.File
 
 
 class RoundedImageView(context: Context, attrs: AttributeSet) :
@@ -47,7 +48,7 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
     fun setFile(fileName: String) {
         val imageView: ImageView = findViewById(R.id.round_image)
         val filePath = getFilePath(context, getMiniPhotoFileName(context,fileName))
-        imageView.setImageBitmap(BitmapFactory.decodeFile(filePath))
+        if(File(filePath).exists()) imageView.setImageBitmap(BitmapFactory.decodeFile(filePath))
     }
 
 }

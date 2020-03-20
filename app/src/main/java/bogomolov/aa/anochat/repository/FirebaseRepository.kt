@@ -141,7 +141,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         suspendCoroutine { continuation ->
             Log.i("test", "start downloading: $fileName")
             val fileRef = FirebaseStorage.getInstance()
-                .getReference(if (uid != null) "/user/{$uid}/" else "/files/").child(fileName)
+                .getReference(if (!needDecrypt) "/user/{$uid}/" else "/files/").child(fileName)
             val localFile = File(getFilesDir(context), fileName)
             fileRef.getFile(localFile).addOnSuccessListener {
                 Log.i("test", "downloaded $fileName")
@@ -157,8 +157,8 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     override suspend fun uploadFile(fileName: String, uid: String?, needEncrypt: Boolean): Boolean =
         suspendCoroutine { continuation ->
             val fileRef = FirebaseStorage.getInstance()
-                .getReference(if (uid != null) "/user/$uid/" else "/files/").child(fileName)
-            Log.i("test", "start uploading $fileName")
+                .getReference(if (!needEncrypt) "/user/$uid/" else "/files/").child(fileName)
+            Log.i("test", "start uploading $fileName to ${fileRef.path} myUid ${getMyUid(context)}")
             val localFile = File(getFilesDir(context), fileName)
             val byteArray =
                 if (needEncrypt) encryptFile(localFile, uid!!, context) else localFile.readBytes()
