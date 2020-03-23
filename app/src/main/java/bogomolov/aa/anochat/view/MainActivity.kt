@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.android.DiscoveryTest2
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
 import bogomolov.aa.anochat.viewmodel.MainActivityViewModel
@@ -20,12 +21,13 @@ import dagger.android.AndroidInjection
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
-import de.javawi.jstun.test.DiscoveryTest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.net.InetAddress
+import java.net.NetworkInterface
 import java.net.UnknownHostException
+import java.util.*
 import javax.inject.Inject
 
 
@@ -84,29 +86,49 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
     }
 
     private fun doDiscovery() {
-        for (i in 1100..3000) {
-            Log.i("test", "i $i")
-            try {
-                val dt = DiscoveryTest(
-                    InetAddress.getByName("0.0.0.0"), i,
-                    "stun1.l.google.com", 19302
-                )
-                val di = dt.test()
-                Log.i("test", "$di")
-            } catch (ex: UnknownHostException) {
-                Log.i(
-                    "test",
-                    "Could not resolve STUN server. Make sure that a network connection is available"
-                )
-                continue
-                //ex.printStackTrace()
-            } catch (ex: Exception) {
-                //ex.printStackTrace()
-                Log.i("test", ex.message ?: "null")
-                continue
-            }
-            break
+        try {
+            val dt = DiscoveryTest2(
+                InetAddress.getByName("0.0.0.0"), 0,
+                "stun1.l.google.com", 19302
+            )
+            val di = dt.test()
+            Log.i("test", "$di")
+        } catch (ex: UnknownHostException) {
+            Log.i(
+                "test",
+                "Could not resolve STUN server. Make sure that a network connection is available"
+            )
+            ex.printStackTrace()
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            Log.i("test", ex.message ?: "null")
         }
+        val ip = getIPAddress(true)
+        Log.i("test", "ip $ip")
+    }
+
+    fun getIPAddress(useIPv4: Boolean): String? {
+        val intf = NetworkInterface.getNetworkInterfaces().nextElement()
+        val addrs: List<InetAddress> = Collections.list(intf.getInetAddresses())
+        for (addr in addrs) {
+            if (!addr.isLoopbackAddress) {
+                val sAddr = addr.hostAddress
+                //boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+                val isIPv4 = sAddr.indexOf(':') < 0
+                if (useIPv4) {
+                    if (isIPv4) return sAddr
+                } else {
+                    if (!isIPv4) {
+                        val delim = sAddr.indexOf('%') // drop ip6 zone suffix
+                        return if (delim < 0) sAddr.toUpperCase() else sAddr.substring(
+                            0,
+                            delim
+                        ).toUpperCase()
+                    }
+                }
+            }
+        }
+        return ""
     }
 
 
