@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.view
 
-import android.content.SharedPreferences.Editor
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.viewModels
@@ -11,7 +10,6 @@ import androidx.emoji.text.EmojiCompat
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
-import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
@@ -22,9 +20,12 @@ import dagger.android.AndroidInjection
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
+import de.javawi.jstun.test.DiscoveryTest
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.net.InetAddress
+import java.net.UnknownHostException
 import javax.inject.Inject
 
 
@@ -56,7 +57,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
                     Log.i("test", "signedIn $signedIn")
                     if (!signedIn) {
                         //withContext(Dispatchers.Main) {
-                            controller.navigate(R.id.signInFragment)
+                        controller.navigate(R.id.signInFragment)
                         //}
                     }
                 }
@@ -67,6 +68,9 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         //setSetting(this, UID,"LX4U2yR5ZJUsN5hivvDvF9NUHXJ3")
         viewModel.startWorkManager()
 
+        GlobalScope.launch(Dispatchers.IO) {
+            doDiscovery()
+        }
         //val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         //val editor: Editor = sharedPreferences.edit()
         //editor.clear()
@@ -78,6 +82,33 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         EmojiCompat.init(config)
         EmojiManager.install(IosEmojiProvider())
     }
+
+    private fun doDiscovery() {
+        for (i in 1100..3000) {
+            Log.i("test", "i $i")
+            try {
+                val dt = DiscoveryTest(
+                    InetAddress.getByName("0.0.0.0"), i,
+                    "stun1.l.google.com", 19302
+                )
+                val di = dt.test()
+                Log.i("test", "$di")
+            } catch (ex: UnknownHostException) {
+                Log.i(
+                    "test",
+                    "Could not resolve STUN server. Make sure that a network connection is available"
+                )
+                continue
+                //ex.printStackTrace()
+            } catch (ex: Exception) {
+                //ex.printStackTrace()
+                Log.i("test", ex.message ?: "null")
+                continue
+            }
+            break
+        }
+    }
+
 
 }
 
