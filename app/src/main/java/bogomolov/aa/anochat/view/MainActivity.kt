@@ -24,10 +24,7 @@ import dagger.android.HasAndroidInjector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.net.InetAddress
-import java.net.NetworkInterface
-import java.net.UnknownHostException
-import java.util.*
+import java.net.*
 import javax.inject.Inject
 
 
@@ -80,19 +77,24 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
     }
 
     private fun emojiSupport() {
-        val config = BundledEmojiCompatConfig(this)
+        val config = BundledEmojiCompatConfig(applicationContext)
         EmojiCompat.init(config)
         EmojiManager.install(IosEmojiProvider())
     }
 
     private fun doDiscovery() {
         try {
+            val ip = getLocalIpAddress()
+            Log.i("test", "ip $ip")
             val dt = DiscoveryTest2(
-                InetAddress.getByName("0.0.0.0"), 0,
-                "stun1.l.google.com", 19302
+                InetAddress.getByName(ip), 1549,
+                //"stun.sipnet.ru", 3478  //
+            //"stunserver.org",  3478
+                "stun.voippro.com", 3478
             )
             val di = dt.test()
             Log.i("test", "$di")
+            Log.i("test", "public port ${di?.publicPort}")
         } catch (ex: UnknownHostException) {
             Log.i(
                 "test",
@@ -103,32 +105,31 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
             ex.printStackTrace()
             Log.i("test", ex.message ?: "null")
         }
-        val ip = getIPAddress(true)
-        Log.i("test", "ip $ip")
+
     }
 
-    fun getIPAddress(useIPv4: Boolean): String? {
-        val intf = NetworkInterface.getNetworkInterfaces().nextElement()
-        val addrs: List<InetAddress> = Collections.list(intf.getInetAddresses())
-        for (addr in addrs) {
-            if (!addr.isLoopbackAddress) {
-                val sAddr = addr.hostAddress
-                //boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
-                val isIPv4 = sAddr.indexOf(':') < 0
-                if (useIPv4) {
-                    if (isIPv4) return sAddr
-                } else {
-                    if (!isIPv4) {
-                        val delim = sAddr.indexOf('%') // drop ip6 zone suffix
-                        return if (delim < 0) sAddr.toUpperCase() else sAddr.substring(
-                            0,
-                            delim
-                        ).toUpperCase()
+    fun getLocalIpAddress(): String? {
+        try {
+            val en =
+                NetworkInterface.getNetworkInterfaces()
+            var lastAddress: String? = null
+            while (en.hasMoreElements()) {
+                val intf = en.nextElement()
+                val enumIpAddr = intf.inetAddresses
+                while (enumIpAddr.hasMoreElements()) {
+                    val inetAddress = enumIpAddr.nextElement()
+                    if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
+                        //return inetAddress.hostAddress
+                        lastAddress = inetAddress.hostAddress
+                        Log.i("test","inetAddress.hostAddress ${inetAddress.hostAddress}")
                     }
                 }
             }
+            return lastAddress
+        } catch (ex: SocketException) {
+            ex.printStackTrace()
         }
-        return ""
+        return null
     }
 
 

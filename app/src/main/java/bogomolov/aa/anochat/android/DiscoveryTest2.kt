@@ -44,8 +44,10 @@ class DiscoveryTest2(
         var timeout = timeoutInitValue
         while (true) {
             try { // Test 1 including response
-                socketTest1 = DatagramSocket()
+                socketTest1 = DatagramSocket(null)
                 socketTest1!!.reuseAddress = true
+                //socketTest1!!.bind(InetSocketAddress(sourceIaddress, sourcePort))
+                Log.i("test","socketTest1 bind $sourceIaddress:$sourcePort connect ${stunServer}:${stunServerPort}")
                 socketTest1!!.bind(InetSocketAddress(sourceIaddress, sourcePort))
                 socketTest1!!.connect(InetAddress.getByName(stunServer), stunServerPort)
                 socketTest1!!.soTimeout = timeout
@@ -63,16 +65,18 @@ class DiscoveryTest2(
                 while (!receiveMH.equalTransactionID(sendMH)) {
                     val receive =
                         DatagramPacket(ByteArray(200), 200)
+                    Log.i("test","socketTest1.receive")
                     socketTest1!!.receive(receive)
                     receiveMH = MessageHeader.parseHeader(receive.data)
                     receiveMH.parseAttributes(receive.data)
                 }
                 ma =
-                    receiveMH.getMessageAttribute(MessageAttributeInterface.MessageAttributeType.MappedAddress) as MappedAddress
+                    receiveMH.getMessageAttribute(MessageAttributeInterface.MessageAttributeType.MappedAddress) as MappedAddress?
                 ca =
-                    receiveMH.getMessageAttribute(MessageAttributeInterface.MessageAttributeType.ChangedAddress) as ChangedAddress
+                    receiveMH.getMessageAttribute(MessageAttributeInterface.MessageAttributeType.ChangedAddress) as ChangedAddress?
                 val ec =
                     receiveMH.getMessageAttribute(MessageAttributeInterface.MessageAttributeType.ErrorCode) as ErrorCode?
+                Log.i("test", "ma $ma ca $ca")
                 if (ec != null) {
                     di!!.setError(ec.responseCode, ec.reason)
                     Log.i("test", "Message header contains an Errorcode message attribute.")
@@ -124,8 +128,11 @@ class DiscoveryTest2(
         var timeout = timeoutInitValue
         while (true) {
             try { // Test 2 including response
-                val sendSocket =
-                    DatagramSocket(InetSocketAddress(sourceIaddress, sourcePort))
+                //val sendSocket = DatagramSocket(InetSocketAddress(sourceIaddress, sourcePort))
+                val sendSocket = DatagramSocket(null)
+                sendSocket.reuseAddress = true
+                Log.i("test","sendSocket bind $sourceIaddress:$sourcePort connect ${stunServer}:${stunServerPort}")
+                sendSocket.bind(InetSocketAddress(sourceIaddress, sourcePort))
                 sendSocket.connect(InetAddress.getByName(stunServer), stunServerPort)
                 sendSocket.soTimeout = timeout
                 val sendMH =
@@ -142,8 +149,11 @@ class DiscoveryTest2(
                 val localPort = sendSocket.localPort
                 val localAddress = sendSocket.localAddress
                 sendSocket.close()
-                val receiveSocket =
-                    DatagramSocket(localPort, localAddress)
+                //val receiveSocket = DatagramSocket(localPort, localAddress)
+                val receiveSocket = DatagramSocket(null)
+                receiveSocket.reuseAddress = true
+                Log.i("test","receiveSocket bind $localAddress:$localPort connect ${ca!!.address.inetAddress}:${ca!!.port}")
+                receiveSocket.bind(InetSocketAddress(localAddress, localPort))
                 receiveSocket.connect(ca!!.address.inetAddress, ca!!.port)
                 receiveSocket.soTimeout = timeout
                 var receiveMH =
@@ -151,9 +161,11 @@ class DiscoveryTest2(
                 while (!receiveMH.equalTransactionID(sendMH)) {
                     val receive =
                         DatagramPacket(ByteArray(200), 200)
+                    Log.i("test","receiveSocket.receive")
                     receiveSocket.receive(receive)
                     receiveMH = MessageHeader.parseHeader(receive.data)
                     receiveMH.parseAttributes(receive.data)
+                    Log.i("test","receiveSocket.received length ${receive.data.toHexString()}")
                 }
                 val ec =
                     receiveMH.getMessageAttribute(MessageAttributeInterface.MessageAttributeType.ErrorCode) as ErrorCode?
@@ -203,6 +215,7 @@ class DiscoveryTest2(
         var timeout = timeoutInitValue
         while (true) { // redo test 1 with address and port as offered in the changed-address message attribute
             try { // Test 1 with changed port and address values
+                Log.i("test","socketTest1 connect ${ca!!.address.inetAddress}:${ca!!.port} send")
                 socketTest1!!.connect(ca!!.address.inetAddress, ca!!.port)
                 socketTest1!!.soTimeout = timeout
                 val sendMH =
@@ -214,17 +227,16 @@ class DiscoveryTest2(
                 val send = DatagramPacket(data, data.size)
                 socketTest1!!.send(send)
                 Log.i("test", "Test 1 redo with changed address: Binding Request sent.")
-                var receiveMH =
-                    MessageHeader()
+                var receiveMH = MessageHeader()
                 while (!receiveMH.equalTransactionID(sendMH)) {
-                    val receive =
-                        DatagramPacket(ByteArray(200), 200)
+                    val receive = DatagramPacket(ByteArray(200), 200)
+                    Log.i("test", "redo socketTest1.receive")
                     socketTest1!!.receive(receive)
                     receiveMH = MessageHeader.parseHeader(receive.data)
                     receiveMH.parseAttributes(receive.data)
                 }
                 val ma2 =
-                    receiveMH.getMessageAttribute(MessageAttributeInterface.MessageAttributeType.MappedAddress) as MappedAddress
+                    receiveMH.getMessageAttribute(MessageAttributeInterface.MessageAttributeType.MappedAddress) as MappedAddress?
                 val ec =
                     receiveMH.getMessageAttribute(MessageAttributeInterface.MessageAttributeType.ErrorCode) as ErrorCode?
                 if (ec != null) {
@@ -274,8 +286,9 @@ class DiscoveryTest2(
         var timeout = timeoutInitValue
         while (true) {
             try { // Test 3 including response
-                val sendSocket =
-                    DatagramSocket(InetSocketAddress(sourceIaddress, sourcePort))
+                val sendSocket = DatagramSocket(InetSocketAddress(sourceIaddress, sourcePort))
+                Log.i("test","sendSocket bind $sourceIaddress:$sourcePort connect ${stunServer}:${stunServerPort}")
+                //val sendSocket = DatagramSocket()
                 sendSocket.connect(InetAddress.getByName(stunServer), stunServerPort)
                 sendSocket.soTimeout = timeout
                 val sendMH =
@@ -291,8 +304,11 @@ class DiscoveryTest2(
                 val localPort = sendSocket.localPort
                 val localAddress = sendSocket.localAddress
                 sendSocket.close()
-                val receiveSocket =
-                    DatagramSocket(localPort, localAddress)
+                //val receiveSocket = DatagramSocket(localPort, localAddress)
+                val receiveSocket = DatagramSocket(null)
+                receiveSocket.reuseAddress = true
+                Log.i("test","receiveSocket bind $localAddress:$localPort connect ${stunServer}:${ca!!.port}")
+                receiveSocket.bind(InetSocketAddress(localAddress, localPort))
                 receiveSocket.connect(InetAddress.getByName(stunServer), ca!!.port)
                 receiveSocket.soTimeout = timeout
                 var receiveMH =
@@ -300,6 +316,7 @@ class DiscoveryTest2(
                 while (!receiveMH.equalTransactionID(sendMH)) {
                     val receive =
                         DatagramPacket(ByteArray(200), 200)
+                    Log.i("test","receiveSocket.receive")
                     receiveSocket.receive(receive)
                     receiveMH = MessageHeader.parseHeader(receive.data)
                     receiveMH.parseAttributes(receive.data)
@@ -317,6 +334,7 @@ class DiscoveryTest2(
                     return
                 }
             } catch (ste: SocketTimeoutException) {
+                ste.printStackTrace()
                 if (timeSinceFirstTransmission < 7900) {
                     Log.i("test", "Test 3: Socket timeout while receiving the response.")
                     timeSinceFirstTransmission += timeout
@@ -336,3 +354,5 @@ class DiscoveryTest2(
         }
     }
 }
+
+fun ByteArray.toHexString() = joinToString("") { "%02x".format(it) }
