@@ -24,7 +24,7 @@ class SettingsViewModel
     fun loadUser(uid: String) {
         if (userLiveData.value == null) {
             viewModelScope.launch(Dispatchers.IO) {
-                userLiveData.postValue(repository.getUser(uid))
+                userLiveData.postValue(repository.getUser(uid, true))
             }
         }
     }

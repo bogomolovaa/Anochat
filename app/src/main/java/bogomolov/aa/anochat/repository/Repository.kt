@@ -8,7 +8,7 @@ import bogomolov.aa.anochat.core.User
 
 interface Repository : IFirebaseRepository {
 
-    fun getImages(userId: Long): DataSource.Factory<Int,String>
+    fun getImages(userId: Long): DataSource.Factory<Int, String>
 
     suspend fun sendMessage(message: Message)
 
@@ -16,7 +16,7 @@ interface Repository : IFirebaseRepository {
 
     fun loadMessages(conversationId: Long): DataSource.Factory<Int, Message>
 
-    suspend fun getUser(uid: String): User?
+    suspend fun getUser(uid: String, save: Boolean = false): User?
 
     suspend fun getUser(id: Long): User
 
@@ -24,7 +24,7 @@ interface Repository : IFirebaseRepository {
 
     suspend fun updateUserTo(user: User)
 
-    suspend fun updateUserFrom(user: User, saveLocal: Boolean = false)
+    suspend fun updateUserFrom(user: User, saveLocal: Boolean = true)
 
     suspend fun loadConversations(): List<Conversation>
 
@@ -54,5 +54,7 @@ interface Repository : IFirebaseRepository {
     suspend fun sendPublicKey(uid: String, initiator: Boolean)
 
     suspend fun getPendingMessages(uid: String): List<Message>
+
+    fun getUsersByPhones(phones: List<String>): DataSource.Factory<Int, User>
 
 }

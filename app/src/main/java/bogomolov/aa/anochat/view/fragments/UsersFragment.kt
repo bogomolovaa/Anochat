@@ -10,18 +10,24 @@ import androidx.appcompat.widget.SearchView
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.UsersAdapter
+import bogomolov.aa.anochat.view.adapters.UsersSearchAdapter
 import bogomolov.aa.anochat.viewmodel.UsersViewModel
 import dagger.android.support.AndroidSupportInjection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
@@ -30,6 +36,7 @@ class UsersFragment : Fragment() {
     internal lateinit var viewModelFactory: ViewModelFactory
     val viewModel: UsersViewModel by activityViewModels { viewModelFactory }
     lateinit var recyclerView: RecyclerView
+    private var adapter: UsersAdapter? = null
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -54,21 +61,28 @@ class UsersFragment : Fragment() {
 
         recyclerView = binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
-        val adapter =
-            UsersAdapter(AdapterHelper {
-                viewModel.createConversation(it) { conversationId ->
-                    navController.navigate(
-                        R.id.conversationFragment,
-                        Bundle().apply { putLong("id", conversationId) })
-                }
-            })
-        recyclerView.adapter = adapter
-        viewModel.usersLiveData.observe(viewLifecycleOwner) {
-            adapter.submitList(it)
+        val onClick = { user: User ->
+            viewModel.createConversation(user) { conversationId ->
+                navController.navigate(
+                    R.id.conversationFragment,
+                    Bundle().apply { putLong("id", conversationId) })
+            }
         }
-        setHasOptionsMenu(true)
-        viewModel.loadContactUsers()
+        adapter = UsersAdapter(AdapterHelper(onClick = onClick))
+        val searchAdapter = UsersSearchAdapter(AdapterHelper(onClick = onClick))
+        viewModel.searchLiveData.observe(viewLifecycleOwner) {
+            recyclerView.adapter = searchAdapter
+            searchAdapter.submitList(it)
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            val contacts = viewModel.getContacts()
+            viewModel.loadContactUsers(contacts).observe(viewLifecycleOwner) {
+                recyclerView.adapter = adapter
+                adapter!!.submitList(it)
+            }
+        }
 
+        setHasOptionsMenu(true)
 
         return binding.root
     }
@@ -97,7 +111,7 @@ class UsersFragment : Fragment() {
         })
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
         closeButton.setOnClickListener {
-            viewModel.loadContactUsers()
+            recyclerView.adapter = adapter
         }
 
     }

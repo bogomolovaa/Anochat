@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.repository.dao
 
+import androidx.paging.DataSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
@@ -12,12 +13,15 @@ interface UserDao {
     fun add(user: UserEntity): Long
 
     @Query("select * from UserEntity where id = :id")
-    fun getUser(id: Long): UserEntity?
+    fun getUser(id: Long): UserEntity
 
     @Query("select * from UserEntity where uid = :uid")
     fun findByUid(uid: String): UserEntity?
 
     @Query("update UserEntity set name = :name, photo = :photo, status = :status, phone = :phone where uid = :uid")
     fun updateUser(uid: String, phone: String, name: String?, photo: String?, status: String?)
+
+    @Query("select * from UserEntity where phone in (:phoneList) and uid != :myUid")
+    fun getAll(phoneList: List<String>, myUid: String): DataSource.Factory<Int, UserEntity>
 
 }

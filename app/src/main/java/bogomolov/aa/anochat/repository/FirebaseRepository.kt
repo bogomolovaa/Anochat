@@ -23,7 +23,7 @@ import kotlin.coroutines.suspendCoroutine
 
 
 interface IFirebaseRepository {
-    suspend fun getUsersByPhones(phones: List<String>): List<User>
+    suspend fun receiveUsersByPhones(phones: List<String>): List<User>
     suspend fun findByPhone(phone: String): List<User>
     suspend fun signUp(name: String, email: String, password: String): Boolean
     suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean
@@ -217,7 +217,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         })
     }
 
-    override suspend fun getUsersByPhones(phones: List<String>): List<User> = suspendCoroutine {
+    override suspend fun receiveUsersByPhones(phones: List<String>): List<User> = suspendCoroutine {
         val phonesMap = HashMap<String, String>()
         for (phone in phones) phonesMap[phone] = ""
         val ref = FirebaseDatabase.getInstance().reference.child("requests").push()
