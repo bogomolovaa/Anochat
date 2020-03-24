@@ -26,6 +26,7 @@ import bogomolov.aa.anochat.viewmodel.ConversationListViewModel
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.view.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 
 class ConversationsListFragment : Fragment() {
