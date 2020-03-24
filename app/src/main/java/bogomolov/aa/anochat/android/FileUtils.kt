@@ -9,26 +9,46 @@ import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import android.util.Log
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import kotlin.math.max
 
 const val MAX_IMAGE_DIM = 1024
 
-fun resizeImage(path: String? = null, bitmap: Bitmap? = null, context: Context): String {
-    val btmp = bitmap ?: BitmapFactory.decodeFile(path)
-    val newFileName = getRandomString(20)
-    var ratio = MAX_IMAGE_DIM / max(btmp.width, btmp.height).toFloat()
+fun roundNextPowerOfTwo(value: Int): Int {
+    val highestOneBit = Integer.highestOneBit(value)
+    return if (value == highestOneBit) {
+        value
+    } else highestOneBit shl 1
+}
+
+fun resizeImage(path: String? = null, context: Context): String {
+    var bitmapOptions = BitmapFactory.Options()
+    bitmapOptions.inJustDecodeBounds = true
+    BitmapFactory.decodeFile(path, bitmapOptions)
+    val bitmapWidth = bitmapOptions.outWidth
+    val bitmapHeight = bitmapOptions.outHeight
+
+    var ratio = MAX_IMAGE_DIM / max(bitmapWidth, bitmapHeight).toFloat()
     if (ratio > 1) ratio = 1.0f
+    val outWidth = (ratio * bitmapWidth).toInt()
+    /*
     val resized = Bitmap.createScaledBitmap(
         btmp,
-        (ratio * btmp.width).toInt(),
-        (ratio * btmp.height).toInt(),
+        (ratio * bitmapWidth).toInt(),
+        (ratio * bitmapHeight).toInt(),
         true
     )
-    val fileName = "$newFileName.jpg"
+     */
+    bitmapOptions = BitmapFactory.Options()
+    bitmapOptions.inScaled = true
+    bitmapOptions.inSampleSize = 4
+    bitmapOptions.inDensity = bitmapWidth
+    bitmapOptions.inTargetDensity =  outWidth * bitmapOptions.inSampleSize
+    val resized = BitmapFactory.decodeFile(path, bitmapOptions);
+    val fileName = "${getRandomString(20)}.jpg"
     try {
         val stream = FileOutputStream(getFilePath(context, fileName))
         resized.compress(Bitmap.CompressFormat.JPEG, 80, stream)
@@ -56,9 +76,8 @@ fun getRandomString(length: Int): String {
 
 
 fun getPath(context: Context, uri: Uri): String? {
-    val isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
     // DocumentProvider
-    if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) { // ExternalStorageProvider
+    if (DocumentsContract.isDocumentUri(context, uri)) { // ExternalStorageProvider
         if (isExternalStorageDocument(uri)) {
             val docId = DocumentsContract.getDocumentId(uri)
             val split = docId.split(":").toTypedArray()

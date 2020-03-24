@@ -17,6 +17,7 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 private const val AES_KEY_SIZE = 128
+private val IV = "12345678".toByteArray()
 
 
 fun createKeyPair(): KeyPair? {
@@ -77,7 +78,7 @@ fun genSharedSecretKey(
     return null
 }
 
-fun encrypt(secretKey: SecretKey, clear: ByteArray): ByteArray {
+fun encrypt_(secretKey: SecretKey, clear: ByteArray): ByteArray {
     val raw = secretKey.encoded
     val skeySpec = SecretKeySpec(raw, "AES")
     val cipher = Cipher.getInstance("AES")
@@ -85,7 +86,7 @@ fun encrypt(secretKey: SecretKey, clear: ByteArray): ByteArray {
     return cipher.doFinal(clear)
 }
 
-fun decrypt(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
+fun decrypt_(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
     val raw = secretKey.encoded
     val skeySpec = SecretKeySpec(raw, "AES")
     val cipher = Cipher.getInstance("AES")
@@ -93,20 +94,20 @@ fun decrypt(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
     return cipher.doFinal(encrypted)
 }
 
-fun encrypt2(secretKey: SecretKey, clear: ByteArray): ByteArray {
+fun encrypt(secretKey: SecretKey, clear: ByteArray): ByteArray {
     val raw = secretKey.encoded
     val skeySpec = SecretKeySpec(raw, "AES")
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    val spec = GCMParameterSpec(128, cipher.getIV())
+    val spec = GCMParameterSpec(128, IV)
     cipher.init(Cipher.ENCRYPT_MODE, skeySpec, spec)
     return cipher.doFinal(clear)
 }
 
-fun decrypt2(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
+fun decrypt(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
     val raw = secretKey.encoded
     val skeySpec = SecretKeySpec(raw, "AES")
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    val spec = GCMParameterSpec(128, cipher.iv)
+    val spec = GCMParameterSpec(128, IV)
     cipher.init(Cipher.DECRYPT_MODE, skeySpec, spec)
     return cipher.doFinal(encrypted)
 }

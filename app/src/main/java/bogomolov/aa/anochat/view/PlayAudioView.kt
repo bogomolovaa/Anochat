@@ -40,7 +40,6 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         player.prepare()
         val duration = player.duration.toLong()
         progressBar.max = (duration / 1000).toInt()
-        Log.i("test", "progressBar.max ${progressBar.max}")
         lengthText.text = timeToString(duration)
         this.player = player
         val playPauseButton: ImageView = findViewById(R.id.playPause)
@@ -74,7 +73,6 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
                 val time = System.currentTimeMillis() - startTime!! + pastDuration
                 progressBar.progress = (time / 1000).toInt()
                 timerText.text = timeToString(time)
-                Log.i("test", "progressBar.progress ${progressBar.progress}")
                 delay(1000)
             }
         }

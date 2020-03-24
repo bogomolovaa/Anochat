@@ -25,7 +25,11 @@ data class Message(
     @SuppressLint("SimpleDateFormat")
     fun shortTimeString(): String = SimpleDateFormat("HH:mm").format(Date(time))
 
-    fun shortText(): String = if (text.length > 30) text.take(30) + "..." else text
+    fun shortText(): String {
+        if (image != null) return String(Character.toChars(0x1F4F7))
+        if (audio != null) return String(Character.toChars(0x1F3A4))
+        return if (text.length > 30) text.take(30) + "..." else text
+    }
 
     fun isMine() = senderId == 0L
 

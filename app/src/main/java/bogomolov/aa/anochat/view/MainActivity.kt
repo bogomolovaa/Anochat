@@ -11,7 +11,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.android.DiscoveryTest2
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
 import bogomolov.aa.anochat.viewmodel.MainActivityViewModel

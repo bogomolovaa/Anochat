@@ -78,14 +78,14 @@
 
 
         <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerView"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginTop="4dp"
-                app:layout_constraintBottom_toTopOf="@+id/inputLayout"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="4dp"
+            app:layout_constraintBottom_toTopOf="@+id/inputLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
         <RelativeLayout
                 android:id="@+id/reply_layout"
@@ -159,57 +159,59 @@
 
 
         <RelativeLayout
-                android:id="@+id/fab_layout"
+            android:id="@+id/fab_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="300dp"
+            android:layout_marginEnd="4dp"
+            android:gravity="bottom|right"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/message_input_layout">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabMic"
                 android:layout_width="wrap_content"
-                android:layout_height="300dp"
-                android:gravity="bottom|right"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/message_input_layout">
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="false"
+                android:layout_alignParentBottom="false"
+                android:layout_centerHorizontal="true"
+                android:clickable="true"
+                android:visibility="invisible"
+                app:fabSize="mini"
+                app:srcCompat="@drawable/mic_icon" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fabMic"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="false"
-                    android:layout_alignParentBottom="false"
-                    android:layout_centerHorizontal="true"
-                    android:clickable="true"
-                    android:visibility="invisible"
-                    app:fabSize="mini"
-                    app:srcCompat="@drawable/mic_icon" />
+                android:id="@+id/fabFile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="false"
+                android:layout_alignParentBottom="false"
+                android:layout_centerHorizontal="true"
+                android:clickable="true"
+                android:visibility="invisible"
+                app:fabSize="mini"
+                app:srcCompat="@drawable/attach_icon" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fabFile"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="false"
-                    android:layout_alignParentBottom="false"
-                    android:layout_centerHorizontal="true"
-                    android:clickable="true"
-                    android:visibility="invisible"
-                    app:fabSize="mini"
-                    app:srcCompat="@drawable/attach_icon" />
+                android:id="@+id/fabCamera"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="false"
+                android:layout_alignParentBottom="false"
+                android:layout_centerHorizontal="true"
+                android:clickable="true"
+                android:visibility="invisible"
+                app:fabSize="mini"
+                app:srcCompat="@drawable/camera_icon" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fabCamera"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="false"
-                    android:layout_alignParentBottom="false"
-                    android:layout_centerHorizontal="true"
-                    android:clickable="true"
-                    android:visibility="invisible"
-                    app:fabSize="mini"
-                    app:srcCompat="@drawable/camera_icon" />
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fab"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:clickable="true"
-                    app:srcCompat="@drawable/plus_icon" />
+                android:id="@+id/fab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="4dp"
+                android:clickable="true"
+                app:srcCompat="@drawable/plus_icon" />
 
         </RelativeLayout>
 
@@ -251,13 +253,14 @@
                         app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
-                        android:id="@+id/emojiIcon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:srcCompat="@drawable/emoji_icon" />
+                    android:id="@+id/emojiIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/emoji_icon" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

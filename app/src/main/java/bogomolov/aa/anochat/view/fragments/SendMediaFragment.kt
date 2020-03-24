@@ -54,7 +54,7 @@ class SendMediaFragment : Fragment() {
         mediaPath = arguments?.getString("path")!!
         conversationId = arguments?.getLong("conversationId")!!
 
-        val resizedImage = resizeImage(path = mediaPath,context = requireContext())
+        val resizedImage = resizeImage(mediaPath, requireContext())
         binding.imageView.setImageBitmap(BitmapFactory.decodeFile(getFilePath(requireContext(), resizedImage)))
         binding.messageInputLayout.setEndIconOnClickListener {
             val text = binding.messageInputText.text?.toString() ?: ""

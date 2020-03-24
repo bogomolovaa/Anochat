@@ -74,11 +74,15 @@ class UsersFragment : Fragment() {
             recyclerView.adapter = searchAdapter
             searchAdapter.submitList(it)
         }
+        binding.progressBar.visibility = View.VISIBLE
         lifecycleScope.launch(Dispatchers.IO) {
             val contacts = viewModel.getContacts()
-            viewModel.loadContactUsers(contacts).observe(viewLifecycleOwner) {
-                recyclerView.adapter = adapter
-                adapter!!.submitList(it)
+            withContext(Dispatchers.Main) {
+                viewModel.loadContactUsers(contacts).observe(viewLifecycleOwner) {
+                    recyclerView.adapter = adapter
+                    adapter!!.submitList(it)
+                    binding.progressBar.visibility = View.INVISIBLE
+                }
             }
         }
 
