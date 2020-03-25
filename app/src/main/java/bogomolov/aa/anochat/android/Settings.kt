@@ -21,7 +21,7 @@ inline fun <reified T> getSetting(context: Context, name: String): T? {
     return null
 }
 
-inline fun <reified T> setSetting(context: Context, name: String, value: T) {
+inline fun <reified T> setSetting(context: Context, name: String, value: T?) {
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     if (T::class == ByteArray::class) {
         val string = byteArrayToBase64(value as ByteArray)

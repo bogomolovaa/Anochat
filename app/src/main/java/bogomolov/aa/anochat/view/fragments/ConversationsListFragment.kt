@@ -59,11 +59,11 @@ class ConversationsListFragment : Fragment() {
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         val adapter =
             ConversationsPagedAdapter(helper =
-                AdapterHelper {
-                    navController.navigate(
-                        R.id.conversationFragment,
-                        Bundle().apply { putLong("id", it.id) })
-                })
+            AdapterHelper {
+                navController.navigate(
+                    R.id.conversationFragment,
+                    Bundle().apply { putLong("id", it.id) })
+            })
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
         viewModel.pagedListLiveData.observe(viewLifecycleOwner) {
@@ -105,13 +105,12 @@ class ConversationsListFragment : Fragment() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         if (item.itemId == R.id.menu_sign_out) {
             viewModel.signOut()
-            Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
-                .navigate(R.id.signInFragment)
+            navController.navigate(R.id.conversationsListFragment)
             return true
         }
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         return (NavigationUI.onNavDestinationSelected(item, navController)
                 || super.onOptionsItemSelected(item))
     }

@@ -9,6 +9,7 @@ import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.Navigation
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
@@ -49,16 +50,20 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
 
         navController = Navigation.findNavController(this, R.id.nav_host_fragment)
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
-
-            if (destination.id != R.id.signInFragment) {
-                viewModel.viewModelScope.launch(Dispatchers.IO) {
-                    val signedIn = viewModel.isSignedIn()
-                    Log.i("test", "signedIn $signedIn")
-                    if (!signedIn) {
-                        withContext(Dispatchers.Main) {
-                            controller.popBackStack(R.id.signInFragment, true)
-                            controller.navigate(R.id.signInFragment)
-
+            val currentDestination = controller.currentDestination
+            if (currentDestination != null) {
+                Log.i("test","currentDestination $currentDestination")
+                if (currentDestination.id != R.id.signInFragment) {
+                    viewModel.viewModelScope.launch(Dispatchers.IO) {
+                        val signedIn = viewModel.isSignedIn()
+                        Log.i("test", "signedIn $signedIn")
+                        if (!signedIn) {
+                            withContext(Dispatchers.Main) {
+                                val navOption =
+                                    NavOptions.Builder().setPopUpTo(destination.id, true)
+                                        .build()
+                                controller.navigate(R.id.signInFragment, null, navOption)
+                            }
                         }
                     }
                 }

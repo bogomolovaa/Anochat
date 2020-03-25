@@ -310,7 +310,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
     override fun signOut() {
         FirebaseAuth.getInstance().signOut()
-        setSetting(context, UID, "")
+        setSetting<String>(context, UID, null)
     }
 
     override fun isSignedIn() = getSetting<String>(context, UID) != null && getUid() != null
