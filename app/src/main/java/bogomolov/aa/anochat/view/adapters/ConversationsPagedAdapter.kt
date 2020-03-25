@@ -43,7 +43,12 @@ class ConversationsPagedAdapter(
     override fun bind(item: Conversation?, binding: ConversationLayoutBinding) {
         if (item != null) {
             binding.conversation = item
-            if (showFullMessage) binding.messageText.text = item.lastMessage?.text ?: ""
+            binding.messageText.text =
+                if (showFullMessage) {
+                    item.lastMessage?.text ?: ""
+                } else {
+                    item.lastMessage?.shortText() ?: ""
+                }
         }
     }
 

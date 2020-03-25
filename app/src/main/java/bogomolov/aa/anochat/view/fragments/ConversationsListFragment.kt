@@ -58,7 +58,7 @@ class ConversationsListFragment : Fragment() {
 
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         val adapter =
-            ConversationsPagedAdapter(
+            ConversationsPagedAdapter(helper =
                 AdapterHelper {
                     navController.navigate(
                         R.id.conversationFragment,

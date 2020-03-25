@@ -23,6 +23,7 @@ import dagger.android.HasAndroidInjector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.net.*
 import javax.inject.Inject
 
@@ -54,10 +55,11 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
                     val signedIn = viewModel.isSignedIn()
                     Log.i("test", "signedIn $signedIn")
                     if (!signedIn) {
-                        //withContext(Dispatchers.Main) {
-                        controller.navigate(R.id.signInFragment)
-                        controller.popBackStack(R.id.signInFragment, true)
-                        //}
+                        withContext(Dispatchers.Main) {
+                            controller.popBackStack(R.id.signInFragment, true)
+                            controller.navigate(R.id.signInFragment)
+
+                        }
                     }
                 }
             }
@@ -66,7 +68,6 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
 
         //setSetting(this, UID,"LX4U2yR5ZJUsN5hivvDvF9NUHXJ3")
         viewModel.startWorkManager()
-
 
 
         //val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
@@ -80,10 +81,6 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         EmojiCompat.init(config)
         EmojiManager.install(IosEmojiProvider())
     }
-
-
-
-
 
 
 }
