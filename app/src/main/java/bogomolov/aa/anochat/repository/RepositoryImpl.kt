@@ -217,6 +217,7 @@ class RepositoryImpl
 
     override fun loadConversationsDataSource(): DataSource.Factory<Int, Conversation> {
         val myUid = getSetting<String>(context, UID) ?: ""
+        Log.i("test","loadConversationsDataSource() myUid $myUid")
         return db.conversationDao().loadConversations(myUid).map {
             mapper.entityToModel(it)
         }

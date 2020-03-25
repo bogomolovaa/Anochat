@@ -50,7 +50,7 @@ class ImagesPagedAdapter(
             binding.image.transitionName = item
             binding.image.setImageBitmap(BitmapFactory.decodeFile(
                 getFilePath(context, item),
-                BitmapFactory.Options().apply { inSampleSize = 8 }
+                BitmapFactory.Options().apply { inSampleSize = 4 }
             ))
             binding.image.setOnClickListener { view ->
                 val extras = FragmentNavigator.Extras.Builder()

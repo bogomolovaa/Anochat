@@ -10,6 +10,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.observe
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 
@@ -57,13 +58,27 @@ class SignInFragment : Fragment() {
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
+        binding.toolbar.navigationIcon = null
+
+        viewModel.clearState()
 
         viewModel.loginStateLiveData.observe(viewLifecycleOwner) {
+            Log.i(
+                "test",
+                "loginStateLiveData loaded: navigate LoginState $it is LOGGED ${it == LoginState.LOGGED}"
+            )
             binding.codeInputLayout.visibility =
                 if (it == LoginState.CODE_SENT) View.VISIBLE else View.INVISIBLE
             if (it == LoginState.LOGGED)
                 navController.navigate(R.id.action_signInFragment_to_conversationsListFragment)
-            //navController.navigate(R.id.conversationsListFragment)
+
+                /*
+                navController.navigate(
+                    R.id.conversationsListFragment, null,
+                    NavOptions.Builder().setPopUpTo(R.id.conversationsListFragment, true).build()
+                )
+                 */
+
         }
 
 
@@ -82,17 +97,18 @@ class SignInFragment : Fragment() {
                         binding.codeInputLayout.visibility = View.VISIBLE
                         viewModel.phoneNumber = phoneNumber
                     } else {
-                        binding.phoneInputLayout.error = resources.getString(R.string.enter_valid_phone)
+                        binding.phoneInputLayout.error =
+                            resources.getString(R.string.enter_valid_phone)
                     }
                 }
                 LoginState.CODE_SENT -> {
                     if (viewModel.verificationId != null) {
                         val code = binding.codeInputText.text.toString()
-                        if(code.isNotEmpty()) {
+                        if (code.isNotEmpty()) {
                             val credential =
                                 PhoneAuthProvider.getCredential(viewModel.verificationId!!, code)
                             viewModel.signIn(credential)
-                        }else{
+                        } else {
                             binding.codeInputLayout.error = resources.getString(R.string.empty_code)
                         }
                     } else {

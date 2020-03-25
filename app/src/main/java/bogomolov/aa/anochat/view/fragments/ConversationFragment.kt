@@ -38,6 +38,7 @@ import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.android.getPath

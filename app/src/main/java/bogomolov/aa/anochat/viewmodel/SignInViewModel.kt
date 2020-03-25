@@ -20,6 +20,10 @@ class SignInViewModel
     var verificationId: String? = null
     var phoneNumber: String? = null
 
+    fun clearState(){
+        loginStateLiveData.value = LoginState.NOT_LOGGED
+    }
+
     fun signIn(credential: PhoneAuthCredential) {
         viewModelScope.launch(Dispatchers.IO) {
             val state = if (repository.signIn(

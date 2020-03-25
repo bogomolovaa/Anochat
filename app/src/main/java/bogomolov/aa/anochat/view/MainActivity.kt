@@ -52,17 +52,19 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
             val currentDestination = controller.currentDestination
             if (currentDestination != null) {
-                Log.i("test","currentDestination $currentDestination")
+                Log.i("test", "currentDestination $currentDestination")
+                Log.i("test", "destination $destination")
                 if (currentDestination.id != R.id.signInFragment) {
                     viewModel.viewModelScope.launch(Dispatchers.IO) {
                         val signedIn = viewModel.isSignedIn()
                         Log.i("test", "signedIn $signedIn")
                         if (!signedIn) {
                             withContext(Dispatchers.Main) {
-                                val navOption =
-                                    NavOptions.Builder().setPopUpTo(destination.id, true)
-                                        .build()
-                                controller.navigate(R.id.signInFragment, null, navOption)
+                                val navOptions =
+                                    NavOptions.Builder().setPopUpTo(destination.id, true).build()
+                                Log.i("test", "controller.navigate R.id.signInFragment")
+                                super.onPostResume()
+                                controller.navigate(R.id.signInFragment, null, navOptions)
                             }
                         }
                     }

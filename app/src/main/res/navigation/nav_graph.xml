@@ -44,7 +44,7 @@
         <action
                 android:id="@+id/action_signInFragment_to_conversationsListFragment"
                 app:destination="@id/conversationsListFragment"
-                app:popUpTo="@+id/conversationsListFragment"
+                app:popUpTo="@+id/signInFragment"
                 app:popUpToInclusive="true" />
     </fragment>
     <fragment

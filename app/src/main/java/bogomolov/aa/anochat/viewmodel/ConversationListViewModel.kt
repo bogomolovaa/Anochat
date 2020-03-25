@@ -17,16 +17,11 @@ import kotlin.math.abs
 
 class ConversationListViewModel
 @Inject constructor(private val repository: Repository) : ViewModel() {
-    val pagedListLiveData = LivePagedListBuilder(
-        repository.loadConversationsDataSource()
-            .mapByPage {
 
-                it
-                //it.sortedByDescending { conversation -> conversation?.lastMessage?.time ?: 0 }
-            }, 10
-    ).build()
+    fun loadConversations() =
+        LivePagedListBuilder(repository.loadConversationsDataSource(), 10).build()
 
-    fun signOut(){
+    fun signOut() {
         repository.signOut()
     }
 }

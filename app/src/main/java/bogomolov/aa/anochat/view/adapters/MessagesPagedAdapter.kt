@@ -66,7 +66,7 @@ class MessagesPagedAdapter(
                     binding.imageView.setImageBitmap(
                         BitmapFactory.decodeFile(
                             file.path,
-                            BitmapFactory.Options().apply { inSampleSize = 2 }
+                            BitmapFactory.Options().apply { inSampleSize = 1 }
                         )
                     )
                     binding.imageView.setOnClickListener {
@@ -123,6 +123,8 @@ class MessagesPagedAdapter(
                 true
             }
             binding.layout.visibility = View.VISIBLE
+        }else{
+            binding.layout.visibility = View.GONE
         }
 
 

@@ -66,7 +66,8 @@ class ConversationsListFragment : Fragment() {
             })
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
-        viewModel.pagedListLiveData.observe(viewLifecycleOwner) {
+        viewModel.loadConversations().observe(viewLifecycleOwner) {
+            Log.i("Test","pagedListLiveData loaded")
             adapter.submitList(it)
         }
 
@@ -107,6 +108,7 @@ class ConversationsListFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         if (item.itemId == R.id.menu_sign_out) {
+            Log.i("test","sign out")
             viewModel.signOut()
             navController.navigate(R.id.conversationsListFragment)
             return true

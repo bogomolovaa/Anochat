@@ -79,7 +79,7 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:minWidth="150dp">
+                    android:minWidth="120dp">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/reply_layout"
@@ -142,19 +142,18 @@
 
                     <ImageView
                         android:id="@+id/imageView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="250dp"
+                        android:layout_height="250dp"
                         android:layout_margin="6dp"
+                        android:adjustViewBounds="false"
                         android:duplicateParentState="true"
+                        android:scaleType="centerCrop"
                         android:transitionName="@{message.message.image}"
                         android:visibility="@{message.hasImage()? View.VISIBLE : View.GONE}"
                         app:layout_constraintBottom_toTopOf="@+id/message_text"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintHeight_max="300dp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/reply_layout"
-                        app:layout_constraintVertical_bias="1.0"
-                        app:layout_constraintWidth_min="200dp"
                         tools:srcCompat="@drawable/ic_launcher_background"
                         tools:visibility="visible" />
 

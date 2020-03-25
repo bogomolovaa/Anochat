@@ -27,7 +27,7 @@ inline fun <reified T> setSetting(context: Context, name: String, value: T?) {
         val string = byteArrayToBase64(value as ByteArray)
         sharedPreferences.edit(true) { putString(name, string) }
     }
-    if (T::class == String::class) sharedPreferences.edit(true) { putString(name, value as String) }
+    if (T::class == String::class) sharedPreferences.edit(true) { putString(name, value as String?) }
     if (T::class == Boolean::class) sharedPreferences.edit(true) {
         putBoolean(name, value as Boolean)
     }
