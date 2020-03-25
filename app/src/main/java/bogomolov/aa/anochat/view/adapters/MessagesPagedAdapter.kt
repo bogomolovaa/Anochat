@@ -8,10 +8,7 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
-import android.view.GestureDetector
-import android.view.LayoutInflater
-import android.view.MotionEvent
-import android.view.ViewGroup
+import android.view.*
 import android.view.animation.AccelerateInterpolator
 import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.Navigation
@@ -66,7 +63,12 @@ class MessagesPagedAdapter(
                 //Char.isSurrogate()
                 val file = File(getFilesDir(activity), item.message.image!!)
                 if (file.exists()) {
-                    binding.imageView.setImageBitmap(BitmapFactory.decodeFile(file.path))
+                    binding.imageView.setImageBitmap(
+                        BitmapFactory.decodeFile(
+                            file.path,
+                            BitmapFactory.Options().apply { inSampleSize = 2 }
+                        )
+                    )
                     binding.imageView.setOnClickListener {
                         val navController =
                             Navigation.findNavController(activity, R.id.nav_host_fragment)
@@ -120,6 +122,7 @@ class MessagesPagedAdapter(
                 detector.onTouchEvent(event)
                 true
             }
+            binding.layout.visibility = View.VISIBLE
         }
 
 

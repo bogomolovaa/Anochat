@@ -16,14 +16,18 @@
     </data>
 
     <LinearLayout
+        android:id="@+id/layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="4dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
             android:gravity="center"
             android:visibility="@{message.isTimeMessage? View.VISIBLE : View.GONE}">
 
@@ -79,7 +83,7 @@
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/reply_layout"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:background="#EEEDED"
                         android:visibility="@{message.hasReplyMessage()? View.VISIBLE : View.GONE}"

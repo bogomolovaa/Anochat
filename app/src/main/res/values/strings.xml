@@ -42,4 +42,9 @@
     <string name="sign_in">Sign in</string>
     <string name="set_avatar">Set avatar</string>
 
+
+    <string name="enter_valid_phone">Enter valid phone number</string>
+    <string name="empty_code">Empty code</string>
+
+
 </resources>

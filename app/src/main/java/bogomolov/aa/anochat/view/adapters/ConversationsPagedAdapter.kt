@@ -8,7 +8,10 @@ import bogomolov.aa.anochat.databinding.ConversationLayoutBinding
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.AdapterSelectable
 
-class ConversationsPagedAdapter(private val helper: AdapterHelper<Conversation, ConversationLayoutBinding> = AdapterHelper()) :
+class ConversationsPagedAdapter(
+    private val showFullMessage: Boolean = false,
+    private val helper: AdapterHelper<Conversation, ConversationLayoutBinding> = AdapterHelper()
+) :
     PagedListAdapter<Conversation, AdapterHelper<Conversation, ConversationLayoutBinding>.VH>(
         helper.DIFF_CALLBACK
     ),
@@ -25,7 +28,7 @@ class ConversationsPagedAdapter(private val helper: AdapterHelper<Conversation, 
         val binding =
             ConversationLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.cardView
-        return helper.VH(cv,cv, binding)
+        return helper.VH(cv, cv, binding)
     }
 
     override fun onBindViewHolder(
@@ -38,8 +41,10 @@ class ConversationsPagedAdapter(private val helper: AdapterHelper<Conversation, 
     override fun getId(item: Conversation) = item.id
 
     override fun bind(item: Conversation?, binding: ConversationLayoutBinding) {
-        if (item != null)
+        if (item != null) {
             binding.conversation = item
+            if (showFullMessage) binding.messageText.text = item.lastMessage?.text ?: ""
+        }
     }
 
 }

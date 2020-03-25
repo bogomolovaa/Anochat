@@ -13,7 +13,10 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilePath
 import bogomolov.aa.anochat.databinding.ImageLayoutBinding
 
-class ImagesPagedAdapter(val context: Context, private val helper: AdapterHelper<String, ImageLayoutBinding> = AdapterHelper()) :
+class ImagesPagedAdapter(
+    val context: Context,
+    private val helper: AdapterHelper<String, ImageLayoutBinding> = AdapterHelper()
+) :
     PagedListAdapter<String, AdapterHelper<String, ImageLayoutBinding>.VH>(
         helper.DIFF_CALLBACK
     ),
@@ -30,7 +33,7 @@ class ImagesPagedAdapter(val context: Context, private val helper: AdapterHelper
         val binding =
             ImageLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.cardView
-        return helper.VH(cv,cv, binding)
+        return helper.VH(cv, cv, binding)
     }
 
     override fun onBindViewHolder(
@@ -45,8 +48,11 @@ class ImagesPagedAdapter(val context: Context, private val helper: AdapterHelper
     override fun bind(item: String?, binding: ImageLayoutBinding) {
         if (item != null) {
             binding.image.transitionName = item
-            binding.image.setImageBitmap(BitmapFactory.decodeFile(getFilePath(context,item)))
-            binding.image.setOnClickListener {view->
+            binding.image.setImageBitmap(BitmapFactory.decodeFile(
+                getFilePath(context, item),
+                BitmapFactory.Options().apply { inSampleSize = 8 }
+            ))
+            binding.image.setOnClickListener { view ->
                 val extras = FragmentNavigator.Extras.Builder()
                     .addSharedElement(binding.image, binding.image.transitionName)
                     .build()
@@ -54,7 +60,8 @@ class ImagesPagedAdapter(val context: Context, private val helper: AdapterHelper
                     R.id.imageViewFragment,
                     Bundle().apply { putString("image", item) },
                     null,
-                    extras)
+                    extras
+                )
             }
         }
     }

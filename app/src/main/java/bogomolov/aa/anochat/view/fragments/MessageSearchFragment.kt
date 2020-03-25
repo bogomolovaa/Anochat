@@ -34,7 +34,7 @@ class MessageSearchFragment : Fragment() {
     internal lateinit var viewModelFactory: ViewModelFactory
     val viewModel: MessageSearchViewModel by activityViewModels { viewModelFactory }
     private lateinit var navController: NavController
-    private val adapter = ConversationsPagedAdapter()
+    private val adapter = ConversationsPagedAdapter(showFullMessage = true)
     private var searchLiveData: LiveData<PagedList<Conversation>>? = null
 
     override fun onAttach(context: Context) {

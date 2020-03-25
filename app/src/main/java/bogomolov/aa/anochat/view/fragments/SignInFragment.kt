@@ -14,6 +14,7 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.android.isValidPhone
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSignInBinding
 import bogomolov.aa.anochat.viewmodel.LoginState
@@ -70,22 +71,30 @@ class SignInFragment : Fragment() {
             when (viewModel.loginStateLiveData.value ?: LoginState.NOT_LOGGED) {
                 LoginState.NOT_LOGGED -> {
                     val phoneNumber = binding.phoneInputText.text.toString()
-                    PhoneAuthProvider.getInstance().verifyPhoneNumber(
-                        phoneNumber,
-                        60,
-                        TimeUnit.SECONDS,
-                        requireActivity(),
-                        callbacks
-                    )
-                    binding.codeInputLayout.visibility = View.VISIBLE
-                    viewModel.phoneNumber = phoneNumber
+                    if (!phoneNumber.isEmpty() && isValidPhone(phoneNumber)) {
+                        PhoneAuthProvider.getInstance().verifyPhoneNumber(
+                            phoneNumber,
+                            60,
+                            TimeUnit.SECONDS,
+                            requireActivity(),
+                            callbacks
+                        )
+                        binding.codeInputLayout.visibility = View.VISIBLE
+                        viewModel.phoneNumber = phoneNumber
+                    } else {
+                        binding.phoneInputLayout.error = resources.getString(R.string.enter_valid_phone)
+                    }
                 }
                 LoginState.CODE_SENT -> {
                     if (viewModel.verificationId != null) {
                         val code = binding.codeInputText.text.toString()
-                        val credential =
-                            PhoneAuthProvider.getCredential(viewModel.verificationId!!, code)
-                        viewModel.signIn(credential)
+                        if(code.isNotEmpty()) {
+                            val credential =
+                                PhoneAuthProvider.getCredential(viewModel.verificationId!!, code)
+                            viewModel.signIn(credential)
+                        }else{
+                            binding.codeInputLayout.error = resources.getString(R.string.empty_code)
+                        }
                     } else {
                         Log.i("test", "viewModel.verificationId null")
                     }

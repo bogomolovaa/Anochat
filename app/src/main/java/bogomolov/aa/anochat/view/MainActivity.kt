@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
                     if (!signedIn) {
                         //withContext(Dispatchers.Main) {
                         controller.navigate(R.id.signInFragment)
+                        controller.popBackStack(R.id.signInFragment, true)
                         //}
                     }
                 }

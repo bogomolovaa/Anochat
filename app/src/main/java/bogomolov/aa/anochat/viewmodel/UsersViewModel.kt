@@ -10,6 +10,7 @@ import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.android.UID
 import bogomolov.aa.anochat.android.getSetting
+import bogomolov.aa.anochat.android.isNotValidPhone
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.repository.Repository
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,7 @@ class UsersViewModel
             val users = repository.receiveUsersByPhones(contactPhones).filter { it.uid != myUid }
             Log.i("test", "loadContactUsers finished")
             for (user in users) repository.updateUserFrom(user)
+            usersList.clear()
             usersList.addAll(users)
         }
         return LivePagedListBuilder(repository.getUsersByPhones(contactPhones), 10).build()
@@ -61,7 +63,7 @@ class UsersViewModel
         return ArrayList(phones)
     }
 
-    private fun isNotValidPhone(string: String) = string.contains("[^+0-9]".toRegex())
+
 
     fun search(startWith: String) {
         if (isNotValidPhone(startWith)) {

@@ -17,12 +17,9 @@ import kotlin.math.max
 
 const val MAX_IMAGE_DIM = 1024
 
-fun roundNextPowerOfTwo(value: Int): Int {
-    val highestOneBit = Integer.highestOneBit(value)
-    return if (value == highestOneBit) {
-        value
-    } else highestOneBit shl 1
-}
+fun isNotValidPhone(string: String) = string.contains("[^+0-9]".toRegex())
+
+fun isValidPhone(string: String) = !isNotValidPhone(string)
 
 fun resizeImage(path: String? = null, context: Context): String {
     var bitmapOptions = BitmapFactory.Options()
