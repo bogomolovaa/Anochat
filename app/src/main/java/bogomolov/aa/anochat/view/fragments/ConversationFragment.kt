@@ -46,6 +46,7 @@ import bogomolov.aa.anochat.android.getRandomString
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.view.MainActivity
+import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.MessagesPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationViewModel
 import com.google.android.material.card.MaterialCardView
@@ -57,6 +58,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
+import kotlin.collections.HashMap
 
 
 class ConversationFragment : Fragment() {
@@ -100,7 +102,9 @@ class ConversationFragment : Fragment() {
         conversationId = arguments?.get("id") as Long
         mainActivity.conversationId = conversationId
         val recyclerView = binding.recyclerView
-        recyclerView.setItemViewCacheSize(20);
+        recyclerView.setItemViewCacheSize(20)
+        val actionsMap = HashMap<Int,(Set<Long>)->Unit>()
+        actionsMap[R.id.delete_messages_action] = viewModel::deleteMessages
         val adapter =
             MessagesPagedAdapter(activity = requireActivity(),
                 onReply = {
@@ -131,7 +135,13 @@ class ConversationFragment : Fragment() {
                 setRecyclerViewState = {
                     viewModel.recyclerViewState =
                         recyclerView.layoutManager?.onSaveInstanceState()
-                })
+                },
+                helper = AdapterHelper(
+                    menuId = R.menu.messages_menu,
+                    actionsMap = actionsMap,
+                    toolbar = binding.toolbar
+                )
+            )
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(context)
         viewModel.loadMessages(conversationId).observe(viewLifecycleOwner) {

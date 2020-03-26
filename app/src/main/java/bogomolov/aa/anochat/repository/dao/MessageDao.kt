@@ -1,10 +1,7 @@
 package bogomolov.aa.anochat.repository.dao
 
 import androidx.paging.DataSource
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
-import androidx.room.Transaction
+import androidx.room.*
 import bogomolov.aa.anochat.repository.entity.ConversationJoined
 import bogomolov.aa.anochat.repository.entity.MessageEntity
 import bogomolov.aa.anochat.repository.entity.MessageJoined
@@ -14,6 +11,12 @@ interface MessageDao {
 
     @Insert
     fun insert(message: MessageEntity): Long
+
+    @Query("delete from MessageEntity where id in (:ids)")
+    fun deleteByIds(ids: Set<Long>)
+
+    @Query("delete from MessageEntity where conversationId in (:ids)")
+    fun deleteByConversationIds(ids: Set<Long>)
 
     @Transaction
     @Query(

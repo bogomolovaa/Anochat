@@ -21,6 +21,12 @@ class ConversationListViewModel
     fun loadConversations() =
         LivePagedListBuilder(repository.loadConversationsDataSource(), 10).build()
 
+    fun deleteConversations(ids: Set<Long>){
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.deleteConversations(ids)
+        }
+    }
+
     fun signOut() {
         repository.signOut()
     }

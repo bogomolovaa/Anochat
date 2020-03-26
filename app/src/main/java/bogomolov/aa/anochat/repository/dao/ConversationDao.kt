@@ -40,4 +40,7 @@ interface ConversationDao {
 
     @Query("UPDATE ConversationEntity set lastMessageId = :lastMessageId where id = :conversationId")
     fun updateLastMessage(lastMessageId: Long, conversationId: Long)
+
+    @Query("delete from ConversationEntity where id in (:ids)")
+    fun deleteByIds(ids: Set<Long>)
 }

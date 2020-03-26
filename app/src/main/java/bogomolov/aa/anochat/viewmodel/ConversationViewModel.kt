@@ -31,6 +31,12 @@ class ConversationViewModel
         removeStatusListener?.invoke()
     }
 
+    fun deleteMessages(ids: Set<Long>){
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.deleteMessages(ids)
+        }
+    }
+
     @SuppressLint("SimpleDateFormat")
     fun loadMessages(conversationId: Long): LiveData<PagedList<MessageView>> {
         if (conversationId != conversationLiveData.value?.id) recyclerViewState = null

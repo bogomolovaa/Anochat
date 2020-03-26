@@ -57,9 +57,15 @@ class ConversationsListFragment : Fragment() {
         setHasOptionsMenu(true)
 
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        val actionsMap = HashMap<Int,(Set<Long>)->Unit>()
+        actionsMap[R.id.delete_conversations_action] = viewModel::deleteConversations
         val adapter =
             ConversationsPagedAdapter(helper =
-            AdapterHelper {
+            AdapterHelper(
+                R.menu.conversations_menu,
+                actionsMap,
+                binding.toolbar
+            ) {
                 navController.navigate(
                     R.id.conversationFragment,
                     Bundle().apply { putLong("id", it.id) })

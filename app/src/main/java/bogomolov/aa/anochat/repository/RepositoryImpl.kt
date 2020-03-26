@@ -217,7 +217,7 @@ class RepositoryImpl
 
     override fun loadConversationsDataSource(): DataSource.Factory<Int, Conversation> {
         val myUid = getSetting<String>(context, UID) ?: ""
-        Log.i("test","loadConversationsDataSource() myUid $myUid")
+        Log.i("test", "loadConversationsDataSource() myUid $myUid")
         return db.conversationDao().loadConversations(myUid).map {
             mapper.entityToModel(it)
         }
@@ -240,4 +240,14 @@ class RepositoryImpl
             mapper.entityToModel(it)
         }
     }
+
+    override suspend fun deleteMessages(ids: Set<Long>){
+        db.messageDao().deleteByIds(ids)
+    }
+
+    override suspend fun deleteConversations(ids: Set<Long>){
+        db.messageDao().deleteByConversationIds(ids)
+        db.conversationDao().deleteByIds(ids)
+    }
+
 }

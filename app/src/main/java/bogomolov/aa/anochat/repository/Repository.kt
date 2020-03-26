@@ -57,4 +57,8 @@ interface Repository : IFirebaseRepository {
 
     fun getUsersByPhones(phones: List<String>): DataSource.Factory<Int, User>
 
+    suspend fun deleteMessages(ids: Set<Long>)
+
+    suspend fun deleteConversations(ids: Set<Long>)
+
 }

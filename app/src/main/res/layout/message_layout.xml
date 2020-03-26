@@ -38,7 +38,7 @@
                 android:layout_margin="4dp"
                 android:checkable="true"
                 app:cardBackgroundColor="@color/time_message_color"
-                app:cardElevation="4dp">
+                app:cardElevation="2dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
@@ -74,7 +74,7 @@
                 android:layout_marginBottom="4dp"
                 android:checkable="true"
                 app:cardBackgroundColor="@{message.message.isMine? @color/my_message_color : @color/not_my_message_color}"
-                app:cardElevation="4dp">
+                app:cardElevation="2dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="wrap_content"
@@ -111,6 +111,7 @@
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintWidth_min="120dp"
                             tools:visibility="visible" />
 
                         <com.vanniktech.emoji.EmojiTextView
