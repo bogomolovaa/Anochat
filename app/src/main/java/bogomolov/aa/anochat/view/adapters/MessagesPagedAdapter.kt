@@ -118,10 +118,12 @@ class MessagesPagedAdapter(
                         return true
                     }
                 })
+            /*
             binding.messageCardView.setOnTouchListener { view, event ->
                 detector.onTouchEvent(event)
-                true
+                false
             }
+             */
             binding.layout.visibility = View.VISIBLE
         }else{
             binding.layout.visibility = View.GONE

@@ -9,6 +9,7 @@
 
         <item name="colorControlNormal">#FFFFFF</item>
         <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="windowActionModeOverlay">true</item>
 
     </style>
 

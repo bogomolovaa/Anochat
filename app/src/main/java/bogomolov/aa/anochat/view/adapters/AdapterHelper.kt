@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.view.adapters
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.*
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.DiffUtil
@@ -48,6 +49,7 @@ class AdapterHelper<T, R> constructor(
         }
 
         override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+            Log.i("test","onActionItemClicked")
             for ((actionId, action) in actionsMap!!) {
                 if (item.itemId == actionId) {
                     action(selectedIds)
@@ -75,6 +77,7 @@ class AdapterHelper<T, R> constructor(
         val item = adapter.getItem(position)
         if (item != null) {
             val selected = selectedIds.contains(adapter.getId(item))
+            Log.i("test","CHECKED")
             holder.cardView.isChecked = selected
         }
         holder.bindItem(item)
@@ -85,8 +88,8 @@ class AdapterHelper<T, R> constructor(
         View.OnClickListener, View.OnLongClickListener {
 
         init {
-            if(onClick!=null) viewHolder.setOnClickListener(this)
-            if(actionsMap!=null) viewHolder.setOnLongClickListener(this)
+            if(onClick!=null) cardView.setOnClickListener(this)
+            if(actionsMap!=null) cardView.setOnLongClickListener(this)
         }
 
         fun bindItem(item: T?) {
@@ -112,6 +115,7 @@ class AdapterHelper<T, R> constructor(
         }
 
         override fun onLongClick(view: View): Boolean {
+            Log.i("test","onLongClick")
             selectionMode = true
             selectedIds.clear()
             onClick(view)
