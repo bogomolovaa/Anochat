@@ -10,6 +10,7 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateInterpolator
+import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.FragmentNavigator
@@ -64,18 +65,19 @@ class MessagesPagedAdapter(
     override fun bind(item: MessageView?, binding: MessageLayoutBinding) {
         if (item != null) {
             binding.message = item
+            binding.executePendingBindings()
             if (item.hasImage()) {
                 //Char.isSurrogate()
                 val file = File(getFilesDir(activity), item.message.image!!)
                 if (file.exists()) {
-                    GlobalScope.launch(Dispatchers.IO) {
-                        binding.imageView.setImageBitmap(
-                            BitmapFactory.decodeFile(
-                                file.path,
-                                BitmapFactory.Options().apply { inSampleSize = 1 }
-                            )
+
+                    binding.imageView.setImageBitmap(
+                        BitmapFactory.decodeFile(
+                            file.path,
+                            BitmapFactory.Options().apply { inSampleSize = 2 }
                         )
-                    }
+                    )
+
                     binding.imageView.setOnClickListener {
                         val navController =
                             Navigation.findNavController(activity, R.id.nav_host_fragment)
@@ -88,10 +90,15 @@ class MessagesPagedAdapter(
                     }
                 }
             }
+
             if (item.hasReplyMessageImage()) {
                 val file = File(getFilesDir(activity), item.message.replyMessage?.image!!)
                 if (file.exists())
-                    binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
+                    binding.replyImage.setImageBitmap(
+                        BitmapFactory.decodeFile(
+                            file.path,
+                            BitmapFactory.Options().apply { inSampleSize = 4 })
+                    )
             }
 
             val detector =
@@ -125,12 +132,11 @@ class MessagesPagedAdapter(
                         return true
                     }
                 })
-            /*
+
             binding.messageCardView.setOnTouchListener { view, event ->
                 detector.onTouchEvent(event)
                 false
             }
-             */
             binding.layout.visibility = View.VISIBLE
         } else {
             binding.layout.visibility = View.GONE

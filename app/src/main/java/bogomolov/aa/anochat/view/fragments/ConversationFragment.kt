@@ -143,9 +143,9 @@ class ConversationFragment : Fragment() {
                     toolbar = binding.toolbar
                 )
             )
+        adapter.setHasStableIds(true)
         recyclerView.adapter = adapter
 
-        adapter.setHasStableIds(true)
 
 
         recyclerView.layoutManager = LinearLayoutManager(context)
