@@ -19,6 +19,9 @@ import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import bogomolov.aa.anochat.view.MessageView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.File
 
 class MessagesPagedAdapter(
@@ -53,6 +56,8 @@ class MessagesPagedAdapter(
 
     override fun getItem(position: Int) = super.getItem(position)
 
+    override fun getItemId(position: Int) = super.getItem(position)?.message?.id ?: 0
+
     override fun getId(item: MessageView) = item.message.id
 
     @SuppressLint("ClickableViewAccessibility")
@@ -63,12 +68,14 @@ class MessagesPagedAdapter(
                 //Char.isSurrogate()
                 val file = File(getFilesDir(activity), item.message.image!!)
                 if (file.exists()) {
-                    binding.imageView.setImageBitmap(
-                        BitmapFactory.decodeFile(
-                            file.path,
-                            BitmapFactory.Options().apply { inSampleSize = 1 }
+                    GlobalScope.launch(Dispatchers.IO) {
+                        binding.imageView.setImageBitmap(
+                            BitmapFactory.decodeFile(
+                                file.path,
+                                BitmapFactory.Options().apply { inSampleSize = 1 }
+                            )
                         )
-                    )
+                    }
                     binding.imageView.setOnClickListener {
                         val navController =
                             Navigation.findNavController(activity, R.id.nav_host_fragment)
@@ -125,7 +132,7 @@ class MessagesPagedAdapter(
             }
              */
             binding.layout.visibility = View.VISIBLE
-        }else{
+        } else {
             binding.layout.visibility = View.GONE
         }
 

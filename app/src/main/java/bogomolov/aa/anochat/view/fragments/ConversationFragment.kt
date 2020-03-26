@@ -103,10 +103,11 @@ class ConversationFragment : Fragment() {
         mainActivity.conversationId = conversationId
         val recyclerView = binding.recyclerView
         recyclerView.setItemViewCacheSize(20)
-        val actionsMap = HashMap<Int,(Set<Long>)->Unit>()
+        val actionsMap = HashMap<Int, (Set<Long>) -> Unit>()
         actionsMap[R.id.delete_messages_action] = viewModel::deleteMessages
         val adapter =
-            MessagesPagedAdapter(activity = requireActivity(),
+            MessagesPagedAdapter(
+                activity = requireActivity(),
                 onReply = {
                     binding.replyImage.visibility = View.INVISIBLE
                     binding.replayAudio.visibility = View.INVISIBLE
@@ -143,6 +144,10 @@ class ConversationFragment : Fragment() {
                 )
             )
         recyclerView.adapter = adapter
+
+        adapter.setHasStableIds(true)
+
+
         recyclerView.layoutManager = LinearLayoutManager(context)
         viewModel.loadMessages(conversationId).observe(viewLifecycleOwner) {
             Log.i("test", "pagedListLiveData observed from conversationId ${conversationId}")
