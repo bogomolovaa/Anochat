@@ -61,6 +61,24 @@ class MessagesPagedAdapter(
 
     override fun getId(item: MessageView) = item.message.id
 
+    fun itemShowed(position: Int, binding: MessageLayoutBinding) {
+        val item = getItem(position)
+        if(item!=null) loadImage(item.message, binding, 2)
+    }
+
+    private fun loadImage(message: Message, binding: MessageLayoutBinding, quality: Int) {
+        val file = File(getFilesDir(activity), message.image!!)
+        if (file.exists()) {
+            Log.i("test","load image ${message.image}")
+            binding.imageView.setImageBitmap(
+                BitmapFactory.decodeFile(
+                    file.path,
+                    BitmapFactory.Options().apply { inSampleSize = quality }
+                )
+            )
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun bind(item: MessageView?, binding: MessageLayoutBinding) {
         if (item != null) {
@@ -68,26 +86,17 @@ class MessagesPagedAdapter(
             binding.executePendingBindings()
             if (item.hasImage()) {
                 //Char.isSurrogate()
-                val file = File(getFilesDir(activity), item.message.image!!)
-                if (file.exists()) {
+                loadImage(item.message, binding, 8)
 
-                    binding.imageView.setImageBitmap(
-                        BitmapFactory.decodeFile(
-                            file.path,
-                            BitmapFactory.Options().apply { inSampleSize = 2 }
-                        )
-                    )
-
-                    binding.imageView.setOnClickListener {
-                        val navController =
-                            Navigation.findNavController(activity, R.id.nav_host_fragment)
-                        val extras = FragmentNavigator.Extras.Builder()
-                            .addSharedElement(binding.imageView, binding.imageView.transitionName)
-                            .build()
-                        setRecyclerViewState()
-                        val bundle = Bundle().apply { putString("image", file.name) }
-                        navController.navigate(R.id.imageViewFragment, bundle, null, extras)
-                    }
+                binding.imageView.setOnClickListener {
+                    val navController =
+                        Navigation.findNavController(activity, R.id.nav_host_fragment)
+                    val extras = FragmentNavigator.Extras.Builder()
+                        .addSharedElement(binding.imageView, binding.imageView.transitionName)
+                        .build()
+                    setRecyclerViewState()
+                    val bundle = Bundle().apply { putString("image", item.message.image) }
+                    navController.navigate(R.id.imageViewFragment, bundle, null, extras)
                 }
             }
 

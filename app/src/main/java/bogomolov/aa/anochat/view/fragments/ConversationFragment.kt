@@ -46,13 +46,16 @@ import bogomolov.aa.anochat.android.getPath
 import bogomolov.aa.anochat.android.getRandomString
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
+import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import bogomolov.aa.anochat.view.MainActivity
+import bogomolov.aa.anochat.view.MessageView
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.MessagesPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationViewModel
 import com.google.android.material.card.MaterialCardView
 import com.vanniktech.emoji.EmojiPopup
 import dagger.android.support.AndroidSupportInjection
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -148,12 +151,21 @@ class ConversationFragment : Fragment() {
         recyclerView.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
         recyclerView.layoutManager = linearLayoutManager
+        var loadImagesJob: Job? = null
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
                 val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
-                Log.i("test", "onScrolled visible ($firstId,$lastId)")
+                loadImagesJob?.cancel()
+                loadImagesJob = lifecycleScope.launch {
+                    delay(3000)
+                    Log.i("test", "onScrolled visible ($firstId,$lastId)")
+                    for(id in firstId..lastId) if(id!=-1) {
+                        val vh = linearLayoutManager . findViewByPosition (id) as AdapterHelper<MessageView, MessageLayoutBinding>.VH
+                        adapter.itemShowed(id, vh.binding )
+                    }
+                }
             }
         });
 

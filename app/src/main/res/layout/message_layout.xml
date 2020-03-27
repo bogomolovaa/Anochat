@@ -68,16 +68,16 @@
                 android:id="@+id/messageCardView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="@{message.message.isMine? @dimen/message_margin1 : @dimen/message_margin0}"
+                android:layout_marginStart="@{message.message.isMine? @dimen/message_margin1 : @dimen/message_margin0}"
                 android:layout_marginTop="4dp"
-                android:layout_marginRight="@{message.message.isMine? @dimen/message_margin0 : @dimen/message_margin1}"
+                android:layout_marginEnd="@{message.message.isMine? @dimen/message_margin0 : @dimen/message_margin1}"
                 android:layout_marginBottom="4dp"
                 android:checkable="true"
                 app:cardBackgroundColor="@{message.message.isMine? @color/my_message_color : @color/not_my_message_color}"
                 app:cardElevation="2dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:minWidth="120dp">
 
@@ -114,7 +114,7 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
                             app:layout_constraintWidth_min="120dp"
-                            tools:visibility="visible" />
+                            tools:visibility="gone" />
 
                         <com.vanniktech.emoji.EmojiTextView
                             android:id="@+id/reply_text"
@@ -126,9 +126,11 @@
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toEndOf="@+id/replyImage"
                             app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintVertical_bias="0.515"
                             tools:text="Reply message" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
+
 
                     <bogomolov.aa.anochat.view.PlayAudioView
                         android:id="@+id/playAudioInput"
@@ -157,8 +159,7 @@
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/reply_layout"
-                        tools:srcCompat="@drawable/ic_launcher_background"
-                        tools:visibility="visible" />
+                        tools:srcCompat="@drawable/ic_launcher_background" />
 
                     <com.vanniktech.emoji.EmojiTextView
                         android:id="@+id/message_text"

@@ -66,6 +66,7 @@ class ConversationsListFragment : Fragment() {
                 actionsMap,
                 binding.toolbar
             ) {
+                Log.i("test","navigate to R.id.conversationFragment")
                 navController.navigate(
                     R.id.conversationFragment,
                     Bundle().apply { putLong("id", it.id) })
