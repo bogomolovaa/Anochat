@@ -38,6 +38,7 @@ import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilesDir
@@ -145,10 +146,19 @@ class ConversationFragment : Fragment() {
             )
         adapter.setHasStableIds(true)
         recyclerView.adapter = adapter
+        val linearLayoutManager = LinearLayoutManager(context)
+        recyclerView.layoutManager = linearLayoutManager
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+                val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
+                Log.i("test", "onScrolled visible ($firstId,$lastId)")
+            }
+        });
 
 
 
-        recyclerView.layoutManager = LinearLayoutManager(context)
         viewModel.loadMessages(conversationId).observe(viewLifecycleOwner) {
             Log.i("test", "pagedListLiveData observed from conversationId ${conversationId}")
             adapter.submitList(it)

@@ -41,6 +41,7 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
         if (defaultDrawable != -1) {
             val imageView: ImageView = findViewById(R.id.round_image)
             val drawable = AppCompatResources.getDrawable(context, defaultDrawable!!)
+            Log.i("test","setDefaultDrawable")
             imageView.setImageDrawable(drawable)
         }
     }
@@ -48,7 +49,10 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
     fun setFile(fileName: String) {
         val imageView: ImageView = findViewById(R.id.round_image)
         val filePath = getFilePath(context, getMiniPhotoFileName(context,fileName))
-        if(File(filePath).exists()) imageView.setImageBitmap(BitmapFactory.decodeFile(filePath))
+        if(File(filePath).exists()){
+            Log.i("test","setFile $fileName")
+            imageView.setImageBitmap(BitmapFactory.decodeFile(filePath))
+        }
     }
 
 }
