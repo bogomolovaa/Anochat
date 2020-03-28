@@ -18,11 +18,12 @@ interface AdapterSelectable<T, R> {
 
 class AdapterHelper<T, R> constructor(
     val menuId: Int? = null,
-    val actionsMap: Map<Int, (Set<Long>) -> Unit>? = null,
+    val actionsMap: Map<Int, (Set<Long>,Set<T>) -> Unit>? = null,
     val toolbar: Toolbar? = null,
     val onClick: ((T) -> Unit)? = null
 ) {
     private val selectedIds: MutableSet<Long> = HashSet()
+    private val selectedItems: MutableSet<T> = HashSet()
     private var selectionMode = false
     private var actionMode: ActionMode? = null
     lateinit var adapter: AdapterSelectable<T, R>
@@ -49,10 +50,9 @@ class AdapterHelper<T, R> constructor(
         }
 
         override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-            Log.i("test","onActionItemClicked")
             for ((actionId, action) in actionsMap!!) {
                 if (item.itemId == actionId) {
-                    action(selectedIds)
+                    action(selectedIds,selectedItems)
                     actionMode!!.finish()
                     break
                 }
@@ -69,6 +69,7 @@ class AdapterHelper<T, R> constructor(
 
     private fun disableCheckMode() {
         selectedIds.clear()
+        selectedItems.clear()
         selectionMode = false
         adapter.notifyDataSetChanged()
     }
@@ -77,7 +78,6 @@ class AdapterHelper<T, R> constructor(
         val item = adapter.getItem(position)
         if (item != null) {
             val selected = selectedIds.contains(adapter.getId(item))
-            Log.i("test","CHECKED")
             holder.cardView.isChecked = selected
         }
         holder.bindItem(item)
@@ -88,8 +88,8 @@ class AdapterHelper<T, R> constructor(
         View.OnClickListener, View.OnLongClickListener {
 
         init {
-            if(onClick!=null) cardView.setOnClickListener(this)
-            if(actionsMap!=null) cardView.setOnLongClickListener(this)
+            if (onClick != null || actionsMap != null) cardView.setOnClickListener(this)
+            if (actionsMap != null) cardView.setOnLongClickListener(this)
         }
 
         fun bindItem(item: T?) {
@@ -104,20 +104,22 @@ class AdapterHelper<T, R> constructor(
                 if (selectionMode) {
                     if (selectedIds.contains(adapter.getId(item))) {
                         selectedIds.remove(adapter.getId(item))
+                        selectedItems.remove(item)
                     } else {
                         selectedIds.add(adapter.getId(item))
+                        selectedItems.add(item)
                     }
                     adapter.notifyItemChanged(position)
-                }else{
+                } else {
                     onClick?.invoke(item)
                 }
             }
         }
 
         override fun onLongClick(view: View): Boolean {
-            Log.i("test","onLongClick")
             selectionMode = true
             selectedIds.clear()
+            selectedItems.clear()
             onClick(view)
             adapter.notifyDataSetChanged()
             if (actionMode == null)

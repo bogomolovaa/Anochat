@@ -113,6 +113,7 @@ class RepositoryImpl
         image: String?,
         audio: String?
     ): Message? {
+        Log.i("test","receiveMessage $messageId $text replyId $replyId")
         val conversationEntity = getOrAddConversation(uid)
         val secretKey = getSecretKey(getMyUid(context)!!, uid, context)!!
         val message = Message(
@@ -121,7 +122,7 @@ class RepositoryImpl
             conversationId = conversationEntity.id,
             senderId = conversationEntity.userId,
             messageId = messageId,
-            replyMessage = if (replyId != null)
+            replyMessage = if (!replyId.isNullOrEmpty())
                 mapper.entityToModel(db.messageDao().getByMessageId(replyId)) else null,
             image = image,
             audio = audio

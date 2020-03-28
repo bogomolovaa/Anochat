@@ -3,10 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/reply_message_action"
+        android:title="@string/reply"
+        app:showAsAction="ifRoom"/>
+
+    <item
         android:id="@+id/delete_messages_action"
         android:title="@string/delete"
-        app:showAsAction="always"/>
-
-
+        app:showAsAction="ifRoom"/>
 
 </menu>

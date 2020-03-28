@@ -44,6 +44,7 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilesDir
 import bogomolov.aa.anochat.android.getPath
 import bogomolov.aa.anochat.android.getRandomString
+import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
@@ -77,6 +78,7 @@ class ConversationFragment : Fragment() {
     private var recorder: MediaRecorder? = null
     private lateinit var binding: FragmentConversationBinding
     private var audioFileName: String? = null
+    private var scrollEnd = false
 
 
     override fun onAttach(context: Context) {
@@ -107,36 +109,17 @@ class ConversationFragment : Fragment() {
         mainActivity.conversationId = conversationId
         val recyclerView = binding.recyclerView
         recyclerView.setItemViewCacheSize(20)
-        val actionsMap = HashMap<Int, (Set<Long>) -> Unit>()
-        actionsMap[R.id.delete_messages_action] = viewModel::deleteMessages
+
+        val actionsMap = HashMap<Int, (Set<Long>,Set<MessageView>) -> Unit>()
+        actionsMap[R.id.delete_messages_action] = {ids,items -> viewModel.deleteMessages(ids)}
+        actionsMap[R.id.reply_message_action] = {ids,items ->
+            val message = items.iterator().next()
+            onReply(message.message)
+        }
         val adapter =
             MessagesPagedAdapter(
                 activity = requireActivity(),
-                onReply = {
-                    binding.replyImage.visibility = View.INVISIBLE
-                    binding.replayAudio.visibility = View.INVISIBLE
-                    binding.replyText.text = it.text
-                    replyMessageId = it.messageId
-                    Log.i("test", "onReply replyMessageId $replyMessageId")
-                    val lastPosition = recyclerView.adapter?.itemCount ?: 0 - 1
-                    Log.i("test", "lastPosition $lastPosition")
-                    if (lastPosition > 0) recyclerView.smoothScrollToPosition(lastPosition)
-                    if (it.image != null) {
-                        val file = File(getFilesDir(requireContext()), it.image)
-                        if (file.exists()) {
-                            binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
-                            binding.replyImage.visibility = View.VISIBLE
-                        }
-                    }
-                    if (it.audio != null) {
-                        binding.replayAudio.setFile(it.audio)
-                        binding.replayAudio.visibility = View.VISIBLE
-                    }
-                    binding.removeReply.setOnClickListener {
-                        removeReply(binding)
-                    }
-                    binding.replyLayout.visibility = View.VISIBLE
-                },
+                onReply = this::onReply,
                 setRecyclerViewState = {
                     viewModel.recyclerViewState =
                         recyclerView.layoutManager?.onSaveInstanceState()
@@ -159,11 +142,12 @@ class ConversationFragment : Fragment() {
                 val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
                 loadImagesJob?.cancel()
                 loadImagesJob = lifecycleScope.launch {
-                    delay(3000)
+                    delay(1000)
                     Log.i("test", "onScrolled visible ($firstId,$lastId)")
-                    for(id in firstId..lastId) if(id!=-1) {
-                        val vh = linearLayoutManager . findViewByPosition (id) as AdapterHelper<MessageView, MessageLayoutBinding>.VH
-                        adapter.itemShowed(id, vh.binding )
+                    for (id in firstId..lastId) if (id != -1) {
+                        val vh =
+                            recyclerView.findViewHolderForLayoutPosition(id) as AdapterHelper<MessageView, MessageLayoutBinding>.VH
+                        adapter.itemShowed(id, vh.binding)
                     }
                 }
             }
@@ -180,6 +164,7 @@ class ConversationFragment : Fragment() {
                 recyclerView.layoutManager?.onRestoreInstanceState(viewModel.recyclerViewState)
                 viewModel.recyclerViewState = null
             } else {
+                Log.i("test","scrollToPosition ${it.size}")
                 binding.recyclerView.scrollToPosition(it.size - 1);
             }
             recyclerView.doOnPreDraw {
@@ -187,24 +172,37 @@ class ConversationFragment : Fragment() {
             }
         }
 
+
         recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-            if (bottom < oldBottom && adapter.itemCount > 0) {
+            Log.i("test", "try scroll scrollEnd $scrollEnd")
+            if (scrollEnd&&bottom < oldBottom && adapter.itemCount > 0) {
                 binding.recyclerView.postDelayed({
-                    Log.i("test", "addOnLayoutChangeListener scrollToPosition")
+                    Log.i("test", "addOnLayoutChangeListener scrollToPosition scrollEnd $scrollEnd")
                     binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
+                    scrollEnd = false
                 }, 100)
             }
         }
 
 
+
+
         postponeEnterTransition()
 
         setFabDefaultOnClickListener()
+        binding.messageInputText.setOnFocusChangeListener { v, hasFocus ->
+            if(hasFocus) {
+                scrollEnd = true
+                Log.i("text", "setOnFocusChangeListener")
+            }
+        }
         binding.messageInputText.doOnTextChanged { text, start, count, after ->
             hideFabs()
             if (!text.isNullOrEmpty()) {
                 binding.fab.setImageResource(R.drawable.send_icon)
                 textEntered = true
+                Log.i("text","doOnTextChanged")
+                scrollEnd = true
             } else {
                 binding.fab.setImageResource(R.drawable.plus_icon)
                 textEntered = false
@@ -214,6 +212,7 @@ class ConversationFragment : Fragment() {
         binding.fabMic.setOnClickListener {
             hideFabs()
             requestMicrophonePermission()
+            scrollEnd = false
         }
         binding.fabFile.setOnClickListener {
             hideFabs()
@@ -255,6 +254,35 @@ class ConversationFragment : Fragment() {
 
 
         return view
+    }
+
+    private fun scrollToEnd(){
+        val lastPosition = binding.recyclerView.adapter?.itemCount ?: 0 - 1
+        if (lastPosition > 0) binding.recyclerView.smoothScrollToPosition(lastPosition)
+    }
+
+    private fun onReply(it: Message){
+        binding.replyImage.visibility = View.GONE
+        binding.replayAudio.visibility = View.GONE
+        binding.replyText.text = it.text
+        replyMessageId = it.messageId
+        val lastPosition = binding.recyclerView.adapter?.itemCount ?: 0 - 1
+        if (lastPosition > 0) binding.recyclerView.smoothScrollToPosition(lastPosition)
+        if (it.image != null) {
+            val file = File(getFilesDir(requireContext()), it.image)
+            if (file.exists()) {
+                binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
+                binding.replyImage.visibility = View.VISIBLE
+            }
+        }
+        if (it.audio != null) {
+            binding.replayAudio.setFile(it.audio)
+            binding.replayAudio.visibility = View.VISIBLE
+        }
+        binding.removeReply.setOnClickListener {
+            removeReply(binding)
+        }
+        binding.replyLayout.visibility = View.VISIBLE
     }
 
 
@@ -330,6 +358,7 @@ class ConversationFragment : Fragment() {
 
     private fun setFabDefaultOnClickListener() {
         binding.fab.setOnClickListener {
+            scrollEnd = false
             if (textEntered) {
                 sendMessageAction()
                 textEntered = false

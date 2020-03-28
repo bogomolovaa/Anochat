@@ -63,19 +63,21 @@ class MessagesPagedAdapter(
 
     fun itemShowed(position: Int, binding: MessageLayoutBinding) {
         val item = getItem(position)
-        if(item!=null) loadImage(item.message, binding, 2)
+        if (item != null) loadImage(item.message, binding, 2)
     }
 
     private fun loadImage(message: Message, binding: MessageLayoutBinding, quality: Int) {
-        val file = File(getFilesDir(activity), message.image!!)
-        if (file.exists()) {
-            Log.i("test","load image ${message.image}")
-            binding.imageView.setImageBitmap(
-                BitmapFactory.decodeFile(
-                    file.path,
-                    BitmapFactory.Options().apply { inSampleSize = quality }
+        if (message.image != null) {
+            val file = File(getFilesDir(activity), message.image)
+            if (file.exists()) {
+                Log.i("test","loadImage")
+                binding.imageView.setImageBitmap(
+                    BitmapFactory.decodeFile(
+                        file.path,
+                        BitmapFactory.Options().apply { inSampleSize = quality }
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -106,14 +108,13 @@ class MessagesPagedAdapter(
                     binding.replyImage.setImageBitmap(
                         BitmapFactory.decodeFile(
                             file.path,
-                            BitmapFactory.Options().apply { inSampleSize = 4 })
+                            BitmapFactory.Options().apply { inSampleSize = 16 })
                     )
             }
 
             val detector =
                 GestureDetectorCompat(activity, object : GestureDetector.SimpleOnGestureListener() {
                     override fun onDown(event: MotionEvent): Boolean {
-                        Log.d("test", "onDown: $event")
                         return true
                     }
 
@@ -123,17 +124,12 @@ class MessagesPagedAdapter(
                         velocityX: Float,
                         velocityY: Float
                     ): Boolean {
-                        Log.d(
-                            "test",
-                            "onFling: $event1 $event2 velocityX $velocityX velocityY $velocityY"
-                        )
                         val displayMetrics = DisplayMetrics()
                         activity.windowManager.defaultDisplay.getMetrics(displayMetrics)
                         val length = displayMetrics.widthPixels.toFloat()
                         binding.messageCardView.animate().translationX(length).setDuration(500)
                             .setListener(object : AnimatorListenerAdapter() {
                                 override fun onAnimationEnd(var1: Animator) {
-                                    Log.i("test", "onAnimationEnd")
                                     binding.messageCardView.translationX = 0f
                                     onReply(item.message)
                                 }
@@ -143,7 +139,7 @@ class MessagesPagedAdapter(
                 })
 
             binding.messageCardView.setOnTouchListener { view, event ->
-                detector.onTouchEvent(event)
+                if(event!=null) detector.onTouchEvent(event)
                 false
             }
             binding.layout.visibility = View.VISIBLE

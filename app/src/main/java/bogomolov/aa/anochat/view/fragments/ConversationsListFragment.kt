@@ -26,6 +26,7 @@ import bogomolov.aa.anochat.viewmodel.ConversationListViewModel
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.view.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 
@@ -57,8 +58,8 @@ class ConversationsListFragment : Fragment() {
         setHasOptionsMenu(true)
 
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
-        val actionsMap = HashMap<Int,(Set<Long>)->Unit>()
-        actionsMap[R.id.delete_conversations_action] = viewModel::deleteConversations
+        val actionsMap = HashMap<Int,(Set<Long>,Set<Conversation>)->Unit>()
+        actionsMap[R.id.delete_conversations_action] = {ids,items -> viewModel.deleteConversations(ids)}
         val adapter =
             ConversationsPagedAdapter(helper =
             AdapterHelper(
