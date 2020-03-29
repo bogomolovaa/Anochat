@@ -1,6 +1,8 @@
 package bogomolov.aa.anochat.view.fragments
 
 import android.os.Bundle
+import android.text.InputFilter
+import android.text.InputFilter.LengthFilter
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -11,8 +13,12 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.UserEditLayoutBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
+enum class SettingType { EDIT_USERNAME, EDIT_STATUS }
+
 class EditUserBottomDialogFragment(
+    private val settingType: SettingType,
     private val title: String,
+    private val currentValue: String?,
     val onSave: (String) -> Unit
 ) : BottomSheetDialogFragment() {
 
@@ -38,10 +44,15 @@ class EditUserBottomDialogFragment(
         }
         binding.saveButton.setOnClickListener {
             val text = binding.enterText.text.toString()
-            Log.i("test","save text $text")
+            Log.i("test", "save text $text")
             onSave(text)
             dismiss()
         }
+        var maxLength = 0
+        if (settingType == SettingType.EDIT_USERNAME) maxLength = 20
+        if (settingType == SettingType.EDIT_STATUS) maxLength = 40
+        binding.enterText.filters = arrayOf<InputFilter>(LengthFilter(maxLength))
+        binding.enterText.setText(currentValue)
         return binding.root
     }
 

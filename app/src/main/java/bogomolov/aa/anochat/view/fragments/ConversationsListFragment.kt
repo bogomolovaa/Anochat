@@ -8,8 +8,10 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -18,6 +20,8 @@ import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
+import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
@@ -25,10 +29,7 @@ import bogomolov.aa.anochat.view.adapters.ConversationsPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationListViewModel
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
-import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.core.Conversation
-import bogomolov.aa.anochat.view.MainActivity
-import com.google.firebase.auth.FirebaseAuth
+
 
 class ConversationsListFragment : Fragment() {
     @Inject
@@ -58,8 +59,9 @@ class ConversationsListFragment : Fragment() {
         setHasOptionsMenu(true)
 
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
-        val actionsMap = HashMap<Int,(Set<Long>,Set<Conversation>)->Unit>()
-        actionsMap[R.id.delete_conversations_action] = {ids,items -> viewModel.deleteConversations(ids)}
+        val actionsMap = HashMap<Int, (Set<Long>, Set<Conversation>) -> Unit>()
+        actionsMap[R.id.delete_conversations_action] =
+            { ids, items -> viewModel.deleteConversations(ids) }
         val adapter =
             ConversationsPagedAdapter(helper =
             AdapterHelper(
@@ -67,7 +69,7 @@ class ConversationsListFragment : Fragment() {
                 actionsMap,
                 binding.toolbar
             ) {
-                Log.i("test","navigate to R.id.conversationFragment")
+                Log.i("test", "navigate to R.id.conversationFragment")
                 navController.navigate(
                     R.id.conversationFragment,
                     Bundle().apply { putLong("id", it.id) })
@@ -75,7 +77,7 @@ class ConversationsListFragment : Fragment() {
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
         viewModel.loadConversations().observe(viewLifecycleOwner) {
-            Log.i("Test","pagedListLiveData loaded")
+            Log.i("Test", "pagedListLiveData loaded")
             adapter.submitList(it)
         }
 
@@ -83,6 +85,13 @@ class ConversationsListFragment : Fragment() {
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         binding.fab.setOnClickListener {
             requestContactsPermission()
+        }
+
+        val view = requireActivity().currentFocus
+        if (view != null) {
+            val imm =
+                requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager?
+            imm?.hideSoftInputFromWindow(view.windowToken, 0)
         }
         return binding.root
     }
@@ -116,7 +125,7 @@ class ConversationsListFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         if (item.itemId == R.id.menu_sign_out) {
-            Log.i("test","sign out")
+            Log.i("test", "sign out")
             viewModel.signOut()
             navController.navigate(R.id.conversationsListFragment)
             return true

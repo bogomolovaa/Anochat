@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.lifecycle.observe
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -69,23 +70,31 @@ class SettingsFragment : Fragment() {
             requestReadPermission()
         }
 
-        binding.editUsername.setOnClickListener {
-            val bottomSheetFragment = EditUserBottomDialogFragment(
-                requireContext().resources.getString(R.string.enter_new_name)
-            ) {
-                if (it.isNotEmpty()) viewModel.updateName(it)
+        viewModel.userLiveData.observe(viewLifecycleOwner) { user ->
+            binding.editUsername.setOnClickListener {
+                val bottomSheetFragment = EditUserBottomDialogFragment(
+                    SettingType.EDIT_USERNAME,
+                    requireContext().resources.getString(R.string.enter_new_name),
+                    user.name
+                ) {
+                    if (it.isNotEmpty()) viewModel.updateName(it)
+                }
+                bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
             }
-            bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
+
+            binding.editStatus.setOnClickListener {
+                val bottomSheetFragment = EditUserBottomDialogFragment(
+                    SettingType.EDIT_STATUS,
+                    requireContext().resources.getString(R.string.enter_new_status),
+                    user.status
+                ) {
+                    if (it.isNotEmpty()) viewModel.updateStatus(it)
+                }
+                bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
+            }
         }
 
-        binding.editStatus.setOnClickListener {
-            val bottomSheetFragment = EditUserBottomDialogFragment(
-                requireContext().resources.getString(R.string.enter_new_status)
-            ) {
-                if (it.isNotEmpty()) viewModel.updateStatus(it)
-            }
-            bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
-        }
+
 
         binding.notificationsSwitch.isChecked =
             getSetting<Boolean>(requireContext(), NOTIFICATIONS) != null

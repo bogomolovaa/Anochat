@@ -110,9 +110,9 @@ class ConversationFragment : Fragment() {
         val recyclerView = binding.recyclerView
         recyclerView.setItemViewCacheSize(20)
 
-        val actionsMap = HashMap<Int, (Set<Long>,Set<MessageView>) -> Unit>()
-        actionsMap[R.id.delete_messages_action] = {ids,items -> viewModel.deleteMessages(ids)}
-        actionsMap[R.id.reply_message_action] = {ids,items ->
+        val actionsMap = HashMap<Int, (Set<Long>, Set<MessageView>) -> Unit>()
+        actionsMap[R.id.delete_messages_action] = { ids, items -> viewModel.deleteMessages(ids) }
+        actionsMap[R.id.reply_message_action] = { ids, items ->
             val message = items.iterator().next()
             onReply(message.message)
         }
@@ -143,7 +143,6 @@ class ConversationFragment : Fragment() {
                 loadImagesJob?.cancel()
                 loadImagesJob = lifecycleScope.launch {
                     delay(1000)
-                    Log.i("test", "onScrolled visible ($firstId,$lastId)")
                     for (id in firstId..lastId) if (id != -1) {
                         val vh =
                             recyclerView.findViewHolderForLayoutPosition(id) as AdapterHelper<MessageView, MessageLayoutBinding>.VH
@@ -164,7 +163,8 @@ class ConversationFragment : Fragment() {
                 recyclerView.layoutManager?.onRestoreInstanceState(viewModel.recyclerViewState)
                 viewModel.recyclerViewState = null
             } else {
-                Log.i("test","scrollToPosition ${it.size}")
+                Log.i("test", "scrollToPosition ${it.size}")
+                scrollEnd = true
                 binding.recyclerView.scrollToPosition(it.size - 1);
             }
             recyclerView.doOnPreDraw {
@@ -175,7 +175,7 @@ class ConversationFragment : Fragment() {
 
         recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             Log.i("test", "try scroll scrollEnd $scrollEnd")
-            if (scrollEnd&&bottom < oldBottom && adapter.itemCount > 0) {
+            if (scrollEnd) { // && (bottom < oldBottom && adapter.itemCount > 0)
                 binding.recyclerView.postDelayed({
                     Log.i("test", "addOnLayoutChangeListener scrollToPosition scrollEnd $scrollEnd")
                     binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
@@ -191,7 +191,7 @@ class ConversationFragment : Fragment() {
 
         setFabDefaultOnClickListener()
         binding.messageInputText.setOnFocusChangeListener { v, hasFocus ->
-            if(hasFocus) {
+            if (hasFocus) {
                 scrollEnd = true
                 Log.i("text", "setOnFocusChangeListener")
             }
@@ -201,7 +201,7 @@ class ConversationFragment : Fragment() {
             if (!text.isNullOrEmpty()) {
                 binding.fab.setImageResource(R.drawable.send_icon)
                 textEntered = true
-                Log.i("text","doOnTextChanged")
+                Log.i("text", "doOnTextChanged")
                 scrollEnd = true
             } else {
                 binding.fab.setImageResource(R.drawable.plus_icon)
@@ -237,17 +237,13 @@ class ConversationFragment : Fragment() {
             textEntered = false
             binding.playAudioInput.visibility = View.GONE
             binding.textLayout.visibility = View.VISIBLE
-            if (audioFileName != null) {
-                File(getFilesDir(requireContext()), audioFileName!!).delete()
-                audioFileName = null
-            }
         }
 
-        viewModel.conversationLiveData.observe(viewLifecycleOwner) { user ->
+        viewModel.conversationLiveData.observe(viewLifecycleOwner) { conversation ->
             binding.usernameLayout.setOnClickListener {
                 navController.navigate(
                     R.id.userViewFragment,
-                    Bundle().apply { putLong("id", user.id) })
+                    Bundle().apply { putLong("id", conversation.user.id) })
             }
         }
 
@@ -256,12 +252,12 @@ class ConversationFragment : Fragment() {
         return view
     }
 
-    private fun scrollToEnd(){
+    private fun scrollToEnd() {
         val lastPosition = binding.recyclerView.adapter?.itemCount ?: 0 - 1
         if (lastPosition > 0) binding.recyclerView.smoothScrollToPosition(lastPosition)
     }
 
-    private fun onReply(it: Message){
+    private fun onReply(it: Message) {
         binding.replyImage.visibility = View.GONE
         binding.replayAudio.visibility = View.GONE
         binding.replyText.text = it.text
@@ -296,6 +292,7 @@ class ConversationFragment : Fragment() {
             viewModel.sendMessage(text.toString(), replyMessageId, audioFileName)
             binding.playAudioInput.visibility = View.GONE
             binding.textLayout.visibility = View.VISIBLE
+            audioFileName = null
         } else if (!text.isNullOrEmpty()) {
             Log.i("test", "message text: $text")
             viewModel.sendMessage(text.toString(), replyMessageId, null)

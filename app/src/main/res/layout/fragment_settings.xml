@@ -50,29 +50,33 @@
 
 
         <TextView
-                android:id="@+id/username_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:text="@{viewModel.userLiveData.name}"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toEndOf="@+id/user_photo"
-                app:layout_constraintTop_toBottomOf="@+id/phoneText"
-                tools:text="User name" />
+            android:id="@+id/username_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="@{viewModel.userLiveData.name}"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/edit_username"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/user_photo"
+            app:layout_constraintTop_toBottomOf="@+id/phoneText"
+            tools:text="User name with long new line" />
 
         <TextView
-                android:id="@+id/status_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:text="@{viewModel.userLiveData.status ?? @string/no_status}"
-                android:textSize="16sp"
-                app:layout_constraintStart_toEndOf="@+id/user_photo"
-                app:layout_constraintTop_toBottomOf="@+id/username_text"
-                tools:text="Status" />
+            android:id="@+id/status_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="@{viewModel.userLiveData.status ?? @string/no_status}"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toStartOf="@+id/edit_status"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/user_photo"
+            app:layout_constraintTop_toBottomOf="@+id/username_text"
+            tools:text="Status" />
 
             <ImageView
                     android:id="@+id/edit_username"
