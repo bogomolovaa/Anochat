@@ -14,7 +14,7 @@ import dagger.android.HasAndroidInjector
 import javax.inject.Inject
 
 class AnochatAplication: Application(), HasAndroidInjector, LifecycleObserver, Configuration.Provider {
-    var inBackground = false
+    var inBackground = true
 
     private val delegatingWorkerFactory = DelegatingWorkerFactory()
 
@@ -38,13 +38,19 @@ class AnochatAplication: Application(), HasAndroidInjector, LifecycleObserver, C
         return androidInjector
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    fun onAppBackgrounded() {
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    fun onAppDestroy() {
         inBackground = true
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    fun onAppForegrounded() {
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    fun onAppStop() {
+        inBackground = true
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    fun onAppStart() {
         inBackground = false
     }
 }

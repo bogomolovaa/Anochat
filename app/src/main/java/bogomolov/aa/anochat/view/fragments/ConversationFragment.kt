@@ -102,92 +102,96 @@ class ConversationFragment : Fragment() {
         binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
         mainActivity.setSupportActionBar(binding.toolbar)
+
+
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
+        Log.i("test","ConversationFragment onCreateView")
+
         conversationId = arguments?.get("id") as Long
         mainActivity.conversationId = conversationId
-        val recyclerView = binding.recyclerView
-        recyclerView.setItemViewCacheSize(20)
-
-        val actionsMap = HashMap<Int, (Set<Long>, Set<MessageView>) -> Unit>()
-        actionsMap[R.id.delete_messages_action] = { ids, items -> viewModel.deleteMessages(ids) }
-        actionsMap[R.id.reply_message_action] = { ids, items ->
-            val message = items.iterator().next()
-            onReply(message.message)
-        }
-        val adapter =
-            MessagesPagedAdapter(
-                activity = requireActivity(),
-                onReply = this::onReply,
-                setRecyclerViewState = {
-                    viewModel.recyclerViewState =
-                        recyclerView.layoutManager?.onSaveInstanceState()
-                },
-                helper = AdapterHelper(
-                    menuId = R.menu.messages_menu,
-                    actionsMap = actionsMap,
-                    toolbar = binding.toolbar
-                )
-            )
-        adapter.setHasStableIds(true)
-        recyclerView.adapter = adapter
-        val linearLayoutManager = LinearLayoutManager(context)
-        recyclerView.layoutManager = linearLayoutManager
-        var loadImagesJob: Job? = null
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
-                val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
-                loadImagesJob?.cancel()
-                loadImagesJob = lifecycleScope.launch {
-                    delay(1000)
-                    for (id in firstId..lastId) if (id != -1) {
-                        val vh =
-                            recyclerView.findViewHolderForLayoutPosition(id) as AdapterHelper<MessageView, MessageLayoutBinding>.VH
-                        adapter.itemShowed(id, vh.binding)
-                    }
-                }
-            }
-        });
 
 
+      val recyclerView = binding.recyclerView
+      recyclerView.setItemViewCacheSize(20)
 
-        viewModel.loadMessages(conversationId).observe(viewLifecycleOwner) {
-            Log.i("test", "pagedListLiveData observed from conversationId ${conversationId}")
-            adapter.submitList(it)
-
-            if (viewModel.recyclerViewState != null) {
-                Log.i("test", "onRestoreInstanceState")
-                recyclerView.layoutManager?.onRestoreInstanceState(viewModel.recyclerViewState)
-                viewModel.recyclerViewState = null
-            } else {
-                Log.i("test", "scrollToPosition ${it.size}")
-                scrollEnd = true
-                binding.recyclerView.scrollToPosition(it.size - 1);
-            }
-            recyclerView.doOnPreDraw {
-                startPostponedEnterTransition()
-            }
-        }
-
-
-        recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-            Log.i("test", "try scroll scrollEnd $scrollEnd")
-            if (scrollEnd) { // && (bottom < oldBottom && adapter.itemCount > 0)
-                binding.recyclerView.postDelayed({
-                    Log.i("test", "addOnLayoutChangeListener scrollToPosition scrollEnd $scrollEnd")
-                    binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
-                    scrollEnd = false
-                }, 100)
-            }
-        }
+      val actionsMap = HashMap<Int, (Set<Long>, Set<MessageView>) -> Unit>()
+      actionsMap[R.id.delete_messages_action] = { ids, items -> viewModel.deleteMessages(ids) }
+      actionsMap[R.id.reply_message_action] = { ids, items ->
+          val message = items.iterator().next()
+          onReply(message.message)
+      }
+      val adapter =
+          MessagesPagedAdapter(
+              activity = requireActivity(),
+              onReply = this::onReply,
+              setRecyclerViewState = {
+                  viewModel.recyclerViewState =
+                      recyclerView.layoutManager?.onSaveInstanceState()
+              },
+              helper = AdapterHelper(
+                  menuId = R.menu.messages_menu,
+                  actionsMap = actionsMap,
+                  toolbar = binding.toolbar
+              )
+          )
+      adapter.setHasStableIds(true)
+      recyclerView.adapter = adapter
+      val linearLayoutManager = LinearLayoutManager(context)
+      recyclerView.layoutManager = linearLayoutManager
+      var loadImagesJob: Job? = null
+      recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+          override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+              super.onScrolled(recyclerView, dx, dy)
+              val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+              val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
+              loadImagesJob?.cancel()
+              loadImagesJob = lifecycleScope.launch {
+                  delay(1000)
+                  for (id in firstId..lastId) if (id != -1) {
+                      val vh =
+                          recyclerView.findViewHolderForLayoutPosition(id) as AdapterHelper<MessageView, MessageLayoutBinding>.VH
+                      adapter.itemShowed(id, vh.binding)
+                  }
+              }
+          }
+      });
 
 
 
+      viewModel.loadMessages(conversationId).observe(viewLifecycleOwner) {
+          Log.i("test", "pagedListLiveData observed from conversationId ${conversationId}")
+          adapter.submitList(it)
 
-        postponeEnterTransition()
+          if (viewModel.recyclerViewState != null) {
+              Log.i("test", "onRestoreInstanceState")
+              recyclerView.layoutManager?.onRestoreInstanceState(viewModel.recyclerViewState)
+              viewModel.recyclerViewState = null
+          } else {
+              Log.i("test", "scrollToPosition ${it.size}")
+              scrollEnd = true
+              binding.recyclerView.scrollToPosition(it.size - 1);
+          }
+          recyclerView.doOnPreDraw {
+              startPostponedEnterTransition()
+          }
+      }
+
+
+      recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+          Log.i("test", "try scroll scrollEnd $scrollEnd")
+          if (scrollEnd) { // && (bottom < oldBottom && adapter.itemCount > 0)
+              binding.recyclerView.postDelayed({
+                  Log.i("test", "addOnLayoutChangeListener scrollToPosition scrollEnd $scrollEnd")
+                  binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
+                  scrollEnd = false
+              }, 100)
+          }
+      }
+
+
+
 
         setFabDefaultOnClickListener()
         binding.messageInputText.setOnFocusChangeListener { v, hasFocus ->
@@ -209,52 +213,57 @@ class ConversationFragment : Fragment() {
             }
         }
 
-        binding.fabMic.setOnClickListener {
-            hideFabs()
-            requestMicrophonePermission()
-            scrollEnd = false
-        }
-        binding.fabFile.setOnClickListener {
-            hideFabs()
-            requestReadPermission()
-        }
-        binding.fabCamera.setOnClickListener {
-            hideFabs()
-            requestCameraPermission()
-        }
 
 
-        emojiPopup = EmojiPopup.Builder.fromRootView(view).build(binding.messageInputText)
-        binding.emojiIcon.setOnClickListener {
-            emojiPopup.toggle()
-        }
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            emojiPopup.dismiss()
-            navController.navigateUp()
-        }
-        binding.playAudioInput.setOnClose {
-            binding.fab.setImageResource(R.drawable.plus_icon)
-            textEntered = false
-            binding.playAudioInput.visibility = View.GONE
-            binding.textLayout.visibility = View.VISIBLE
-        }
 
-        viewModel.conversationLiveData.observe(viewLifecycleOwner) { conversation ->
-            binding.usernameLayout.setOnClickListener {
-                navController.navigate(
-                    R.id.userViewFragment,
-                    Bundle().apply { putLong("id", conversation.user.id) })
-            }
-        }
+
+      binding.fabMic.setOnClickListener {
+          hideFabs()
+          requestMicrophonePermission()
+          scrollEnd = false
+      }
+      binding.fabFile.setOnClickListener {
+          hideFabs()
+          requestReadPermission()
+      }
+      binding.fabCamera.setOnClickListener {
+          hideFabs()
+          requestCameraPermission()
+      }
+
+
+      emojiPopup = EmojiPopup.Builder.fromRootView(view).build(binding.messageInputText)
+      binding.emojiIcon.setOnClickListener {
+          emojiPopup.toggle()
+      }
+      requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+          emojiPopup.dismiss()
+          navController.navigateUp()
+      }
+      binding.playAudioInput.setOnClose {
+          binding.fab.setImageResource(R.drawable.plus_icon)
+          textEntered = false
+          binding.playAudioInput.visibility = View.GONE
+          binding.textLayout.visibility = View.VISIBLE
+      }
+
+      viewModel.conversationLiveData.observe(viewLifecycleOwner) { conversation ->
+          binding.usernameLayout.setOnClickListener {
+              navController.navigate(
+                  R.id.userViewFragment,
+                  Bundle().apply { putLong("id", conversation.user.id) })
+          }
+      }
+
 
 
 
         return view
     }
 
-    private fun scrollToEnd() {
-        val lastPosition = binding.recyclerView.adapter?.itemCount ?: 0 - 1
-        if (lastPosition > 0) binding.recyclerView.smoothScrollToPosition(lastPosition)
+    override fun onStart() {
+        super.onStart()
+        postponeEnterTransition()
     }
 
     private fun onReply(it: Message) {
@@ -383,10 +392,9 @@ class ConversationFragment : Fragment() {
     }
 
     private fun redirectToSendMediaFragment(uri: Uri? = null, path: String? = null) {
-        val path0 = path ?: getPath(requireContext(), uri!!)
-        Log.i("test", "File Path: $path0")
         navController.navigate(R.id.sendMediaFragment, Bundle().apply {
-            putString("path", path0)
+            if(path!=null) putString("path", path)
+            if(uri!=null) putParcelable("uri", uri)
             putLong("conversationId", conversationId)
         })
     }

@@ -1,5 +1,7 @@
 package bogomolov.aa.anochat.view
 
+import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.viewModels
@@ -9,6 +11,7 @@ import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.NavOptions
 import androidx.navigation.Navigation
 import bogomolov.aa.anochat.R
@@ -22,10 +25,8 @@ import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.net.*
 import javax.inject.Inject
 
 
@@ -37,9 +38,9 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     val viewModel: MainActivityViewModel by viewModels { viewModelFactory }
-    lateinit var navController: NavController
     var conversationId = 0L
 
+    @SuppressLint("ResourceType")
     override fun onCreate(savedInstanceState: Bundle?) {
         AndroidInjection.inject(this)
         super.onCreate(savedInstanceState)
@@ -47,12 +48,11 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
 
         val binding =
             DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
-
-        navController = Navigation.findNavController(this, R.id.nav_host_fragment)
+        val navController = Navigation.findNavController(this, R.id.nav_host_fragment)
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
             val currentDestination = controller.currentDestination
+            Log.i("test", "currentDestination $currentDestination")
             if (currentDestination != null) {
-                Log.i("test", "currentDestination $currentDestination")
                 Log.i("test", "destination $destination")
                 if (currentDestination.id != R.id.signInFragment) {
                     viewModel.viewModelScope.launch(Dispatchers.IO) {
@@ -73,14 +73,18 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
 
         }
 
+
+
         //setSetting(this, UID,"LX4U2yR5ZJUsN5hivvDvF9NUHXJ3")
         viewModel.startWorkManager()
 
 
-        //val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        //val editor: Editor = sharedPreferences.edit()
-        //editor.clear()
-        //editor.commit()
+        /*
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val editor: SharedPreferences.Editor = sharedPreferences.edit()
+        editor.clear()
+        editor.commit()
+         */
     }
 
     private fun emojiSupport() {
@@ -90,6 +94,15 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
     }
 
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.setOnline()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.setOffline()
+    }
 }
 
 

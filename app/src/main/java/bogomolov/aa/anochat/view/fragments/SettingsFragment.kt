@@ -119,8 +119,8 @@ class SettingsFragment : Fragment() {
     }
 
     private fun updatePhoto(uri: Uri) {
-        val path = getPath(requireContext(), uri)
-        val resizedImage = resizeImage(path, requireContext())
+        //val path = getPath(requireContext(), uri)
+        val resizedImage = resizeImage(uri, requireContext())
         val bundle = Bundle().apply { putString("image", resizedImage) }
         navController.navigate(R.id.miniatureFragment, bundle)
         //binding.userPhoto.setFile(resizedImage)

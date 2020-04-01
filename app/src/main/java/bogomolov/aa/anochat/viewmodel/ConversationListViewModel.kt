@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 import kotlin.Comparator
+import kotlin.collections.HashSet
 import kotlin.math.abs
 
 
@@ -22,8 +23,9 @@ class ConversationListViewModel
         LivePagedListBuilder(repository.loadConversationsDataSource(), 10).build()
 
     fun deleteConversations(ids: Set<Long>){
+        val saveIds = HashSet(ids)
         viewModelScope.launch(Dispatchers.IO) {
-            repository.deleteConversations(ids)
+            repository.deleteConversations(saveIds)
         }
     }
 

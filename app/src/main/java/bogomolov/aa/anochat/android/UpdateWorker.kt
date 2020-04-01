@@ -10,7 +10,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class UpdateWorker(
+public class UpdateWorker(
     appContext: Context,
     workerParams: WorkerParameters,
     val repository: Repository

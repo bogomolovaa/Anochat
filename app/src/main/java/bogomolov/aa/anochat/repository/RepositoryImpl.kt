@@ -8,6 +8,9 @@ import bogomolov.aa.anochat.core.Conversation
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.core.User
 import bogomolov.aa.anochat.repository.entity.ConversationEntity
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,10 +31,9 @@ class RepositoryImpl
 
     override fun getContext() = context
 
-    override suspend fun reportAsViewed(conversationId: Long) {
-        val messages = db.messageDao().loadNotViewed(conversationId)
-        for (message in messages) firebase.sendReport(message.messageId, 1, 1)
-        db.messageDao().updateAsViewed(conversationId)
+    override suspend fun reportAsViewed(message: Message) {
+        firebase.sendReport(message.messageId, 1, 1)
+        db.messageDao().updateAsViewed(message.id)
     }
 
     override suspend fun getConversation(id: Long): Conversation =
@@ -41,7 +43,7 @@ class RepositoryImpl
         val myUid = getMyUid(context)!!
         val sentSettingName = getSentSettingName(myUid, uid)
         val isSent = getSetting<Boolean>(context, sentSettingName)!!
-        if (initiator && !isSent) {
+        if (!isSent) {
             Log.i("test", "sendKey $uid")
             setSetting(context, sentSettingName, true)
             val keyPair = createKeyPair()
@@ -102,6 +104,7 @@ class RepositoryImpl
     }
 
     override fun receiveReport(messageId: String, received: Int, viewed: Int) {
+        Log.i("test", "receiveReport received $received viewed $viewed")
         db.messageDao().updateReport(messageId, received, viewed)
     }
 
@@ -113,7 +116,7 @@ class RepositoryImpl
         image: String?,
         audio: String?
     ): Message? {
-        Log.i("test","receiveMessage $messageId $text replyId $replyId")
+        Log.i("test", "receiveMessage $messageId $text replyId $replyId")
         val conversationEntity = getOrAddConversation(uid)
         val secretKey = getSecretKey(getMyUid(context)!!, uid, context)!!
         val message = Message(
@@ -167,7 +170,8 @@ class RepositoryImpl
     }
 
     override suspend fun loadConversations(): List<Conversation> {
-        val myUid = getSetting<String>(context, UID)!!
+        val myUid = getSetting<String>(context, UID)
+        if (myUid == null) return listOf()
         return mapper.entityToModel(db.conversationDao().loadAllConversations(myUid))
     }
 
@@ -242,11 +246,11 @@ class RepositoryImpl
         }
     }
 
-    override suspend fun deleteMessages(ids: Set<Long>){
+    override suspend fun deleteMessages(ids: Set<Long>) {
         db.messageDao().deleteByIds(ids)
     }
 
-    override suspend fun deleteConversations(ids: Set<Long>){
+    override suspend fun deleteConversations(ids: Set<Long>) {
         db.messageDao().deleteByConversationIds(ids)
         db.conversationDao().deleteByIds(ids)
     }

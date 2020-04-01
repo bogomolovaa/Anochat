@@ -72,13 +72,6 @@ class SignInFragment : Fragment() {
             if (it == LoginState.LOGGED)
                 navController.navigate(R.id.action_signInFragment_to_conversationsListFragment)
 
-                /*
-                navController.navigate(
-                    R.id.conversationsListFragment, null,
-                    NavOptions.Builder().setPopUpTo(R.id.conversationsListFragment, true).build()
-                )
-                 */
-
         }
 
 
@@ -86,7 +79,7 @@ class SignInFragment : Fragment() {
             when (viewModel.loginStateLiveData.value ?: LoginState.NOT_LOGGED) {
                 LoginState.NOT_LOGGED -> {
                     val phoneNumber = binding.phoneInputText.text.toString()
-                    if (!phoneNumber.isEmpty() && isValidPhone(phoneNumber)) {
+                    if (phoneNumber.isNotEmpty() && isValidPhone(phoneNumber)) {
                         PhoneAuthProvider.getInstance().verifyPhoneNumber(
                             phoneNumber,
                             60,

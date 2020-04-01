@@ -43,7 +43,7 @@ interface Repository : IFirebaseRepository {
         audio: String?
     ): Message?
 
-    suspend fun reportAsViewed(conversationId: Long)
+    suspend fun reportAsViewed(message: Message)
 
     fun getContext(): Context
 

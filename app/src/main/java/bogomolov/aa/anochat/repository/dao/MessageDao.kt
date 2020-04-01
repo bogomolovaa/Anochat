@@ -13,7 +13,7 @@ interface MessageDao {
     fun insert(message: MessageEntity): Long
 
     @Query("delete from MessageEntity where id in (:ids)")
-    fun deleteByIds(ids: Set<Long>)
+    fun deleteByIds(ids: Set<Long>): Int
 
     @Query("delete from MessageEntity where conversationId in (:ids)")
     fun deleteByConversationIds(ids: Set<Long>)
@@ -35,11 +35,8 @@ interface MessageDao {
     @Query("select * from MessageEntity where messageId = :messageId")
     fun getByMessageId(messageId: String): MessageEntity?
 
-    @Query("select * from MessageEntity where conversationId = :conversationId and senderId > 0 and viewed = 0")
-    fun loadNotViewed(conversationId: Long): List<MessageEntity>
-
-    @Query("update MessageEntity set received = 1, viewed = 1 where conversationId = :conversationId and senderId > 0 and viewed = 0")
-    fun updateAsViewed(conversationId: Long)
+    @Query("update MessageEntity set received = 1, viewed = 1 where id = :id")
+    fun updateAsViewed(id: Long)
 
     @Query("update MessageEntity set received = :received, viewed=:viewed where messageId = :messageId")
     fun updateReport(messageId: String, received: Int, viewed: Int)

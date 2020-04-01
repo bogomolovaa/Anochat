@@ -17,13 +17,60 @@ import kotlin.math.max
 
 const val MAX_IMAGE_DIM = 1024
 
+fun getBitmap(fileName: String, quality: Int, context: Context): Bitmap =
+    BitmapFactory.decodeFile(getFilePath(context, fileName), BitmapFactory.Options().apply {
+        inSampleSize = quality
+    })
+
 fun isNotValidPhone(string: String) = string.contains("[^+0-9]".toRegex())
 
 fun isValidPhone(string: String) = !isNotValidPhone(string)
 
-fun resizeImage(path: String? = null, context: Context): String {
+fun resizeImage(uri: Uri, context: Context): String {
     var bitmapOptions = BitmapFactory.Options()
     bitmapOptions.inJustDecodeBounds = true
+
+    val ins = context.contentResolver.openInputStream(uri)
+
+    BitmapFactory.decodeStream(ins, null, bitmapOptions)
+    ins?.close()
+    val bitmapWidth = bitmapOptions.outWidth
+    val bitmapHeight = bitmapOptions.outHeight
+    Log.i("test", "bitmapWidth $bitmapWidth bitmapHeight $bitmapHeight")
+
+    var ratio = MAX_IMAGE_DIM / max(bitmapWidth, bitmapHeight).toFloat()
+    if (ratio > 1) ratio = 1.0f
+    val outWidth = (ratio * bitmapWidth).toInt()
+
+    bitmapOptions = BitmapFactory.Options()
+    bitmapOptions.inScaled = true
+    bitmapOptions.inSampleSize = 4
+    bitmapOptions.inDensity = bitmapWidth
+    bitmapOptions.inTargetDensity = outWidth * bitmapOptions.inSampleSize
+
+    val ins2 = context.contentResolver.openInputStream(uri)
+    val resized = BitmapFactory.decodeStream(ins2, null, bitmapOptions)
+    ins2?.close()
+    val fileName = "${getRandomString(20)}.jpg"
+    try {
+        if (resized != null) {
+            val stream = FileOutputStream(getFilePath(context, fileName))
+            resized.compress(Bitmap.CompressFormat.JPEG, 80, stream)
+            stream.flush()
+            stream.close()
+        } else {
+            throw IOException("can't decode $uri")
+        }
+    } catch (e: IOException) {
+        e.printStackTrace()
+    }
+    return fileName
+}
+
+fun resizeImage(path: String, context: Context): String {
+    var bitmapOptions = BitmapFactory.Options()
+    bitmapOptions.inJustDecodeBounds = true
+
     BitmapFactory.decodeFile(path, bitmapOptions)
     val bitmapWidth = bitmapOptions.outWidth
     val bitmapHeight = bitmapOptions.outHeight
@@ -31,20 +78,13 @@ fun resizeImage(path: String? = null, context: Context): String {
     var ratio = MAX_IMAGE_DIM / max(bitmapWidth, bitmapHeight).toFloat()
     if (ratio > 1) ratio = 1.0f
     val outWidth = (ratio * bitmapWidth).toInt()
-    /*
-    val resized = Bitmap.createScaledBitmap(
-        btmp,
-        (ratio * bitmapWidth).toInt(),
-        (ratio * bitmapHeight).toInt(),
-        true
-    )
-     */
+
     bitmapOptions = BitmapFactory.Options()
     bitmapOptions.inScaled = true
     bitmapOptions.inSampleSize = 4
     bitmapOptions.inDensity = bitmapWidth
-    bitmapOptions.inTargetDensity =  outWidth * bitmapOptions.inSampleSize
-    val resized = BitmapFactory.decodeFile(path, bitmapOptions);
+    bitmapOptions.inTargetDensity = outWidth * bitmapOptions.inSampleSize
+    val resized = BitmapFactory.decodeFile(path, bitmapOptions)
     val fileName = "${getRandomString(20)}.jpg"
     try {
         val stream = FileOutputStream(getFilePath(context, fileName))

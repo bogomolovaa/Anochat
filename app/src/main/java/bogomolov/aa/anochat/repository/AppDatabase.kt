@@ -11,7 +11,7 @@ import bogomolov.aa.anochat.repository.entity.UserEntity
 
 const val DB_NAME = "anochat_db"
 
-@Database(entities = [ConversationEntity::class, MessageEntity::class, UserEntity::class], version = 47)
+@Database(entities = [ConversationEntity::class, MessageEntity::class, UserEntity::class], version = 54)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun conversationDao(): ConversationDao

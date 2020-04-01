@@ -9,9 +9,10 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.view.inputmethod.InputMethodManager
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
-import androidx.core.content.ContextCompat.getSystemService
+import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -27,6 +28,7 @@ import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.ConversationsPagedAdapter
 import bogomolov.aa.anochat.viewmodel.ConversationListViewModel
+import com.vanniktech.emoji.EmojiTextView
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -47,6 +49,7 @@ class ConversationsListFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
         val binding = DataBindingUtil.inflate<FragmentConversationsListBinding>(
             inflater,
             R.layout.fragment_conversations_list,
@@ -57,6 +60,8 @@ class ConversationsListFragment : Fragment() {
         binding.lifecycleOwner = this
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         setHasOptionsMenu(true)
+
+        Log.i("test", "ConversationsListFragment onCreateView")
 
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         val actionsMap = HashMap<Int, (Set<Long>, Set<Conversation>) -> Unit>()
@@ -125,7 +130,6 @@ class ConversationsListFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         if (item.itemId == R.id.menu_sign_out) {
-            Log.i("test", "sign out")
             viewModel.signOut()
             navController.navigate(R.id.conversationsListFragment)
             return true
@@ -163,3 +167,9 @@ class ConversationsListFragment : Fragment() {
     }
 
 }
+
+@BindingAdapter(value = ["android:textStyle"])
+fun setTypeface(v: TextView, style: Int) {
+    v.setTypeface(null, style);
+}
+

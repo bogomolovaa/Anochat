@@ -87,6 +87,7 @@ class AdapterHelper<T, R> constructor(
         RecyclerView.ViewHolder(viewHolder),
         View.OnClickListener, View.OnLongClickListener {
 
+
         init {
             if (onClick != null || actionsMap != null) cardView.setOnClickListener(this)
             if (actionsMap != null) cardView.setOnLongClickListener(this)

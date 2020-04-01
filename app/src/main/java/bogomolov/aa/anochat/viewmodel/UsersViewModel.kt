@@ -57,7 +57,6 @@ class UsersViewModel
                 val name = cursor.getString(nameIndex)
                 val number = cursor.getString(numberIndex)
                 phones += number.replace("[- ()]".toRegex(), "").replace("^8".toRegex(), "+7")
-                Log.i("test", "contact $name $number")
             }
         }
         return ArrayList(phones)

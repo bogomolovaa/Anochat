@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.view.fragments
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -28,7 +29,6 @@ class SendMediaFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     val viewModel: SendMediaViewModel by activityViewModels { viewModelFactory }
-    lateinit var mediaPath: String
     var conversationId = 0L
 
     override fun onAttach(context: Context) {
@@ -51,10 +51,14 @@ class SendMediaFragment : Fragment() {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        mediaPath = arguments?.getString("path")!!
+        val mediaPath = arguments?.getString("path")
+        val mediaUri = arguments?.getParcelable("uri") as Uri?
         conversationId = arguments?.getLong("conversationId")!!
 
-        val resizedImage = resizeImage(mediaPath, requireContext())
+        val resizedImage = if(mediaUri!=null)
+            resizeImage(mediaUri, requireContext())
+        else
+            resizeImage(mediaPath!!, requireContext())
         binding.imageView.setImageBitmap(BitmapFactory.decodeFile(getFilePath(requireContext(), resizedImage)))
         binding.messageInputLayout.setEndIconOnClickListener {
             val text = binding.messageInputText.text?.toString() ?: ""

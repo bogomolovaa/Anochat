@@ -1,38 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
+        <import type="android.graphics.Typeface" />
+        <import type="android.view.View" />
+
         <variable
-                name="conversation"
-                type="bogomolov.aa.anochat.core.Conversation" />
+            name="conversation"
+            type="bogomolov.aa.anochat.core.Conversation" />
     </data>
 
     <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="4dp"
-            android:checkable="true"
-            app:cardElevation="4dp">
+        android:id="@+id/cardView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:checkable="true"
+        app:cardElevation="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <TextView
-                    android:id="@+id/last_time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:text="@{conversation.lastMessage.timeString()}"
-                    android:textSize="12sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:text="1.1.2020" />
+                android:id="@+id/last_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:text="@{conversation.lastMessage.timeString()}"
+                android:textSize="12sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="1.1.2020" />
 
             <com.vanniktech.emoji.EmojiTextView
                 android:id="@+id/messageText"
@@ -41,7 +44,8 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="16dp"
-                android:textColor="#000000"
+                android:textColor="@{(!conversation.lastMessage.isMine() &amp;&amp; conversation.lastMessage.viewed==0)? @color/green : @color/black}"
+                android:textStyle='@{(!conversation.lastMessage.isMine() &amp;&amp; conversation.lastMessage.viewed==0)? Typeface.BOLD : Typeface.NORMAL}'
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/user_photo"
@@ -64,19 +68,31 @@
                 tools:text="username" />
 
             <bogomolov.aa.anochat.view.RoundedImageView
-                    android:id="@+id/user_photo"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    app:foregroundColor="@color/white"
-                    app:srcDrawable="@drawable/user_icon"
-                    app:srcFile="@{conversation.user.photo}"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"/>
+                android:id="@+id/user_photo"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                app:foregroundColor="@color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcDrawable="@drawable/user_icon"
+                app:srcFile="@{conversation.user.photo}" />
 
+            <ImageView
+                android:id="@+id/newMessageStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="4dp"
+                android:tint="@color/green"
+                android:visibility="@{(!conversation.lastMessage.isMine() &amp;&amp; conversation.lastMessage.viewed==0)? View.VISIBLE : View.GONE}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:srcCompat="@drawable/circle_icon"
+                tools:visibility="visible" />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

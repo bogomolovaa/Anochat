@@ -43,4 +43,5 @@ interface ConversationDao {
 
     @Query("delete from ConversationEntity where id in (:ids)")
     fun deleteByIds(ids: Set<Long>)
+
 }

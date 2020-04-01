@@ -70,7 +70,7 @@ class MessagesPagedAdapter(
         if (message.image != null) {
             val file = File(getFilesDir(activity), message.image)
             if (file.exists()) {
-                Log.i("test","loadImage")
+                Log.i("test", "loadImage")
                 binding.imageView.setImageBitmap(
                     BitmapFactory.decodeFile(
                         file.path,
@@ -119,27 +119,30 @@ class MessagesPagedAdapter(
                     }
 
                     override fun onFling(
-                        event1: MotionEvent,
-                        event2: MotionEvent,
+                        event1: MotionEvent?,
+                        event2: MotionEvent?,
                         velocityX: Float,
                         velocityY: Float
                     ): Boolean {
-                        val displayMetrics = DisplayMetrics()
-                        activity.windowManager.defaultDisplay.getMetrics(displayMetrics)
-                        val length = displayMetrics.widthPixels.toFloat()
-                        binding.messageCardView.animate().translationX(length).setDuration(500)
-                            .setListener(object : AnimatorListenerAdapter() {
-                                override fun onAnimationEnd(var1: Animator) {
-                                    binding.messageCardView.translationX = 0f
-                                    onReply(item.message)
-                                }
-                            }).setInterpolator(AccelerateInterpolator()).start()
+
+                      val displayMetrics = DisplayMetrics()
+                      activity.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+                      val length = displayMetrics.widthPixels.toFloat()
+
+                      binding.messageCardView.animate().translationX(length).setDuration(500)
+                          .setListener(object : AnimatorListenerAdapter() {
+                              override fun onAnimationEnd(var1: Animator) {
+                                  binding.messageCardView.translationX = 0f
+                                  onReply(item.message)
+                              }
+                          }).setInterpolator(AccelerateInterpolator()).start()
+
                         return true
                     }
                 })
 
             binding.messageCardView.setOnTouchListener { view, event ->
-                if(event!=null) detector.onTouchEvent(event)
+                if (event != null) detector.onTouchEvent(event)
                 false
             }
             binding.layout.visibility = View.VISIBLE

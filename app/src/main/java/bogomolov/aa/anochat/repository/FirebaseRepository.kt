@@ -48,6 +48,8 @@ interface IFirebaseRepository {
         isOnline: (Boolean) -> Unit,
         lastTimeOnline: (Long) -> Unit
     ): () -> Unit
+    suspend fun setOnline()
+    suspend fun setOffline()
 }
 
 class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRepository {
@@ -97,26 +99,32 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         }
     }
 
+    override suspend fun setOnline(){
+        val uid = getUid()
+        if (uid != null) {
+            val database = FirebaseDatabase.getInstance()
+            val userRef = database.getReference("users/${uid}")
+            userRef.child("online").setValue(1)
+        }
+    }
+
+    override suspend fun setOffline(){
+        val uid = getUid()
+        if (uid != null) {
+            val database = FirebaseDatabase.getInstance()
+            val userRef = database.getReference("users/${uid}")
+            userRef.child("online").setValue(0)
+            userRef.child("lastOnline").setValue(ServerValue.TIMESTAMP)
+        }
+    }
+
     private fun updateOnlineStatus() {
         val uid = getUid()
         if (uid != null) {
             val database = FirebaseDatabase.getInstance()
             val userRef = database.getReference("users/${uid}")
             userRef.child("lastOnline").onDisconnect().setValue(ServerValue.TIMESTAMP)
-            userRef.child("online").setValue(1)
             userRef.child("online").onDisconnect().setValue(0)
-            val connectedRef = database.getReference(".info/connected")
-            connectedRef.addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val connected = snapshot.getValue(Boolean::class.java) ?: false
-                    if (connected)
-                        userRef.child("online").onDisconnect().setValue(1)
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.i("test", ".info/connected canceled")
-                }
-            })
         }
     }
 
@@ -139,14 +147,16 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         needDecrypt: Boolean
     ): Boolean =
         suspendCoroutine { continuation ->
-            Log.i("test", "start downloading: $fileName")
             val fileRef = FirebaseStorage.getInstance()
-                .getReference(if (!needDecrypt) "/user/{$uid}/" else "/files/").child(fileName)
+                .getReference(if (!needDecrypt) "/user/$uid/" else "/files/").child(fileName)
+            Log.i("test", "start downloading: $fileName ref $fileRef")
             val localFile = File(getFilesDir(context), fileName)
             fileRef.getFile(localFile).addOnSuccessListener {
                 Log.i("test", "downloaded $fileName")
-                if (needDecrypt) decryptFile(localFile, uid!!, context)
-                fileRef.delete()
+                if (needDecrypt) {
+                    decryptFile(localFile, uid!!, context)
+                    fileRef.delete()
+                }
                 continuation.resume(true)
             }.addOnFailureListener {
                 Log.i("test", "NOT downloaded $fileName")

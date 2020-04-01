@@ -12,11 +12,13 @@ import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.repository.Repository
 import bogomolov.aa.anochat.view.MessageView
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 
 class ConversationViewModel
 @Inject constructor(private val repository: Repository) : ViewModel() {
@@ -24,6 +26,7 @@ class ConversationViewModel
     val onlineStatus = MutableLiveData<String>()
     private var removeStatusListener: (() -> Unit)? = null
     private var userOnline = false
+    private var lastTimeOnline = 0L
     var recyclerViewState: Parcelable? = null
 
     override fun onCleared() {
@@ -31,9 +34,10 @@ class ConversationViewModel
         removeStatusListener?.invoke()
     }
 
-    fun deleteMessages(ids: Set<Long>){
+    fun deleteMessages(ids: Set<Long>) {
+        val saveIds = HashSet(ids)
         viewModelScope.launch(Dispatchers.IO) {
-            repository.deleteMessages(ids)
+            repository.deleteMessages(saveIds)
         }
     }
 
@@ -48,16 +52,23 @@ class ConversationViewModel
                     uid = conversation.user.uid,
                     isOnline = { online ->
                         userOnline = online
-                        if (online) onlineStatus.postValue("online")
+                        if (online) {
+                            onlineStatus.postValue("online")
+                        } else {
+                            if (lastTimeOnline > 0)
+                                onlineStatus.postValue(
+                                    SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(lastTimeOnline))
+                                )
+                        }
                     },
                     lastTimeOnline = { lastTime ->
+                        lastTimeOnline = lastTime
                         if (lastTime > 0 && !userOnline)
                             onlineStatus.postValue(
                                 SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(lastTime))
                             )
                     })
-            if (conversation.lastMessage?.isMine() == false)
-                repository.reportAsViewed(conversationId)
+
 
         }
         return LivePagedListBuilder(repository.loadMessages(conversationId).mapByPage {
@@ -65,6 +76,8 @@ class ConversationViewModel
             if (it != null) {
                 var lastDay = -1
                 for ((i, message) in it.listIterator().withIndex()) {
+                    if (!message.isMine() && message.viewed == 0)
+                        viewModelScope.launch(Dispatchers.IO) { repository.reportAsViewed(message) }
                     val messageView = MessageView(message)
                     val day = GregorianCalendar().apply { time = Date(message.time) }
                         .get(Calendar.DAY_OF_YEAR)

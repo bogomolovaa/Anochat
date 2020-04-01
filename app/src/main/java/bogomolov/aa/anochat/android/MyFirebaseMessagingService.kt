@@ -37,6 +37,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
 
     @Inject
     lateinit var repository: Repository
+
     @Inject
     lateinit var androidInjector: DispatchingAndroidInjector<Any>
 
@@ -125,7 +126,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                                             applicationContext,
                                             NOTIFICATIONS
                                         ) != null
-                                    if (inBackground && showNotification) sendNotification(message)
+                                    if (inBackground && showNotification)
+                                        sendNotification(message)
                                 }
                             }
                         }
@@ -158,10 +160,15 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
     private suspend fun sendNotification(message: Message) {
         val conversation = repository.getConversation(message.conversationId)
         val bitmap = if (conversation.user.photo != null)
-            BitmapFactory.decodeFile(getFilePath(applicationContext, conversation.user.photo!!))
+            BitmapFactory.decodeFile(
+                getFilePath(
+                    applicationContext,
+                    getMiniPhotoFileName(applicationContext, conversation.user.photo!!)
+                )
+            )
         else
             BitmapFactory.decodeResource(applicationContext.resources, R.drawable.user_icon)
-        val pendingIntent = NavDeepLinkBuilder(applicationContext)
+        val pendingIntent = NavDeepLinkBuilder(repository.getContext())
             .setComponentName(MainActivity::class.java)
             .setGraph(R.navigation.nav_graph)
             .setDestination(R.id.conversationFragment)
@@ -185,6 +192,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
             android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,
             AudioManager.STREAM_NOTIFICATION
         )
+        if (message.image != null)
+            notificationBuilder.setStyle(
+                NotificationCompat.BigPictureStyle()
+                    .bigPicture(getBitmap(message.image, 4, applicationContext))
+            )
 
         val notificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager

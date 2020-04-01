@@ -43,14 +43,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
-                android:hint="@string/phone_number"
-                app:boxBackgroundColor="#FFFFFF">
+                android:hint="@string/phone_number">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/phoneInputText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="phone"
+                    android:background="#FFFFFF"
                     android:text="" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -61,14 +60,14 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
                 android:hint="@string/verification_code"
-                android:visibility="invisible"
-                app:boxBackgroundColor="#FFFFFF">
+                android:visibility="invisible">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/codeInputText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
+                    android:background="#FFFFFF"
                     android:text="" />
 
             </com.google.android.material.textfield.TextInputLayout>

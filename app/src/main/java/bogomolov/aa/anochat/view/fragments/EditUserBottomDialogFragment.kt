@@ -52,7 +52,7 @@ class EditUserBottomDialogFragment(
         if (settingType == SettingType.EDIT_USERNAME) maxLength = 20
         if (settingType == SettingType.EDIT_STATUS) maxLength = 40
         binding.enterText.filters = arrayOf<InputFilter>(LengthFilter(maxLength))
-        binding.enterText.setText(currentValue)
+        if (!currentValue.isNullOrEmpty()) binding.enterText.setText(currentValue)
         return binding.root
     }
 
