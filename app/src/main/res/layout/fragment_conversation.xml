@@ -1,49 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
         <variable
-                name="viewModel"
-                type="bogomolov.aa.anochat.viewmodel.ConversationViewModel" />
+            name="viewModel"
+            type="bogomolov.aa.anochat.viewmodel.ConversationViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            tools:context=".view.fragments.ConversationFragment">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/conversation_background"
+        tools:context=".view.fragments.ConversationFragment">
 
         <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/colorPrimary"
-                android:minHeight="?attr/actionBarSize"
-                android:theme="?attr/actionBarTheme"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimary"
+            android:minHeight="?attr/actionBarSize"
+            app:theme="@style/AppTheme.Toolbar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/usernameLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    tools:layout_editor_absoluteX="16dp"
-                    tools:layout_editor_absoluteY="8dp">
+                android:id="@+id/usernameLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:layout_editor_absoluteX="16dp"
+                tools:layout_editor_absoluteY="8dp">
 
                 <bogomolov.aa.anochat.view.RoundedImageView
-                        android:id="@+id/user_photo"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        app:foregroundColor="@color/colorPrimary"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:srcDrawable="@drawable/user_icon"
-                        app:srcFile="@{viewModel.conversationLiveData.user.photo}" />
+                    android:id="@+id/user_photo"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    app:foregroundColor="@color/colorPrimary"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcDrawable="@drawable/user_icon"
+                    app:srcFile="@{viewModel.conversationLiveData.user.photo}" />
 
 
                 <TextView
@@ -52,7 +53,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:text="@{viewModel.conversationLiveData.user.name}"
-                    android:textColor="#000000"
+                    android:textColor="@color/title_color"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -62,16 +63,17 @@
                     tools:text="Username" />
 
                 <TextView
-                        android:id="@+id/status_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginBottom="4dp"
-                        android:text="@{viewModel.onlineStatus}"
-                        android:textSize="12sp"
-                        app:layout_constraintBottom_toBottomOf="@+id/user_photo"
-                        app:layout_constraintStart_toEndOf="@+id/user_photo"
-                        tools:text="online" />
+                    android:id="@+id/status_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginBottom="4dp"
+                    android:text="@{viewModel.onlineStatus}"
+                    android:textColor="@color/title_color"
+                    android:textSize="12sp"
+                    app:layout_constraintBottom_toBottomOf="@+id/user_photo"
+                    app:layout_constraintStart_toEndOf="@+id/user_photo"
+                    tools:text="online" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -84,76 +86,77 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginBottom="4dp"
+            android:background="@color/conversation_background"
             app:layout_constraintBottom_toTopOf="@+id/inputLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
         <RelativeLayout
-                android:id="@+id/reply_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="start"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toTopOf="@+id/inputLayout"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent">
+            android:id="@+id/reply_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@+id/inputLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
 
             <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/dateCardView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="4dp"
-                    android:checkable="true"
-                    app:cardBackgroundColor="@color/time_message_color"
-                    app:cardElevation="4dp">
+                android:id="@+id/dateCardView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:checkable="true"
+                app:cardBackgroundColor="@color/time_message_color"
+                app:cardElevation="4dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
 
                     <bogomolov.aa.anochat.view.PlayAudioView
-                            android:id="@+id/replayAudio"
-                            android:layout_width="250dp"
-                            android:layout_height="50dp"
-                            android:visibility="invisible"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            tools:visibility="visible" />
+                        android:id="@+id/replayAudio"
+                        android:layout_width="250dp"
+                        android:layout_height="50dp"
+                        android:visibility="invisible"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:visibility="visible" />
 
                     <ImageView
-                            android:id="@+id/removeReply"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:backgroundTint="#FFFFFF"
-                            android:tint="#E91E63"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:srcCompat="@drawable/clear_icon" />
+                        android:id="@+id/removeReply"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:backgroundTint="#FFFFFF"
+                        android:tint="#E91E63"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/clear_icon" />
 
                     <ImageView
-                            android:id="@+id/replyImage"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:layout_margin="6dp"
-                            android:duplicateParentState="true"
-                            android:visibility="invisible"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
+                        android:id="@+id/replyImage"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_margin="6dp"
+                        android:duplicateParentState="true"
+                        android:visibility="invisible"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <com.vanniktech.emoji.EmojiTextView
-                            android:id="@+id/reply_text"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_margin="6dp"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toEndOf="@+id/replyImage"
-                            app:layout_constraintTop_toTopOf="parent"
-                            tools:text="Reply message" />
+                        android:id="@+id/reply_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="6dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/replyImage"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:text="Reply message" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -167,8 +170,7 @@
             android:layout_marginEnd="4dp"
             android:gravity="bottom|right"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/message_input_layout">
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fabMic"
@@ -179,6 +181,7 @@
                 android:layout_centerHorizontal="true"
                 android:clickable="true"
                 android:visibility="invisible"
+                app:backgroundTint="@color/fab"
                 app:fabSize="mini"
                 app:srcCompat="@drawable/mic_icon" />
 
@@ -191,6 +194,7 @@
                 android:layout_centerHorizontal="true"
                 android:clickable="true"
                 android:visibility="invisible"
+                app:backgroundTint="@color/fab"
                 app:fabSize="mini"
                 app:srcCompat="@drawable/attach_icon" />
 
@@ -203,6 +207,7 @@
                 android:layout_centerHorizontal="true"
                 android:clickable="true"
                 android:visibility="invisible"
+                app:backgroundTint="@color/fab"
                 app:fabSize="mini"
                 app:srcCompat="@drawable/camera_icon" />
 
@@ -211,48 +216,50 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
-                android:layout_marginBottom="4dp"
+                android:layout_margin="4dp"
                 android:clickable="true"
+                app:backgroundTint="@color/fab"
                 app:srcCompat="@drawable/plus_icon" />
 
         </RelativeLayout>
 
         <FrameLayout
-                android:id="@+id/inputLayout"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/fab_layout"
-                app:layout_constraintHeight_min="40dp"
-                app:layout_constraintStart_toStartOf="parent">
+            android:id="@+id/inputLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/fab_layout"
+            app:layout_constraintHeight_min="40dp"
+            app:layout_constraintStart_toStartOf="parent">
 
             <bogomolov.aa.anochat.view.PlayAudioView
-                    android:id="@+id/playAudioInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginEnd="16dp"
-                    android:visibility="gone" />
+                android:id="@+id/playAudioInput"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginEnd="16dp"
+                android:visibility="gone" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/textLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    tools:visibility="visible">
+                android:id="@+id/textLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:visibility="visible">
 
                 <com.vanniktech.emoji.EmojiEditText
-                        android:id="@+id/message_input_text"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:inputType="textShortMessage|textMultiLine"
-                        android:maxLength="1000"
-                        android:maxLines="5"
-                        android:minHeight="55dp"
-                        android:minLines="1"
-                        android:scrollbars="vertical"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@+id/emojiIcon"
-                        app:layout_constraintTop_toTopOf="parent" />
+                    android:id="@+id/message_input_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="2dp"
+                    android:inputType="textShortMessage|textMultiLine"
+                    android:maxLength="1000"
+                    android:maxLines="5"
+                    android:minHeight="55dp"
+                    android:minLines="1"
+                    android:scrollbars="vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/emojiIcon"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
                     android:id="@+id/emojiIcon"
@@ -267,54 +274,54 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/audioLayout"
-                    android:layout_width="348dp"
-                    android:layout_height="53dp"
-                    android:visibility="gone"
-                    tools:visibility="gone">
+                android:id="@+id/audioLayout"
+                android:layout_width="348dp"
+                android:layout_height="53dp"
+                android:visibility="gone"
+                tools:visibility="gone">
 
                 <ImageView
-                        android:id="@+id/imageView2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:srcCompat="@drawable/mic_icon" />
+                    android:id="@+id/imageView2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/mic_icon" />
 
                 <TextView
-                        android:id="@+id/textView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="@string/audio_message"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toEndOf="@+id/imageView2"
-                        app:layout_constraintTop_toTopOf="parent" />
+                    android:id="@+id/textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/audio_message"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/imageView2"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
-                        android:id="@+id/audio_length_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toEndOf="@+id/textView"
-                        app:layout_constraintTop_toTopOf="parent"
-                        tools:text="0:15" />
+                    android:id="@+id/audio_length_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/textView"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:text="0:15" />
 
                 <ImageView
-                        android:id="@+id/imageView3"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:tint="#FF0000"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintHorizontal_bias="0.0"
-                        app:layout_constraintStart_toEndOf="@+id/audio_length_text"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:srcCompat="@drawable/record_icon" />
+                    android:id="@+id/imageView3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:tint="#FF0000"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toEndOf="@+id/audio_length_text"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/record_icon" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </FrameLayout>
 

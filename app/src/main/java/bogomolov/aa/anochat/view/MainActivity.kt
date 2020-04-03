@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.view
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.viewModels
@@ -14,6 +15,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavOptions
 import androidx.navigation.Navigation
+import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
@@ -51,18 +53,18 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         val navController = Navigation.findNavController(this, R.id.nav_host_fragment)
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
             val currentDestination = controller.currentDestination
-            Log.i("test", "currentDestination $currentDestination")
+            //Log.i("test", "currentDestination $currentDestination")
             if (currentDestination != null) {
-                Log.i("test", "destination $destination")
+                //Log.i("test", "destination $destination")
                 if (currentDestination.id != R.id.signInFragment) {
                     viewModel.viewModelScope.launch(Dispatchers.IO) {
                         val signedIn = viewModel.isSignedIn()
-                        Log.i("test", "signedIn $signedIn")
+                        //Log.i("test", "signedIn $signedIn")
                         if (!signedIn) {
                             withContext(Dispatchers.Main) {
                                 val navOptions =
                                     NavOptions.Builder().setPopUpTo(destination.id, true).build()
-                                Log.i("test", "controller.navigate R.id.signInFragment")
+                                //Log.i("test", "controller.navigate R.id.signInFragment")
                                 super.onPostResume()
                                 controller.navigate(R.id.signInFragment, null, navOptions)
                             }
@@ -84,7 +86,8 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         val editor: SharedPreferences.Editor = sharedPreferences.edit()
         editor.clear()
         editor.commit()
-         */
+        */
+
     }
 
     private fun emojiSupport() {

@@ -107,8 +107,6 @@ class ConversationFragment : Fragment() {
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        Log.i("test","ConversationFragment onCreateView")
-
         conversationId = arguments?.get("id") as Long
         mainActivity.conversationId = conversationId
 
@@ -161,15 +159,12 @@ class ConversationFragment : Fragment() {
 
 
       viewModel.loadMessages(conversationId).observe(viewLifecycleOwner) {
-          Log.i("test", "pagedListLiveData observed from conversationId ${conversationId}")
           adapter.submitList(it)
 
           if (viewModel.recyclerViewState != null) {
-              Log.i("test", "onRestoreInstanceState")
               recyclerView.layoutManager?.onRestoreInstanceState(viewModel.recyclerViewState)
               viewModel.recyclerViewState = null
           } else {
-              Log.i("test", "scrollToPosition ${it.size}")
               scrollEnd = true
               binding.recyclerView.scrollToPosition(it.size - 1);
           }
@@ -180,10 +175,8 @@ class ConversationFragment : Fragment() {
 
 
       recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-          Log.i("test", "try scroll scrollEnd $scrollEnd")
           if (scrollEnd) { // && (bottom < oldBottom && adapter.itemCount > 0)
               binding.recyclerView.postDelayed({
-                  Log.i("test", "addOnLayoutChangeListener scrollToPosition scrollEnd $scrollEnd")
                   binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
                   scrollEnd = false
               }, 100)
@@ -197,7 +190,6 @@ class ConversationFragment : Fragment() {
         binding.messageInputText.setOnFocusChangeListener { v, hasFocus ->
             if (hasFocus) {
                 scrollEnd = true
-                Log.i("text", "setOnFocusChangeListener")
             }
         }
         binding.messageInputText.doOnTextChanged { text, start, count, after ->
@@ -205,7 +197,6 @@ class ConversationFragment : Fragment() {
             if (!text.isNullOrEmpty()) {
                 binding.fab.setImageResource(R.drawable.send_icon)
                 textEntered = true
-                Log.i("text", "doOnTextChanged")
                 scrollEnd = true
             } else {
                 binding.fab.setImageResource(R.drawable.plus_icon)
@@ -259,6 +250,11 @@ class ConversationFragment : Fragment() {
 
 
         return view
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.deleteIfNoMessages()
     }
 
     override fun onStart() {
@@ -400,7 +396,7 @@ class ConversationFragment : Fragment() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        Log.i("test", "onActivityResult $resultCode $intent requestCode $requestCode")
+        //Log.i("test", "onActivityResult $resultCode $intent requestCode $requestCode")
         if (resultCode == RESULT_OK) {
             var uri: Uri? = null
             when (requestCode) {

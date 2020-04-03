@@ -12,6 +12,9 @@ interface MessageDao {
     @Insert
     fun insert(message: MessageEntity): Long
 
+    @Query("select * from MessageEntity where conversationId = :conversationId")
+    fun getMessages(conversationId: Long): List<MessageEntity>
+
     @Query("delete from MessageEntity where id in (:ids)")
     fun deleteByIds(ids: Set<Long>): Int
 

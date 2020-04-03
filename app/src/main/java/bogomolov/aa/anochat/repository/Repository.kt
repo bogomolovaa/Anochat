@@ -61,4 +61,6 @@ interface Repository : IFirebaseRepository {
 
     suspend fun deleteConversations(ids: Set<Long>)
 
+    suspend fun deleteConversationIfNoMessages(conversationId: Long)
+
 }

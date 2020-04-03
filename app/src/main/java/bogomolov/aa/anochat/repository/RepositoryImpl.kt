@@ -143,12 +143,10 @@ class RepositoryImpl
     override fun getImages(userId: Long) = db.messageDao().getImages(userId)
 
     override suspend fun getUser(uid: String, save: Boolean): User? {
-        Log.i("test", "getUser $uid")
         var user = mapper.entityToModel(db.userDao().findByUid(uid))
         if (user == null && save) {
             user = firebase.getUser(uid)
             updateUserFrom(user = user!!, saveLocal = true)
-            Log.i("test", "user ${user.uid} updated")
         }
         return user
     }
@@ -159,14 +157,11 @@ class RepositoryImpl
 
     override suspend fun updateUserTo(user: User) {
         val savedUser = db.userDao().getUser(user.id)
-        Log.i("test", "updateUserTo $user saved: $savedUser")
-        if (savedUser != null) {
-            if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
-            if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
-            if (user.photo != null && user.photo != savedUser.photo)
-                firebase.updatePhoto(user.uid, user.photo!!)
-            db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
-        }
+        if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
+        if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
+        if (user.photo != null && user.photo != savedUser.photo)
+            firebase.updatePhoto(user.uid, user.photo!!)
+        db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
     }
 
     override suspend fun loadConversations(): List<Conversation> {
@@ -222,7 +217,6 @@ class RepositoryImpl
 
     override fun loadConversationsDataSource(): DataSource.Factory<Int, Conversation> {
         val myUid = getSetting<String>(context, UID) ?: ""
-        Log.i("test", "loadConversationsDataSource() myUid $myUid")
         return db.conversationDao().loadConversations(myUid).map {
             mapper.entityToModel(it)
         }
@@ -244,6 +238,11 @@ class RepositoryImpl
         return db.userDao().getAll(phones, myUid).map {
             mapper.entityToModel(it)
         }
+    }
+
+    override suspend fun deleteConversationIfNoMessages(conversationId: Long) {
+        val messages = db.messageDao().getMessages(conversationId)
+        if (messages.isEmpty()) db.conversationDao().deleteByIds(setOf(conversationId))
     }
 
     override suspend fun deleteMessages(ids: Set<Long>) {

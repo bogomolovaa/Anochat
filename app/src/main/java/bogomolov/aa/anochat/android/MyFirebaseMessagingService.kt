@@ -94,8 +94,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                 //https://stackoverflow.com/questions/13261252/javax-crypto-illegalblocksizeexception-last-block-incomplete-in-decryption-de
                 //https://stackoverflow.com/questions/18350459/javax-crypto-illegalblocksizeexception-last-block-incomplete-in-decryption-exce/20417874#20417874
                 TYPE_MESSAGE -> {
-                    var text = data["body"] ?: ""
-                    val uid = data["source"]
+                    val text = data["body"] ?: ""
                     var image = data["image"]
                     var audio = data["audio"]
                     val replyId = data["reply"]
@@ -186,7 +185,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
         val canVibrate = getSetting<Boolean>(applicationContext, VIBRATION) != null
-        if (canVibrate) notificationBuilder.setVibrate(longArrayOf(1000, 1000))
+        if (canVibrate) notificationBuilder.setVibrate(longArrayOf(500, 500))
         val canSound = getSetting<Boolean>(applicationContext, SOUND) != null
         if (canSound) notificationBuilder.setSound(
             android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,

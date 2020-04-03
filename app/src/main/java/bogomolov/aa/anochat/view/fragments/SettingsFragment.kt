@@ -6,25 +6,21 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.lifecycle.observe
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
+import androidx.lifecycle.observe
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
-import androidx.preference.PreferenceManager
-
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.*
 import bogomolov.aa.anochat.dagger.ViewModelFactory
@@ -115,7 +111,15 @@ class SettingsFragment : Fragment() {
             setSetting(requireContext(), VIBRATION, isChecked)
         }
 
+        binding.privacyPolicy.setOnClickListener { openPrivacyPolicy() }
+
         return binding.root
+    }
+
+    private fun openPrivacyPolicy() {
+        val i = Intent(Intent.ACTION_VIEW)
+        i.data = Uri.parse("https://bogomolovaa.github.io/Anochat/")
+        startActivity(i)
     }
 
     private fun updatePhoto(uri: Uri) {
@@ -128,7 +132,6 @@ class SettingsFragment : Fragment() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        Log.i("test", "onActivityResult $resultCode $intent requestCode $requestCode")
         if (resultCode == Activity.RESULT_OK) {
             var uri: Uri? = null
             when (requestCode) {

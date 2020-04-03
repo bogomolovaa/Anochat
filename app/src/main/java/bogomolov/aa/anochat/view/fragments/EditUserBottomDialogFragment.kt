@@ -44,7 +44,6 @@ class EditUserBottomDialogFragment(
         }
         binding.saveButton.setOnClickListener {
             val text = binding.enterText.text.toString()
-            Log.i("test", "save text $text")
             onSave(text)
             dismiss()
         }

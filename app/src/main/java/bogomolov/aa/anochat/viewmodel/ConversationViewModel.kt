@@ -41,6 +41,14 @@ class ConversationViewModel
         }
     }
 
+    fun deleteIfNoMessages() {
+        if (conversationLiveData.value != null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                repository.deleteConversationIfNoMessages(conversationLiveData.value!!.id)
+            }
+        }
+    }
+
     @SuppressLint("SimpleDateFormat")
     fun loadMessages(conversationId: Long): LiveData<PagedList<MessageView>> {
         if (conversationId != conversationLiveData.value?.id) recyclerViewState = null
@@ -110,7 +118,6 @@ class ConversationViewModel
                     replyMessage = if (replyMessageId != null) Message(messageId = replyMessageId) else null,
                     audio = audio
                 )
-                Log.i("test", "sendMessage message.replyMessage ${message.replyMessage?.messageId}")
                 if (audio == null) {
                     repository.saveMessage(message, conversation.id)
                     repository.sendMessage(message)
@@ -118,8 +125,6 @@ class ConversationViewModel
                     repository.saveMessage(message, conversation.id)
                     if (repository.uploadFile(audio, conversation.user.uid, true)) {
                         repository.sendMessage(message)
-                    } else {
-                        Log.i("test", "Not uploaded")
                     }
                 }
             }

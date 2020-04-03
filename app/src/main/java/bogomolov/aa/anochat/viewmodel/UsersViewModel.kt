@@ -28,7 +28,6 @@ class UsersViewModel
         viewModelScope.launch(Dispatchers.IO) {
             val myUid = getSetting<String>(repository.getContext(), UID)
             val users = repository.receiveUsersByPhones(contactPhones).filter { it.uid != myUid }
-            Log.i("test", "loadContactUsers finished")
             for (user in users) repository.updateUserFrom(user)
             usersList.clear()
             usersList.addAll(users)
@@ -54,7 +53,6 @@ class UsersViewModel
             val numberIndex =
                 cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
             while (cursor.moveToNext()) {
-                val name = cursor.getString(nameIndex)
                 val number = cursor.getString(numberIndex)
                 phones += number.replace("[- ()]".toRegex(), "").replace("^8".toRegex(), "+7")
             }

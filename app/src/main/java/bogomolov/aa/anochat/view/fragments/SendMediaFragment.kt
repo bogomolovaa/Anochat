@@ -62,7 +62,6 @@ class SendMediaFragment : Fragment() {
         binding.imageView.setImageBitmap(BitmapFactory.decodeFile(getFilePath(requireContext(), resizedImage)))
         binding.messageInputLayout.setEndIconOnClickListener {
             val text = binding.messageInputText.text?.toString() ?: ""
-            Log.i("test","send message: $text")
             viewModel.sendMessage(resizedImage, text, conversationId)
             navController.popBackStack()
         }

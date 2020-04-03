@@ -36,7 +36,6 @@ fun resizeImage(uri: Uri, context: Context): String {
     ins?.close()
     val bitmapWidth = bitmapOptions.outWidth
     val bitmapHeight = bitmapOptions.outHeight
-    Log.i("test", "bitmapWidth $bitmapWidth bitmapHeight $bitmapHeight")
 
     var ratio = MAX_IMAGE_DIM / max(bitmapWidth, bitmapHeight).toFloat()
     if (ratio > 1) ratio = 1.0f

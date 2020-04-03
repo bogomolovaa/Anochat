@@ -129,7 +129,6 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     }
 
     override suspend fun deleteRemoteMessage(messageId: String) {
-        Log.i("test", "deleteRemoteMessage messageId $messageId")
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("messages").child(messageId).removeValue()
     }
@@ -214,8 +213,6 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         Log.i("test", "findUsers")
         query.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                Log.i("test", "snapshot $snapshot")
-
                 if (snapshot.exists())
                     for (user in snapshot.children) users += userFromRef(user)
                 it.resume(users)
@@ -237,24 +234,20 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         val respRef = FirebaseDatabase.getInstance().getReference("responses/$requestKey")
         respRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                Log.i("test", "onDataChange $snapshot")
                 if (snapshot.value != null) {
                     val users = ArrayList<User>()
                     for (child in snapshot.children) {
                         val user = userFromRef(child)
                         users.add(user)
-                        Log.i("test", "response $user")
                     }
                     respRef.removeEventListener(this)
                     respRef.removeValue()
-                    //key = -M2ZVxOnfsdtB-Hx1Cn_, value = {IVmG8808LGdtVPaz95CLIYIpI2D3={phone=+79057148736, name=sasha, online=1, lastOnline=1584379350147, photo=ipDgwQNFOmVCJlIvkxuu.jpg}}
                     it.resume(users)
                 }
             }
 
             override fun onCancelled(p0: DatabaseError) {
                 it.resume(listOf())
-                Log.i("test", "onCancelled $p0")
             }
         })
     }
@@ -295,7 +288,6 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     }
 
     suspend fun updatePhoto(uid: String, photo: String) {
-        Log.i("test", "updatePhoto $uid $photo")
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("users").child(uid).updateChildren(mapOf("photo" to photo))
         uploadFile(photo, uid)
@@ -327,7 +319,6 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
 
     private fun saveUidAndToken(uid: String) {
-        Log.i("test", "saveUidAndToken $uid")
         setSetting(context, UID, uid)
         setSetting(context, TOKEN, token)
     }

@@ -18,7 +18,6 @@ public class UpdateWorker(
 
     override fun doWork(): Result {
         runBlocking {
-            Log.i("test","start UpdateWorker")
             val conversations = repository.loadConversations()
             for (conversation in conversations) {
                 val user = repository.receiveUser(conversation.user.uid)

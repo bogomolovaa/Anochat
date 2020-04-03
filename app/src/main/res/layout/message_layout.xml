@@ -174,7 +174,6 @@
                         android:layout_marginStart="8dp"
                         android:paddingTop="4dp"
                         android:text="@{message.message.text}"
-                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintBottom_toTopOf="@+id/time_text"
                         app:layout_constraintEnd_toStartOf="@+id/time_text"
                         app:layout_constraintHorizontal_bias="0.0"

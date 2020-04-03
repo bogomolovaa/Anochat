@@ -70,7 +70,6 @@ class MessagesPagedAdapter(
         if (message.image != null) {
             val file = File(getFilesDir(activity), message.image)
             if (file.exists()) {
-                Log.i("test", "loadImage")
                 binding.imageView.setImageBitmap(
                     BitmapFactory.decodeFile(
                         file.path,

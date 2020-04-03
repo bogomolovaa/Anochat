@@ -34,8 +34,6 @@ class SendMediaViewModel
             val conversation = repository.getConversation(conversationId)
             if (repository.uploadFile(imageFileName,conversation.user.uid, true)) {
                 repository.sendMessage(message)
-            } else {
-                Log.i("test", "Not uploaded")
             }
         }
     }

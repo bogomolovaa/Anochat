@@ -36,26 +36,30 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         val progressBar: ProgressBar = findViewById(R.id.playProgressBar)
         val player = MediaPlayer()
         Log.i("test","audio file: "+File(getFilesDir(context), fileName).path)
-        player.setDataSource(File(getFilesDir(context), fileName).path)
-        player.prepare()
-        val duration = player.duration.toLong()
-        progressBar.max = (duration / 1000).toInt()
-        lengthText.text = timeToString(duration)
-        this.player = player
-        val playPauseButton: ImageView = findViewById(R.id.playPause)
-        playPauseButton.setOnClickListener {
-            start()
-        }
-        player.setOnCompletionListener {
-            startTime = null
-            pastDuration = 0
-            progressBar.progress = 0
-            timerText.text = "0:00"
-            playPauseButton.setImageResource(R.drawable.send_icon)
+        if(File(getFilesDir(context), fileName).exists()) {
+            player.setDataSource(File(getFilesDir(context), fileName).path)
+            player.prepare()
+            val duration = player.duration.toLong()
+            progressBar.max = (duration / 1000).toInt()
+            lengthText.text = timeToString(duration)
+            this.player = player
+            val playPauseButton: ImageView = findViewById(R.id.playPause)
             playPauseButton.setOnClickListener {
                 start()
             }
-            if (playJob != null) playJob!!.cancel()
+            player.setOnCompletionListener {
+                startTime = null
+                pastDuration = 0
+                progressBar.progress = 0
+                timerText.text = "0:00"
+                playPauseButton.setImageResource(R.drawable.send_icon)
+                playPauseButton.setOnClickListener {
+                    start()
+                }
+                if (playJob != null) playJob!!.cancel()
+            }
+        }else{
+            Log.i("test","error file: "+File(getFilesDir(context), fileName).path+" not exist")
         }
         timerText.text = "0:00"
     }
