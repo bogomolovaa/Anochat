@@ -9,6 +9,7 @@ If you choose to use the app, then you agree to the collection and use of inform
 <h3>Information Collection and Use</h3>
 
 Phone numbers that end users provide for authentication will be sent and stored by Google to improve spam and abuse prevention across Google services, including but not limited to Firebase
+<p>
 All data sent by the App is encrypted and can be decrypted only on recipient device
 
 The app does use third party services that may collect information used to identify you.
