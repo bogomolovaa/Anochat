@@ -54,7 +54,6 @@ interface IFirebaseRepository {
 
 class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRepository {
     private lateinit var token: String
-    //TODO: turn on caching
 
     init {
         //signOut()

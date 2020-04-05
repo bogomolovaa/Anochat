@@ -78,22 +78,6 @@ fun genSharedSecretKey(
     return null
 }
 
-fun encrypt_(secretKey: SecretKey, clear: ByteArray): ByteArray {
-    val raw = secretKey.encoded
-    val skeySpec = SecretKeySpec(raw, "AES")
-    val cipher = Cipher.getInstance("AES")
-    cipher.init(Cipher.ENCRYPT_MODE, skeySpec)
-    return cipher.doFinal(clear)
-}
-
-fun decrypt_(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
-    val raw = secretKey.encoded
-    val skeySpec = SecretKeySpec(raw, "AES")
-    val cipher = Cipher.getInstance("AES")
-    cipher.init(Cipher.DECRYPT_MODE, skeySpec)
-    return cipher.doFinal(encrypted)
-}
-
 fun encrypt(secretKey: SecretKey, clear: ByteArray): ByteArray {
     val raw = secretKey.encoded
     val skeySpec = SecretKeySpec(raw, "AES")
@@ -187,30 +171,3 @@ fun generateAndSaveSecretKey(
     val secretKey = genSharedSecretKey(privateKey, publicKeyByteArray)
     saveKey(getSecretKeyName(myUid, uid), secretKey, context)
 }
-
-fun test1() {
-    //val baos = ByteArrayOutputStream()
-    //bm.compress(Bitmap.CompressFormat.PNG, 100, baos) // bm is the bitmap object
-    //val b: ByteArray = baos.toByteArray()
-
-
-    val keyPair1 = createKeyPair()
-    val publicKey1 = keyPair1!!.public
-    val privateKeyByteArray = serializeKey(keyPair1.private)
-
-    val keyPair2 = createKeyPair()
-    val publicKey2 = keyPair2!!.public
-
-
-    val privateKey1 = deserializeKey<PrivateKey>(privateKeyByteArray)
-    val secretKey = genSharedSecretKey(privateKey1, publicKey2.encoded)!!
-    val secretKeyArray = serializeKey(secretKey)
-    val encryptedData = encrypt(secretKey, "test string".toByteArray())
-
-
-    val loadedSecreteKey = deserializeKey<SecretKey>(secretKeyArray)
-    val decryptedData = decrypt(loadedSecreteKey, encryptedData)
-    val decryptedString = String(decryptedData)
-    Log.i("test", "decryptedData $decryptedString")
-}
-

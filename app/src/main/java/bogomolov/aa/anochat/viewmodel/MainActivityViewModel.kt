@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 class MainActivityViewModel
 @Inject constructor(private val repository: Repository) : ViewModel() {
-    suspend fun isSignedIn() = repository.isSignedIn()
+    fun isSignedIn() = repository.isSignedIn()
 
     fun startWorkManager() {
         val constraints = Constraints.Builder()

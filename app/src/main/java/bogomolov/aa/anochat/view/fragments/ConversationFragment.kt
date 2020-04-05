@@ -42,7 +42,6 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.android.getFilesDir
-import bogomolov.aa.anochat.android.getPath
 import bogomolov.aa.anochat.android.getRandomString
 import bogomolov.aa.anochat.core.Message
 import bogomolov.aa.anochat.dagger.ViewModelFactory

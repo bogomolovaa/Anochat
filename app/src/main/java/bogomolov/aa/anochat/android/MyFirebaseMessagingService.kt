@@ -52,11 +52,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
 
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        Log.d("test", "From: " + remoteMessage.getFrom())
         val context = repository.getContext()
         val myUid = getSetting<String>(context, UID)!!
-
-        // Check if message contains a data payload.
         if (remoteMessage.data.isNotEmpty()) {
             Log.d("test", "Message data payload: " + remoteMessage.data);
             val data = remoteMessage.data
@@ -91,8 +88,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                         }
                     }
                 }
-                //https://stackoverflow.com/questions/13261252/javax-crypto-illegalblocksizeexception-last-block-incomplete-in-decryption-de
-                //https://stackoverflow.com/questions/18350459/javax-crypto-illegalblocksizeexception-last-block-incomplete-in-decryption-exce/20417874#20417874
                 TYPE_MESSAGE -> {
                     val text = data["body"] ?: ""
                     var image = data["image"]
@@ -144,13 +139,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                 }
             }
         }
-
-        // Check if message contains a notification payload.
-        if (remoteMessage.notification != null) {
-            val body = remoteMessage.notification?.body;
-            Log.d("test", "Message Notification Body: $body")
-        }
-
     }
 
     override fun onNewToken(token: String) {
