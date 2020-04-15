@@ -40,7 +40,6 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     val viewModel: MainActivityViewModel by viewModels { viewModelFactory }
-    var conversationId = 0L
 
     @SuppressLint("ResourceType")
     override fun onCreate(savedInstanceState: Bundle?) {

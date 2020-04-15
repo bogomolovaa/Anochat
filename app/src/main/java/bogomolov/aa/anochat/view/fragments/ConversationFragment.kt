@@ -107,7 +107,6 @@ class ConversationFragment : Fragment() {
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         conversationId = arguments?.get("id") as Long
-        mainActivity.conversationId = conversationId
 
 
       val recyclerView = binding.recyclerView
