@@ -2,6 +2,14 @@ package bogomolov.aa.anochat.dagger
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import bogomolov.aa.anochat.features.main.MainActivityViewModel
+import bogomolov.aa.anochat.features.contacts.user.UserViewViewModel
+import bogomolov.aa.anochat.features.contacts.list.UsersViewModel
+import bogomolov.aa.anochat.features.conversations.list.ConversationListViewModel
+import bogomolov.aa.anochat.features.conversations.dialog.ConversationViewModel
+import bogomolov.aa.anochat.features.conversations.search.MessageSearchViewModel
+import bogomolov.aa.anochat.features.conversations.dialog.media.SendMediaViewModel
+import bogomolov.aa.anochat.features.settings.SettingsViewModel
 import bogomolov.aa.anochat.viewmodel.*
 import dagger.Binds
 import dagger.Module

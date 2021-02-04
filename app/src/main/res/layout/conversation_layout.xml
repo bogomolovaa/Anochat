@@ -10,7 +10,7 @@
 
         <variable
             name="conversation"
-            type="bogomolov.aa.anochat.core.Conversation" />
+            type="bogomolov.aa.anochat.domain.Conversation" />
     </data>
 
     <com.google.android.material.card.MaterialCardView
@@ -68,7 +68,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="username" />
 
-            <bogomolov.aa.anochat.view.RoundedImageView
+            <bogomolov.aa.anochat.features.shared.RoundedImageView
                 android:id="@+id/user_photo"
                 android:layout_width="60dp"
                 android:layout_height="60dp"

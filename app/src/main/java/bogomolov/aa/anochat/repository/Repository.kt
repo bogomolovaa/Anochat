@@ -2,9 +2,9 @@ package bogomolov.aa.anochat.repository
 
 import android.content.Context
 import androidx.paging.DataSource
-import bogomolov.aa.anochat.core.Conversation
-import bogomolov.aa.anochat.core.Message
-import bogomolov.aa.anochat.core.User
+import bogomolov.aa.anochat.domain.Conversation
+import bogomolov.aa.anochat.domain.Message
+import bogomolov.aa.anochat.domain.User
 
 interface Repository : IFirebaseRepository {
 

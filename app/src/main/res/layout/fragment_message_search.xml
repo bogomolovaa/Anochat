@@ -7,7 +7,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/conversation_background"
-        tools:context=".view.fragments.SettingsFragment">
+        tools:context=".features.settings.SettingsFragment">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"

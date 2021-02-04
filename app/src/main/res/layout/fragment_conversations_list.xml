@@ -5,7 +5,7 @@
     <data>
         <variable
                 name="viewModel"
-                type="bogomolov.aa.anochat.viewmodel.ConversationListViewModel" />
+                type="bogomolov.aa.anochat.features.conversations.list.ConversationListViewModel" />
     </data>
     <androidx.constraintlayout.widget.ConstraintLayout
                  android:layout_width="match_parent"

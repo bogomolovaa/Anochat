@@ -1,8 +1,16 @@
 package bogomolov.aa.anochat.dagger
 
-import bogomolov.aa.anochat.android.MyFirebaseMessagingService
-import bogomolov.aa.anochat.view.MainActivity
-import bogomolov.aa.anochat.view.fragments.*
+import bogomolov.aa.anochat.features.contacts.user.UserViewFragment
+import bogomolov.aa.anochat.features.contacts.list.UsersFragment
+import bogomolov.aa.anochat.features.conversations.MyFirebaseMessagingService
+import bogomolov.aa.anochat.features.conversations.dialog.ConversationFragment
+import bogomolov.aa.anochat.features.conversations.search.MessageSearchFragment
+import bogomolov.aa.anochat.features.conversations.dialog.media.SendMediaFragment
+import bogomolov.aa.anochat.features.conversations.list.ConversationsListFragment
+import bogomolov.aa.anochat.features.login.SignInFragment
+import bogomolov.aa.anochat.features.settings.SettingsFragment
+import bogomolov.aa.anochat.features.main.MainActivity
+import bogomolov.aa.anochat.features.settings.MiniatureFragment
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 

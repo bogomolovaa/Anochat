@@ -7,7 +7,7 @@
 
     <fragment
             android:id="@+id/conversationFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.ConversationFragment">
+            android:name="bogomolov.aa.anochat.features.conversations.dialog.ConversationFragment">
         <action
                 android:id="@+id/action_conversationFragment_to_sendMediaFragment"
                 app:destination="@id/sendMediaFragment" />
@@ -17,7 +17,7 @@
     </fragment>
     <fragment
             android:id="@+id/conversationsListFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.ConversationsListFragment"
+            android:name="bogomolov.aa.anochat.features.conversations.list.ConversationsListFragment"
             android:label="Anochat">
         <action
                 android:id="@+id/action_conversationsListFragment_to_conversationFragment"
@@ -34,11 +34,11 @@
     </fragment>
     <fragment
             android:id="@+id/usersFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.UsersFragment"
+            android:name="bogomolov.aa.anochat.features.contacts.list.UsersFragment"
             android:label="@string/contacts" />
     <fragment
             android:id="@+id/signInFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.SignInFragment"
+            android:name="bogomolov.aa.anochat.features.login.SignInFragment"
             android:label="@string/sign_in"
             tools:layout="@layout/fragment_sign_in">
         <action
@@ -49,13 +49,13 @@
     </fragment>
     <fragment
             android:id="@+id/sendMediaFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.SendMediaFragment" />
+            android:name="bogomolov.aa.anochat.features.conversations.dialog.media.SendMediaFragment" />
     <fragment
             android:id="@+id/imageViewFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.ImageViewFragment" />
+            android:name="bogomolov.aa.anochat.features.shared.ImageViewFragment" />
     <fragment
             android:id="@+id/settingsFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.SettingsFragment"
+            android:name="bogomolov.aa.anochat.features.settings.SettingsFragment"
             android:label="@string/settings" >
         <action
                 android:id="@+id/action_settingsFragment_to_miniatureFragment"
@@ -63,13 +63,13 @@
     </fragment>
     <fragment
             android:id="@+id/userViewFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.UserViewFragment" />
+            android:name="bogomolov.aa.anochat.features.contacts.user.UserViewFragment" />
     <fragment
             android:id="@+id/messageSearchFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.MessageSearchFragment"
+            android:name="bogomolov.aa.anochat.features.conversations.search.MessageSearchFragment"
             android:label="@string/search" />
     <fragment
             android:id="@+id/miniatureFragment"
-            android:name="bogomolov.aa.anochat.view.fragments.MiniatureFragment"
+            android:name="bogomolov.aa.anochat.features.settings.MiniatureFragment"
             android:label="@string/set_avatar" />
 </navigation>

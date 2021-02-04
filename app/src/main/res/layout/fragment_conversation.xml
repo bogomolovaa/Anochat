@@ -7,7 +7,7 @@
 
         <variable
             name="viewModel"
-            type="bogomolov.aa.anochat.viewmodel.ConversationViewModel" />
+            type="bogomolov.aa.anochat.features.conversations.dialog.ConversationViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -35,7 +35,7 @@
                 tools:layout_editor_absoluteX="16dp"
                 tools:layout_editor_absoluteY="8dp">
 
-                <bogomolov.aa.anochat.view.RoundedImageView
+                <bogomolov.aa.anochat.features.shared.RoundedImageView
                     android:id="@+id/user_photo"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
@@ -115,7 +115,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
-                    <bogomolov.aa.anochat.view.PlayAudioView
+                    <bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView
                         android:id="@+id/replayAudio"
                         android:layout_width="250dp"
                         android:layout_height="50dp"
@@ -232,7 +232,7 @@
             app:layout_constraintHeight_min="40dp"
             app:layout_constraintStart_toStartOf="parent">
 
-            <bogomolov.aa.anochat.view.PlayAudioView
+            <bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView
                 android:id="@+id/playAudioInput"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"

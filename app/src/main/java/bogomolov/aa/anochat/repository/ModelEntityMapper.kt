@@ -1,12 +1,9 @@
 package bogomolov.aa.anochat.repository
 
 import android.content.Context
-import bogomolov.aa.anochat.android.UID
-import bogomolov.aa.anochat.android.getMyUid
-import bogomolov.aa.anochat.android.getSetting
-import bogomolov.aa.anochat.core.Conversation
-import bogomolov.aa.anochat.core.Message
-import bogomolov.aa.anochat.core.User
+import bogomolov.aa.anochat.domain.Conversation
+import bogomolov.aa.anochat.domain.Message
+import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.repository.entity.*
 
 class ModelEntityMapper(private val context: Context) {

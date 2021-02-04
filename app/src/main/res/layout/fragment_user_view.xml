@@ -7,14 +7,14 @@
 
         <variable
             name="viewModel"
-            type="bogomolov.aa.anochat.viewmodel.UserViewViewModel" />
+            type="bogomolov.aa.anochat.features.contacts.user.UserViewViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/conversation_background"
-        tools:context=".view.fragments.UsersFragment">
+        tools:context=".features.contacts.list.UsersFragment">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"

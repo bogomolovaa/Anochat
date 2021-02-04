@@ -7,14 +7,14 @@
 
         <variable
             name="viewModel"
-            type="bogomolov.aa.anochat.viewmodel.SettingsViewModel" />
+            type="bogomolov.aa.anochat.features.settings.SettingsViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:background="@color/conversation_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".view.fragments.SettingsFragment">
+        tools:context=".features.settings.SettingsFragment">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -30,7 +30,7 @@
             app:titleTextColor="@color/title_color" />
 
 
-        <bogomolov.aa.anochat.view.RoundedImageView
+        <bogomolov.aa.anochat.features.shared.RoundedImageView
             android:id="@+id/user_photo"
             android:layout_width="100dp"
             android:layout_height="100dp"

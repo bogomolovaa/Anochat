@@ -1,10 +1,10 @@
 package bogomolov.aa.anochat.repository
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
-import bogomolov.aa.anochat.android.*
-import bogomolov.aa.anochat.core.User
+import bogomolov.aa.anochat.domain.User
+import bogomolov.aa.anochat.features.conversations.decryptFile
+import bogomolov.aa.anochat.features.conversations.encryptFile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.database.*
@@ -13,9 +13,7 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.io.ByteArrayInputStream
 import java.io.File
-import javax.crypto.SecretKey
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
