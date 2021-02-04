@@ -47,9 +47,9 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         val navController = Navigation.findNavController(this, R.id.nav_host_fragment)
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
             val currentDestination = controller.currentDestination
-            Log.i("test", "currentDestination $currentDestination")
+            //Log.i("test", "currentDestination $currentDestination")
             if (currentDestination != null) {
-                Log.i("test", "destination $destination")
+                //Log.i("test", "destination $destination")
                 if (currentDestination.id != R.id.signInFragment) {
                     lifecycleScope.launch(Dispatchers.IO) {
                         val signedIn = viewModel.isSignedIn()
