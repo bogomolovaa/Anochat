@@ -8,6 +8,7 @@ import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.domain.Message
+import bogomolov.aa.anochat.features.shared.BaseViewModel
 import bogomolov.aa.anochat.repository.Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,7 +19,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
 class ConversationViewModel
-@Inject constructor(private val repository: Repository) : ViewModel() {
+@Inject constructor(private val repository: Repository) : BaseViewModel() {
     val conversationLiveData = MutableLiveData<Conversation>()
     val onlineStatus = MutableLiveData<String>()
     private var removeStatusListener: (() -> Unit)? = null
