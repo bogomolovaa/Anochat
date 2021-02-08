@@ -10,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 
@@ -26,8 +26,8 @@ import javax.inject.Inject
 class SendMediaFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    val viewModel: SendMediaViewModel by activityViewModels { viewModelFactory }
-    var conversationId = 0L
+    private val viewModel: SendMediaViewModel by viewModels { viewModelFactory }
+    private var conversationId = 0L
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -37,7 +37,7 @@ class SendMediaFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val binding = DataBindingUtil.inflate<FragmentSendMediaBinding>(
             inflater,
             R.layout.fragment_send_media,
@@ -53,11 +53,18 @@ class SendMediaFragment : Fragment() {
         val mediaUri = arguments?.getParcelable("uri") as Uri?
         conversationId = arguments?.getLong("conversationId")!!
 
-        val resizedImage = if(mediaUri!=null)
+        val resizedImage = if (mediaUri != null)
             resizeImage(mediaUri, requireContext())
         else
             resizeImage(mediaPath!!, requireContext())
-        binding.imageView.setImageBitmap(BitmapFactory.decodeFile(getFilePath(requireContext(), resizedImage)))
+        binding.imageView.setImageBitmap(
+            BitmapFactory.decodeFile(
+                getFilePath(
+                    requireContext(),
+                    resizedImage
+                )
+            )
+        )
         binding.messageInputLayout.setEndIconOnClickListener {
             val text = binding.messageInputText.text?.toString() ?: ""
             viewModel.sendMessage(resizedImage, text, conversationId)

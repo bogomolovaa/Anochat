@@ -5,9 +5,6 @@
 
     <data>
 
-        <variable
-            name="viewModel"
-            type="bogomolov.aa.anochat.features.conversations.dialog.ConversationViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -43,8 +40,7 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:srcDrawable="@drawable/user_icon"
-                    app:srcFile="@{viewModel.conversationLiveData.user.photo}" />
+                    app:srcDrawable="@drawable/user_icon" />
 
 
                 <TextView
@@ -52,7 +48,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:text="@{viewModel.conversationLiveData.user.name}"
                     android:textColor="@color/title_color"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -68,7 +63,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginBottom="4dp"
-                    android:text="@{viewModel.onlineStatus}"
                     android:textColor="@color/title_color"
                     android:textSize="12sp"
                     app:layout_constraintBottom_toBottomOf="@+id/user_photo"

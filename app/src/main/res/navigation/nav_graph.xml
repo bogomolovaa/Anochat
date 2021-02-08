@@ -17,7 +17,7 @@
     </fragment>
     <fragment
             android:id="@+id/conversationsListFragment"
-            android:name="bogomolov.aa.anochat.features.conversations.list.ConversationsListFragment"
+            android:name="bogomolov.aa.anochat.features.conversations.list.ConversationListFragment"
             android:label="Anochat">
         <action
                 android:id="@+id/action_conversationsListFragment_to_conversationFragment"

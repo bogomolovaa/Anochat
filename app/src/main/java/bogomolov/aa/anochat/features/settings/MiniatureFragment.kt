@@ -30,7 +30,6 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     private val viewModel: SettingsViewModel by activityViewModels { viewModelFactory }
-    private lateinit var navController: NavController
     private lateinit var binding: FragmentMiniatureBinding
     private lateinit var bitmap: Bitmap
 
@@ -43,7 +42,7 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = DataBindingUtil.inflate(
             inflater,
             R.layout.fragment_miniature,
@@ -64,12 +63,14 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         binding.fab.setOnClickListener {
             val maskWidth = binding.maskImage.scaledWidth()
             val maskHeight = binding.maskImage.scaledHeight()
-            viewModel.updatePhoto(
-                photo = imageName,
-                x = (maskX/ initialImageScale).toInt(),
-                y = (maskY/ initialImageScale).toInt(),
-                width = (maskWidth / initialImageScale).toInt(),
-                height = (maskHeight / initialImageScale).toInt()
+            viewModel.addAction(
+                UpdatePhotoAction(
+                    photo = imageName,
+                    x = (maskX / initialImageScale).toInt(),
+                    y = (maskY / initialImageScale).toInt(),
+                    width = (maskWidth / initialImageScale).toInt(),
+                    height = (maskHeight / initialImageScale).toInt()
+                )
             )
             navController.navigateUp()
         }

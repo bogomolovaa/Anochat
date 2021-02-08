@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.features.conversations.search
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import androidx.activity.addCallback
@@ -9,9 +10,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.observe
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
@@ -29,10 +29,9 @@ import javax.inject.Inject
 class MessageSearchFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    val viewModel: MessageSearchViewModel by activityViewModels { viewModelFactory }
+    private val viewModel: MessageSearchViewModel by viewModels { viewModelFactory }
     private lateinit var navController: NavController
     private val adapter = ConversationsPagedAdapter(showFullMessage = true)
-    private var searchLiveData: LiveData<PagedList<Conversation>>? = null
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -42,7 +41,7 @@ class MessageSearchFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val binding = DataBindingUtil.inflate<FragmentMessageSearchBinding>(
             inflater,
             R.layout.fragment_message_search,
@@ -60,19 +59,9 @@ class MessageSearchFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
 
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            navController.navigateUp()
-        }
+        viewModel.searchLiveData.observe(viewLifecycleOwner, adapter::submitList)
 
         return binding.root
-    }
-
-    private fun search(searchString: String) {
-        if (searchLiveData != null) searchLiveData!!.removeObservers(viewLifecycleOwner)
-        searchLiveData = viewModel.search(searchString)
-        searchLiveData!!.observe(viewLifecycleOwner) {
-            adapter.submitList(it)
-        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -88,17 +77,13 @@ class MessageSearchFragment : Fragment() {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (query != null && query.length >= 3) {
-                    search(query)
+                    viewModel.search(query)
                     return true
                 }
                 return false
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                if (newText != null && newText.length >= 3) {
-                    search(newText)
-                    return true
-                }
                 return false
             }
         })
@@ -112,11 +97,11 @@ class MessageSearchFragment : Fragment() {
         searchView.clearFocus()
 
 
-        menuItem.setOnActionExpandListener(object: MenuItem.OnActionExpandListener {
+        menuItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
 
             override fun onMenuItemActionExpand(item: MenuItem) = true
 
-            override fun onMenuItemActionCollapse(item:MenuItem):Boolean {
+            override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
                 navController.navigateUp()
                 return true
             }

@@ -17,39 +17,53 @@ import androidx.core.content.ContextCompat
 import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.observe
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
+import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
+import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
+import bogomolov.aa.anochat.features.shared.UpdatableView
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import dagger.android.support.AndroidSupportInjection
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
-class ConversationsListFragment : Fragment() {
+class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState> {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    val viewModel: ConversationListViewModel by activityViewModels { viewModelFactory }
+    private val viewModel: ConversationListViewModel by viewModels { viewModelFactory }
     private lateinit var navController: NavController
+    private lateinit var binding: FragmentConversationsListBinding
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
         super.onAttach(context)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewModel.addAction(InitConversationsAction())
+        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
-        val binding = DataBindingUtil.inflate<FragmentConversationsListBinding>(
+        binding = DataBindingUtil.inflate(
             inflater,
             R.layout.fragment_conversations_list,
             container,
@@ -59,11 +73,41 @@ class ConversationsListFragment : Fragment() {
         binding.lifecycleOwner = this
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         setHasOptionsMenu(true)
-
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        NavigationUI.setupWithNavController(binding.toolbar, navController)
+
+        binding.fab.setOnClickListener {
+            requestContactsPermission()
+        }
+
+        val focus = requireActivity().currentFocus
+        if (focus != null) {
+            val imm =
+                requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager?
+            imm?.hideSoftInputFromWindow(focus.windowToken, 0)
+        }
+
+        setupRecyclerView()
+
+        return binding.root
+    }
+
+    override fun updateView(newState: ConversationsUiState, currentState: ConversationsUiState) {
+        Log.i("ConversationsFragment", "updateView newState:\n$newState")
+        if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState.pagedListLiveData!!)
+    }
+
+    private fun setPagedList(pagedListLiveData: LiveData<PagedList<Conversation>>) {
+        pagedListLiveData.observe(viewLifecycleOwner) {
+            val adapter = binding.recyclerView.adapter as ConversationsPagedAdapter
+            adapter.submitList(it)
+        }
+    }
+
+    private fun setupRecyclerView() {
         val actionsMap = HashMap<Int, (Set<Long>, Set<Conversation>) -> Unit>()
         actionsMap[R.id.delete_conversations_action] =
-            { ids, items -> viewModel.deleteConversations(ids) }
+            { ids, items -> viewModel.addAction(DeleteConversationsAction(ids)) }
         val adapter =
             ConversationsPagedAdapter(helper =
             AdapterHelper(
@@ -77,23 +121,6 @@ class ConversationsListFragment : Fragment() {
             })
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
-        viewModel.loadConversations().observe(viewLifecycleOwner) {
-            adapter.submitList(it)
-        }
-
-
-        NavigationUI.setupWithNavController(binding.toolbar, navController)
-        binding.fab.setOnClickListener {
-            requestContactsPermission()
-        }
-
-        val view = requireActivity().currentFocus
-        if (view != null) {
-            val imm =
-                requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager?
-            imm?.hideSoftInputFromWindow(view.windowToken, 0)
-        }
-        return binding.root
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -143,8 +170,8 @@ class ConversationsListFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         if (item.itemId == R.id.menu_sign_out) {
-            viewModel.signOut()
-            navController.navigate(R.id.conversationsListFragment)
+            viewModel.addAction(SignOutAction())
+            navController.navigate(R.id.signInFragment)
             return true
         }
         return (NavigationUI.onNavDestinationSelected(item, navController)

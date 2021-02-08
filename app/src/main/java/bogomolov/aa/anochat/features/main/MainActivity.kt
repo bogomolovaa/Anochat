@@ -2,14 +2,12 @@ package bogomolov.aa.anochat.features.main
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavOptions
 import androidx.navigation.Navigation
 import bogomolov.aa.anochat.R
@@ -30,11 +28,11 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity(), HasAndroidInjector {
     @Inject
     internal lateinit var androidInjector: DispatchingAndroidInjector<Any>
-
-    override fun androidInjector(): AndroidInjector<Any> = androidInjector
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    val viewModel: MainActivityViewModel by viewModels { viewModelFactory }
+    private val viewModel: MainActivityViewModel by viewModels { viewModelFactory }
+
+    override fun androidInjector(): AndroidInjector<Any> = androidInjector
 
     @SuppressLint("ResourceType")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,10 +40,9 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         super.onCreate(savedInstanceState)
         emojiSupport()
 
-        val binding =
-            DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
+        DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
         val navController = Navigation.findNavController(this, R.id.nav_host_fragment)
-        navController.addOnDestinationChangedListener { controller, destination, arguments ->
+        navController.addOnDestinationChangedListener { controller, destination, _ ->
             val currentDestination = controller.currentDestination
             //Log.i("test", "currentDestination $currentDestination")
             if (currentDestination != null) {
@@ -68,7 +65,6 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
             }
 
         }
-
 
 
         //setSetting(this, UID,"LX4U2yR5ZJUsN5hivvDvF9NUHXJ3")

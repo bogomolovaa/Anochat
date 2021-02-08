@@ -17,6 +17,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Parcelable
 import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
@@ -31,20 +32,27 @@ import androidx.core.widget.doOnTextChanged
 import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.observe
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
+import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
+import bogomolov.aa.anochat.domain.Conversation
+import bogomolov.aa.anochat.domain.Message
+import bogomolov.aa.anochat.features.conversations.dialog.actions.DeleteMessagesAction
+import bogomolov.aa.anochat.features.conversations.dialog.actions.InitConversationAction
+import bogomolov.aa.anochat.features.conversations.dialog.actions.SendMessageAction
 import bogomolov.aa.anochat.features.main.MainActivity
+import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
+import bogomolov.aa.anochat.features.shared.UpdatableView
 import bogomolov.aa.anochat.repository.getFilesDir
 import bogomolov.aa.anochat.repository.getRandomString
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
@@ -61,31 +69,42 @@ import javax.inject.Inject
 import kotlin.collections.HashMap
 
 
-class ConversationFragment : Fragment() {
+class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    val viewModel: ConversationViewModel by activityViewModels { viewModelFactory }
-    lateinit var navController: NavController
-    var conversationId = 0L
+    private val viewModel: ConversationViewModel by viewModels { viewModelFactory }
+    private lateinit var navController: NavController
+    private lateinit var binding: FragmentConversationBinding
+
     private var photoPath: String? = null
     private lateinit var emojiPopup: EmojiPopup
     private var replyMessageId: String? = null
     private var recorder: MediaRecorder? = null
-    private lateinit var binding: FragmentConversationBinding
     private var audioFileName: String? = null
     private var scrollEnd = false
-
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
         super.onAttach(context)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val conversationId = arguments?.get("id") as Long
+        viewModel.addAction(InitConversationAction(conversationId))
+        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
+    }
+
+    override fun onStart() {
+        super.onStart()
+        postponeEnterTransition()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = DataBindingUtil.inflate(
             inflater,
             R.layout.fragment_conversation,
@@ -94,92 +113,54 @@ class ConversationFragment : Fragment() {
         )
         val mainActivity = activity as MainActivity
         val view = binding.root
-        binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
         mainActivity.setSupportActionBar(binding.toolbar)
-
-
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        conversationId = arguments?.get("id") as Long
+        setupRecyclerView()
+        setupUserInput(view)
 
+        return view
+    }
 
-      val recyclerView = binding.recyclerView
-      recyclerView.setItemViewCacheSize(20)
+    override fun updateView(newState: DialogUiState, currentState: DialogUiState) {
+        Log.i("ConversationFragment", "updateView newState:\n$newState")
+        if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState)
+        if (newState.conversation != currentState.conversation) setConversation(newState.conversation!!)
+        if (newState.onlineStatus != currentState.onlineStatus) binding.statusText.text =
+            newState.onlineStatus
+    }
 
-      val actionsMap = HashMap<Int, (Set<Long>, Set<MessageView>) -> Unit>()
-      actionsMap[R.id.delete_messages_action] = { ids, items -> viewModel.deleteMessages(ids) }
-      actionsMap[R.id.reply_message_action] = { ids, items ->
-          val message = items.iterator().next()
-          onReply(message.message)
-      }
-      val adapter =
-          MessagesPagedAdapter(
-              activity = requireActivity(),
-              onReply = this::onReply,
-              setRecyclerViewState = {
-                  viewModel.recyclerViewState =
-                      recyclerView.layoutManager?.onSaveInstanceState()
-              },
-              helper = AdapterHelper(
-                  menuId = R.menu.messages_menu,
-                  actionsMap = actionsMap,
-                  toolbar = binding.toolbar
-              )
-          )
-      adapter.setHasStableIds(true)
-      recyclerView.adapter = adapter
-      val linearLayoutManager = LinearLayoutManager(context)
-      recyclerView.layoutManager = linearLayoutManager
-      var loadImagesJob: Job? = null
-      recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-          override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-              super.onScrolled(recyclerView, dx, dy)
-              val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
-              val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
-              loadImagesJob?.cancel()
-              loadImagesJob = lifecycleScope.launch {
-                  delay(1000)
-                  for (id in firstId..lastId) if (id != -1) {
-                      val vh =
-                          recyclerView.findViewHolderForLayoutPosition(id) as AdapterHelper<MessageView, MessageLayoutBinding>.VH
-                      adapter.itemShowed(id, vh.binding)
-                  }
-              }
-          }
-      });
+    private fun setConversation(conversation: Conversation) {
+        if (conversation.user.photo != null) binding.userPhoto.setFile(conversation.user.photo!!)
+        binding.usernameText.text = conversation.user.name
+        binding.usernameLayout.setOnClickListener {
+            navController.navigate(
+                R.id.userViewFragment,
+                Bundle().apply { putLong("id", conversation.user.id) })
+        }
+    }
 
+    private fun setPagedList(uiState: DialogUiState) {
+        uiState.pagedListLiveData!!.observe(viewLifecycleOwner) {
+            Log.i("test", "pagedListLiveData UPDATED")
+            (binding.recyclerView.adapter as MessagesPagedAdapter).submitList(it)
+            if (uiState.recyclerViewState != null) {
+                binding.recyclerView.layoutManager?.onRestoreInstanceState(uiState.recyclerViewState)
+                viewModel.setStateAsync { copy(recyclerViewState = null) }
+            } else {
+                scrollEnd = true
+                binding.recyclerView.scrollToPosition(it.size - 1);
+            }
+            binding.recyclerView.doOnPreDraw {
+                startPostponedEnterTransition()
+            }
+        }
 
+    }
 
-      viewModel.loadMessages(conversationId).observe(viewLifecycleOwner) {
-          adapter.submitList(it)
-
-          if (viewModel.recyclerViewState != null) {
-              recyclerView.layoutManager?.onRestoreInstanceState(viewModel.recyclerViewState)
-              viewModel.recyclerViewState = null
-          } else {
-              scrollEnd = true
-              binding.recyclerView.scrollToPosition(it.size - 1);
-          }
-          recyclerView.doOnPreDraw {
-              startPostponedEnterTransition()
-          }
-      }
-
-
-      recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-          if (scrollEnd) { // && (bottom < oldBottom && adapter.itemCount > 0)
-              binding.recyclerView.postDelayed({
-                  binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
-                  scrollEnd = false
-              }, 100)
-          }
-      }
-
-
-
-
+    private fun setupUserInput(view: View) {
         setFabDefaultOnClickListener()
         binding.messageInputText.setOnFocusChangeListener { v, hasFocus ->
             if (hasFocus) {
@@ -198,63 +179,95 @@ class ConversationFragment : Fragment() {
             }
         }
 
+        binding.fabMic.setOnClickListener {
+            hideFabs()
+            requestMicrophonePermission()
+            scrollEnd = false
+        }
+        binding.fabFile.setOnClickListener {
+            hideFabs()
+            requestReadPermission()
+        }
+        binding.fabCamera.setOnClickListener {
+            hideFabs()
+            requestCameraPermission()
+        }
 
 
-
-
-      binding.fabMic.setOnClickListener {
-          hideFabs()
-          requestMicrophonePermission()
-          scrollEnd = false
-      }
-      binding.fabFile.setOnClickListener {
-          hideFabs()
-          requestReadPermission()
-      }
-      binding.fabCamera.setOnClickListener {
-          hideFabs()
-          requestCameraPermission()
-      }
-
-
-      emojiPopup = EmojiPopup.Builder.fromRootView(view).build(binding.messageInputText)
-      binding.emojiIcon.setOnClickListener {
-          emojiPopup.toggle()
-      }
-      requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-          emojiPopup.dismiss()
-          navController.navigateUp()
-      }
-      binding.playAudioInput.setOnClose {
-          binding.fab.setImageResource(R.drawable.plus_icon)
-          textEntered = false
-          binding.playAudioInput.visibility = View.GONE
-          binding.textLayout.visibility = View.VISIBLE
-      }
-
-      viewModel.conversationLiveData.observe(viewLifecycleOwner) { conversation ->
-          binding.usernameLayout.setOnClickListener {
-              navController.navigate(
-                  R.id.userViewFragment,
-                  Bundle().apply { putLong("id", conversation.user.id) })
-          }
-      }
-
-
-
-
-        return view
+        emojiPopup = EmojiPopup.Builder.fromRootView(view).build(binding.messageInputText)
+        binding.emojiIcon.setOnClickListener {
+            emojiPopup.toggle()
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            emojiPopup.dismiss()
+            navController.navigateUp()
+        }
+        binding.playAudioInput.setOnClose {
+            binding.fab.setImageResource(R.drawable.plus_icon)
+            textEntered = false
+            binding.playAudioInput.visibility = View.GONE
+            binding.textLayout.visibility = View.VISIBLE
+        }
     }
 
-    override fun onStop() {
-        super.onStop()
-        viewModel.deleteIfNoMessages()
+    private fun setupRecyclerView() {
+        val recyclerView = binding.recyclerView
+        recyclerView.setItemViewCacheSize(20)
+
+        val actionsMap = HashMap<Int, (Set<Long>, Set<MessageView>) -> Unit>()
+        actionsMap[R.id.delete_messages_action] =
+            { ids, items -> viewModel.addAction(DeleteMessagesAction(ids)) }
+        actionsMap[R.id.reply_message_action] = { ids, items ->
+            val message = items.iterator().next()
+            onReply(message.message)
+        }
+        val adapter =
+            MessagesPagedAdapter(
+                activity = requireActivity(),
+                onReply = this::onReply,
+                setRecyclerViewState = {
+                    viewModel.setStateAsync {
+                        copy(recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState())
+                    }
+                },
+                helper = AdapterHelper(
+                    menuId = R.menu.messages_menu,
+                    actionsMap = actionsMap,
+                    toolbar = binding.toolbar
+                )
+            )
+        adapter.setHasStableIds(true)
+        recyclerView.adapter = adapter
+        val linearLayoutManager = LinearLayoutManager(context)
+        recyclerView.layoutManager = linearLayoutManager
+        var loadImagesJob: Job? = null
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+                val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
+                loadImagesJob?.cancel()
+                loadImagesJob = lifecycleScope.launch {
+                    delay(1000)
+                    for (id in firstId..lastId) if (id != -1) {
+                        val vh =
+                            recyclerView.findViewHolderForLayoutPosition(id) as AdapterHelper<MessageView, MessageLayoutBinding>.VH
+                        adapter.itemShowed(id, vh.binding)
+                    }
+                }
+            }
+        })
+
+        recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+            if (scrollEnd) { // && (bottom < oldBottom && adapter.itemCount > 0)
+                binding.recyclerView.postDelayed({
+                    binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
+                    scrollEnd = false
+                }, 100)
+            }
+        }
     }
 
-    override fun onStart() {
-        super.onStart()
-        postponeEnterTransition()
-    }
 
     private fun onReply(it: Message) {
         binding.replyImage.visibility = View.GONE
@@ -288,16 +301,15 @@ class ConversationFragment : Fragment() {
         val text = binding.messageInputText.text
         if (audioFileName != null) {
             Log.i("test", "message audio: $audioFileName")
-            viewModel.sendMessage(text.toString(), replyMessageId, audioFileName)
             binding.playAudioInput.visibility = View.GONE
             binding.textLayout.visibility = View.VISIBLE
             audioFileName = null
         } else if (!text.isNullOrEmpty()) {
             Log.i("test", "message text: $text")
-            viewModel.sendMessage(text.toString(), replyMessageId, null)
             binding.messageInputText.setText("")
             removeReply(binding)
         }
+        viewModel.addAction(SendMessageAction(text.toString(), replyMessageId, audioFileName))
     }
 
     private fun hideFabs() {
@@ -383,9 +395,9 @@ class ConversationFragment : Fragment() {
 
     private fun redirectToSendMediaFragment(uri: Uri? = null, path: String? = null) {
         navController.navigate(R.id.sendMediaFragment, Bundle().apply {
-            if(path!=null) putString("path", path)
-            if(uri!=null) putParcelable("uri", uri)
-            putLong("conversationId", conversationId)
+            if (path != null) putString("path", path)
+            if (uri != null) putParcelable("uri", uri)
+            putLong("conversationId", viewModel.currentState.conversation!!.id)
         })
     }
 

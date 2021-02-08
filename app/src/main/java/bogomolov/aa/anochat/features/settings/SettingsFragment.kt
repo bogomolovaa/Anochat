@@ -17,13 +17,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.observe
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSettingsBinding
+import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
+import bogomolov.aa.anochat.features.shared.UpdatableView
 import bogomolov.aa.anochat.repository.*
 import bogomolov.aa.anochat.view.fragments.EditUserBottomDialogFragment
 import bogomolov.aa.anochat.view.fragments.SettingType
@@ -31,10 +32,10 @@ import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
 
-class SettingsFragment : Fragment() {
+class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    val viewModel: SettingsViewModel by activityViewModels { viewModelFactory }
+    private val viewModel: SettingsViewModel by activityViewModels { viewModelFactory }
     private lateinit var binding: FragmentSettingsBinding
     private lateinit var navController: NavController
 
@@ -43,55 +44,78 @@ class SettingsFragment : Fragment() {
         super.onAttach(context)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val uid = getSetting<String>(requireContext(), UID)
+        viewModel.addAction(LoadUserAction(uid!!))
+        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = DataBindingUtil.inflate(
             inflater,
             R.layout.fragment_settings,
             container,
             false
         )
-        binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        val uid = getSetting<String>(requireContext(), UID)
-        viewModel.loadUser(uid!!)
+        addListeners()
 
+        return binding.root
+    }
+
+    override fun updateView(newState: SettingsUiState, currentState: SettingsUiState) {
+        Log.i("SettingsFragment", "updateView newState:\n${newState}\ncurrentState:\n$currentState")
+        if (newState.user != null) {
+            Log.i("SettingsFragment","newState.user not null")
+            if (newState.user.photo != currentState.user?.photo)
+                binding.userPhoto.setFile(newState.user.photo!!)
+            if (newState.user.name != currentState.user?.name) {
+                Log.i("SettingsFragment","diff name")
+                binding.usernameText.text = newState.user.name
+                binding.editUsername.setOnClickListener {
+                    val bottomSheetFragment = EditUserBottomDialogFragment(
+                        SettingType.EDIT_USERNAME,
+                        requireContext().resources.getString(R.string.enter_new_name),
+                        newState.user.name
+                    ) {
+                        if (it.isNotEmpty()) viewModel.addAction(UpdateNameAction(it))
+                    }
+                    bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
+                }
+            }
+            if (newState.user.status != currentState.user?.status) {
+                Log.i("SettingsFragment","diff status")
+                binding.statusText.text =
+                    newState.user.status ?: requireContext().resources.getText(R.string.no_status)
+                binding.editStatus.setOnClickListener {
+                    val bottomSheetFragment = EditUserBottomDialogFragment(
+                        SettingType.EDIT_STATUS,
+                        requireContext().resources.getString(R.string.enter_new_status),
+                        newState.user.status
+                    ) {
+                        Log.i("SettingsFragment","entered $it isNotEmpty ${it.isNotEmpty()}")
+                        if (it.isNotEmpty()) viewModel.addAction(UpdateStatusAction(it))
+                    }
+                    bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
+                }
+            }
+            if (newState.user.phone != currentState.user?.phone)
+                binding.phoneText.text = newState.user.phone
+        }
+    }
+
+    private fun addListeners() {
         binding.editPhoto.setOnClickListener {
             requestReadPermission()
         }
-
-        viewModel.userLiveData.observe(viewLifecycleOwner) { user ->
-            binding.editUsername.setOnClickListener {
-                val bottomSheetFragment = EditUserBottomDialogFragment(
-                    SettingType.EDIT_USERNAME,
-                    requireContext().resources.getString(R.string.enter_new_name),
-                    user.name
-                ) {
-                    if (it.isNotEmpty()) viewModel.updateName(it)
-                }
-                bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
-            }
-
-            binding.editStatus.setOnClickListener {
-                val bottomSheetFragment = EditUserBottomDialogFragment(
-                    SettingType.EDIT_STATUS,
-                    requireContext().resources.getString(R.string.enter_new_status),
-                    user.status
-                ) {
-                    if (it.isNotEmpty()) viewModel.updateStatus(it)
-                }
-                bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
-            }
-        }
-
-
 
         binding.notificationsSwitch.isChecked =
             getSetting<Boolean>(requireContext(), NOTIFICATIONS) != null
@@ -113,8 +137,6 @@ class SettingsFragment : Fragment() {
         }
 
         binding.privacyPolicy.setOnClickListener { openPrivacyPolicy() }
-
-        return binding.root
     }
 
     private fun openPrivacyPolicy() {
@@ -134,11 +156,10 @@ class SettingsFragment : Fragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         if (resultCode == Activity.RESULT_OK) {
-            var uri: Uri? = null
             when (requestCode) {
                 FILE_CHOOSER_CODE -> {
                     if (intent != null) {
-                        uri = intent.data
+                        val uri = intent.data
                         if (uri != null) updatePhoto(uri)
                     }
                 }
@@ -190,4 +211,6 @@ class SettingsFragment : Fragment() {
         private const val READ_PERMISSION = Manifest.permission.READ_EXTERNAL_STORAGE
         private const val READ_PERMISSIONS_CODE = 1001
     }
+
+
 }

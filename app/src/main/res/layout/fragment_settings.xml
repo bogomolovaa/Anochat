@@ -5,9 +5,6 @@
 
     <data>
 
-        <variable
-            name="viewModel"
-            type="bogomolov.aa.anochat.features.settings.SettingsViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -39,8 +36,7 @@
             app:foregroundColor="@color/conversation_background"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/toolbar"
-            app:srcDrawable="@drawable/user_icon"
-            app:srcFile="@{viewModel.userLiveData.photo}" />
+            app:srcDrawable="@drawable/user_icon" />
 
         <ImageView
             android:id="@+id/edit_photo"
@@ -57,7 +53,6 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
-            android:text='@{viewModel.userLiveData.name??""}'
             android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@+id/edit_username"
@@ -72,7 +67,6 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
-            android:text="@{viewModel.userLiveData.status ?? @string/no_status}"
             android:textSize="16sp"
             app:layout_constraintEnd_toStartOf="@+id/edit_status"
             app:layout_constraintHorizontal_bias="0.0"
@@ -174,7 +168,6 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
-            android:text="@{viewModel.userLiveData.phone}"
             android:textSize="16sp"
             app:layout_constraintStart_toEndOf="@+id/edit_photo"
             app:layout_constraintTop_toBottomOf="@+id/toolbar"

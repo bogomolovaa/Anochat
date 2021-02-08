@@ -6,7 +6,7 @@ import bogomolov.aa.anochat.features.conversations.MyFirebaseMessagingService
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationFragment
 import bogomolov.aa.anochat.features.conversations.search.MessageSearchFragment
 import bogomolov.aa.anochat.features.conversations.dialog.media.SendMediaFragment
-import bogomolov.aa.anochat.features.conversations.list.ConversationsListFragment
+import bogomolov.aa.anochat.features.conversations.list.ConversationListFragment
 import bogomolov.aa.anochat.features.login.SignInFragment
 import bogomolov.aa.anochat.features.settings.SettingsFragment
 import bogomolov.aa.anochat.features.main.MainActivity
@@ -24,7 +24,7 @@ abstract class InjectionsModule {
     abstract fun bindConversationFragment(): ConversationFragment
 
     @ContributesAndroidInjector
-    abstract fun bindConversationsListFragment(): ConversationsListFragment
+    abstract fun bindConversationsListFragment(): ConversationListFragment
 
     @ContributesAndroidInjector
     abstract fun bindUsersFragment(): UsersFragment

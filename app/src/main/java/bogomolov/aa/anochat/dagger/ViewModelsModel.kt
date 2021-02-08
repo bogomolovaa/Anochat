@@ -9,8 +9,8 @@ import bogomolov.aa.anochat.features.conversations.list.ConversationListViewMode
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationViewModel
 import bogomolov.aa.anochat.features.conversations.search.MessageSearchViewModel
 import bogomolov.aa.anochat.features.conversations.dialog.media.SendMediaViewModel
+import bogomolov.aa.anochat.features.login.SignInViewModel
 import bogomolov.aa.anochat.features.settings.SettingsViewModel
-import bogomolov.aa.anochat.viewmodel.*
 import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoMap
