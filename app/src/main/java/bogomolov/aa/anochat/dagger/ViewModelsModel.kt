@@ -8,7 +8,6 @@ import bogomolov.aa.anochat.features.contacts.list.UsersViewModel
 import bogomolov.aa.anochat.features.conversations.list.ConversationListViewModel
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationViewModel
 import bogomolov.aa.anochat.features.conversations.search.MessageSearchViewModel
-import bogomolov.aa.anochat.features.conversations.dialog.media.SendMediaViewModel
 import bogomolov.aa.anochat.features.login.SignInViewModel
 import bogomolov.aa.anochat.features.settings.SettingsViewModel
 import dagger.Binds
@@ -17,11 +16,6 @@ import dagger.multibindings.IntoMap
 
 @Module
 abstract class ViewModelsModule {
-
-    @Binds
-    @IntoMap
-    @ViewModelKey(SendMediaViewModel::class)
-    abstract fun bindSendMediaViewModel(sendMediaViewModel: SendMediaViewModel): ViewModel
 
     @Binds
     @IntoMap

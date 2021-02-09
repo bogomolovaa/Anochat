@@ -5,7 +5,7 @@ import bogomolov.aa.anochat.features.contacts.list.UsersFragment
 import bogomolov.aa.anochat.features.conversations.MyFirebaseMessagingService
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationFragment
 import bogomolov.aa.anochat.features.conversations.search.MessageSearchFragment
-import bogomolov.aa.anochat.features.conversations.dialog.media.SendMediaFragment
+import bogomolov.aa.anochat.features.conversations.dialog.SendMediaFragment
 import bogomolov.aa.anochat.features.conversations.list.ConversationListFragment
 import bogomolov.aa.anochat.features.login.SignInFragment
 import bogomolov.aa.anochat.features.settings.SettingsFragment

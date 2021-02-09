@@ -13,12 +13,15 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Switch
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
@@ -35,7 +38,7 @@ import javax.inject.Inject
 class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: SettingsViewModel by activityViewModels { viewModelFactory }
+    private val viewModel: SettingsViewModel by navGraphViewModels(R.id.settings_graph) { viewModelFactory }
     private lateinit var binding: FragmentSettingsBinding
     private lateinit var navController: NavController
 
@@ -47,6 +50,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val uid = getSetting<String>(requireContext(), UID)
+        viewModel.addAction(LoadSettingsAction())
         viewModel.addAction(LoadUserAction(uid!!))
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
     }
@@ -72,13 +76,13 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     }
 
     override fun updateView(newState: SettingsUiState, currentState: SettingsUiState) {
-        Log.i("SettingsFragment", "updateView newState:\n${newState}\ncurrentState:\n$currentState")
+        binding.notificationsSwitch.isChecked = newState.notifications
+        binding.soundSwitch.isChecked = newState.sound
+        binding.vibrationSwitch.isChecked = newState.vibration
         if (newState.user != null) {
-            Log.i("SettingsFragment","newState.user not null")
             if (newState.user.photo != currentState.user?.photo)
                 binding.userPhoto.setFile(newState.user.photo!!)
             if (newState.user.name != currentState.user?.name) {
-                Log.i("SettingsFragment","diff name")
                 binding.usernameText.text = newState.user.name
                 binding.editUsername.setOnClickListener {
                     val bottomSheetFragment = EditUserBottomDialogFragment(
@@ -92,7 +96,6 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
                 }
             }
             if (newState.user.status != currentState.user?.status) {
-                Log.i("SettingsFragment","diff status")
                 binding.statusText.text =
                     newState.user.status ?: requireContext().resources.getText(R.string.no_status)
                 binding.editStatus.setOnClickListener {
@@ -101,7 +104,6 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
                         requireContext().resources.getString(R.string.enter_new_status),
                         newState.user.status
                     ) {
-                        Log.i("SettingsFragment","entered $it isNotEmpty ${it.isNotEmpty()}")
                         if (it.isNotEmpty()) viewModel.addAction(UpdateStatusAction(it))
                     }
                     bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
@@ -113,35 +115,22 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     }
 
     private fun addListeners() {
-        binding.editPhoto.setOnClickListener {
-            requestReadPermission()
-        }
-
-        binding.notificationsSwitch.isChecked =
-            getSetting<Boolean>(requireContext(), NOTIFICATIONS) != null
-        binding.soundSwitch.isChecked =
-            getSetting<Boolean>(requireContext(), SOUND) != null
-        binding.vibrationSwitch.isChecked =
-            getSetting<Boolean>(requireContext(), VIBRATION) != null
-
-        binding.notificationsSwitch.setOnCheckedChangeListener { _, isChecked ->
-            setSetting(requireContext(), NOTIFICATIONS, isChecked)
-        }
-
-        binding.soundSwitch.setOnCheckedChangeListener { _, isChecked ->
-            setSetting(requireContext(), SOUND, isChecked)
-        }
-
-        binding.vibrationSwitch.setOnCheckedChangeListener { _, isChecked ->
-            setSetting(requireContext(), VIBRATION, isChecked)
-        }
-
         binding.privacyPolicy.setOnClickListener { openPrivacyPolicy() }
+        binding.editPhoto.setOnClickListener { requestReadPermission() }
+        setSwitchListener(binding.notificationsSwitch, Setting.NOTIFICATIONS)
+        setSwitchListener(binding.soundSwitch, Setting.SOUND)
+        setSwitchListener(binding.vibrationSwitch, Setting.VIBRATION)
+    }
+
+    private fun setSwitchListener(switch: Switch, setting: Setting) {
+        switch.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.addAction(UpdateSettingAction(setting, isChecked))
+        }
     }
 
     private fun openPrivacyPolicy() {
         val i = Intent(Intent.ACTION_VIEW)
-        i.data = Uri.parse("https://bogomolovaa.github.io/Anochat/")
+        i.data = Uri.parse(requireContext().resources.getString(R.string.privacy_policy_url))
         startActivity(i)
     }
 
@@ -205,12 +194,9 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
             requestPermissions(arrayOf(READ_PERMISSION), READ_PERMISSIONS_CODE)
     }
 
-
     companion object {
         private const val FILE_CHOOSER_CODE: Int = 0
         private const val READ_PERMISSION = Manifest.permission.READ_EXTERNAL_STORAGE
         private const val READ_PERMISSIONS_CODE = 1001
     }
-
-
 }

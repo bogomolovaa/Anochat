@@ -6,7 +6,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-class StateLifecycleObserver<S : UiState, V : ViewModel>(
+class StateLifecycleObserver<S : UiState, V : ActionContext>(
     private val updatableView: UpdatableView<S>,
     private val viewModel: BaseViewModel<S, V>
 ) : LifecycleObserver {
@@ -15,19 +15,21 @@ class StateLifecycleObserver<S : UiState, V : ViewModel>(
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     fun onStart() {
-        Log.i("StateLifecycleObserver","onStart()")
         uiState = viewModel.createInitialState()
         updatingJob = viewModel.viewModelScope.launch {
             viewModel.uiState.collect {
-                Log.i("StateLifecycleObserver","collect")
+                Log.i(
+                    "StateLifecycleObserver",
+                    "${updatableView.javaClass.name} updateView newState:\n${it}\ncurrentState:\n$uiState"
+                )
                 updatableView.updateView(it, uiState)
                 uiState = it
             }
         }
-    }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    fun onStop() {
-        updatingJob.cancel()
+        @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+        fun onStop() {
+            updatingJob.cancel()
+        }
     }
 }

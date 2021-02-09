@@ -1,10 +1,20 @@
 package bogomolov.aa.anochat.repository
 
 import android.content.Context
+import androidx.core.content.edit
 import androidx.paging.DataSource
+import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.domain.User
+import bogomolov.aa.anochat.features.conversations.base64ToByteArray
+import bogomolov.aa.anochat.features.conversations.byteArrayToBase64
+
+enum class Setting{
+    NOTIFICATIONS,
+    SOUND,
+    VIBRATION,
+}
 
 interface Repository : IFirebaseRepository {
 
@@ -63,4 +73,29 @@ interface Repository : IFirebaseRepository {
 
     suspend fun deleteConversationIfNoMessages(conversationId: Long)
 
+}
+
+inline fun <reified T> Repository.getSetting(setting: Setting): T? {
+    val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext())
+    return when (T::class) {
+        ByteArray::class -> {
+            val value = sharedPreferences.getString(setting.name, null)
+            if (value != null) base64ToByteArray(value) as T? else null
+        }
+        String::class -> sharedPreferences.getString(setting.name, null) as T?
+        Boolean::class -> sharedPreferences.getBoolean(setting.name, false) as T
+        else -> null
+    }
+}
+
+inline fun <reified T> Repository.setSetting(setting: Setting, value: T?) {
+    val preferences = PreferenceManager.getDefaultSharedPreferences(getContext())
+    when (T::class) {
+        ByteArray::class -> {
+            val string = byteArrayToBase64(value as ByteArray)
+            preferences.edit(true) { putString(setting.name, string) }
+        }
+        String::class -> preferences.edit(true) { putString(setting.name, value as String?) }
+        Boolean::class -> preferences.edit(true) { putBoolean(setting.name, value as Boolean) }
+    }
 }

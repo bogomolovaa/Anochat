@@ -6,28 +6,18 @@
         app:startDestination="@id/conversationsListFragment">
 
     <fragment
-            android:id="@+id/conversationFragment"
-            android:name="bogomolov.aa.anochat.features.conversations.dialog.ConversationFragment">
-        <action
-                android:id="@+id/action_conversationFragment_to_sendMediaFragment"
-                app:destination="@id/sendMediaFragment" />
-        <action
-                android:id="@+id/action_conversationFragment_to_userViewFragment"
-                app:destination="@id/userViewFragment" />
-    </fragment>
-    <fragment
             android:id="@+id/conversationsListFragment"
             android:name="bogomolov.aa.anochat.features.conversations.list.ConversationListFragment"
             android:label="Anochat">
         <action
                 android:id="@+id/action_conversationsListFragment_to_conversationFragment"
-                app:destination="@id/conversationFragment" />
+                app:destination="@id/dialog_graph" />
         <action
                 android:id="@+id/action_conversationsListFragment_to_usersFragment"
                 app:destination="@id/usersFragment" />
         <action
                 android:id="@+id/action_conversationsListFragment_to_settingsFragment"
-                app:destination="@id/settingsFragment" />
+                app:destination="@id/settings_graph" />
         <action
                 android:id="@+id/action_conversationsListFragment_to_messageSearchFragment"
                 app:destination="@id/messageSearchFragment" />
@@ -48,19 +38,8 @@
                 app:popUpToInclusive="true" />
     </fragment>
     <fragment
-            android:id="@+id/sendMediaFragment"
-            android:name="bogomolov.aa.anochat.features.conversations.dialog.media.SendMediaFragment" />
-    <fragment
             android:id="@+id/imageViewFragment"
             android:name="bogomolov.aa.anochat.features.shared.ImageViewFragment" />
-    <fragment
-            android:id="@+id/settingsFragment"
-            android:name="bogomolov.aa.anochat.features.settings.SettingsFragment"
-            android:label="@string/settings" >
-        <action
-                android:id="@+id/action_settingsFragment_to_miniatureFragment"
-                app:destination="@id/miniatureFragment" />
-    </fragment>
     <fragment
             android:id="@+id/userViewFragment"
             android:name="bogomolov.aa.anochat.features.contacts.user.UserViewFragment" />
@@ -68,8 +47,33 @@
             android:id="@+id/messageSearchFragment"
             android:name="bogomolov.aa.anochat.features.conversations.search.MessageSearchFragment"
             android:label="@string/search" />
-    <fragment
+
+    <navigation android:id="@+id/settings_graph"
+        app:startDestination="@id/settingsFragment">
+        <fragment
+                android:id="@+id/settingsFragment"
+                android:name="bogomolov.aa.anochat.features.settings.SettingsFragment"
+                android:label="@string/settings">
+            <action
+                    android:id="@+id/action_settingsFragment_to_miniatureFragment"
+                    app:destination="@id/miniatureFragment" />
+        </fragment>
+        <fragment
             android:id="@+id/miniatureFragment"
             android:name="bogomolov.aa.anochat.features.settings.MiniatureFragment"
             android:label="@string/set_avatar" />
+    </navigation>
+    <navigation android:id="@+id/dialog_graph"
+        app:startDestination="@id/conversationFragment">
+        <fragment
+            android:id="@+id/conversationFragment"
+            android:name="bogomolov.aa.anochat.features.conversations.dialog.ConversationFragment">
+            <action
+                android:id="@+id/action_conversationFragment_to_sendMediaFragment"
+                app:destination="@id/sendMediaFragment" />
+        </fragment>
+        <fragment
+            android:id="@+id/sendMediaFragment"
+            android:name="bogomolov.aa.anochat.features.conversations.dialog.SendMediaFragment" />
+    </navigation>
 </navigation>

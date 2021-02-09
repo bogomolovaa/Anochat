@@ -19,7 +19,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
@@ -33,9 +32,6 @@ import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.UpdatableView
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -116,7 +112,7 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
                 binding.toolbar
             ) {
                 navController.navigate(
-                    R.id.conversationFragment,
+                    R.id.dialog_graph,
                     Bundle().apply { putLong("id", it.id) })
             })
         binding.recyclerView.adapter = adapter

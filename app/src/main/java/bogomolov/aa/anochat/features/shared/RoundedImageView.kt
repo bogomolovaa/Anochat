@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.util.AttributeSet
+import android.util.Log
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.appcompat.content.res.AppCompatResources
@@ -58,7 +59,7 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
 
 @BindingAdapter("app:srcFile")
 fun setFileName(view: RoundedImageView, fileName: String?) {
-    if (fileName!=null&&view.setFile(fileName)) {
+    if (fileName != null && view.setFile(fileName)) {
         view.requestLayout()
     } else {
         view.setDefaultDrawable()

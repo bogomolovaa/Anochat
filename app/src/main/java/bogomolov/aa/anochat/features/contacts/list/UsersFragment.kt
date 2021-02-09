@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.contacts.list
 
-
 import android.content.Context
 import android.os.Bundle
 import android.view.*
@@ -9,45 +8,56 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.observe
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.LiveData
+import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
+import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
+import bogomolov.aa.anochat.features.contacts.list.actions.CreateConversationAction
+import bogomolov.aa.anochat.features.contacts.list.actions.LoadContactsAction
+import bogomolov.aa.anochat.features.contacts.list.actions.SearchAction
+import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
+import bogomolov.aa.anochat.features.shared.UpdatableView
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.UsersAdapter
 import bogomolov.aa.anochat.view.adapters.UsersSearchAdapter
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
-class UsersFragment : Fragment() {
+class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    val viewModel: UsersViewModel by activityViewModels { viewModelFactory }
-    lateinit var recyclerView: RecyclerView
-    private var adapter: UsersAdapter? = null
+    private val viewModel: UsersViewModel by viewModels { viewModelFactory }
+
+    private lateinit var navController: NavController
+    private lateinit var binding: FragmentUsersBinding
+    private val usersAdapter = UsersAdapter(AdapterHelper(onClick = getOnClick()))
+    private val searchAdapter = UsersSearchAdapter(AdapterHelper(onClick = getOnClick()))
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
         super.onAttach(context)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewModel.addAction(LoadContactsAction())
+        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val binding = DataBindingUtil.inflate<FragmentUsersBinding>(
+    ): View {
+        binding = DataBindingUtil.inflate(
             inflater,
             R.layout.fragment_users,
             container,
@@ -55,39 +65,49 @@ class UsersFragment : Fragment() {
         )
         binding.lifecycleOwner = this
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
-
-        recyclerView = binding.recyclerView
-        recyclerView.layoutManager = LinearLayoutManager(context)
-        val onClick = { user: User ->
-            viewModel.createConversation(user) { conversationId ->
-                navController.navigate(
-                    R.id.conversationFragment,
-                    Bundle().apply { putLong("id", conversationId) })
-            }
-        }
-        adapter = UsersAdapter(AdapterHelper(onClick = onClick))
-        val searchAdapter = UsersSearchAdapter(AdapterHelper(onClick = onClick))
-        viewModel.searchLiveData.observe(viewLifecycleOwner) {
-            recyclerView.adapter = searchAdapter
-            searchAdapter.submitList(it)
-        }
-        binding.progressBar.visibility = View.VISIBLE
-        lifecycleScope.launch(Dispatchers.IO) {
-            val contacts = viewModel.getContacts()
-            withContext(Dispatchers.Main) {
-                viewModel.loadContactUsers(contacts).observe(viewLifecycleOwner) {
-                    recyclerView.adapter = adapter
-                    adapter!!.submitList(it)
-                    binding.progressBar.visibility = View.INVISIBLE
-                }
-            }
-        }
-
+        binding.recyclerView.layoutManager = LinearLayoutManager(context)
         setHasOptionsMenu(true)
 
+
         return binding.root
+    }
+
+    override fun updateView(newState: ContactsUiState, currentState: ContactsUiState) {
+        if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState.pagedListLiveData!!)
+        if (newState.searchedUsers != currentState.searchedUsers) setSearchedUsers(newState.searchedUsers!!)
+    }
+
+    private fun setPagedList(pagedListLiveData: LiveData<PagedList<User>>) {
+        showProgressBar()
+
+        binding.recyclerView.adapter = usersAdapter
+        pagedListLiveData.observe(viewLifecycleOwner) {
+            usersAdapter.submitList(it)
+            hideProgressBar()
+        }
+    }
+
+    private fun setSearchedUsers(users: List<User>) {
+        binding.recyclerView.adapter = searchAdapter
+        searchAdapter.submitList(users)
+    }
+
+    private fun getOnClick() = { user: User ->
+        viewModel.addAction(CreateConversationAction(user) { conversationId ->
+            navController.navigate(
+                R.id.dialog_graph,
+                Bundle().apply { putLong("id", conversationId) })
+        })
+    }
+
+    private fun showProgressBar(){
+        binding.progressBar.visibility = View.VISIBLE
+    }
+
+    private fun hideProgressBar(){
+        binding.progressBar.visibility = View.INVISIBLE
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -102,7 +122,7 @@ class UsersFragment : Fragment() {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (query != null) {
-                    viewModel.search(query)
+                    viewModel.addAction(SearchAction(query))
                     return true
                 }
                 return false
@@ -114,7 +134,7 @@ class UsersFragment : Fragment() {
         })
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
         closeButton.setOnClickListener {
-            recyclerView.adapter = adapter
+            binding.recyclerView.adapter = usersAdapter
         }
 
     }

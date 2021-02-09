@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.features.conversations.dialog.media
+package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.content.Context
 import android.graphics.BitmapFactory
@@ -12,11 +12,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
+import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
 
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
+import bogomolov.aa.anochat.features.conversations.dialog.actions.SendMessageAction
 import bogomolov.aa.anochat.repository.getFilePath
 import bogomolov.aa.anochat.repository.resizeImage
 import dagger.android.support.AndroidSupportInjection
@@ -26,7 +28,7 @@ import javax.inject.Inject
 class SendMediaFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: SendMediaViewModel by viewModels { viewModelFactory }
+    private val viewModel: ConversationViewModel by navGraphViewModels(R.id.dialog_graph) { viewModelFactory }
     private var conversationId = 0L
 
     override fun onAttach(context: Context) {
@@ -67,7 +69,7 @@ class SendMediaFragment : Fragment() {
         )
         binding.messageInputLayout.setEndIconOnClickListener {
             val text = binding.messageInputText.text?.toString() ?: ""
-            viewModel.sendMessage(resizedImage, text, conversationId)
+            viewModel.addAction(SendMessageAction(image = resizedImage, text = text))
             navController.popBackStack()
         }
 

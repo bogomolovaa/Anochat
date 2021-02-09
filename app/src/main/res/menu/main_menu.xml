@@ -10,7 +10,7 @@
             tools:ignore="AlwaysShowAction" />
 
     <item
-            android:id="@id/settingsFragment"
+            android:id="@id/settings_graph"
             android:title="@string/settings"
             app:showAsAction="never"/>
 

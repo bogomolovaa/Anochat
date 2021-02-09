@@ -118,7 +118,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                                     val showNotification =
                                         getSetting<Boolean>(
                                             applicationContext,
-                                            NOTIFICATIONS
+                                            Setting.NOTIFICATIONS.name
                                         ) != null
                                     if (inBackground && showNotification)
                                         sendNotification(message)
@@ -172,9 +172,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                 .setContentText(message.shortText())
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
-        val canVibrate = getSetting<Boolean>(applicationContext, VIBRATION) != null
+        val canVibrate = getSetting<Boolean>(applicationContext, Setting.VIBRATION.name) != null
         if (canVibrate) notificationBuilder.setVibrate(longArrayOf(500, 500))
-        val canSound = getSetting<Boolean>(applicationContext, SOUND) != null
+        val canSound = getSetting<Boolean>(applicationContext, Setting.SOUND.name) != null
         if (canSound) notificationBuilder.setSound(
             android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,
             AudioManager.STREAM_NOTIFICATION

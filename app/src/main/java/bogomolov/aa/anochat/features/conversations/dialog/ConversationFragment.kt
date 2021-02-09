@@ -17,7 +17,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.Parcelable
 import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
@@ -32,13 +31,11 @@ import androidx.core.widget.doOnTextChanged
 import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
-import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
@@ -72,15 +69,15 @@ import kotlin.collections.HashMap
 class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: ConversationViewModel by viewModels { viewModelFactory }
+    private val viewModel: ConversationViewModel by navGraphViewModels(R.id.dialog_graph) { viewModelFactory }
     private lateinit var navController: NavController
     private lateinit var binding: FragmentConversationBinding
 
     private var photoPath: String? = null
     private lateinit var emojiPopup: EmojiPopup
-    private var replyMessageId: String? = null
+    private var replyId: String? = null
     private var recorder: MediaRecorder? = null
-    private var audioFileName: String? = null
+    private var audioFile: String? = null
     private var scrollEnd = false
 
     override fun onAttach(context: Context) {
@@ -273,7 +270,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         binding.replyImage.visibility = View.GONE
         binding.replayAudio.visibility = View.GONE
         binding.replyText.text = it.text
-        replyMessageId = it.messageId
+        replyId = it.messageId
         val lastPosition = binding.recyclerView.adapter?.itemCount ?: 0 - 1
         if (lastPosition > 0) binding.recyclerView.smoothScrollToPosition(lastPosition)
         if (it.image != null) {
@@ -298,18 +295,18 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     private var textEntered = false
 
     private fun sendMessageAction() {
-        val text = binding.messageInputText.text
-        if (audioFileName != null) {
-            Log.i("test", "message audio: $audioFileName")
+        val text = binding.messageInputText.text.toString()
+        if (audioFile != null) {
+            Log.i("test", "message audio: $audioFile")
             binding.playAudioInput.visibility = View.GONE
             binding.textLayout.visibility = View.VISIBLE
-            audioFileName = null
-        } else if (!text.isNullOrEmpty()) {
+            audioFile = null
+        } else if (text.isNotEmpty()) {
             Log.i("test", "message text: $text")
             binding.messageInputText.setText("")
             removeReply(binding)
         }
-        viewModel.addAction(SendMessageAction(text.toString(), replyMessageId, audioFileName))
+        viewModel.addAction(SendMessageAction(text = text, replyId = replyId, audio = audioFile))
     }
 
     private fun hideFabs() {
@@ -382,7 +379,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
 
     private fun removeReply(binding: FragmentConversationBinding) {
         binding.replyLayout.visibility = View.INVISIBLE
-        replyMessageId = null
+        replyId = null
     }
 
     override fun onPause() {
@@ -440,7 +437,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
 
     @SuppressLint("SimpleDateFormat")
     private fun startRecording() {
-        audioFileName = getRandomString(20) + ".3gp"
+        audioFile = getRandomString(20) + ".3gp"
         binding.textLayout.visibility = View.GONE
         binding.audioLayout.visibility = View.VISIBLE
         val startTime = System.currentTimeMillis()
@@ -462,7 +459,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         val recorder = MediaRecorder()
         recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
         recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-        recorder.setOutputFile(File(getFilesDir(requireContext()), audioFileName!!).path)
+        recorder.setOutputFile(File(getFilesDir(requireContext()), audioFile!!).path)
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
         recorder.prepare()
         recorder.start()
@@ -478,7 +475,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         recorder = null
         binding.fab.setImageResource(R.drawable.plus_icon)
         setFabDefaultOnClickListener()
-        binding.playAudioInput.setFile(audioFileName!!)
+        binding.playAudioInput.setFile(audioFile!!)
         binding.playAudioInput.visibility = View.VISIBLE
         binding.fab.setImageResource(R.drawable.send_icon)
         textEntered = true

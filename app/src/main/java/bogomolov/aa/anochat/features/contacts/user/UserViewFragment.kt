@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnPreDraw
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.observe
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.FragmentNavigator
@@ -27,7 +28,7 @@ import javax.inject.Inject
 class UserViewFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    val viewModel: UserViewViewModel by activityViewModels { viewModelFactory }
+    private val viewModel: UserViewViewModel by viewModels { viewModelFactory }
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -38,7 +39,7 @@ class UserViewFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val binding = DataBindingUtil.inflate<FragmentUserViewBinding>(
             inflater,
             R.layout.fragment_user_view,
@@ -50,6 +51,7 @@ class UserViewFragment : Fragment() {
 
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         val userId = arguments?.getLong("id")!!
+
         viewModel.loadUser(userId)
         viewModel.userLiveData.observe(viewLifecycleOwner) { user ->
             (activity as AppCompatActivity).supportActionBar?.title = user.name
@@ -60,6 +62,7 @@ class UserViewFragment : Fragment() {
                 binding.userPhoto.setImageResource(R.drawable.user_icon)
             }
         }
+
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 

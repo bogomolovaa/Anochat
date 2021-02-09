@@ -5,10 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.LivePagedListBuilder
 import bogomolov.aa.anochat.domain.User
+import bogomolov.aa.anochat.features.shared.UiState
 import bogomolov.aa.anochat.repository.Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 class UserViewViewModel
 @Inject constructor(val repository: Repository) : ViewModel() {

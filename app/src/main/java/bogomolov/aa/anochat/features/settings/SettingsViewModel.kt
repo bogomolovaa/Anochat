@@ -2,66 +2,82 @@ package bogomolov.aa.anochat.features.settings
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import bogomolov.aa.anochat.domain.User
-import bogomolov.aa.anochat.features.shared.BaseViewModel
-import bogomolov.aa.anochat.features.shared.UiState
-import bogomolov.aa.anochat.features.shared.UserAction
-import bogomolov.aa.anochat.repository.Repository
-import bogomolov.aa.anochat.repository.getFilePath
-import bogomolov.aa.anochat.repository.getMiniPhotoFileName
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import bogomolov.aa.anochat.features.shared.*
+import bogomolov.aa.anochat.repository.*
 import java.io.FileOutputStream
 import java.lang.Math.max
 import javax.inject.Inject
 
 data class SettingsUiState(
     val user: User? = null,
-    val status: String? = null
+    val notifications: Boolean = false,
+    val sound: Boolean = false,
+    val vibration: Boolean = false
 ) : UiState
 
-class SettingsViewModel
-@Inject constructor(val repository: Repository) :
-    BaseViewModel<SettingsUiState, SettingsViewModel>() {
+class SettingsViewModel @Inject constructor(repository: Repository) :
+    RepositoryBaseViewModel<SettingsUiState>(repository) {
 
     override fun createInitialState() = SettingsUiState()
 }
 
-class UpdateNameAction(val name: String) : UserAction<SettingsViewModel> {
 
-    override suspend fun execute(viewModel: SettingsViewModel) {
-        val user = viewModel.currentState.user
+class UpdateNameAction(val name: String) : DefaultUserAction<SettingsUiState>() {
+
+    override suspend fun execute(context: DefaultContext<SettingsUiState>) {
+        val user = context.viewModel.currentState.user
         if (user != null) {
             user.name = name
-            viewModel.repository.updateUserTo(user)
-            viewModel.setState { copy(user = user) }
+            context.repository.updateUserTo(user)
+            context.viewModel.setState { copy(user = user) }
         }
     }
 }
 
-class UpdateStatusAction(val status: String) : UserAction<SettingsViewModel> {
+class UpdateStatusAction(val status: String) : DefaultUserAction<SettingsUiState>() {
 
-    override suspend fun execute(viewModel: SettingsViewModel) {
-        val user = viewModel.currentState.user
-        Log.i("UpdateStatusAction","execute status $status")
+    override suspend fun execute(context: DefaultContext<SettingsUiState>) {
+        val user = context.viewModel.currentState.user
         if (user != null) {
-            user.status = status
-            viewModel.repository.updateUserTo(user)
-            Log.i("UpdateStatusAction","execute setState $user")
-            viewModel.setState { copy(status = status) }
+            context.repository.updateUserTo(user)
+            context.viewModel.setState { copy(user = user.copy(status = status)) }
         }
     }
 }
 
-class LoadUserAction(val uid: String) : UserAction<SettingsViewModel> {
+class LoadSettingsAction() : DefaultUserAction<SettingsUiState>() {
 
-    override suspend fun execute(viewModel: SettingsViewModel) {
-        val user = viewModel.repository.getUser(uid, true)
-        viewModel.setState { copy(user = user) }
+    override suspend fun execute(context: DefaultContext<SettingsUiState>) {
+        val notifications: Boolean = context.repository.getSetting(Setting.NOTIFICATIONS)!!
+        val sound: Boolean = context.repository.getSetting(Setting.SOUND)!!
+        val vibration: Boolean = context.repository.getSetting(Setting.VIBRATION)!!
+        context.viewModel.setState {
+            copy(notifications = notifications, sound = sound, vibration = vibration)
+        }
+    }
+}
+
+class UpdateSettingAction(private val setting: Setting, private val value: Boolean) :
+    DefaultUserAction<SettingsUiState>() {
+
+    override suspend fun execute(context: DefaultContext<SettingsUiState>) {
+        context.repository.setSetting(setting, value)
+        context.viewModel.setState {
+            when (setting) {
+                Setting.NOTIFICATIONS -> copy(notifications = value)
+                Setting.SOUND -> copy(sound = value)
+                Setting.VIBRATION -> copy(vibration = value)
+            }
+        }
+    }
+}
+
+class LoadUserAction(val uid: String) : DefaultUserAction<SettingsUiState>() {
+
+    override suspend fun execute(context: DefaultContext<SettingsUiState>) {
+        val user = context.repository.getUser(uid, true)
+        context.viewModel.setState { copy(user = user) }
     }
 }
 
@@ -71,12 +87,12 @@ class UpdatePhotoAction(
     val y: Int,
     val width: Int,
     val height: Int
-) : UserAction<SettingsViewModel> {
+) : DefaultUserAction<SettingsUiState>() {
 
-    override suspend fun execute(viewModel: SettingsViewModel) {
-        val user = viewModel.currentState.user
+    override suspend fun execute(context: DefaultContext<SettingsUiState>) {
+        val user = context.viewModel.currentState.user
         if (user != null) {
-            val filePath = getFilePath(viewModel.repository.getContext(), photo)
+            val filePath = getFilePath(context.repository.getContext(), photo)
             val bitmap = BitmapFactory.decodeFile(filePath)
             val miniBitmap = Bitmap.createBitmap(
                 bitmap,
@@ -85,13 +101,12 @@ class UpdatePhotoAction(
                 Math.min(bitmap.width - max(x, 0), width),
                 Math.min(bitmap.height - max(y, 0), height)
             )
-            val miniPhotoPath = getFilePath(
-                viewModel.repository.getContext(),
-                getMiniPhotoFileName(viewModel.repository.getContext(), photo)
-            )
+            val userWithNewPhoto = user.copy(photo = photo)
+            context.viewModel.setState { copy(user = userWithNewPhoto) }
+            context.repository.updateUserTo(userWithNewPhoto)
+            val appContext = context.repository.getContext()
+            val miniPhotoPath = getFilePath(appContext, getMiniPhotoFileName(appContext, photo))
             miniBitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(miniPhotoPath))
-            user.photo = photo
-            viewModel.setState { copy(user = user) }
         }
     }
 }

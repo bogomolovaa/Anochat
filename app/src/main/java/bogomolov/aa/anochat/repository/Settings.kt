@@ -6,12 +6,6 @@ import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.features.conversations.base64ToByteArray
 import bogomolov.aa.anochat.features.conversations.byteArrayToBase64
 
-const val UID = "uid"
-const val TOKEN = "token"
-const val NOTIFICATIONS = "notifications"
-const val SOUND = "sound"
-const val VIBRATION = "vibration"
-
 inline fun <reified T> getSetting(context: Context, name: String): T? {
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     if (T::class == ByteArray::class) {
@@ -39,4 +33,5 @@ fun getMyUid(context: Context) = getSetting<String>(context, UID)
 
 fun getSentSettingName(myUid: String, uid: String) = "${myUid}${uid}_sent"
 
-
+const val UID = "uid"
+const val TOKEN = "token"

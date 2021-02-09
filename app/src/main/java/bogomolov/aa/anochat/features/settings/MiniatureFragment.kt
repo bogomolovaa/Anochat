@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
@@ -29,7 +30,7 @@ import kotlin.math.min
 class MiniatureFragment : Fragment(), View.OnTouchListener {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: SettingsViewModel by activityViewModels { viewModelFactory }
+    private val viewModel: SettingsViewModel by navGraphViewModels(R.id.settings_graph) { viewModelFactory }
     private lateinit var binding: FragmentMiniatureBinding
     private lateinit var bitmap: Bitmap
 

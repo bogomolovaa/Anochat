@@ -1,84 +1,27 @@
 package bogomolov.aa.anochat.features.contacts.list
 
-import android.provider.ContactsContract
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.User
+import bogomolov.aa.anochat.features.shared.*
 import bogomolov.aa.anochat.repository.Repository
-import bogomolov.aa.anochat.repository.UID
-import bogomolov.aa.anochat.repository.getSetting
-import bogomolov.aa.anochat.repository.isNotValidPhone
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.ArrayList
 import javax.inject.Inject
 
+data class ContactsUiState(
+    val searchedUsers: List<User>? = null,
+    val pagedListLiveData: LiveData<PagedList<User>>? = null
+) : UiState
+
+data class UsersActionContext(
+    val viewModel: UsersViewModel,
+    val repository: Repository,
+    var usersList: List<User>? = null
+) : ActionContext
+
 class UsersViewModel
-@Inject constructor(private val repository: Repository) : ViewModel() {
-    val searchLiveData = MutableLiveData<List<User>>()
-    private val usersList = ArrayList<User>()
+@Inject constructor(private val repository: Repository) :
+    BaseViewModel<ContactsUiState, UsersActionContext>() {
 
-    fun loadContactUsers(contactPhones: List<String>): LiveData<PagedList<User>> {
-        viewModelScope.launch(Dispatchers.IO) {
-            val myUid = getSetting<String>(repository.getContext(), UID)
-            val users = repository.receiveUsersByPhones(contactPhones).filter { it.uid != myUid }
-            for (user in users) repository.updateUserFrom(user)
-            usersList.clear()
-            usersList.addAll(users)
-        }
-        return LivePagedListBuilder(repository.getUsersByPhones(contactPhones), 10).build()
-    }
-
-    fun getContacts(): List<String> {
-        val phones = HashSet<String>()
-        val projection = arrayOf(
-            ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
-            ContactsContract.Contacts.DISPLAY_NAME,
-            ContactsContract.CommonDataKinds.Phone.NUMBER
-        )
-        repository.getContext().contentResolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            projection,
-            null,
-            null,
-            null
-        )?.use { cursor ->
-            val nameIndex = cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
-            val numberIndex =
-                cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
-            while (cursor.moveToNext()) {
-                val number = cursor.getString(numberIndex)
-                phones += number.replace("[- ()]".toRegex(), "").replace("^8".toRegex(), "+7")
-            }
-        }
-        return ArrayList(phones)
-    }
-
-
-
-    fun search(startWith: String) {
-        if (isNotValidPhone(startWith)) {
-            searchLiveData.value = usersList.filter { it.name.startsWith(startWith) }
-        } else {
-            viewModelScope.launch(Dispatchers.IO) {
-                val users = repository.findByPhone(startWith)
-                for (user in users) repository.updateUserFrom(user, false)
-                searchLiveData.postValue(users)
-            }
-        }
-    }
-
-    fun createConversation(user: User, onCreate: (Long) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val conversationId = repository.getConversation(user)
-            withContext(Dispatchers.Main) {
-                onCreate(conversationId)
-            }
-        }
-    }
+    override fun createViewModelContext() = UsersActionContext(this, repository)
+    override fun createInitialState() = ContactsUiState()
 }

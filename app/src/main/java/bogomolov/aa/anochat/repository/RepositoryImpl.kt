@@ -2,7 +2,9 @@ package bogomolov.aa.anochat.repository
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import androidx.paging.DataSource
+import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.domain.User
