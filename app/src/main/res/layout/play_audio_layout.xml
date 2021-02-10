@@ -16,7 +16,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/send_icon" />
+            app:srcCompat="@drawable/send_icon"
+        tools:ignore="ContentDescription" />
 
     <ProgressBar
             android:id="@+id/playProgressBar"
@@ -38,7 +39,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/mic_icon" />
+            app:srcCompat="@drawable/mic_icon"
+        tools:ignore="ContentDescription" />
 
     <ImageView
             android:id="@+id/closePlayImage"
@@ -49,7 +51,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/clear_icon"
-            tools:visibility="visible" />
+            tools:visibility="visible"
+        tools:ignore="ContentDescription" />
 
     <TextView
             android:id="@+id/timer_text"

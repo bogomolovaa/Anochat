@@ -7,6 +7,7 @@ import bogomolov.aa.anochat.features.contacts.list.UsersActionContext
 import bogomolov.aa.anochat.features.shared.UserAction
 import bogomolov.aa.anochat.repository.UID
 import bogomolov.aa.anochat.repository.getSetting
+import bogomolov.aa.anochat.repository.isValidPhone
 import java.util.ArrayList
 
 class LoadContactsAction() : UserAction<UsersActionContext> {
@@ -17,6 +18,7 @@ class LoadContactsAction() : UserAction<UsersActionContext> {
             LivePagedListBuilder(context.repository.getUsersByPhones(phones), 10).build()
         context.viewModel.setState { copy(pagedListLiveData = pagedListLiveData) }
         syncUsers(context, phones)
+        context.viewModel.setState { copy(synchronizationFinished = true) }
     }
 
     private suspend fun syncUsers(context: UsersActionContext, phones: List<String>) {
@@ -45,7 +47,9 @@ class LoadContactsAction() : UserAction<UsersActionContext> {
                 cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
             while (cursor.moveToNext()) {
                 val number = cursor.getString(numberIndex)
-                phones += number.replace("[- ()]".toRegex(), "").replace("^8".toRegex(), "+7")
+                val clearNumber =
+                    number.replace("[- ()]".toRegex(), "").replace("^8".toRegex(), "+7")
+                if (isValidPhone(clearNumber)) phones += clearNumber
             }
         }
         return ArrayList(phones)

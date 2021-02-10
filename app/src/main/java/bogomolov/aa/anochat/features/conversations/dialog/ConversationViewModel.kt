@@ -5,11 +5,11 @@ import android.util.Log
 import androidx.lifecycle.*
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
-import bogomolov.aa.anochat.features.conversations.dialog.actions.InitConversationAction
+import bogomolov.aa.anochat.features.shared.ActionContext
 import bogomolov.aa.anochat.features.shared.BaseViewModel
 import bogomolov.aa.anochat.features.shared.UiState
-import bogomolov.aa.anochat.features.shared.UserAction
 import bogomolov.aa.anochat.repository.Repository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.*
@@ -23,23 +23,26 @@ data class DialogUiState(
     var recyclerViewState: Parcelable? = null
 ) : UiState
 
+data class ConversationActionContext(
+    val viewModel: ConversationViewModel,
+    val repository: Repository,
+    var removeStatusListener: (() -> Unit)? = null
+) : ActionContext
 
 class ConversationViewModel
-@Inject constructor(val repository: Repository) :
-    BaseViewModel<DialogUiState, ConversationViewModel>() {
-    private lateinit var initConversationAction: InitConversationAction
+@Inject constructor(private val repository: Repository) :
+    BaseViewModel<DialogUiState, ConversationActionContext>() {
 
     override fun createInitialState() = DialogUiState()
-
-    override suspend fun handleAction(action: UserAction<ConversationViewModel>) {
-        super.handleAction(action)
-        if (action is InitConversationAction) initConversationAction = action
-    }
+    override fun createViewModelContext() = ConversationActionContext(this,repository)
 
     override fun onCleared() {
         super.onCleared()
-        GlobalScope.launch {
-            initConversationAction.onDestroy()
+        GlobalScope.launch(Dispatchers.IO) {
+            Log.i("ConversationViewModel","delete conversation ${currentState.conversation}")
+            if (currentState.conversation != null)
+                repository.deleteConversationIfNoMessages(currentState.conversation!!.id)
+            viewModelContext.removeStatusListener?.invoke()
         }
     }
 }

@@ -10,13 +10,15 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="#FFFFFF"
-            tools:srcCompat="@drawable/user_icon" />
+            tools:srcCompat="@drawable/user_icon"
+        tools:ignore="ContentDescription" />
 
     <ImageView
             android:id="@+id/round_fg_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:srcCompat="@drawable/rounded_fg" />
+            app:srcCompat="@drawable/rounded_fg"
+        tools:ignore="ContentDescription" />
 
 
 </FrameLayout>

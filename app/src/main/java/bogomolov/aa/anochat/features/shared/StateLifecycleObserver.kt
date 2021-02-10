@@ -33,3 +33,7 @@ class StateLifecycleObserver<S : UiState, V : ActionContext>(
         }
     }
 }
+
+interface UpdatableView<S : UiState> {
+    fun updateView(newState: S, currentState: S)
+}

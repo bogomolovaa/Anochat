@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.features.contacts.list
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -69,7 +70,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
         setHasOptionsMenu(true)
-
+        showProgressBar()
 
         return binding.root
     }
@@ -77,15 +78,23 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
     override fun updateView(newState: ContactsUiState, currentState: ContactsUiState) {
         if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState.pagedListLiveData!!)
         if (newState.searchedUsers != currentState.searchedUsers) setSearchedUsers(newState.searchedUsers!!)
+        if (newState.conversationId != currentState.conversationId) navigateToConversation(newState.conversationId)
+        if (newState.synchronizationFinished != currentState.synchronizationFinished) hideProgressBar()
+    }
+
+    private fun navigateToConversation(conversationId: Long) {
+        if (conversationId != 0L) {
+            navController.navigate(
+                R.id.dialog_graph,
+                Bundle().apply { putLong("id", conversationId) })
+            viewModel.setStateAsync { copy(conversationId = 0) }
+        }
     }
 
     private fun setPagedList(pagedListLiveData: LiveData<PagedList<User>>) {
-        showProgressBar()
-
         binding.recyclerView.adapter = usersAdapter
         pagedListLiveData.observe(viewLifecycleOwner) {
             usersAdapter.submitList(it)
-            hideProgressBar()
         }
     }
 
@@ -95,18 +104,14 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
     }
 
     private fun getOnClick() = { user: User ->
-        viewModel.addAction(CreateConversationAction(user) { conversationId ->
-            navController.navigate(
-                R.id.dialog_graph,
-                Bundle().apply { putLong("id", conversationId) })
-        })
+        viewModel.addAction(CreateConversationAction(user))
     }
 
-    private fun showProgressBar(){
+    private fun showProgressBar() {
         binding.progressBar.visibility = View.VISIBLE
     }
 
-    private fun hideProgressBar(){
+    private fun hideProgressBar() {
         binding.progressBar.visibility = View.INVISIBLE
     }
 

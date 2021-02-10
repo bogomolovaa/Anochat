@@ -5,9 +5,6 @@
 
     <data>
 
-        <variable
-            name="viewModel"
-            type="bogomolov.aa.anochat.features.contacts.user.UserViewViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -30,14 +27,13 @@
             app:titleTextColor="@color/title_color" />
 
         <TextView
-            android:id="@+id/statusText"
+            android:id="@+id/userStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="24dp"
-            android:text="@{viewModel.userLiveData.status}"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/phoneText"
+            app:layout_constraintTop_toBottomOf="@+id/userPhone"
             tools:text="Status" />
 
         <ImageView
@@ -46,10 +42,10 @@
             android:layout_height="300dp"
             android:scaleType="centerCrop"
             android:src="@drawable/user_icon"
-            android:transitionName="@{viewModel.userLiveData.photo}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+            app:layout_constraintTop_toBottomOf="@+id/toolbar"
+            tools:ignore="ContentDescription" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
@@ -60,12 +56,11 @@
             app:layout_constraintTop_toBottomOf="@+id/userPhoto" />
 
         <TextView
-            android:id="@+id/phoneText"
+            android:id="@+id/userPhone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="24dp"
-            android:text="@{viewModel.userLiveData.phone}"
             android:textSize="20sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/recyclerView"

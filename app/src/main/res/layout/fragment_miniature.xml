@@ -50,7 +50,8 @@
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 android:src="@drawable/rounded_fg"
-                android:tint="#FFFFFF" />
+                android:tint="#FFFFFF"
+                tools:ignore="ContentDescription" />
 
         </RelativeLayout>
 
@@ -62,7 +63,9 @@
             android:clickable="true"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/imageView"
-            app:srcCompat="@drawable/ok_icon" />
+            app:srcCompat="@drawable/ok_icon"
+            tools:ignore="ContentDescription"
+            android:focusable="true" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

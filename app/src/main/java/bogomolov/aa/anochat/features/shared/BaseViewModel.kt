@@ -14,13 +14,18 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
+interface UiState
+interface ActionContext
+interface UserAction<C : ActionContext> {
+    suspend fun execute(context: C)
+}
 
 abstract class BaseViewModel<S : UiState, C : ActionContext> : ViewModel() {
     private val mutex = Mutex()
 
-    private val viewModelContext: C by lazy { createViewModelContext() }
+    protected val viewModelContext: C by lazy { createViewModelContext() }
 
-    abstract fun createViewModelContext(): C
+    protected abstract fun createViewModelContext(): C
 
     val currentState: S
         get() = uiState.value
@@ -69,35 +74,3 @@ abstract class BaseViewModel<S : UiState, C : ActionContext> : ViewModel() {
     }
 
 }
-
-interface UiState
-
-interface UserAction<C : ActionContext> {
-    suspend fun execute(context: C)
-}
-
-interface UpdatableView<S : UiState> {
-    fun updateView(newState: S, currentState: S)
-}
-
-interface ActionContext
-
-
-abstract class DefaultUserAction<S: UiState>() : UserAction<DefaultContext<S>>
-
-open class DefaultActionContext<V>(
-    val viewModel: V,
-    val repository: Repository
-) : ActionContext
-
-class DefaultContext<S : UiState>(
-    viewModel: RepositoryBaseViewModel<S>,
-    repository: Repository
-) : DefaultActionContext<RepositoryBaseViewModel<S>>(viewModel, repository)
-
-abstract class RepositoryBaseViewModel<S : UiState>
-@Inject constructor(private val repository: Repository) :
-    BaseViewModel<S, DefaultContext<S>>() {
-    override fun createViewModelContext() = DefaultContext(this, repository)
-}
-

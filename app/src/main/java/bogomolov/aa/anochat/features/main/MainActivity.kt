@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.features.main
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -10,6 +11,8 @@ import androidx.emoji.text.EmojiCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.Navigation
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
@@ -28,6 +31,7 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity(), HasAndroidInjector {
     @Inject
     internal lateinit var androidInjector: DispatchingAndroidInjector<Any>
+
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     private val viewModel: MainActivityViewModel by viewModels { viewModelFactory }
@@ -40,13 +44,17 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         super.onCreate(savedInstanceState)
         emojiSupport()
 
+
         DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
-        val navController = Navigation.findNavController(this, R.id.nav_host_fragment)
+        //val navController = Navigation.findNavController(this, R.id.nav_host_fragment)
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
         navController.addOnDestinationChangedListener { controller, destination, _ ->
             val currentDestination = controller.currentDestination
-            //Log.i("test", "currentDestination $currentDestination")
+            Log.i("MainActivity", "currentDestination $currentDestination")
             if (currentDestination != null) {
-                //Log.i("test", "destination $destination")
+                Log.i("MainActivity", "destination $destination")
                 if (currentDestination.id != R.id.signInFragment) {
                     lifecycleScope.launch(Dispatchers.IO) {
                         val signedIn = viewModel.isSignedIn()

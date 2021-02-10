@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
+import bogomolov.aa.anochat.features.conversations.dialog.ConversationActionContext
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationViewModel
 import bogomolov.aa.anochat.features.conversations.dialog.MessageView
 import bogomolov.aa.anochat.features.shared.UserAction
@@ -21,20 +22,22 @@ import kotlin.collections.ArrayList
 
 private const val ONLINE_STATUS = "online"
 
-class InitConversationAction(val conversationId: Long) : UserAction<ConversationViewModel> {
-    private var removeStatusListener: (() -> Unit)? = null
+class InitConversationAction(val conversationId: Long) : UserAction<ConversationActionContext> {
     private var userOnline = false
     private var lastTimeOnline = 0L
     private lateinit var viewModel: ConversationViewModel
     private lateinit var repository: Repository
+    private lateinit var context: ConversationActionContext
 
-    override suspend fun execute(viewModel: ConversationViewModel) {
-        this.viewModel = viewModel
-        repository = viewModel.repository
+    override suspend fun execute(context: ConversationActionContext) {
+        this.context = context
+        this.viewModel = context.viewModel
+        repository = context.repository
         initConversation()
     }
 
     private suspend fun initConversation() {
+        Log.i("InitConversationAction", "initConversation conversationId $conversationId")
         val conversation = repository.getConversation(conversationId)
         viewModel.setState { copy(conversation = conversation) }
         val pagedListLiveData = loadMessages()
@@ -43,7 +46,7 @@ class InitConversationAction(val conversationId: Long) : UserAction<Conversation
     }
 
     private suspend fun subscribeToOnlineStatus(conversation: Conversation) {
-        removeStatusListener =
+        context.removeStatusListener =
             repository.addUserStatusListener(
                 uid = conversation.user.uid,
                 isOnline = { online ->
@@ -75,9 +78,7 @@ class InitConversationAction(val conversationId: Long) : UserAction<Conversation
                 for ((i, message) in it.listIterator().withIndex()) {
                     if (!message.isMine() && message.viewed == 0)
                         viewModel.viewModelScope.launch(Dispatchers.IO) {
-                            repository.reportAsViewed(
-                                message
-                            )
+                            repository.reportAsViewed(message)
                         }
                     val messageView = MessageView(message)
                     val day = GregorianCalendar().apply { time = Date(message.time) }
@@ -101,11 +102,4 @@ class InitConversationAction(val conversationId: Long) : UserAction<Conversation
             list
         }, 10
     ).build()
-
-
-    suspend fun onDestroy() {
-        if (viewModel.currentState.conversation != null)
-            repository.deleteConversationIfNoMessages(viewModel.currentState.conversation!!.id)
-        removeStatusListener?.invoke()
-    }
 }

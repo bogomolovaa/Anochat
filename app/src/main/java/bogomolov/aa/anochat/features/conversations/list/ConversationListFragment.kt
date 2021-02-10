@@ -65,7 +65,6 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
             container,
             false
         )
-        binding.viewModel = viewModel
         binding.lifecycleOwner = this
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         setHasOptionsMenu(true)
@@ -89,7 +88,6 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
     }
 
     override fun updateView(newState: ConversationsUiState, currentState: ConversationsUiState) {
-        Log.i("ConversationsFragment", "updateView newState:\n$newState")
         if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState.pagedListLiveData!!)
     }
 

@@ -17,8 +17,6 @@ import android.widget.Switch
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.navGraphViewModels
@@ -26,9 +24,13 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSettingsBinding
+import bogomolov.aa.anochat.features.settings.actions.*
 import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.UpdatableView
-import bogomolov.aa.anochat.repository.*
+import bogomolov.aa.anochat.repository.Setting
+import bogomolov.aa.anochat.repository.UID
+import bogomolov.aa.anochat.repository.getSetting
+import bogomolov.aa.anochat.repository.resizeImage
 import bogomolov.aa.anochat.view.fragments.EditUserBottomDialogFragment
 import bogomolov.aa.anochat.view.fragments.SettingType
 import dagger.android.support.AndroidSupportInjection

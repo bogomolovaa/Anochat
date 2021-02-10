@@ -122,7 +122,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     }
 
     override fun updateView(newState: DialogUiState, currentState: DialogUiState) {
-        Log.i("ConversationFragment", "updateView newState:\n$newState")
         if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState)
         if (newState.conversation != currentState.conversation) setConversation(newState.conversation!!)
         if (newState.onlineStatus != currentState.onlineStatus) binding.statusText.text =

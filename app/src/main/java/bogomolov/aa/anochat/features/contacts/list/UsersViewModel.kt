@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.features.contacts.list
 
 import androidx.lifecycle.LiveData
 import androidx.paging.PagedList
+import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.features.shared.*
 import bogomolov.aa.anochat.repository.Repository
@@ -9,7 +10,9 @@ import javax.inject.Inject
 
 data class ContactsUiState(
     val searchedUsers: List<User>? = null,
-    val pagedListLiveData: LiveData<PagedList<User>>? = null
+    val pagedListLiveData: LiveData<PagedList<User>>? = null,
+    val conversationId: Long = 0,
+    val synchronizationFinished: Boolean = false
 ) : UiState
 
 data class UsersActionContext(
@@ -21,7 +24,6 @@ data class UsersActionContext(
 class UsersViewModel
 @Inject constructor(private val repository: Repository) :
     BaseViewModel<ContactsUiState, UsersActionContext>() {
-
     override fun createViewModelContext() = UsersActionContext(this, repository)
     override fun createInitialState() = ContactsUiState()
 }

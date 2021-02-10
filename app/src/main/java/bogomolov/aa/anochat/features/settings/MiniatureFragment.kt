@@ -11,15 +11,13 @@ import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentMiniatureBinding
-import bogomolov.aa.anochat.features.settings.SettingsViewModel
+import bogomolov.aa.anochat.features.settings.actions.UpdatePhotoAction
 import bogomolov.aa.anochat.repository.getFilesDir
 import dagger.android.support.AndroidSupportInjection
 import java.io.File
