@@ -32,7 +32,7 @@
             </intent-filter>
         </activity>
         <service
-                android:name=".android.MyFirebaseMessagingService"
+                android:name=".features.conversations.MyFirebaseMessagingService"
                 android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

@@ -1,13 +1,9 @@
 package bogomolov.aa.anochat.features.contacts
 
 import android.content.Context
-import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import bogomolov.aa.anochat.repository.Repository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class UpdateWorker(
@@ -18,10 +14,10 @@ class UpdateWorker(
 
     override fun doWork(): Result {
         runBlocking {
-            val conversations = repository.loadConversations()
+            val conversations = repository.loadAllConversations()
             for (conversation in conversations) {
                 val user = repository.receiveUser(conversation.user.uid)
-                if (user != null) repository.updateUserFrom(user)
+                if (user != null) repository.syncFromRemoteUser(user, saveLocal = true, loadFullPhoto = true)
             }
         }
         return Result.success()

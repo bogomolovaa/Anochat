@@ -28,8 +28,6 @@ import bogomolov.aa.anochat.features.settings.actions.*
 import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.UpdatableView
 import bogomolov.aa.anochat.repository.Setting
-import bogomolov.aa.anochat.repository.UID
-import bogomolov.aa.anochat.repository.getSetting
 import bogomolov.aa.anochat.repository.resizeImage
 import bogomolov.aa.anochat.view.fragments.EditUserBottomDialogFragment
 import bogomolov.aa.anochat.view.fragments.SettingType
@@ -51,9 +49,8 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val uid = getSetting<String>(requireContext(), UID)
         viewModel.addAction(LoadSettingsAction())
-        viewModel.addAction(LoadUserAction(uid!!))
+        viewModel.addAction(LoadUserAction())
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
     }
 
@@ -124,7 +121,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         setSwitchListener(binding.vibrationSwitch, Setting.VIBRATION)
     }
 
-    private fun setSwitchListener(switch: Switch, setting: Setting) {
+    private fun setSwitchListener(switch: Switch, setting: String) {
         switch.setOnCheckedChangeListener { _, isChecked ->
             viewModel.addAction(UpdateSettingAction(setting, isChecked))
         }

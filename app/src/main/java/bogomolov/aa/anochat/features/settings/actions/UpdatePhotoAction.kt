@@ -31,7 +31,7 @@ class UpdatePhotoAction(
             )
             val userWithNewPhoto = user.copy(photo = photo)
             context.viewModel.setState { copy(user = userWithNewPhoto) }
-            context.repository.updateUserTo(userWithNewPhoto)
+            context.repository.updateMyUser(userWithNewPhoto)
             val appContext = context.repository.getContext()
             val miniPhotoPath = getFilePath(appContext, getMiniPhotoFileName(appContext, photo))
             miniBitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(miniPhotoPath))

@@ -2,12 +2,11 @@ package bogomolov.aa.anochat.features.contacts.list.actions
 
 import android.content.Context
 import android.provider.ContactsContract
+import android.util.Log
 import androidx.paging.LivePagedListBuilder
 import bogomolov.aa.anochat.features.contacts.list.UsersActionContext
 import bogomolov.aa.anochat.features.shared.UserAction
-import bogomolov.aa.anochat.repository.UID
-import bogomolov.aa.anochat.repository.getSetting
-import bogomolov.aa.anochat.repository.isValidPhone
+import bogomolov.aa.anochat.repository.*
 import java.util.ArrayList
 
 class LoadContactsAction() : UserAction<UsersActionContext> {
@@ -15,16 +14,19 @@ class LoadContactsAction() : UserAction<UsersActionContext> {
     override suspend fun execute(context: UsersActionContext) {
         val phones = getContactPhones(context.repository.getContext())
         val pagedListLiveData =
-            LivePagedListBuilder(context.repository.getUsersByPhones(phones), 10).build()
+            LivePagedListBuilder(context.repository.getUsersByPhonesDataSource(phones), 10).build()
         context.viewModel.setState { copy(pagedListLiveData = pagedListLiveData) }
         syncUsers(context, phones)
         context.viewModel.setState { copy(synchronizationFinished = true) }
     }
 
     private suspend fun syncUsers(context: UsersActionContext, phones: List<String>) {
-        val myUid = getSetting<String>(context.repository.getContext(), UID)
-        val users = context.repository.receiveUsersByPhones(phones).filter { it.uid != myUid }
-        for (user in users) context.repository.updateUserFrom(user)
+        val myUid = context.repository.getMyUID()!!
+        Log.i("LoadContactsAction", "phones $phones")
+        val users = if (phones.isNotEmpty())
+            context.repository.receiveUsersByPhones(phones).filter { it.uid != myUid }
+        else listOf()
+        for (user in users) context.repository.syncFromRemoteUser(user, saveLocal = true, loadFullPhoto = false)
         context.usersList = users
     }
 

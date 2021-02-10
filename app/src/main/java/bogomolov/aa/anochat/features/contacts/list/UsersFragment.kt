@@ -79,7 +79,10 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState.pagedListLiveData!!)
         if (newState.searchedUsers != currentState.searchedUsers) setSearchedUsers(newState.searchedUsers!!)
         if (newState.conversationId != currentState.conversationId) navigateToConversation(newState.conversationId)
-        if (newState.synchronizationFinished != currentState.synchronizationFinished) hideProgressBar()
+        if (newState.synchronizationFinished != currentState.synchronizationFinished){
+            hideProgressBar()
+            setPagedList(newState.pagedListLiveData!!)
+        }
     }
 
     private fun navigateToConversation(conversationId: Long) {

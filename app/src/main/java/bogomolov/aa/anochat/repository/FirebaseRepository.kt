@@ -3,8 +3,6 @@ package bogomolov.aa.anochat.repository
 import android.content.Context
 import android.util.Log
 import bogomolov.aa.anochat.domain.User
-import bogomolov.aa.anochat.features.conversations.decryptFile
-import bogomolov.aa.anochat.features.conversations.encryptFile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.database.*
@@ -29,29 +27,32 @@ interface IFirebaseRepository {
     fun isSignedIn(): Boolean
     suspend fun uploadFile(
         fileName: String,
-        uid: String? = null,
+        uid: String,
         needEncrypt: Boolean = false
     ): Boolean
 
     suspend fun downloadFile(
         fileName: String,
-        uid: String? = null,
+        uid: String,
         needDecrypt: Boolean = false
     ): Boolean
 
     suspend fun sendReport(messageId: String, received: Int, viewed: Int)
-    suspend fun deleteRemoteMessage(messageId: String)
     suspend fun addUserStatusListener(
         uid: String,
         isOnline: (Boolean) -> Unit,
         lastTimeOnline: (Long) -> Unit
     ): () -> Unit
+
     suspend fun setOnline()
     suspend fun setOffline()
 }
 
-class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRepository {
+class FirebaseRepository @Inject constructor() :
+    IFirebaseRepository {
+    private lateinit var repository: Repository
     private lateinit var token: String
+    private lateinit var context: Context
 
     init {
         //signOut()
@@ -59,6 +60,11 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             token = getToken()
             updateOnlineStatus()
         }
+    }
+
+    fun setRepository(repository: Repository){
+        this.repository = repository
+        context = repository.getContext()
     }
 
     override suspend fun addUserStatusListener(
@@ -96,7 +102,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         }
     }
 
-    override suspend fun setOnline(){
+    override suspend fun setOnline() {
         val uid = getUid()
         if (uid != null) {
             val database = FirebaseDatabase.getInstance()
@@ -105,7 +111,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         }
     }
 
-    override suspend fun setOffline(){
+    override suspend fun setOffline() {
         val uid = getUid()
         if (uid != null) {
             val database = FirebaseDatabase.getInstance()
@@ -125,7 +131,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
         }
     }
 
-    override suspend fun deleteRemoteMessage(messageId: String) {
+    fun deleteRemoteMessage(messageId: String) {
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("messages").child(messageId).removeValue()
     }
@@ -139,7 +145,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
     override suspend fun downloadFile(
         fileName: String,
-        uid: String?,
+        uid: String,
         needDecrypt: Boolean
     ): Boolean =
         suspendCoroutine { continuation ->
@@ -150,7 +156,7 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             fileRef.getFile(localFile).addOnSuccessListener {
                 Log.i("test", "downloaded $fileName")
                 if (needDecrypt) {
-                    decryptFile(localFile, uid!!, context)
+                    repository.getCrypto().decryptFile(localFile, uid)
                     fileRef.delete()
                 }
                 continuation.resume(true)
@@ -160,14 +166,15 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
             }
         }
 
-    override suspend fun uploadFile(fileName: String, uid: String?, needEncrypt: Boolean): Boolean =
+    override suspend fun uploadFile(fileName: String, uid: String, needEncrypt: Boolean): Boolean =
         suspendCoroutine { continuation ->
             val fileRef = FirebaseStorage.getInstance()
                 .getReference(if (!needEncrypt) "/user/$uid/" else "/files/").child(fileName)
-            Log.i("test", "start uploading $fileName to ${fileRef.path} myUid ${getMyUid(context)}")
+            val myUID = repository.getMyUID()!!
+            Log.i("test", "start uploading $fileName to ${fileRef.path} myUid $myUID")
             val localFile = File(getFilesDir(context), fileName)
-            val byteArray =
-                if (needEncrypt) encryptFile(localFile, uid!!, context) else localFile.readBytes()
+            val byteArray = if (needEncrypt)
+                repository.getCrypto().encryptFile(localFile, uid) else localFile.readBytes()
             if (byteArray == null) continuation.resumeWithException(Exception("not uploaded: can't read file $fileName"))
             fileRef.putBytes(byteArray!!).addOnSuccessListener {
                 Log.i("test", "uploaded $fileName")
@@ -250,12 +257,12 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
     }
 
     fun sendMessage(
-        text: String?,
-        replyId: String?,
-        image: String?,
-        audio: String?,
+        text: String? = null,
+        replyId: String? = null,
+        image: String? = null,
+        audio: String? = null,
         uid: String,
-        publicKey: String?,
+        publicKey: String? = null,
         initiator: Boolean = false
     ): String {
         val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
@@ -309,15 +316,16 @@ class FirebaseRepository @Inject constructor(val context: Context) : IFirebaseRe
 
     override fun signOut() {
         FirebaseAuth.getInstance().signOut()
-        setSetting<String>(context, UID, null)
+        repository.setSetting<String>(Setting.UID, null)
     }
 
-    override fun isSignedIn() = getSetting<String>(context, UID) != null && getUid() != null
+    override fun isSignedIn() =
+        repository.getSetting<String>(Setting.UID) != null && getUid() != null
 
 
     private fun saveUidAndToken(uid: String) {
-        setSetting(context, UID, uid)
-        setSetting(context, TOKEN, token)
+        repository.setSetting(Setting.UID, uid)
+        //setSetting(context, TOKEN, token)
     }
 
 

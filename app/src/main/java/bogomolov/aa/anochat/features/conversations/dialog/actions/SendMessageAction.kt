@@ -24,10 +24,10 @@ class SendMessageAction(
                 audio = audio,
                 image = image
             )
-            repository.saveMessage(message, conversation.id)
+            repository.saveMessage(message)
             val file = audio ?: image
             if (file == null || repository.uploadFile(file, conversation.user.uid, true)) {
-                repository.sendMessage(message)
+                repository.sendMessage(message, conversation.user.uid)
             }
         }
     }

@@ -24,7 +24,7 @@ class UserViewViewModel
 class LoadImagesAction(val id: Long) : UserAction<DefaultContext<UserUiState>> {
 
     override suspend fun execute(context: DefaultContext<UserUiState>) {
-        val pagedListLiveData = LivePagedListBuilder(context.repository.getImages(id), 10).build()
+        val pagedListLiveData = LivePagedListBuilder(context.repository.getImagesDataSource(id), 10).build()
         context.viewModel.setState { copy(pagedListLiveData = pagedListLiveData) }
     }
 }

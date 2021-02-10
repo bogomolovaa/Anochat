@@ -51,6 +51,7 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         super.onCreate(savedInstanceState)
         viewModel.addAction(InitConversationsAction())
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
+
     }
 
     override fun onCreateView(
@@ -58,7 +59,6 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         binding = DataBindingUtil.inflate(
             inflater,
             R.layout.fragment_conversations_list,

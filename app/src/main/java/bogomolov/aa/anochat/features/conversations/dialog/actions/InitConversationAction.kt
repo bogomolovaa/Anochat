@@ -3,10 +3,8 @@ package bogomolov.aa.anochat.features.conversations.dialog.actions
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.core.os.ConfigurationCompat
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationActionContext
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationViewModel
@@ -14,7 +12,6 @@ import bogomolov.aa.anochat.features.conversations.dialog.MessageView
 import bogomolov.aa.anochat.features.shared.UserAction
 import bogomolov.aa.anochat.repository.Repository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -71,14 +68,14 @@ class InitConversationAction(val conversationId: Long) : UserAction<Conversation
 
     @SuppressLint("SimpleDateFormat")
     private fun loadMessages() = LivePagedListBuilder(
-        repository.loadMessages(viewModel.currentState.conversation!!.id).mapByPage {
+        repository.loadMessagesDataSource(viewModel.currentState.conversation!!.id).mapByPage {
             val list: MutableList<MessageView> = ArrayList()
             if (it != null) {
                 var lastDay = -1
                 for ((i, message) in it.listIterator().withIndex()) {
                     if (!message.isMine() && message.viewed == 0)
                         viewModel.viewModelScope.launch(Dispatchers.IO) {
-                            repository.reportAsViewed(message)
+                            repository.sendReport(message.messageId, 1, 1)
                         }
                     val messageView = MessageView(message)
                     val day = GregorianCalendar().apply { time = Date(message.time) }

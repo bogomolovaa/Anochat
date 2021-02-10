@@ -11,7 +11,7 @@ data class Message(
     val conversationId: Long = 0L,
     val senderId: Long = 0L,
     var messageId: String = "",
-    val replyMessage: Message? = null,
+    var replyMessage: Message? = null,
     val image: String? = null,
     val audio: String? = null,
     var publicKey: String? = null,

@@ -10,7 +10,7 @@ class UpdateNameAction(val name: String) : DefaultUserAction<SettingsUiState>() 
         val user = context.viewModel.currentState.user
         if (user != null) {
             user.name = name
-            context.repository.updateUserTo(user)
+            context.repository.updateMyUser(user)
             context.viewModel.setState { copy(user = user) }
         }
     }

@@ -6,7 +6,7 @@ import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.repository.entity.*
 
-class ModelEntityMapper(private val context: Context) {
+class ModelEntityMapper(private val repository: Repository) {
 
     fun entityToModel(from: MessageEntity?): Message? =
         if (from != null)
@@ -60,7 +60,7 @@ class ModelEntityMapper(private val context: Context) {
             from.sent,
             from.received,
             from.viewed,
-            getMyUid(context)!!
+            repository.getMyUID()!!
         )
 
     fun entityToModel(from: UserEntity?): User? =
@@ -81,12 +81,12 @@ class ModelEntityMapper(private val context: Context) {
         else null
 
 
-    fun modelToEntity(from: Conversation) =
+    fun modelToEntity(from: Conversation, uid: String) =
         ConversationEntity(
             from.id,
             from.user.id,
             from.lastMessage?.id ?: 0,
-            getSetting(context, UID)!!
+            uid
         )
 
 

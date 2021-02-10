@@ -6,7 +6,7 @@ import bogomolov.aa.anochat.features.shared.DefaultUserAction
 import bogomolov.aa.anochat.repository.Setting
 import bogomolov.aa.anochat.repository.setSetting
 
-class UpdateSettingAction(private val setting: Setting, private val value: Boolean) :
+class UpdateSettingAction(private val setting: String, private val value: Boolean) :
     DefaultUserAction<SettingsUiState>() {
 
     override suspend fun execute(context: DefaultContext<SettingsUiState>) {
@@ -16,6 +16,7 @@ class UpdateSettingAction(private val setting: Setting, private val value: Boole
                 Setting.NOTIFICATIONS -> copy(notifications = value)
                 Setting.SOUND -> copy(sound = value)
                 Setting.VIBRATION -> copy(vibration = value)
+                else -> this
             }
         }
     }

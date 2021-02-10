@@ -2,9 +2,7 @@ package bogomolov.aa.anochat.repository
 
 import android.content.Context
 import android.util.Log
-import androidx.core.content.edit
 import androidx.paging.DataSource
-import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.domain.User
@@ -14,123 +12,110 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val TAG = "Repository"
+
 @Singleton
 class RepositoryImpl
 @Inject constructor(
     private val db: AppDatabase,
     private val firebase: FirebaseRepository,
     private val context: Context
-) :
-    Repository, IFirebaseRepository by firebase {
-    companion object {
-        private const val TAG = "Repository"
+) : Repository, IFirebaseRepository by firebase {
+
+    init {
+        firebase.setRepository(this)
     }
 
-    private val mapper = ModelEntityMapper(context)
+    private val mapper = ModelEntityMapper(this)
+    private val crypto = Crypto(this)
+
+    override fun getCrypto() = crypto
 
     override fun getContext() = context
-
-    override suspend fun reportAsViewed(message: Message) {
-        firebase.sendReport(message.messageId, 1, 1)
-        db.messageDao().updateAsViewed(message.id)
-    }
 
     override suspend fun getConversation(id: Long): Conversation =
         mapper.entityToModel(db.conversationDao().loadConversation(id))!!
 
     override suspend fun sendPublicKey(uid: String, initiator: Boolean) {
-        val myUid = getMyUid(context)!!
-        val sentSettingName = getSentSettingName(myUid, uid)
-        val isSent = getSetting<Boolean>(context, sentSettingName)!!
+        val sentSettingName = getSentSettingName(uid)
+        val isSent: Boolean = getSetting<Boolean>(sentSettingName) ?: false
         if (!isSent) {
-            Log.i("test", "sendKey $uid")
-            setSetting(context, sentSettingName, true)
-            val keyPair = createKeyPair()
-            val publicKeyByteArray = keyPair?.public?.encoded
-            val privateKey = keyPair?.private
-            if (publicKeyByteArray != null && privateKey != null) {
-                saveKey(getPrivateKeyName(myUid, uid), privateKey, context)
-                val publicKey = byteArrayToBase64(publicKeyByteArray)
-                firebase.sendMessage(
-                    null,
-                    null,
-                    null,
-                    null,
-                    uid,
-                    publicKey,
-                    initiator
-                )
+            val publicKey = crypto.generatePublicKey(uid)
+            if (publicKey != null) {
+                firebase.sendMessage(uid = uid, publicKey = publicKey, initiator = initiator)
+                setSetting(sentSettingName, true)
+                Log.i(TAG, "send publicKey for $uid")
             } else {
-                Log.i(TAG, "null keyPair")
+                Log.i(TAG, "publicKey not generated for $uid")
             }
         }
     }
 
-    override suspend fun getPendingMessages(uid: String): List<Message> {
-        val myUid = getMyUid(context)!!
+    override suspend fun sendMessage(message: Message, uid: String) {
+        Log.i("test", "sendMessage message")
+        val secretKey = crypto.getSecretKey(uid)
+        if (secretKey != null) {
+            val text = crypto.encryptString(secretKey, message.text)
+            message.messageId = firebase.sendMessage(
+                text,
+                message.replyMessage?.messageId,
+                message.image,
+                message.audio,
+                uid
+            )
+            db.messageDao().updateMessageIdAndSent(message.id, message.messageId)
+        } else {
+            sendPublicKey(uid, true)
+        }
+    }
+
+    override suspend fun sendPendingMessages(uid: String) {
+        for (message in getPendingMessages(uid)) sendMessage(message, uid)
+    }
+
+    private fun getPendingMessages(uid: String): List<Message> {
+        val myUid = getMyUID()!!
         val userId = db.userDao().findByUid(uid)?.id
         return if (userId != null)
             mapper.entityToModel(db.messageDao().getNotSent(userId, myUid))
         else listOf()
     }
 
-    override suspend fun sendMessage(message: Message) {
-        Log.i("test", "sendMessage message")
-        val conversation = getConversation(message.conversationId)
-        val myUid = getMyUid(context)!!
-        val secretKey = getSecretKey(myUid, conversation.user.uid, context)
-        if (secretKey != null) {
-            val text = encryptString(secretKey, message.text)
-            message.messageId = firebase.sendMessage(
-                text,
-                message.replyMessage?.messageId,
-                message.image,
-                message.audio,
-                conversation.user.uid,
-                null
-            )
-            db.messageDao().updateMessageIdAndSent(message.id, message.messageId, 1)
-        } else {
-            sendPublicKey(conversation.user.uid, true)
-        }
-    }
-
-    override suspend fun saveMessage(message: Message, conversationId: Long) {
+    override suspend fun saveMessage(message: Message) {
         val entity = mapper.modelToEntity(message)
         message.id = db.messageDao().insert(entity)
-        Log.i("test", "save message $entity")
-        db.conversationDao().updateLastMessage(message.id, conversationId)
+        Log.i(TAG, "save message $entity")
+        db.conversationDao().updateLastMessage(message.id, message.conversationId)
     }
 
-    override fun receiveReport(messageId: String, received: Int, viewed: Int) {
-        Log.i("test", "receiveReport received $received viewed $viewed")
+    override suspend fun receiveReport(messageId: String, received: Int, viewed: Int) {
+        Log.i(TAG, "receiveReport received $received viewed $viewed")
         db.messageDao().updateReport(messageId, received, viewed)
+        if (received != 0) firebase.deleteRemoteMessage(messageId)
     }
 
     override suspend fun receiveMessage(
-        text: String?,
+        text: String,
         uid: String,
         messageId: String,
         replyId: String?,
         image: String?,
         audio: String?
-    ): Message? {
-        Log.i("test", "receiveMessage $messageId $text replyId $replyId")
+    ): Message {
+        Log.i(TAG, "receiveMessage $messageId $text replyId $replyId")
         val conversationEntity = getOrAddConversation(uid)
-        val secretKey = getSecretKey(getMyUid(context)!!, uid, context)!!
         val message = Message(
-            text = text ?: "",
             time = System.currentTimeMillis(),
             conversationId = conversationEntity.id,
             senderId = conversationEntity.userId,
             messageId = messageId,
-            replyMessage = if (!replyId.isNullOrEmpty())
-                mapper.entityToModel(db.messageDao().getByMessageId(replyId)) else null,
             image = image,
             audio = audio
         )
-        if (message.text.isNotEmpty()) message.text = decryptString(secretKey, message.text)
-        saveMessage(message, conversationEntity.id)
+        if (message.text.isNotEmpty()) message.text = crypto.decryptString(text, uid)
+        if (!replyId.isNullOrEmpty()) message.replyMessage =
+            mapper.entityToModel(db.messageDao().getByMessageId(replyId))
+        saveMessage(message)
         firebase.sendReport(messageId, 1, 0)
         if (message.image != null)
             firebase.downloadFile(message.image, uid, true)
@@ -139,63 +124,69 @@ class RepositoryImpl
         return message
     }
 
-    override fun getImages(userId: Long) = db.messageDao().getImages(userId)
+    override fun getImagesDataSource(userId: Long) = db.messageDao().getImages(userId)
 
-    override suspend fun getUser(uid: String, save: Boolean): User? {
-        var user = mapper.entityToModel(db.userDao().findByUid(uid))
-        if (user == null && save) {
-            user = firebase.getUser(uid)
-            updateUserFrom(user = user!!, saveLocal = true)
+    override suspend fun getMyUser(): User {
+        val myUid = getMyUID()!!
+        var user = mapper.entityToModel(db.userDao().findByUid(myUid))
+        if (user == null) {
+            user = receiveUser(myUid)
+            syncFromRemoteUser(user!!, saveLocal = true, loadFullPhoto = true)
         }
         return user
     }
 
-    override suspend fun receiveUser(uid: String): User? = firebase.getUser(uid)
-
-    override suspend fun getUser(id: Long): User = mapper.entityToModel(db.userDao().getUser(id))!!
-
-    override suspend fun updateUserTo(user: User) {
+    override suspend fun updateMyUser(user: User) {
         val savedUser = db.userDao().getUser(user.id)
         if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
         if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
         if (user.photo != null && user.photo != savedUser.photo)
-            firebase.updatePhoto(user.uid, user.photo!!)
+            firebase.updatePhoto(user.uid, user.photo)
         db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
     }
 
-    override suspend fun loadConversations(): List<Conversation> {
-        val myUid = getSetting<String>(context, UID)
-        if (myUid == null) return listOf()
-        return mapper.entityToModel(db.conversationDao().loadAllConversations(myUid))
-    }
+    override suspend fun getUser(id: Long): User = mapper.entityToModel(db.userDao().getUser(id))!!
 
-    private suspend fun loadPhoto(user: User, loadFullPhoto: Boolean) {
-        val photo = user.photo!!
-        val miniPhoto = getMiniPhotoFileName(context, photo)
-        if (loadFullPhoto && !File(getFilesDir(context), photo).exists())
-            firebase.downloadFile(photo, user.uid)
-        if (!File(getFilesDir(context), miniPhoto).exists())
-            firebase.downloadFile(miniPhoto, user.uid)
-    }
+    override suspend fun receiveUser(uid: String): User? = firebase.getUser(uid)
 
-    override suspend fun updateUserFrom(user: User, saveLocal: Boolean) {
-        val savedUser =
-            if (user.id != 0L) db.userDao().getUser(user.id) else db.userDao().findByUid(user.uid)
+    override suspend fun syncFromRemoteUser(
+        user: User,
+        saveLocal: Boolean,
+        loadFullPhoto: Boolean
+    ) {
+        val savedUser = db.userDao().findByUid(user.uid)
         if (savedUser != null) {
-            if ((user.photo != savedUser.photo && user.photo != null)) loadPhoto(user, true)
             db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
+            if ((user.photo != savedUser.photo && user.photo != null)) {
+                if (loadFullPhoto) downloadPhoto(user.photo, user.uid)
+                downloadMiniPhoto(user.photo, user.uid)
+            }
         } else {
             if (saveLocal) user.id = db.userDao().add(mapper.modelToEntity(user))
-            if (user.photo != null) loadPhoto(user, saveLocal)
+            if (user.photo != null) {
+                if (loadFullPhoto) downloadPhoto(user.photo, user.uid)
+                downloadMiniPhoto(user.photo, user.uid)
+            }
         }
     }
 
+    private suspend fun downloadPhoto(photo: String, uid: String) {
+        if (!File(getFilesDir(context), photo).exists())
+            firebase.downloadFile(photo, uid)
+    }
+
+    private suspend fun downloadMiniPhoto(photo: String, uid: String) {
+        val miniPhoto = getMiniPhotoFileName(context, photo)
+        if (!File(getFilesDir(context), miniPhoto).exists())
+            firebase.downloadFile(miniPhoto, uid)
+    }
+
     private suspend fun getOrAddConversation(uid: String): ConversationEntity {
-        val myUid = getSetting<String>(context, UID)!!
+        val myUid = getMyUID()!!
         val userEntity = db.userDao().findByUid(uid)
         val userId = if (userEntity == null) {
             val user = receiveUser(uid)
-            if (user != null) updateUserFrom(user, true)
+            if (user != null) syncFromRemoteUser(user, saveLocal = true, loadFullPhoto = true)
             user?.id ?: 0L
         } else {
             userEntity.id
@@ -208,32 +199,35 @@ class RepositoryImpl
         return conversationEntity
     }
 
-
-    override fun loadMessages(conversationId: Long): DataSource.Factory<Int, Message> =
+    override fun loadMessagesDataSource(conversationId: Long): DataSource.Factory<Int, Message> =
         db.messageDao().loadAll(conversationId).map {
             mapper.entityToModel(it)
         }
 
+    override suspend fun loadAllConversations(): List<Conversation> {
+        val myUid = getMyUID()
+        return if (myUid == null) listOf()
+        else mapper.entityToModel(db.conversationDao().loadAllConversations(myUid))
+    }
+
     override fun loadConversationsDataSource(): DataSource.Factory<Int, Conversation> {
-        val myUid = getSetting<String>(context, UID) ?: ""
+        val myUid = getMyUID() ?: ""
         return db.conversationDao().loadConversations(myUid).map {
             mapper.entityToModel(it)
         }
     }
 
-    override suspend fun getConversation(user: User): Long =
-        getOrAddConversation(user.uid).id
-
+    override suspend fun getConversation(user: User) = getOrAddConversation(user.uid).id
 
     override fun searchMessagesDataSource(search: String): DataSource.Factory<Int, Conversation> {
-        val myUid = getSetting<String>(context, UID)!!
+        val myUid = getMyUID()!!
         return db.messageDao().searchText("%$search%", myUid).map {
             mapper.entityToModel(it)
         }
     }
 
-    override fun getUsersByPhones(phones: List<String>): DataSource.Factory<Int, User> {
-        val myUid = getSetting<String>(context, UID)!!
+    override fun getUsersByPhonesDataSource(phones: List<String>): DataSource.Factory<Int, User> {
+        val myUid = getMyUID()!!
         return db.userDao().getAll(phones, myUid).map {
             mapper.entityToModel(it)
         }
@@ -252,5 +246,4 @@ class RepositoryImpl
         db.messageDao().deleteByConversationIds(ids)
         db.conversationDao().deleteByIds(ids)
     }
-
 }

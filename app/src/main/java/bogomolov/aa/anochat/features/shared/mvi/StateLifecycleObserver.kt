@@ -26,11 +26,11 @@ class StateLifecycleObserver<S : UiState, V : ActionContext>(
                 uiState = it
             }
         }
+    }
 
-        @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-        fun onStop() {
-            updatingJob.cancel()
-        }
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    fun onStop() {
+        updatingJob.cancel()
     }
 }
 
