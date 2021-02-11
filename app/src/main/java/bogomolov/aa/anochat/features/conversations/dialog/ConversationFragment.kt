@@ -153,7 +153,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
                 startPostponedEnterTransition()
             }
         }
-
     }
 
     private fun setupUserInput(view: View) {
@@ -212,7 +211,9 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
 
         val actionsMap = HashMap<Int, (Set<Long>, Set<MessageView>) -> Unit>()
         actionsMap[R.id.delete_messages_action] =
-            { ids, items -> viewModel.addAction(DeleteMessagesAction(ids)) }
+            { _, items ->
+                viewModel.addAction(DeleteMessagesAction(items.map { it.message.id }.toSet()))
+            }
         actionsMap[R.id.reply_message_action] = { ids, items ->
             val message = items.iterator().next()
             onReply(message.message)

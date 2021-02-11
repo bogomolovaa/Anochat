@@ -1,8 +1,9 @@
 package bogomolov.aa.anochat.features.settings
 
 import bogomolov.aa.anochat.domain.User
-import bogomolov.aa.anochat.features.shared.*
-import bogomolov.aa.anochat.repository.*
+import bogomolov.aa.anochat.features.shared.RepositoryBaseViewModel
+import bogomolov.aa.anochat.features.shared.UiState
+import bogomolov.aa.anochat.repository.Repository
 import javax.inject.Inject
 
 data class SettingsUiState(

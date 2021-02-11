@@ -12,6 +12,7 @@ import bogomolov.aa.anochat.features.conversations.dialog.MessageView
 import bogomolov.aa.anochat.features.shared.UserAction
 import bogomolov.aa.anochat.repository.Repository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -20,8 +21,6 @@ import kotlin.collections.ArrayList
 private const val ONLINE_STATUS = "online"
 
 class InitConversationAction(val conversationId: Long) : UserAction<ConversationActionContext> {
-    private var userOnline = false
-    private var lastTimeOnline = 0L
     private lateinit var viewModel: ConversationViewModel
     private lateinit var repository: Repository
     private lateinit var context: ConversationActionContext
@@ -37,46 +36,35 @@ class InitConversationAction(val conversationId: Long) : UserAction<Conversation
         Log.i("InitConversationAction", "initConversation conversationId $conversationId")
         val conversation = repository.getConversation(conversationId)
         viewModel.setState { copy(conversation = conversation) }
-        val pagedListLiveData = loadMessages()
+        val pagedListLiveData = loadMessages(conversation)
         viewModel.setState { copy(pagedListLiveData = pagedListLiveData) }
-        subscribeToOnlineStatus(conversation)
+        subscribeToOnlineStatus(conversation.user.uid)
     }
 
-    private suspend fun subscribeToOnlineStatus(conversation: Conversation) {
-        context.removeStatusListener =
-            repository.addUserStatusListener(
-                uid = conversation.user.uid,
-                isOnline = { online ->
-                    userOnline = online
-                    if (online) {
-                        viewModel.setStateAsync { copy(onlineStatus = ONLINE_STATUS) }
-                    } else {
-                        if (lastTimeOnline > 0) setLastSeen()
-                    }
-                },
-                lastTimeOnline = { lastTime ->
-                    lastTimeOnline = lastTime
-                    if (lastTime > 0 && !userOnline) setLastSeen()
-                })
+    private fun subscribeToOnlineStatus(uid: String) {
+        val flow = repository.addUserStatusListener(uid, viewModel.viewModelScope)
+        viewModel.viewModelScope.launch(Dispatchers.IO) {
+            flow.collect {
+                val online = it.first
+                val lastSeenTime = it.second
+                val status = if (online) ONLINE_STATUS else timeToString(lastSeenTime)
+                viewModel.setState { copy(onlineStatus = status) }
+            }
+        }
     }
 
     @SuppressLint("SimpleDateFormat")
-    private fun setLastSeen() {
-        val time = SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(lastTimeOnline))
-        viewModel.setStateAsync { copy(onlineStatus = time) }
+    private fun timeToString(lastTimeOnline: Long): String {
+        return SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(lastTimeOnline))
     }
 
     @SuppressLint("SimpleDateFormat")
-    private fun loadMessages() = LivePagedListBuilder(
-        repository.loadMessagesDataSource(viewModel.currentState.conversation!!.id).mapByPage {
+    private fun loadMessages(conversation: Conversation) = LivePagedListBuilder(
+        repository.loadMessagesDataSource(conversation.id, viewModel.viewModelScope).mapByPage {
             val list: MutableList<MessageView> = ArrayList()
             if (it != null) {
                 var lastDay = -1
                 for ((i, message) in it.listIterator().withIndex()) {
-                    if (!message.isMine() && message.viewed == 0)
-                        viewModel.viewModelScope.launch(Dispatchers.IO) {
-                            repository.sendReport(message.messageId, 1, 1)
-                        }
                     val messageView = MessageView(message)
                     val day = GregorianCalendar().apply { time = Date(message.time) }
                         .get(Calendar.DAY_OF_YEAR)

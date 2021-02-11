@@ -14,8 +14,8 @@ import androidx.navigation.Navigation
 import androidx.navigation.fragment.FragmentNavigator
 import androidx.paging.PagedListAdapter
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
+import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.repository.getFilesDir
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.AdapterSelectable
@@ -25,7 +25,7 @@ class MessagesPagedAdapter(
     private val activity: Activity,
     private val onReply: (Message) -> Unit,
     private val helper: AdapterHelper<MessageView, MessageLayoutBinding> = AdapterHelper(),
-    private val setRecyclerViewState: () -> Unit
+    private val setRecyclerViewState: () -> Unit,
 ) :
     PagedListAdapter<MessageView, AdapterHelper<MessageView, MessageLayoutBinding>.VH>(
         helper.DIFF_CALLBACK
@@ -120,17 +120,17 @@ class MessagesPagedAdapter(
                         velocityY: Float
                     ): Boolean {
 
-                      val displayMetrics = DisplayMetrics()
-                      activity.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-                      val length = displayMetrics.widthPixels.toFloat()
+                        val displayMetrics = DisplayMetrics()
+                        activity.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+                        val length = displayMetrics.widthPixels.toFloat()
 
-                      binding.messageCardView.animate().translationX(length).setDuration(500)
-                          .setListener(object : AnimatorListenerAdapter() {
-                              override fun onAnimationEnd(var1: Animator) {
-                                  binding.messageCardView.translationX = 0f
-                                  onReply(item.message)
-                              }
-                          }).setInterpolator(AccelerateInterpolator()).start()
+                        binding.messageCardView.animate().translationX(length).setDuration(500)
+                            .setListener(object : AnimatorListenerAdapter() {
+                                override fun onAnimationEnd(var1: Animator) {
+                                    binding.messageCardView.translationX = 0f
+                                    onReply(item.message)
+                                }
+                            }).setInterpolator(AccelerateInterpolator()).start()
 
                         return true
                     }

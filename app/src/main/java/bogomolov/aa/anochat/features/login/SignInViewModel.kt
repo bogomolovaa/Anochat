@@ -1,6 +1,9 @@
 package bogomolov.aa.anochat.features.login
 
-import bogomolov.aa.anochat.features.shared.*
+import bogomolov.aa.anochat.features.shared.DefaultContext
+import bogomolov.aa.anochat.features.shared.RepositoryBaseViewModel
+import bogomolov.aa.anochat.features.shared.UiState
+import bogomolov.aa.anochat.features.shared.UserAction
 import bogomolov.aa.anochat.repository.Repository
 import com.google.firebase.auth.PhoneAuthCredential
 import javax.inject.Inject

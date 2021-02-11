@@ -3,13 +3,13 @@ package bogomolov.aa.anochat.features.contacts.user
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnPreDraw
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
@@ -18,7 +18,6 @@ import androidx.navigation.fragment.FragmentNavigator
 import androidx.navigation.ui.NavigationUI
 import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
-
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUserViewBinding

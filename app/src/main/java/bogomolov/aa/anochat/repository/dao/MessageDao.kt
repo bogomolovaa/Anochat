@@ -1,7 +1,10 @@
 package bogomolov.aa.anochat.repository.dao
 
 import androidx.paging.DataSource
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Transaction
 import bogomolov.aa.anochat.repository.entity.ConversationJoined
 import bogomolov.aa.anochat.repository.entity.MessageEntity
 import bogomolov.aa.anochat.repository.entity.MessageJoined
@@ -28,7 +31,7 @@ interface MessageDao {
                 "r.id as reply_id, r.text as reply_text, r.time as reply_time, r.conversationId as reply_conversationId, r.senderId as reply_senderId, " +
                 "r.messageId as reply_messageId, r.replyMessageId as reply_replyMessageId, r.image as reply_image, r.audio as reply_audio, r.publicKey as reply_publicKey, r.sent as reply_sent, r.received as reply_received, r.viewed as reply_viewed, r.myUid as reply_myUid " +
                 "FROM MessageEntity as m " +
-                "LEFT JOIN MessageEntity as r ON (m.replyMessageId = r.messageId and m.conversationId = r.conversationId) where m.conversationId = :conversationId"
+                "LEFT JOIN MessageEntity as r ON (m.replyMessageId = r.messageId and m.conversationId = r.conversationId) where m.conversationId = :conversationId order by m.time"
     )
     fun loadAll(conversationId: Long): DataSource.Factory<Int, MessageJoined>
 
@@ -56,5 +59,7 @@ interface MessageDao {
     @Query("select * from MessageEntity where myUid = :myUid and sent = 0 and conversationId in (select id from ConversationEntity where userId = :userId)")
     fun getNotSent(userId: Long, myUid: String): List<MessageEntity>
 
+    @Query("update MessageEntity set viewed = 1 where id in (:ids)")
+    fun updateAsViewed(ids: List<Long>)
 
 }

@@ -2,7 +2,6 @@ package bogomolov.aa.anochat.features.conversations.dialog.actions
 
 import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationActionContext
-import bogomolov.aa.anochat.features.conversations.dialog.ConversationViewModel
 import bogomolov.aa.anochat.features.shared.UserAction
 
 class SendMessageAction(
@@ -14,7 +13,6 @@ class SendMessageAction(
 
     override suspend fun execute(context: ConversationActionContext) {
         val conversation = context.viewModel.currentState.conversation
-        val repository = context.repository
         if (conversation != null) {
             val message = Message(
                 text = text ?: "",
@@ -24,11 +22,7 @@ class SendMessageAction(
                 audio = audio,
                 image = image
             )
-            repository.saveMessage(message)
-            val file = audio ?: image
-            if (file == null || repository.uploadFile(file, conversation.user.uid, true)) {
-                repository.sendMessage(message, conversation.user.uid)
-            }
+            context.repository.sendMessage(message, conversation.user.uid)
         }
     }
 }

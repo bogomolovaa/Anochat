@@ -2,18 +2,17 @@ package bogomolov.aa.anochat.features.conversations
 
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
-import android.media.AudioManager
-import bogomolov.aa.anochat.R
-
 import android.app.NotificationManager
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.navigation.NavDeepLinkBuilder
 import bogomolov.aa.anochat.AnochatAplication
+import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.repository.*
@@ -23,7 +22,10 @@ import dagger.android.AndroidInjection
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val TYPE_MESSAGE = "message"
@@ -78,30 +80,18 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         }
     }
 
-    private suspend fun receiveAndSendPublicKey(publicKey: String?, uid: String?) {
+    private fun receiveAndSendPublicKey(publicKey: String?, uid: String?) {
         if (uid != null && publicKey != null) {
             repository.sendPublicKey(uid, false)
-            generateSecretKey(publicKey, uid)
+            repository.generateSecretKey(publicKey, uid)
         }
     }
 
     private suspend fun finallyReceivePublicKey(publicKey: String?, uid: String?) {
         if (uid != null && publicKey != null) {
-            val generated = generateSecretKey(publicKey, uid)
+            val generated = repository.generateSecretKey(publicKey, uid)
             if (generated) repository.sendPendingMessages(uid)
         }
-    }
-
-    private fun generateSecretKey(publicKey: String, uid: String): Boolean {
-        val generated = repository.getCrypto().generateSecretKey(publicKey, uid)
-        if (generated) {
-            Log.i(TAG, "secret key generated, send messages")
-            val sentSettingName = repository.getSentSettingName(uid)
-            repository.setSetting(sentSettingName, false)
-        } else {
-            Log.i(TAG, "secret key not generated: privateKey null")
-        }
-        return generated
     }
 
     private suspend fun receiveMessage(data: Map<String, String>) {
@@ -114,40 +104,32 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         val messageId = data["messageId"]
         val uid = data["source"]
         if (uid != null && messageId != null) {
-            Log.i("test", "receiveMessage")
-            val secretKey = repository.getCrypto().getSecretKey(uid)
-            if (secretKey == null) {
-                Log.i("test", "not received message: null secretKey")
-                repository.sendReport(messageId, -1, 0)
-                repository.sendPublicKey(uid, true)
-            } else {
-                val message = repository.receiveMessage(text, uid, messageId, replyId, image, audio)
-                if (message != null) {
-                    val inBackground =
-                        (application as AnochatAplication).inBackground
-                    val showNotification =
-                        repository.getSetting<Boolean>(Setting.NOTIFICATIONS) != null
-                    if (inBackground && showNotification)
-                        sendNotification(message, repository)
-                }
+            val message = repository.receiveMessage(text, uid, messageId, replyId, image, audio)
+            if (message != null) {
+                val inBackground =
+                    (application as AnochatAplication).inBackground
+                val showNotification =
+                    repository.getSetting<Boolean>(Setting.NOTIFICATIONS) != null
+                if (inBackground && showNotification)
+                    sendNotification(message, repository)
             }
         }
     }
 
-    private suspend fun receiveReport(messageId: String?, received: Int, viewed: Int) {
+    private fun receiveReport(messageId: String?, received: Int, viewed: Int) {
         if (messageId != null) repository.receiveReport(messageId, received, viewed)
     }
 
-    private suspend fun sendNotification(message: Message, repository: Repository) {
-        val context = repository.getContext()
+    private fun sendNotification(message: Message, repository: Repository) {
+        val context = applicationContext
         val conversation = repository.getConversation(message.conversationId)
         val bitmap = if (conversation.user.photo != null)
             BitmapFactory.decodeFile(
-                getFilePath(context, getMiniPhotoFileName(context, conversation.user.photo!!))
+                getFilePath(context, getMiniPhotoFileName(context, conversation.user.photo))
             )
         else
             BitmapFactory.decodeResource(context.resources, R.drawable.user_icon)
-        val pendingIntent = NavDeepLinkBuilder(repository.getContext())
+        val pendingIntent = NavDeepLinkBuilder(context)
             .setComponentName(MainActivity::class.java)
             .setGraph(R.navigation.nav_graph)
             .setDestination(R.id.conversationFragment)

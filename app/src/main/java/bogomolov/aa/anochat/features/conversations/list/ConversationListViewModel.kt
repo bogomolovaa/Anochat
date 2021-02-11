@@ -1,13 +1,15 @@
 package bogomolov.aa.anochat.features.conversations.list
 
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
-import bogomolov.aa.anochat.features.shared.*
+import bogomolov.aa.anochat.features.shared.DefaultContext
+import bogomolov.aa.anochat.features.shared.RepositoryBaseViewModel
+import bogomolov.aa.anochat.features.shared.UiState
+import bogomolov.aa.anochat.features.shared.UserAction
 import bogomolov.aa.anochat.repository.Repository
 import javax.inject.Inject
-import kotlin.collections.HashSet
 
 data class ConversationsUiState(
     val pagedListLiveData: LiveData<PagedList<Conversation>>? = null

@@ -25,9 +25,9 @@ import androidx.navigation.ui.NavigationUI
 import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
+import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.UpdatableView
 import bogomolov.aa.anochat.view.adapters.AdapterHelper

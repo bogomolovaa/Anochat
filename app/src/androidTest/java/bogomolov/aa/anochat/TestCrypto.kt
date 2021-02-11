@@ -1,12 +1,6 @@
 package bogomolov.aa.anochat
 
-import android.util.Log
-import bogomolov.aa.anochat.features.conversations.*
 import org.junit.Test
-
-import org.junit.Assert.*
-import java.security.PrivateKey
-import javax.crypto.SecretKey
 
 class TestCrypto {
     @Test

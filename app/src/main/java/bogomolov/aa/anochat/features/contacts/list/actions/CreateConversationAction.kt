@@ -9,7 +9,7 @@ class CreateConversationAction(val user: User) :
     UserAction<UsersActionContext> {
 
     override suspend fun execute(context: UsersActionContext) {
-        val conversationId = context.repository.getConversation(user)
+        val conversationId = context.repository.createConversation(user)
         context.viewModel.setState { copy(conversationId = conversationId) }
     }
 }

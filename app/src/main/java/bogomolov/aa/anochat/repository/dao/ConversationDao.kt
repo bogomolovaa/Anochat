@@ -1,7 +1,10 @@
 package bogomolov.aa.anochat.repository.dao
 
 import androidx.paging.DataSource
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Transaction
 import bogomolov.aa.anochat.repository.entity.ConversationEntity
 import bogomolov.aa.anochat.repository.entity.ConversationJoined
 

@@ -2,24 +2,18 @@ package bogomolov.aa.anochat.features.conversations.search
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.ImageView
-import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
-import androidx.fragment.app.Fragment
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
-import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
-
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentMessageSearchBinding
 import bogomolov.aa.anochat.features.conversations.list.ConversationsPagedAdapter

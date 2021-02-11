@@ -4,14 +4,13 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Point
-import androidx.transition.TransitionInflater
 import android.os.Bundle
 import android.view.*
-import androidx.fragment.app.Fragment
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
-
+import androidx.transition.TransitionInflater
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentImageViewBinding
 import bogomolov.aa.anochat.features.main.MainActivity

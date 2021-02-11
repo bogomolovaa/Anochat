@@ -77,7 +77,6 @@ class Crypto(private val repository: Repository) {
     }
 
 
-
     private fun createKeyPair(): KeyPair? {
         try {
             //Generate params
@@ -119,7 +118,7 @@ class Crypto(private val repository: Repository) {
         return if (array != null) deserializeKey<T>(array) else null
     }
 
-    private fun getPrivateKey(myUid: String, uid: String) : PrivateKey? =
+    private fun getPrivateKey(myUid: String, uid: String): PrivateKey? =
         getKey(getPrivateKeyName(myUid, uid))
 
     private fun getSecretKeyName(uid1: String, uid2: String) = "${uid1}${uid2}_secret"
@@ -189,8 +188,12 @@ class Crypto(private val repository: Repository) {
         return key
     }
 
-    fun byteArrayToBase64(array: ByteArray): String =
-        android.util.Base64.encodeToString(array, DEFAULT)
+    companion object {
 
-    fun base64ToByteArray(string: String): ByteArray = android.util.Base64.decode(string, DEFAULT)
+        fun byteArrayToBase64(array: ByteArray): String =
+            android.util.Base64.encodeToString(array, DEFAULT)
+
+        fun base64ToByteArray(string: String): ByteArray =
+            android.util.Base64.decode(string, DEFAULT)
+    }
 }

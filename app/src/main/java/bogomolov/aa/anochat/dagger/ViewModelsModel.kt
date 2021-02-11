@@ -2,11 +2,10 @@ package bogomolov.aa.anochat.dagger
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import bogomolov.aa.anochat.features.main.MainActivityViewModel
-import bogomolov.aa.anochat.features.contacts.user.UserViewViewModel
 import bogomolov.aa.anochat.features.contacts.list.UsersViewModel
-import bogomolov.aa.anochat.features.conversations.list.ConversationListViewModel
+import bogomolov.aa.anochat.features.contacts.user.UserViewViewModel
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationViewModel
+import bogomolov.aa.anochat.features.conversations.list.ConversationListViewModel
 import bogomolov.aa.anochat.features.conversations.search.MessageSearchViewModel
 import bogomolov.aa.anochat.features.login.SignInViewModel
 import bogomolov.aa.anochat.features.settings.SettingsViewModel
@@ -26,11 +25,6 @@ abstract class ViewModelsModule {
     @IntoMap
     @ViewModelKey(ConversationListViewModel::class)
     abstract fun bindConversationListViewModel(conversationListViewModel: ConversationListViewModel): ViewModel
-
-    @Binds
-    @IntoMap
-    @ViewModelKey(MainActivityViewModel::class)
-    abstract fun bindMainActivityViewModel(mainActivityViewModel: MainActivityViewModel): ViewModel
 
     @Binds
     @IntoMap

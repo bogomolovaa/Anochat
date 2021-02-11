@@ -4,8 +4,8 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.databinding.UserLayoutBinding
+import bogomolov.aa.anochat.domain.User
 
 class UsersAdapter(private val helper: AdapterHelper<User, UserLayoutBinding> = AdapterHelper()) :
     PagedListAdapter<User, AdapterHelper<User, UserLayoutBinding>.VH>(helper.DIFF_CALLBACK),

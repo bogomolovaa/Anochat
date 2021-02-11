@@ -2,7 +2,7 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.os.Parcelable
 import android.util.Log
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.features.shared.ActionContext
@@ -12,7 +12,6 @@ import bogomolov.aa.anochat.repository.Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.inject.Inject
 
 
@@ -26,7 +25,6 @@ data class DialogUiState(
 data class ConversationActionContext(
     val viewModel: ConversationViewModel,
     val repository: Repository,
-    var removeStatusListener: (() -> Unit)? = null
 ) : ActionContext
 
 class ConversationViewModel
@@ -34,15 +32,13 @@ class ConversationViewModel
     BaseViewModel<DialogUiState, ConversationActionContext>() {
 
     override fun createInitialState() = DialogUiState()
-    override fun createViewModelContext() = ConversationActionContext(this,repository)
+    override fun createViewModelContext() = ConversationActionContext(this, repository)
 
     override fun onCleared() {
         super.onCleared()
         GlobalScope.launch(Dispatchers.IO) {
-            Log.i("ConversationViewModel","delete conversation ${currentState.conversation}")
             if (currentState.conversation != null)
                 repository.deleteConversationIfNoMessages(currentState.conversation!!.id)
-            viewModelContext.removeStatusListener?.invoke()
         }
     }
 }

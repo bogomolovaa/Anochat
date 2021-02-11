@@ -2,7 +2,6 @@ package bogomolov.aa.anochat.features.contacts.list
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -17,9 +16,9 @@ import androidx.navigation.ui.NavigationUI
 import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
+import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.features.contacts.list.actions.CreateConversationAction
 import bogomolov.aa.anochat.features.contacts.list.actions.LoadContactsAction
 import bogomolov.aa.anochat.features.contacts.list.actions.SearchAction

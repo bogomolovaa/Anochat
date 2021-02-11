@@ -11,8 +11,7 @@ class SearchAction(private val query: String) : UserAction<UsersActionContext> {
             val searchedUsers = context.usersList?.filter { it.name.startsWith(query) }
             context.viewModel.setState { copy(searchedUsers = searchedUsers) }
         } else {
-            val searchedUsers = context.repository.findByPhone(query)
-            for (user in searchedUsers) context.repository.syncFromRemoteUser(user, saveLocal = false, loadFullPhoto = false)
+            val searchedUsers = context.repository.searchByPhone(query)
             context.viewModel.setState { copy(searchedUsers = searchedUsers) }
         }
     }

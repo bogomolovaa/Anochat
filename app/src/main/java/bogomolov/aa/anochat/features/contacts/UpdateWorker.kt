@@ -13,14 +13,10 @@ class UpdateWorker(
 ) : Worker(appContext, workerParams) {
 
     override fun doWork(): Result {
-        runBlocking {
-            val conversations = repository.loadAllConversations()
-            for (conversation in conversations) {
-                val user = repository.receiveUser(conversation.user.uid)
-                if (user != null) repository.syncFromRemoteUser(user, saveLocal = true, loadFullPhoto = true)
-            }
-        }
+        runBlocking { repository.updateUsersInConversations() }
         return Result.success()
     }
+
+
 
 }

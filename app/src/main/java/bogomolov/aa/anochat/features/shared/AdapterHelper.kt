@@ -1,8 +1,10 @@
 package bogomolov.aa.anochat.view.adapters
 
 import android.annotation.SuppressLint
-import android.util.Log
-import android.view.*
+import android.view.ActionMode
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
