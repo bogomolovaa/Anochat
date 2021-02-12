@@ -164,7 +164,7 @@
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/reply_layout"
-                        tools:srcCompat="@drawable/s5"
+                        tools:srcCompat="@android:drawable/ic_media_ff"
                         tools:visibility="visible" />
 
                     <com.vanniktech.emoji.EmojiTextView

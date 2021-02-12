@@ -2,7 +2,7 @@ package bogomolov.aa.anochat.features.contacts.list.actions
 
 import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.features.contacts.list.UsersActionContext
-import bogomolov.aa.anochat.features.shared.UserAction
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
 
 
 class CreateConversationAction(val user: User) :

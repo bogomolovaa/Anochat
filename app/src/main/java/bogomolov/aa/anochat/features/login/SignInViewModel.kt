@@ -1,9 +1,9 @@
 package bogomolov.aa.anochat.features.login
 
-import bogomolov.aa.anochat.features.shared.DefaultContext
-import bogomolov.aa.anochat.features.shared.RepositoryBaseViewModel
-import bogomolov.aa.anochat.features.shared.UiState
-import bogomolov.aa.anochat.features.shared.UserAction
+import bogomolov.aa.anochat.features.shared.mvi.DefaultContext
+import bogomolov.aa.anochat.features.shared.mvi.RepositoryBaseViewModel
+import bogomolov.aa.anochat.features.shared.mvi.UiState
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import bogomolov.aa.anochat.repository.Repository
 import com.google.firebase.auth.PhoneAuthCredential
 import javax.inject.Inject
@@ -23,7 +23,8 @@ class SignInViewModel
     override fun createInitialState() = SignInUiState(LoginState.NOT_LOGGED)
 }
 
-class SignInAction(private val credential: PhoneAuthCredential) : UserAction<DefaultContext<SignInUiState>> {
+class SignInAction(private val credential: PhoneAuthCredential) :
+    UserAction<DefaultContext<SignInUiState>> {
 
     override suspend fun execute(context: DefaultContext<SignInUiState>) {
         val phoneNumber = context.viewModel.currentState.phoneNumber!!

@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.features.shared
+package bogomolov.aa.anochat.features.shared.mvi
 
 import android.util.Log
 import androidx.lifecycle.Lifecycle

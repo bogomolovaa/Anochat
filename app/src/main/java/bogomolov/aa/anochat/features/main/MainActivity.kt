@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
     }
 
     private fun initializeWorkManager(): WorkManager {
-        val appContext = repository.getContext() as AnochatAplication
+        val appContext = application as AnochatAplication
         val factory = appContext.workManagerConfiguration.workerFactory
                 as DelegatingWorkerFactory
         factory.addFactory(MyWorkerFactory(repository))

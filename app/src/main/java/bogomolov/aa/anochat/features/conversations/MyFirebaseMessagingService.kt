@@ -14,6 +14,8 @@ import androidx.navigation.NavDeepLinkBuilder
 import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.Message
+import bogomolov.aa.anochat.domain.Settings
+import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.repository.*
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -106,12 +108,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         if (uid != null && messageId != null) {
             val message = repository.receiveMessage(text, uid, messageId, replyId, image, audio)
             if (message != null) {
-                val inBackground =
-                    (application as AnochatAplication).inBackground
-                val showNotification =
-                    repository.getSetting<Boolean>(Setting.NOTIFICATIONS) != null
-                if (inBackground && showNotification)
-                    sendNotification(message, repository)
+                val inBackground = (application as AnochatAplication).inBackground
+                val settings = repository.getSettings()
+                if (inBackground && settings.notifications) {
+                    val conversation = repository.getConversation(message.conversationId)
+                    sendNotification(message, conversation.user, settings)
+                }
             }
         }
     }
@@ -120,12 +122,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         if (messageId != null) repository.receiveReport(messageId, received, viewed)
     }
 
-    private fun sendNotification(message: Message, repository: Repository) {
+    private fun sendNotification(message: Message, user: User, settings: Settings) {
         val context = applicationContext
-        val conversation = repository.getConversation(message.conversationId)
-        val bitmap = if (conversation.user.photo != null)
+        val bitmap = if (user.photo != null)
             BitmapFactory.decodeFile(
-                getFilePath(context, getMiniPhotoFileName(context, conversation.user.photo))
+                getFilePath(context, getMiniPhotoFileName(user.photo))
             )
         else
             BitmapFactory.decodeResource(context.resources, R.drawable.user_icon)
@@ -136,7 +137,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
             .setArguments(Bundle().apply { putLong("id", message.conversationId) })
             .createPendingIntent()
         val channelId = "anochat channel"
-        val title = conversation.user.name
+        val title = user.name
         val notificationBuilder: NotificationCompat.Builder =
             NotificationCompat.Builder(this, channelId)
                 .setContentTitle(title)
@@ -146,10 +147,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
                 .setContentText(message.shortText())
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
-        val canVibrate: Boolean = repository.getSetting(Setting.VIBRATION) ?: false
-        if (canVibrate) notificationBuilder.setVibrate(longArrayOf(500, 500))
-        val canSound: Boolean = repository.getSetting(Setting.SOUND) ?: false
-        if (canSound) notificationBuilder.setSound(
+        if (settings.vibration) notificationBuilder.setVibrate(longArrayOf(500, 500))
+        if (settings.sound) notificationBuilder.setSound(
             android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,
             AudioManager.STREAM_NOTIFICATION
         )

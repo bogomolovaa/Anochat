@@ -28,8 +28,8 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
 import bogomolov.aa.anochat.domain.Conversation
-import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
-import bogomolov.aa.anochat.features.shared.UpdatableView
+import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
+import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject

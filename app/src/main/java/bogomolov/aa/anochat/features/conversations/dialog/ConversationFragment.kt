@@ -48,8 +48,8 @@ import bogomolov.aa.anochat.features.conversations.dialog.actions.DeleteMessages
 import bogomolov.aa.anochat.features.conversations.dialog.actions.InitConversationAction
 import bogomolov.aa.anochat.features.conversations.dialog.actions.SendMessageAction
 import bogomolov.aa.anochat.features.main.MainActivity
-import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
-import bogomolov.aa.anochat.features.shared.UpdatableView
+import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
+import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.getFilesDir
 import bogomolov.aa.anochat.repository.getRandomString
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
@@ -124,8 +124,8 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     override fun updateView(newState: DialogUiState, currentState: DialogUiState) {
         if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState)
         if (newState.conversation != currentState.conversation) setConversation(newState.conversation!!)
-        if (newState.onlineStatus != currentState.onlineStatus) binding.statusText.text =
-            newState.onlineStatus
+        if (newState.onlineStatus != currentState.onlineStatus)
+            binding.statusText.text = newState.onlineStatus
     }
 
     private fun setConversation(conversation: Conversation) {

@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.features.shared
+package bogomolov.aa.anochat.features.shared.mvi
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

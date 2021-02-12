@@ -22,8 +22,8 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUserViewBinding
 import bogomolov.aa.anochat.domain.User
-import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
-import bogomolov.aa.anochat.features.shared.UpdatableView
+import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
+import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.getFilePath
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject

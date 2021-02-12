@@ -23,7 +23,7 @@ data class MessageEntity(
     val sent: Int = 0,
     val received: Int = 0,
     val viewed: Int = 0,
-    var myUid: String
+    var myUid: String = ""
 )
 
 data class MessageJoined(

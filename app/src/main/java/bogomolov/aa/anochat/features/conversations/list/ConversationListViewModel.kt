@@ -4,10 +4,10 @@ import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
-import bogomolov.aa.anochat.features.shared.DefaultContext
-import bogomolov.aa.anochat.features.shared.RepositoryBaseViewModel
-import bogomolov.aa.anochat.features.shared.UiState
-import bogomolov.aa.anochat.features.shared.UserAction
+import bogomolov.aa.anochat.features.shared.mvi.DefaultContext
+import bogomolov.aa.anochat.features.shared.mvi.RepositoryBaseViewModel
+import bogomolov.aa.anochat.features.shared.mvi.UiState
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import bogomolov.aa.anochat.repository.Repository
 import javax.inject.Inject
 
@@ -31,7 +31,8 @@ class InitConversationsAction() : UserAction<DefaultContext<ConversationsUiState
     }
 }
 
-class DeleteConversationsAction(val ids: Set<Long>) : UserAction<DefaultContext<ConversationsUiState>> {
+class DeleteConversationsAction(val ids: Set<Long>) :
+    UserAction<DefaultContext<ConversationsUiState>> {
 
     override suspend fun execute(context: DefaultContext<ConversationsUiState>) {
         context.repository.deleteConversations(HashSet(ids))

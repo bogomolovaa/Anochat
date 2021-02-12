@@ -1,7 +1,7 @@
 package bogomolov.aa.anochat.features.contacts.list.actions
 
 import bogomolov.aa.anochat.features.contacts.list.UsersActionContext
-import bogomolov.aa.anochat.features.shared.UserAction
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import bogomolov.aa.anochat.repository.isNotValidPhone
 
 class SearchAction(private val query: String) : UserAction<UsersActionContext> {

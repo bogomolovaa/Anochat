@@ -9,7 +9,7 @@ import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationActionContext
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationViewModel
 import bogomolov.aa.anochat.features.conversations.dialog.MessageView
-import bogomolov.aa.anochat.features.shared.UserAction
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import bogomolov.aa.anochat.repository.Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -58,6 +58,7 @@ class InitConversationAction(val conversationId: Long) : UserAction<Conversation
         return SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(lastTimeOnline))
     }
 
+    //todo: Day delimiters
     @SuppressLint("SimpleDateFormat")
     private fun loadMessages(conversation: Conversation) = LivePagedListBuilder(
         repository.loadMessagesDataSource(conversation.id, viewModel.viewModelScope).mapByPage {
@@ -71,7 +72,7 @@ class InitConversationAction(val conversationId: Long) : UserAction<Conversation
                     if (i > 0) {
                         if (lastDay != day) {
                             val locale =
-                                ConfigurationCompat.getLocales(repository.getContext().resources.configuration)[0]
+                                ConfigurationCompat.getLocales(context.appContext.resources.configuration)[0]
                             val dateString =
                                 SimpleDateFormat(
                                     "dd MMMM yyyy",

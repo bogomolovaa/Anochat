@@ -2,7 +2,7 @@ package bogomolov.aa.anochat.features.conversations.dialog.actions
 
 import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationActionContext
-import bogomolov.aa.anochat.features.shared.UserAction
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
 
 class SendMessageAction(
     private val text: String? = null,

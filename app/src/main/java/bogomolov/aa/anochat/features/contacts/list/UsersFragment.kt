@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.features.contacts.list
 
 import android.content.Context
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -22,8 +23,9 @@ import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.features.contacts.list.actions.CreateConversationAction
 import bogomolov.aa.anochat.features.contacts.list.actions.LoadContactsAction
 import bogomolov.aa.anochat.features.contacts.list.actions.SearchAction
-import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
-import bogomolov.aa.anochat.features.shared.UpdatableView
+import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
+import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
+import bogomolov.aa.anochat.repository.isValidPhone
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.UsersAdapter
 import bogomolov.aa.anochat.view.adapters.UsersSearchAdapter
@@ -48,7 +50,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel.addAction(LoadContactsAction())
+        viewModel.addAction(LoadContactsAction(getContactsPhones()))
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
     }
 
@@ -115,6 +117,32 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
 
     private fun hideProgressBar() {
         binding.progressBar.visibility = View.INVISIBLE
+    }
+
+    private fun getContactsPhones(): List<String> {
+        val phones = HashSet<String>()
+        val projection = arrayOf(
+            ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+            ContactsContract.Contacts.DISPLAY_NAME,
+            ContactsContract.CommonDataKinds.Phone.NUMBER
+        )
+        requireContext().contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            projection,
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            val numberIndex =
+                cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+            while (cursor.moveToNext()) {
+                val number = cursor.getString(numberIndex)
+                val clearNumber =
+                    number.replace("[- ()]".toRegex(), "").replace("^8".toRegex(), "+7")
+                if (isValidPhone(clearNumber)) phones += clearNumber
+            }
+        }
+        return ArrayList(phones)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

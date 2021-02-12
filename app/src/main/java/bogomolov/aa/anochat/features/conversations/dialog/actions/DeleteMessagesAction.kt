@@ -1,7 +1,7 @@
 package bogomolov.aa.anochat.features.conversations.dialog.actions
 
 import bogomolov.aa.anochat.features.conversations.dialog.ConversationActionContext
-import bogomolov.aa.anochat.features.shared.UserAction
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
 
 class DeleteMessagesAction(val ids: Set<Long>) : UserAction<ConversationActionContext> {
 

@@ -46,7 +46,7 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
 
     fun setFile(fileName: String): Boolean {
         val imageView: ImageView = findViewById(R.id.round_image)
-        val filePath = getFilePath(context, getMiniPhotoFileName(context, fileName))
+        val filePath = getFilePath(context, getMiniPhotoFileName(fileName))
         if (File(filePath).exists()) {
             imageView.setImageBitmap(BitmapFactory.decodeFile(filePath))
             return true

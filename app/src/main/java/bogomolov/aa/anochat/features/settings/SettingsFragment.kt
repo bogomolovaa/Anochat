@@ -24,10 +24,10 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSettingsBinding
+import bogomolov.aa.anochat.domain.Settings
 import bogomolov.aa.anochat.features.settings.actions.*
-import bogomolov.aa.anochat.features.shared.StateLifecycleObserver
-import bogomolov.aa.anochat.features.shared.UpdatableView
-import bogomolov.aa.anochat.repository.Setting
+import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
+import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.resizeImage
 import bogomolov.aa.anochat.view.fragments.EditUserBottomDialogFragment
 import bogomolov.aa.anochat.view.fragments.SettingType
@@ -75,9 +75,9 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     }
 
     override fun updateView(newState: SettingsUiState, currentState: SettingsUiState) {
-        binding.notificationsSwitch.isChecked = newState.notifications
-        binding.soundSwitch.isChecked = newState.sound
-        binding.vibrationSwitch.isChecked = newState.vibration
+        binding.notificationsSwitch.isChecked = newState.settings.notifications
+        binding.soundSwitch.isChecked = newState.settings.sound
+        binding.vibrationSwitch.isChecked = newState.settings.vibration
         if (newState.user != null) {
             if (newState.user.photo != currentState.user?.photo)
                 binding.userPhoto.setFile(newState.user.photo!!)
@@ -116,14 +116,14 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     private fun addListeners() {
         binding.privacyPolicy.setOnClickListener { openPrivacyPolicy() }
         binding.editPhoto.setOnClickListener { requestReadPermission() }
-        setSwitchListener(binding.notificationsSwitch, Setting.NOTIFICATIONS)
-        setSwitchListener(binding.soundSwitch, Setting.SOUND)
-        setSwitchListener(binding.vibrationSwitch, Setting.VIBRATION)
+        observeChangesFor(binding.notificationsSwitch) { checked -> copy(notifications = checked) }
+        observeChangesFor(binding.soundSwitch) { checked -> copy(sound = checked) }
+        observeChangesFor(binding.vibrationSwitch) { checked -> copy(vibration = checked) }
     }
 
-    private fun setSwitchListener(switch: Switch, setting: String) {
-        switch.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.addAction(UpdateSettingAction(setting, isChecked))
+    private fun observeChangesFor(switch: Switch, change: Settings.(Boolean) -> Settings) {
+        switch.setOnCheckedChangeListener { _, checked ->
+            viewModel.addAction(ChangeSettingsAction { change(checked) })
         }
     }
 

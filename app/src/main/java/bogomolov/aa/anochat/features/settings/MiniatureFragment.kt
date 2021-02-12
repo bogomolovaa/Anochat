@@ -18,9 +18,12 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentMiniatureBinding
 import bogomolov.aa.anochat.features.settings.actions.UpdatePhotoAction
+import bogomolov.aa.anochat.repository.getFilePath
 import bogomolov.aa.anochat.repository.getFilesDir
+import bogomolov.aa.anochat.repository.getMiniPhotoFileName
 import dagger.android.support.AndroidSupportInjection
 import java.io.File
+import java.io.FileOutputStream
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
@@ -60,17 +63,8 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         binding.imageView.setImageBitmap(bitmap)
 
         binding.fab.setOnClickListener {
-            val maskWidth = binding.maskImage.scaledWidth()
-            val maskHeight = binding.maskImage.scaledHeight()
-            viewModel.addAction(
-                UpdatePhotoAction(
-                    photo = imageName,
-                    x = (maskX / initialImageScale).toInt(),
-                    y = (maskY / initialImageScale).toInt(),
-                    width = (maskWidth / initialImageScale).toInt(),
-                    height = (maskHeight / initialImageScale).toInt()
-                )
-            )
+            createMiniature(imageName)
+            viewModel.addAction(UpdatePhotoAction(imageName))
             navController.navigateUp()
         }
 
@@ -82,6 +76,28 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         }
 
         return binding.root
+    }
+
+    private fun createMiniature(photo: String) {
+        val maskWidth = binding.maskImage.scaledWidth()
+        val maskHeight = binding.maskImage.scaledHeight()
+        val x = (maskX / initialImageScale).toInt()
+        val y = (maskY / initialImageScale).toInt()
+        val width = (maskWidth / initialImageScale).toInt()
+        val height = (maskHeight / initialImageScale).toInt()
+
+        val context = requireContext()
+        val filePath = getFilePath(context, photo)
+        val bitmap = BitmapFactory.decodeFile(filePath)
+        val miniBitmap = Bitmap.createBitmap(
+            bitmap,
+            Math.max(x, 0),
+            Math.max(y, 0),
+            Math.min(bitmap.width - Math.max(x, 0), width),
+            Math.min(bitmap.height - Math.max(y, 0), height)
+        )
+        val miniPhotoPath = getFilePath(context, getMiniPhotoFileName(photo))
+        miniBitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(miniPhotoPath))
     }
 
 

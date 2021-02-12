@@ -16,10 +16,6 @@ fun getBitmap(fileName: String, quality: Int, context: Context): Bitmap =
         inSampleSize = quality
     })
 
-fun isNotValidPhone(string: String) = string.contains("[^+0-9]".toRegex())
-
-fun isValidPhone(string: String) = !isNotValidPhone(string)
-
 fun resizeImage(uri: Uri, context: Context): String {
     var bitmapOptions = BitmapFactory.Options()
     bitmapOptions.inJustDecodeBounds = true
@@ -90,8 +86,14 @@ fun resizeImage(path: String, context: Context): String {
     return fileName
 }
 
-fun getMiniPhotoFileName(context: Context, fileName: String) =
-    File(getFilePath(context, fileName)).nameWithoutExtension + "_mini.jpg"
+
+fun isNotValidPhone(string: String) = string.contains("[^+0-9]".toRegex())
+
+fun isValidPhone(string: String) = !isNotValidPhone(string)
+
+
+fun getMiniPhotoFileName(fileName: String) =
+    File(fileName).nameWithoutExtension + "_mini.jpg"
 
 fun getFilePath(context: Context, fileName: String) = File(getFilesDir(context), fileName).path
 

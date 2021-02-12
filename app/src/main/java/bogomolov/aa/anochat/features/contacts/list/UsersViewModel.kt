@@ -3,9 +3,9 @@ package bogomolov.aa.anochat.features.contacts.list
 import androidx.lifecycle.LiveData
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.User
-import bogomolov.aa.anochat.features.shared.ActionContext
-import bogomolov.aa.anochat.features.shared.BaseViewModel
-import bogomolov.aa.anochat.features.shared.UiState
+import bogomolov.aa.anochat.features.shared.mvi.ActionContext
+import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
+import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.repository.Repository
 import javax.inject.Inject
 

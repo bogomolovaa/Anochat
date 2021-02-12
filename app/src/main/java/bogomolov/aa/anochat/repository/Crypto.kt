@@ -1,10 +1,6 @@
-package bogomolov.aa.anochat.features.conversations
+package bogomolov.aa.anochat.repository
 
 import android.util.Base64.DEFAULT
-import bogomolov.aa.anochat.repository.Repository
-import bogomolov.aa.anochat.repository.getMyUID
-import bogomolov.aa.anochat.repository.getSetting
-import bogomolov.aa.anochat.repository.setSetting
 import java.io.*
 import java.math.BigInteger
 import java.security.*
@@ -17,32 +13,32 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.DHParameterSpec
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import javax.inject.Inject
 
 private const val AES_KEY_SIZE = 128
 private val IV = "12345678".toByteArray()
 
-class Crypto(private val repository: Repository) {
+class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
 
-    fun getSecretKey(uid: String): SecretKey? {
-        val myUid = repository.getMyUID()!!
+    fun getSecretKey(uid: String, myUid: String): SecretKey? {
         return getKey(getSecretKeyName(myUid, uid))
     }
 
-    fun decryptFile(file: File, uid: String) {
-        val secretKey = getSecretKey(uid)
+    fun decryptFile(file: File, uid: String, myUid: String) {
+        val secretKey = getSecretKey(uid, myUid)
         if (secretKey != null) {
             val decryptedByteArray = decrypt(secretKey, file.readBytes())
             file.writeBytes(decryptedByteArray)
         }
     }
 
-    fun encryptFile(file: File, uid: String): ByteArray? {
-        val secretKey = getSecretKey(uid)
+    fun encryptFile(file: File, uid: String, myUid: String): ByteArray? {
+        val secretKey = getSecretKey(uid, myUid)
         return if (secretKey != null) encrypt(secretKey, file.readBytes()) else null
     }
 
-    fun decryptString(string: String, uid: String): String {
-        val secretKey = getSecretKey(uid)!!
+    fun decryptString(string: String, uid: String, myUid: String): String {
+        val secretKey = getSecretKey(uid, myUid)!!
         return String(decrypt(secretKey, base64ToByteArray(string)))
     }
 
@@ -51,10 +47,10 @@ class Crypto(private val repository: Repository) {
 
     fun generateSecretKey(
         publicKeyString: String,
-        uid: String
+        uid: String,
+        myUid: String
     ): Boolean {
-        val myUid = repository.getMyUID()!!
-        val privateKey = getPrivateKey(repository.getMyUID()!!, uid)
+        val privateKey = getPrivateKey(myUid, uid)
         return if (privateKey != null) {
             val publicKeyByteArray = base64ToByteArray(publicKeyString)
             val secretKey = genSharedSecretKey(privateKey, publicKeyByteArray)
@@ -65,12 +61,11 @@ class Crypto(private val repository: Repository) {
         }
     }
 
-    fun generatePublicKey(uid: String): String? {
+    fun generatePublicKey(uid: String, myUid: String): String? {
         val keyPair = createKeyPair()
         val publicKeyByteArray = keyPair?.public?.encoded
         val privateKey = keyPair?.private
         return if (publicKeyByteArray != null && privateKey != null) {
-            val myUid = repository.getMyUID()!!
             saveKey(getPrivateKeyName(myUid, uid), privateKey)
             byteArrayToBase64(publicKeyByteArray)
         } else null
@@ -110,11 +105,11 @@ class Crypto(private val repository: Repository) {
 
     private fun <T> saveKey(name: String, value: T) {
         val array = serializeKey(value)
-        repository.setSetting(name, array)
+        keyValueStore.setValue(name, array)
     }
 
     private fun <T> getKey(name: String): T? {
-        val array: ByteArray? = repository.getSetting(name)
+        val array: ByteArray? = keyValueStore.getValue(name)
         return if (array != null) deserializeKey<T>(array) else null
     }
 
