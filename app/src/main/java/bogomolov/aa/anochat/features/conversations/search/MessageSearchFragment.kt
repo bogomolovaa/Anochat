@@ -17,10 +17,12 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentMessageSearchBinding
 import bogomolov.aa.anochat.features.conversations.list.ConversationsPagedAdapter
+import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
+import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
-class MessageSearchFragment : Fragment() {
+class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     private val viewModel: MessageSearchViewModel by viewModels { viewModelFactory }
@@ -30,6 +32,11 @@ class MessageSearchFragment : Fragment() {
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
         super.onAttach(context)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
     }
 
     override fun onCreateView(
@@ -53,9 +60,12 @@ class MessageSearchFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
 
-        viewModel.searchLiveData.observe(viewLifecycleOwner, adapter::submitList)
-
         return binding.root
+    }
+
+    override fun updateView(newState: MessageSearchUiState, currentState: MessageSearchUiState) {
+        if (newState.pagedListLiveData != currentState.pagedListLiveData)
+            newState.pagedListLiveData?.observe(viewLifecycleOwner, adapter::submitList)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -71,7 +81,7 @@ class MessageSearchFragment : Fragment() {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (query != null && query.length >= 3) {
-                    viewModel.search(query)
+                    viewModel.addAction(SearchMessages(query))
                     return true
                 }
                 return false
@@ -102,5 +112,4 @@ class MessageSearchFragment : Fragment() {
         })
 
     }
-
 }

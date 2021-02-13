@@ -8,7 +8,7 @@ data class UserEntity(
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0,
     var uid: String = "",
-    val phone: String,
+    var phone: String? = null,
     var name: String = "",
     var photo: String? = null,
     var status: String? = null

@@ -1,17 +1,18 @@
 package bogomolov.aa.anochat.features.conversations.dialog.actions
 
 import bogomolov.aa.anochat.domain.Message
-import bogomolov.aa.anochat.features.conversations.dialog.ConversationActionContext
-import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import bogomolov.aa.anochat.features.conversations.dialog.DialogUiState
+import bogomolov.aa.anochat.features.shared.mvi.DefaultContext
+import bogomolov.aa.anochat.features.shared.mvi.DefaultUserAction
 
 class SendMessageAction(
     private val text: String? = null,
     private val replyId: String? = null,
     private val audio: String? = null,
     private val image: String? = null
-) : UserAction<ConversationActionContext> {
+) : DefaultUserAction<DialogUiState>() {
 
-    override suspend fun execute(context: ConversationActionContext) {
+    override suspend fun execute(context: DefaultContext<DialogUiState>) {
         val conversation = context.viewModel.currentState.conversation
         if (conversation != null) {
             val message = Message(

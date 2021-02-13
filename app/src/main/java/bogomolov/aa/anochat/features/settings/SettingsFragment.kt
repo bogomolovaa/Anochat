@@ -50,7 +50,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel.addAction(LoadSettingsAction())
-        viewModel.addAction(LoadUserAction())
+        viewModel.addAction(LoadMyUserAction())
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
     }
 

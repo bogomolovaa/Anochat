@@ -19,7 +19,7 @@ interface UserDao {
     fun findByUid(uid: String): UserEntity?
 
     @Query("update UserEntity set name = :name, photo = :photo, status = :status, phone = :phone where uid = :uid")
-    fun updateUser(uid: String, phone: String, name: String?, photo: String?, status: String?)
+    fun updateUser(uid: String, phone: String?, name: String, photo: String?, status: String?)
 
     @Query("select * from UserEntity where phone in (:phoneList) and uid != :myUid")
     fun getAll(phoneList: List<String>, myUid: String): DataSource.Factory<Int, UserEntity>

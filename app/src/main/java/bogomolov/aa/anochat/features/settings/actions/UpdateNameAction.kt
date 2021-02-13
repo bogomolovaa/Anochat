@@ -9,7 +9,7 @@ class UpdateNameAction(val name: String) : DefaultUserAction<SettingsUiState>() 
     override suspend fun execute(context: DefaultContext<SettingsUiState>) {
         val user = context.viewModel.currentState.user!!
         val changedUser = user.copy(name = name)
-        context.repository.updateMyUser(changedUser)
         context.viewModel.setState { copy(user = changedUser) }
+        context.repository.updateMyUser(changedUser)
     }
 }

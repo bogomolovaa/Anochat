@@ -11,6 +11,7 @@ const val UID = "uid"
 
 interface Repository : IFirebaseRepository {
 
+    //UserUseCases
     suspend fun updateUsersByPhones(phones: List<String>): List<User>
 
     suspend fun updateUsersInConversations()
@@ -23,7 +24,7 @@ interface Repository : IFirebaseRepository {
 
     suspend fun searchByPhone(phone: String): List<User>
 
-
+    //ConversationUseCases
     fun getConversation(id: Long): Conversation
 
     suspend fun createConversation(user: User): Long
@@ -33,6 +34,7 @@ interface Repository : IFirebaseRepository {
     suspend fun deleteConversationIfNoMessages(conversation: Conversation)
 
 
+    //MessageUseCases
     suspend fun receiveMessage(
         text: String,
         uid: String,
@@ -47,6 +49,7 @@ interface Repository : IFirebaseRepository {
     suspend fun deleteMessages(ids: Set<Long>)
 
 
+    //SettingsUseCases
     fun updateSettings(settings: Settings)
 
     fun getSettings(): Settings

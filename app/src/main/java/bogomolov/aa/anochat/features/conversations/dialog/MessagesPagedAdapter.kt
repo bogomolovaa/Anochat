@@ -25,7 +25,6 @@ class MessagesPagedAdapter(
     private val activity: Activity,
     private val onReply: (Message) -> Unit,
     private val helper: AdapterHelper<MessageView, MessageLayoutBinding> = AdapterHelper(),
-    private val setRecyclerViewState: () -> Unit,
 ) :
     PagedListAdapter<MessageView, AdapterHelper<MessageView, MessageLayoutBinding>.VH>(
         helper.DIFF_CALLBACK
@@ -91,7 +90,6 @@ class MessagesPagedAdapter(
                     val extras = FragmentNavigator.Extras.Builder()
                         .addSharedElement(binding.imageView, binding.imageView.transitionName)
                         .build()
-                    setRecyclerViewState()
                     val bundle = Bundle().apply { putString("image", item.message.image) }
                     navController.navigate(R.id.imageViewFragment, bundle, null, extras)
                 }

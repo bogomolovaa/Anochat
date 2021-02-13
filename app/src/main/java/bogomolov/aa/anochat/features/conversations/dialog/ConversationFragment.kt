@@ -26,6 +26,7 @@ import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.addCallback
 import androidx.core.content.FileProvider
+import androidx.core.os.ConfigurationCompat
 import androidx.core.view.doOnPreDraw
 import androidx.core.widget.doOnTextChanged
 import androidx.databinding.BindingAdapter
@@ -38,6 +39,7 @@ import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
@@ -88,7 +90,10 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val conversationId = arguments?.get("id") as Long
-        viewModel.addAction(InitConversationAction(conversationId))
+        viewModel.addAction(InitConversationAction(conversationId) {
+            val locale = ConfigurationCompat.getLocales(requireContext().resources.configuration)[0]
+            MessageView.toMessageViewsWithDateDelimiters(it, locale)
+        })
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
     }
 
@@ -205,9 +210,24 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         }
     }
 
+    private fun saveRecyclerViewPosition() {
+        viewModel.setStateAsync {
+            copy(recyclerViewState = binding.recyclerView.layoutManager?.onSaveInstanceState())
+        }
+    }
+
     private fun setupRecyclerView() {
         val recyclerView = binding.recyclerView
         recyclerView.setItemViewCacheSize(20)
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                if (newState == SCROLL_STATE_IDLE) saveRecyclerViewPosition()
+            }
+
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+
+            }
+        })
 
         val actionsMap = HashMap<Int, (Set<Long>, Set<MessageView>) -> Unit>()
         actionsMap[R.id.delete_messages_action] =
@@ -221,12 +241,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         val adapter =
             MessagesPagedAdapter(
                 activity = requireActivity(),
-                onReply = this::onReply,
-                setRecyclerViewState = {
-                    viewModel.setStateAsync {
-                        copy(recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState())
-                    }
-                },
+                onReply = ::onReply,
                 helper = AdapterHelper(
                     menuId = R.menu.messages_menu,
                     actionsMap = actionsMap,
