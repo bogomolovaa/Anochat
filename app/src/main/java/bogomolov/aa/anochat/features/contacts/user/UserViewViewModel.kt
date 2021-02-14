@@ -4,10 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.User
-import bogomolov.aa.anochat.features.shared.mvi.DefaultContext
-import bogomolov.aa.anochat.features.shared.mvi.RepositoryBaseViewModel
-import bogomolov.aa.anochat.features.shared.mvi.UiState
-import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import bogomolov.aa.anochat.features.shared.mvi.*
 import bogomolov.aa.anochat.repository.Repository
 import javax.inject.Inject
 
@@ -16,23 +13,25 @@ data class UserUiState(
     val pagedListLiveData: LiveData<PagedList<String>>? = null
 ) : UiState
 
+class LoadImagesAction(val id: Long) : UserAction
+class LoadUserAction(val id: Long) : UserAction
+
 class UserViewViewModel
-@Inject constructor(repository: Repository) : RepositoryBaseViewModel<UserUiState>(repository) {
+@Inject constructor(private val repository: Repository) : BaseViewModel<UserUiState>() {
     override fun createInitialState() = UserUiState()
-}
 
-class LoadImagesAction(val id: Long) : UserAction<DefaultContext<UserUiState>> {
-
-    override suspend fun execute(context: DefaultContext<UserUiState>) {
-        val pagedListLiveData = LivePagedListBuilder(context.repository.getImagesDataSource(id), 10).build()
-        context.viewModel.setState { copy(pagedListLiveData = pagedListLiveData) }
+    override suspend fun handleAction(action: UserAction) {
+        if(action is LoadImagesAction) action.execute()
+        if(action is LoadUserAction) action.execute()
     }
-}
 
-class LoadUserAction(val id: Long) : UserAction<DefaultContext<UserUiState>> {
+    private suspend fun LoadImagesAction.execute() {
+        val pagedListLiveData = LivePagedListBuilder(repository.getImagesDataSource(id), 10).build()
+        setState { copy(pagedListLiveData = pagedListLiveData) }
+    }
 
-    override suspend fun execute(context: DefaultContext<UserUiState>) {
-        val user = context.repository.getUser(id)
-        context.viewModel.setState { copy(user = user) }
+    private suspend fun LoadUserAction.execute() {
+        val user = repository.getUser(id)
+        setState { copy(user = user) }
     }
 }

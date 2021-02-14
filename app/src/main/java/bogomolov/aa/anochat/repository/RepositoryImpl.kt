@@ -45,7 +45,7 @@ class RepositoryImpl(
         }
     }
 
-    override suspend fun sendMessage(message: Message, uid: String) {
+    override fun sendMessage(message: Message, uid: String) {
         Log.i("test", "sendMessage message")
         if (message.id == 0L) saveMessage(message)
         val myUid = getMyUID()!!
@@ -115,12 +115,12 @@ class RepositoryImpl(
         if (text.isNotEmpty()) message.text = crypto.decryptString(text, uid, myUid)
         if (!replyId.isNullOrEmpty()) message.replyMessage =
             mapper.entityToModel(db.messageDao().getByMessageId(replyId))
-        saveMessage(message)
-        firebase.sendReport(messageId, 1, 0)
         if (message.image != null)
             downloadFile(message.image, uid, needDecrypt = true)
         if (message.audio != null)
             downloadFile(message.audio, uid, needDecrypt = true)
+        saveMessage(message)
+        firebase.sendReport(messageId, 1, 0)
         message
     } else {
         Log.i(TAG, "not received message $messageId from $uid: null secretKey")
@@ -144,7 +144,7 @@ class RepositoryImpl(
         return user
     }
 
-    override suspend fun updateMyUser(user: User) {
+    override fun updateMyUser(user: User) {
         val savedUser = db.userDao().getUser(user.id)
         if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
         if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
@@ -279,16 +279,16 @@ class RepositoryImpl(
             mapper.entityToModel(it)!!
         }
 
-    override suspend fun deleteConversationIfNoMessages(conversation: Conversation) {
+    override fun deleteConversationIfNoMessages(conversation: Conversation) {
         val messages = db.messageDao().getMessages(conversation.id)
         if (messages.isEmpty()) db.conversationDao().deleteByIds(setOf(conversation.id))
     }
 
-    override suspend fun deleteMessages(ids: Set<Long>) {
+    override fun deleteMessages(ids: Set<Long>) {
         db.messageDao().deleteByIds(ids)
     }
 
-    override suspend fun deleteConversations(ids: Set<Long>) {
+    override fun deleteConversations(ids: Set<Long>) {
         db.messageDao().deleteByConversationIds(ids)
         db.conversationDao().deleteByIds(ids)
     }

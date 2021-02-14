@@ -20,7 +20,7 @@ interface Repository : IFirebaseRepository {
 
     fun getUser(id: Long): User
 
-    suspend fun updateMyUser(user: User)
+    fun updateMyUser(user: User)
 
     suspend fun searchByPhone(phone: String): List<User>
 
@@ -29,9 +29,9 @@ interface Repository : IFirebaseRepository {
 
     suspend fun createConversation(user: User): Long
 
-    suspend fun deleteConversations(ids: Set<Long>)
+    fun deleteConversations(ids: Set<Long>)
 
-    suspend fun deleteConversationIfNoMessages(conversation: Conversation)
+    fun deleteConversationIfNoMessages(conversation: Conversation)
 
 
     //MessageUseCases
@@ -44,9 +44,9 @@ interface Repository : IFirebaseRepository {
         audio: String?
     ): Message?
 
-    suspend fun sendMessage(message: Message, uid: String)
+    fun sendMessage(message: Message, uid: String)
 
-    suspend fun deleteMessages(ids: Set<Long>)
+    fun deleteMessages(ids: Set<Long>)
 
 
     //SettingsUseCases

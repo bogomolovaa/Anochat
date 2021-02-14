@@ -81,7 +81,7 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (query != null && query.length >= 3) {
-                    viewModel.addAction(SearchMessages(query))
+                    viewModel.addAction(MessageSearchAction(query))
                     return true
                 }
                 return false

@@ -14,20 +14,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 interface UiState
-interface ActionContext
-interface UserAction<C : ActionContext> {
-    suspend fun execute(context: C)
-}
+interface UserAction
 
-abstract class BaseViewModel<S : UiState, C : ActionContext>() :
-    ViewModel() {
+abstract class BaseViewModel<S : UiState> : ViewModel() {
     private val mutex = Mutex()
 
     var dispatcher: CoroutineDispatcher = Dispatchers.IO
-
-    private val viewModelContext: C by lazy { createViewModelContext() }
-
-    protected abstract fun createViewModelContext(): C
 
     val currentState: S
         get() = uiState.value
@@ -38,7 +30,7 @@ abstract class BaseViewModel<S : UiState, C : ActionContext>() :
     private val _uiState: MutableStateFlow<S> = MutableStateFlow(initialState)
     val uiState = _uiState.asStateFlow()
 
-    private val _actions = Channel<UserAction<C>>()
+    private val _actions = Channel<UserAction>()
     private val actions = _actions.receiveAsFlow()
     private var subscribed = false
 
@@ -52,11 +44,9 @@ abstract class BaseViewModel<S : UiState, C : ActionContext>() :
         }
     }
 
-    protected open suspend fun handleAction(action: UserAction<C>) {
-        action.execute(viewModelContext)
-    }
+    protected abstract suspend fun handleAction(action: UserAction)
 
-    fun addAction(action: UserAction<C>) {
+    fun addAction(action: UserAction) {
         viewModelScope.launch(dispatcher) {
             mutex.withLock { if (!subscribed) subscribeToActions() }
             _actions.send(action)

@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.view.fragments
+package bogomolov.aa.anochat.features.settings
 
 import android.os.Bundle
 import android.text.InputFilter

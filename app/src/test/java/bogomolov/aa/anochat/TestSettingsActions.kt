@@ -3,7 +3,7 @@ package bogomolov.aa.anochat
 
 import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.features.settings.SettingsViewModel
-import bogomolov.aa.anochat.features.settings.actions.UpdateStatusAction
+import bogomolov.aa.anochat.features.settings.UpdateStatusAction
 import bogomolov.aa.anochat.repository.Repository
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.Dispatchers

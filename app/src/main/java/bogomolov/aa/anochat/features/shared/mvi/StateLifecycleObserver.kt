@@ -9,9 +9,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-class StateLifecycleObserver<S : UiState, V : ActionContext>(
+class StateLifecycleObserver<S : UiState>(
     private val updatableView: UpdatableView<S>,
-    private val viewModel: BaseViewModel<S, V>
+    private val viewModel: BaseViewModel<S>
 ) : LifecycleObserver {
     private lateinit var updatingJob: Job
     private lateinit var uiState: S

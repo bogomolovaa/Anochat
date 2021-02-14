@@ -4,10 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
-import bogomolov.aa.anochat.features.shared.mvi.DefaultContext
-import bogomolov.aa.anochat.features.shared.mvi.RepositoryBaseViewModel
-import bogomolov.aa.anochat.features.shared.mvi.UiState
-import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import bogomolov.aa.anochat.features.shared.mvi.*
 import bogomolov.aa.anochat.repository.Repository
 import javax.inject.Inject
 
@@ -15,33 +12,32 @@ data class ConversationsUiState(
     val pagedListLiveData: LiveData<PagedList<Conversation>>? = null
 ) : UiState
 
+class InitConversationsAction : UserAction
+class DeleteConversationsAction(val ids: Set<Long>) : UserAction
+class SignOutAction : UserAction
+
 class ConversationListViewModel
-@Inject constructor(repository: Repository) :
-    RepositoryBaseViewModel<ConversationsUiState>(repository) {
+@Inject constructor(private val repository: Repository) : BaseViewModel<ConversationsUiState>() {
 
     override fun createInitialState() = ConversationsUiState()
-}
 
-class InitConversationsAction() : UserAction<DefaultContext<ConversationsUiState>> {
+    override suspend fun handleAction(action: UserAction) {
+        if (action is InitConversationsAction) action.execute()
+        if (action is DeleteConversationsAction) action.execute()
+        if (action is SignOutAction) action.execute()
+    }
 
-    override suspend fun execute(context: DefaultContext<ConversationsUiState>) {
+    private suspend fun InitConversationsAction.execute() {
         val pagedListLiveData =
-            LivePagedListBuilder(context.repository.loadConversationsDataSource(), 10).build()
-        context.viewModel.setState { copy(pagedListLiveData = pagedListLiveData) }
+            LivePagedListBuilder(repository.loadConversationsDataSource(), 10).build()
+        setState { copy(pagedListLiveData = pagedListLiveData) }
     }
-}
 
-class DeleteConversationsAction(val ids: Set<Long>) :
-    UserAction<DefaultContext<ConversationsUiState>> {
-
-    override suspend fun execute(context: DefaultContext<ConversationsUiState>) {
-        context.repository.deleteConversations(HashSet(ids))
+    private fun DeleteConversationsAction.execute() {
+        repository.deleteConversations(HashSet(ids))
     }
-}
 
-class SignOutAction() : UserAction<DefaultContext<ConversationsUiState>> {
-
-    override suspend fun execute(context: DefaultContext<ConversationsUiState>) {
-        context.repository.signOut()
+    private fun SignOutAction.execute() {
+        repository.signOut()
     }
 }
