@@ -5,7 +5,7 @@ import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.features.shared.mvi.*
-import bogomolov.aa.anochat.repository.Repository
+import bogomolov.aa.anochat.repository.repositories.Repository
 import javax.inject.Inject
 
 data class ConversationsUiState(
@@ -29,15 +29,15 @@ class ConversationListViewModel
 
     private suspend fun InitConversationsAction.execute() {
         val pagedListLiveData =
-            LivePagedListBuilder(repository.loadConversationsDataSource(), 10).build()
+            LivePagedListBuilder(repository.conversationRepository.loadConversationsDataSource(), 10).build()
         setState { copy(pagedListLiveData = pagedListLiveData) }
     }
 
     private fun DeleteConversationsAction.execute() {
-        repository.deleteConversations(HashSet(ids))
+        repository.conversationRepository.deleteConversations(HashSet(ids))
     }
 
     private fun SignOutAction.execute() {
-        repository.signOut()
+        repository.authRepository.signOut()
     }
 }

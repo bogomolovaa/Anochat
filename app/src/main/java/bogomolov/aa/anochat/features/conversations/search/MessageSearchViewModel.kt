@@ -5,7 +5,7 @@ import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.features.shared.mvi.*
-import bogomolov.aa.anochat.repository.Repository
+import bogomolov.aa.anochat.repository.repositories.Repository
 import javax.inject.Inject
 
 data class MessageSearchUiState(
@@ -25,7 +25,7 @@ class MessageSearchViewModel
 
     private suspend fun MessageSearchAction.execute() {
         val pagedListLiveData =
-            LivePagedListBuilder(repository.searchMessagesDataSource(query), 10).build()
+            LivePagedListBuilder(repository.messageRepository.searchMessagesDataSource(query), 10).build()
         setState { copy(pagedListLiveData = pagedListLiveData) }
     }
 }

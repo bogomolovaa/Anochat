@@ -7,7 +7,7 @@ import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
-import bogomolov.aa.anochat.repository.Repository
+import bogomolov.aa.anochat.repository.repositories.Repository
 import bogomolov.aa.anochat.repository.isNotValidPhone
 import javax.inject.Inject
 
@@ -39,21 +39,21 @@ class UsersViewModel
             val searchedUsers = usersList?.filter { it.name.startsWith(query) }
             setState { copy(searchedUsers = searchedUsers) }
         } else {
-            val searchedUsers = repository.searchByPhone(query)
+            val searchedUsers = repository.userRepository.searchByPhone(query)
             setState { copy(searchedUsers = searchedUsers) }
         }
     }
 
     private suspend fun LoadContactsAction.execute() {
         val pagedListLiveData =
-            LivePagedListBuilder(repository.getUsersByPhonesDataSource(phones), 10).build()
+            LivePagedListBuilder(repository.userRepository.getUsersByPhonesDataSource(phones), 10).build()
         setState { copy(pagedListLiveData = pagedListLiveData) }
-        usersList = repository.updateUsersByPhones(phones)
+        usersList = repository.userRepository.updateUsersByPhones(phones)
         setState { copy(synchronizationFinished = true) }
     }
 
     private suspend fun CreateConversationAction.execute() {
-        val conversationId = repository.createConversation(user)
+        val conversationId = repository.conversationRepository.createConversation(user)
         setState { copy(conversationId = conversationId) }
     }
 }

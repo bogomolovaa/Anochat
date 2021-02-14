@@ -4,13 +4,17 @@ import android.app.Application
 import android.content.Context
 import androidx.room.Room
 import bogomolov.aa.anochat.repository.*
+import bogomolov.aa.anochat.repository.repositories.*
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
 
-
 @Module
-class MainModule {
+abstract class MainModule {
+
+    @Binds
+    abstract fun bindsAuthRepository(authRepository: AuthRepositoryImpl): AuthRepository
 
     @Singleton
     @Provides
@@ -23,15 +27,4 @@ class MainModule {
 
     @Provides
     fun providesContext(application: Application): Context = application
-
-    @Provides
-    @Singleton
-    fun providesRepository(
-        application: Application,
-        db: AppDatabase,
-        firebase: FirebaseRepository,
-        keyValueStore: KeyValueStore,
-        crypto: Crypto
-    ): Repository =
-        RepositoryImpl(db, firebase, keyValueStore, crypto, getFilesDir(application))
 }

@@ -5,7 +5,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import bogomolov.aa.anochat.features.contacts.UpdateWorker
-import bogomolov.aa.anochat.repository.Repository
+import bogomolov.aa.anochat.repository.repositories.Repository
 
 class MyWorkerFactory(
     private val repository: Repository

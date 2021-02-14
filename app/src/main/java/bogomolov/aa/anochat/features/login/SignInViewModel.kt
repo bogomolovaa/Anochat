@@ -1,7 +1,7 @@
 package bogomolov.aa.anochat.features.login
 
 import bogomolov.aa.anochat.features.shared.mvi.*
-import bogomolov.aa.anochat.repository.Repository
+import bogomolov.aa.anochat.repository.repositories.Repository
 import com.google.firebase.auth.PhoneAuthCredential
 import javax.inject.Inject
 
@@ -26,7 +26,7 @@ class SignInViewModel
 
     private suspend fun SignInAction.execute() {
         val phoneNumber = currentState.phoneNumber!!
-        val succeed = repository.signIn(phoneNumber, credential)
+        val succeed = repository.authRepository.signIn(phoneNumber, credential)
         val state = if (succeed) LoginState.LOGGED else LoginState.NOT_LOGGED
         setState { copy(state = state) }
     }

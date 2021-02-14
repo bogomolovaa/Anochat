@@ -9,7 +9,7 @@ import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.Conversation
 import bogomolov.aa.anochat.domain.Message
 import bogomolov.aa.anochat.features.shared.mvi.*
-import bogomolov.aa.anochat.repository.Repository
+import bogomolov.aa.anochat.repository.repositories.Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collect
@@ -49,14 +49,14 @@ class ConversationViewModel @Inject constructor(private val repository: Reposito
     override fun onCleared() {
         super.onCleared()
         GlobalScope.launch(Dispatchers.IO) {
-            repository.deleteConversationIfNoMessages(currentState.conversation!!)
+            repository.conversationRepository.deleteConversationIfNoMessages(currentState.conversation!!)
         }
     }
 
     override suspend fun handleAction(action: UserAction) {
-        if(action is SendMessageAction) action.execute()
-        if(action is InitConversationAction) action.execute()
-        if(action is DeleteMessagesAction) action.execute()
+        if (action is SendMessageAction) action.execute()
+        if (action is InitConversationAction) action.execute()
+        if (action is DeleteMessagesAction) action.execute()
     }
 
     private fun SendMessageAction.execute() {
@@ -70,29 +70,30 @@ class ConversationViewModel @Inject constructor(private val repository: Reposito
                 audio = audio,
                 image = image
             )
-            repository.sendMessage(message, conversation.user.uid)
+            repository.messageRepository.sendMessage(message, conversation.user.uid)
         }
     }
 
     private fun DeleteMessagesAction.execute() {
-        repository.deleteMessages(ids)
+        repository.messageRepository.deleteMessages(ids)
     }
 
     private suspend fun InitConversationAction.execute() {
-        val conversation = repository.getConversation(conversationId)
+        val conversation = repository.conversationRepository.getConversation(conversationId)
         setState { copy(conversation = conversation) }
         val pagedListLiveData = loadMessages(conversation)
         setState { copy(pagedListLiveData = pagedListLiveData) }
         subscribeToOnlineStatus(conversation.user.uid)
     }
 
-    private fun InitConversationAction.loadMessages(conversation: Conversation) = LivePagedListBuilder(
-        repository.loadMessagesDataSource(conversation.id, viewModelScope)
-            .mapByPage(toMessageView), 10
-    ).build()
+    private fun InitConversationAction.loadMessages(conversation: Conversation) =
+        LivePagedListBuilder(
+            repository.messageRepository.loadMessagesDataSource(conversation.id, viewModelScope)
+                .mapByPage(toMessageView), 10
+        ).build()
 
     private fun subscribeToOnlineStatus(uid: String) {
-        val flow = repository.addUserStatusListener(uid, viewModelScope)
+        val flow = repository.userRepository.addUserStatusListener(uid, viewModelScope)
         viewModelScope.launch(Dispatchers.IO) {
             flow.collect {
                 val online = it.first

@@ -1,8 +1,8 @@
 package bogomolov.aa.anochat.repository
 
-import android.content.Context
 import android.util.Log
 import bogomolov.aa.anochat.domain.User
+import bogomolov.aa.anochat.repository.repositories.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.database.*
@@ -18,23 +18,11 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-
-interface IFirebaseRepository {
-    suspend fun signUp(name: String, email: String, password: String): Boolean
-    suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean
-    fun signOut()
-    fun isSignedIn(): Boolean
-    fun addUserStatusListener(
-        uid: String,
-        scope: CoroutineScope
-    ): Flow<Pair<Boolean, Long>>
-}
-
 private const val TAG = "FirebaseRepository"
 
-class FirebaseRepository @Inject constructor(
+class Firebase @Inject constructor(
     private val keyValueStore: KeyValueStore
-) : IFirebaseRepository {
+) : AuthRepository {
     private lateinit var token: String
 
     init {
@@ -44,8 +32,30 @@ class FirebaseRepository @Inject constructor(
         }
     }
 
+    override fun signUp(name: String, email: String, password: String): Boolean {
+        return true
+    }
 
-    override fun addUserStatusListener(
+    override suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean {
+        val uid = userSignIn(credential) ?: return false
+        setMyUID(uid)
+        val myRef = FirebaseDatabase.getInstance().reference
+        myRef.child("user_tokens").child(uid)
+            .setValue(mapOf("token" to token))
+        myRef.child("users").child(uid)
+            .updateChildren(mapOf("phone" to phoneNumber))
+        return true
+    }
+
+    override fun signOut() {
+        FirebaseAuth.getInstance().signOut()
+        setMyUID(null)
+    }
+
+    override fun isSignedIn() = getUid() != null
+
+
+    fun addUserStatusListener(
         uid: String,
         scope: CoroutineScope
     ): Flow<Pair<Boolean, Long>> {
@@ -88,32 +98,6 @@ class FirebaseRepository @Inject constructor(
         }
         return onlineFlow.combine(lastTimeFlow) { online, time -> Pair(online, time) }
     }
-
-    override suspend fun signUp(name: String, email: String, password: String): Boolean {
-        return true
-    }
-
-    override suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean {
-        val uid = userSignIn(credential) ?: return false
-        setMyUID(uid)
-        val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("user_tokens").child(uid)
-            .setValue(mapOf("token" to token))
-        myRef.child("users").child(uid)
-            .updateChildren(mapOf("phone" to phoneNumber))
-        return true
-    }
-
-    override fun signOut() {
-        FirebaseAuth.getInstance().signOut()
-        setMyUID(null)
-    }
-
-    override fun isSignedIn() = getUid() != null
-
-
-
-
 
     suspend fun findByPhone(phone: String): List<User> = suspendCoroutine {
         val users = ArrayList<User>()
@@ -270,7 +254,7 @@ class FirebaseRepository @Inject constructor(
     }
 
 
-
+    private val UID = "uid"
     private fun setMyUID(myUid: String?) = keyValueStore.setValue(UID, myUid)
 
     private fun updateOnlineStatus() {

@@ -18,6 +18,7 @@ import bogomolov.aa.anochat.domain.Settings
 import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.repository.*
+import bogomolov.aa.anochat.repository.repositories.Repository
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.android.AndroidInjection
@@ -84,15 +85,15 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
 
     private fun receiveAndSendPublicKey(publicKey: String?, uid: String?) {
         if (uid != null && publicKey != null) {
-            repository.sendPublicKey(uid, false)
-            repository.generateSecretKey(publicKey, uid)
+            repository.messageRepository.sendPublicKey(uid, false)
+            repository.messageRepository.generateSecretKey(publicKey, uid)
         }
     }
 
     private suspend fun finallyReceivePublicKey(publicKey: String?, uid: String?) {
         if (uid != null && publicKey != null) {
-            val generated = repository.generateSecretKey(publicKey, uid)
-            if (generated) repository.sendPendingMessages(uid)
+            val generated = repository.messageRepository.generateSecretKey(publicKey, uid)
+            if (generated) repository.messageRepository.sendPendingMessages(uid)
         }
     }
 
@@ -106,12 +107,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         val messageId = data["messageId"]
         val uid = data["source"]
         if (uid != null && messageId != null) {
-            val message = repository.receiveMessage(text, uid, messageId, replyId, image, audio)
+            val message = repository.messageRepository.receiveMessage(text, uid, messageId, replyId, image, audio)
             if (message != null) {
                 val inBackground = (application as AnochatAplication).inBackground
-                val settings = repository.getSettings()
+                val settings = repository.userRepository.getSettings()
                 if (inBackground && settings.notifications) {
-                    val conversation = repository.getConversation(message.conversationId)
+                    val conversation = repository.conversationRepository.getConversation(message.conversationId)
                     sendNotification(message, conversation.user, settings)
                 }
             }
@@ -119,7 +120,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
     }
 
     private fun receiveReport(messageId: String?, received: Int, viewed: Int) {
-        if (messageId != null) repository.receiveReport(messageId, received, viewed)
+        if (messageId != null) repository.messageRepository.receiveReport(messageId, received, viewed)
     }
 
     private fun sendNotification(message: Message, user: User, settings: Settings) {

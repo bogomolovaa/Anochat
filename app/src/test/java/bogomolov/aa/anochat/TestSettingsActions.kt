@@ -4,7 +4,7 @@ package bogomolov.aa.anochat
 import bogomolov.aa.anochat.domain.User
 import bogomolov.aa.anochat.features.settings.SettingsViewModel
 import bogomolov.aa.anochat.features.settings.UpdateStatusAction
-import bogomolov.aa.anochat.repository.Repository
+import bogomolov.aa.anochat.repository.repositories.Repository
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,7 +46,7 @@ class TestSettingsActions {
         viewModel.setStateAsync { copy(user = User()) }
         viewModel.addAction(UpdateStatusAction(status))
 
-        verify(repository).updateMyUser(capture(userCaptor))
+        verify(repository).userRepository.updateMyUser(capture(userCaptor))
         assertEquals(status, userCaptor.value.status)
         assertEquals(status, viewModel.currentState.user?.status)
     }
