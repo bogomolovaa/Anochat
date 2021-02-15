@@ -12,7 +12,7 @@ data class MessageEntity(
     var text: String = "",
     var time: Long = 0,
     var conversationId: Long = 0,
-    var senderId: Long = 0,
+    var isMine: Int = 0,
     @ColumnInfo(index = true)
     val messageId: String = "",
     @ColumnInfo(index = true)
@@ -31,7 +31,7 @@ data class MessageJoined(
     var text: String = "",
     var time: Long = 0,
     var conversationId: Long = 0,
-    var senderId: Long = 0,
+    var isMine: Int = 0,
     val messageId: String = "",
     @Embedded(prefix = "reply_")
     val replyMessage: MessageEntity?,

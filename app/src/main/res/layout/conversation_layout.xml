@@ -10,7 +10,7 @@
 
         <variable
             name="conversation"
-            type="bogomolov.aa.anochat.domain.Conversation" />
+            type="bogomolov.aa.anochat.domain.entity.Conversation" />
     </data>
 
     <com.google.android.material.card.MaterialCardView

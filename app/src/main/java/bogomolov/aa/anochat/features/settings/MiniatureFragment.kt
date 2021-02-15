@@ -17,7 +17,6 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentMiniatureBinding
-import bogomolov.aa.anochat.features.settings.actions.UpdatePhotoAction
 import bogomolov.aa.anochat.repository.getFilePath
 import bogomolov.aa.anochat.repository.getFilesDir
 import bogomolov.aa.anochat.repository.getMiniPhotoFileName

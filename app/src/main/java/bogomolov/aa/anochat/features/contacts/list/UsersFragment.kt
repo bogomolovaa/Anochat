@@ -19,10 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
-import bogomolov.aa.anochat.domain.User
-import bogomolov.aa.anochat.features.contacts.list.actions.CreateConversationAction
-import bogomolov.aa.anochat.features.contacts.list.actions.LoadContactsAction
-import bogomolov.aa.anochat.features.contacts.list.actions.SearchAction
+import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.isValidPhone

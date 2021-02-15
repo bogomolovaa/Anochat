@@ -97,7 +97,7 @@ fun getMiniPhotoFileName(fileName: String) =
 
 fun getFilePath(context: Context, fileName: String) = File(getFilesDir(context), fileName).path
 
-fun getFilesDir(context: Context) = context.cacheDir
+fun getFilesDir(context: Context) = context.filesDir
 
 fun getRandomString(length: Int): String {
     val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz1234567890"

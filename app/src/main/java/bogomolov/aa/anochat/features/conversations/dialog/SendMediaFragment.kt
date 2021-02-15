@@ -16,7 +16,6 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
-import bogomolov.aa.anochat.features.conversations.dialog.actions.SendMessageAction
 import bogomolov.aa.anochat.repository.getFilePath
 import bogomolov.aa.anochat.repository.resizeImage
 import dagger.android.support.AndroidSupportInjection

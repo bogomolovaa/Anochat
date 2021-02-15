@@ -15,7 +15,7 @@ import androidx.navigation.fragment.FragmentNavigator
 import androidx.paging.PagedListAdapter
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
-import bogomolov.aa.anochat.domain.Message
+import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.repository.getFilesDir
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.AdapterSelectable

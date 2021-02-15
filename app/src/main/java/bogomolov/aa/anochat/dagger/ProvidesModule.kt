@@ -3,18 +3,14 @@ package bogomolov.aa.anochat.dagger
 import android.app.Application
 import android.content.Context
 import androidx.room.Room
-import bogomolov.aa.anochat.repository.*
-import bogomolov.aa.anochat.repository.repositories.*
-import dagger.Binds
+import bogomolov.aa.anochat.repository.AppDatabase
+import bogomolov.aa.anochat.repository.DB_NAME
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
 
 @Module
-abstract class MainModule {
-
-    @Binds
-    abstract fun bindsAuthRepository(authRepository: AuthRepositoryImpl): AuthRepository
+class ProvidesModule {
 
     @Singleton
     @Provides

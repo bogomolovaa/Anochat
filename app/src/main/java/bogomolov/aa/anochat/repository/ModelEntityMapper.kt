@@ -1,11 +1,11 @@
 package bogomolov.aa.anochat.repository
 
-import bogomolov.aa.anochat.domain.Conversation
-import bogomolov.aa.anochat.domain.Message
-import bogomolov.aa.anochat.domain.User
+import bogomolov.aa.anochat.domain.entity.Conversation
+import bogomolov.aa.anochat.domain.entity.Message
+import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.repository.entity.*
 
-open class ModelEntityMapper() {
+open class ModelEntityMapper {
 
     fun entityToModel(from: MessageEntity?): Message? =
         if (from != null)
@@ -14,7 +14,7 @@ open class ModelEntityMapper() {
                 text = from.text,
                 time = from.time,
                 conversationId = from.conversationId,
-                senderId = from.senderId,
+                isMine = from.isMine == 1,
                 messageId = from.messageId,
                 image = from.image,
                 audio = from.audio,
@@ -32,7 +32,7 @@ open class ModelEntityMapper() {
                 from.text,
                 from.time,
                 from.conversationId,
-                from.senderId,
+                from.isMine == 1,
                 from.messageId,
                 entityToModel(from.replyMessage),
                 from.image,
@@ -50,7 +50,7 @@ open class ModelEntityMapper() {
             from.text,
             from.time,
             from.conversationId,
-            from.senderId,
+            if (from.isMine) 1 else 0,
             from.messageId,
             from.replyMessage?.messageId,
             from.image,

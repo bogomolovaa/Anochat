@@ -24,7 +24,7 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSettingsBinding
-import bogomolov.aa.anochat.domain.Settings
+import bogomolov.aa.anochat.domain.entity.Settings
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.resizeImage

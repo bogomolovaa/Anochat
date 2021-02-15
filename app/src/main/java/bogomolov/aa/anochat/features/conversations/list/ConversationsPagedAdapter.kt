@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.paging.PagedListAdapter
 import bogomolov.aa.anochat.databinding.ConversationLayoutBinding
-import bogomolov.aa.anochat.domain.Conversation
+import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import bogomolov.aa.anochat.view.adapters.AdapterSelectable
 

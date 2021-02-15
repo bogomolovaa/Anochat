@@ -5,10 +5,10 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import bogomolov.aa.anochat.features.contacts.UpdateWorker
-import bogomolov.aa.anochat.repository.repositories.Repository
+import bogomolov.aa.anochat.repository.repositories.UserRepository
 
 class MyWorkerFactory(
-    private val repository: Repository
+    private val userRepository: UserRepository
 ) : WorkerFactory() {
 
     override fun createWorker(
@@ -19,7 +19,7 @@ class MyWorkerFactory(
 
         return when (workerClassName) {
             UpdateWorker::class.java.name ->
-                UpdateWorker(appContext, workerParameters, repository)
+                UpdateWorker(appContext, workerParameters, userRepository)
             else ->
                 // Return null, so that the base class can delegate to the default WorkerFactory.
                 null

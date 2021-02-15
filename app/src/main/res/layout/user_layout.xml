@@ -7,7 +7,7 @@
 
         <variable
             name="user"
-            type="bogomolov.aa.anochat.domain.User" />
+            type="bogomolov.aa.anochat.domain.entity.User" />
     </data>
 
     <com.google.android.material.card.MaterialCardView

@@ -1,6 +1,5 @@
-package bogomolov.aa.anochat.repository
+package bogomolov.aa.anochat.domain
 
-import android.util.Base64.DEFAULT
 import java.io.*
 import java.math.BigInteger
 import java.security.*
@@ -20,39 +19,32 @@ private val IV = "12345678".toByteArray()
 
 class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
 
-    fun getSecretKey(uid: String, myUid: String): SecretKey? {
-        return getKey(getSecretKeyName(myUid, uid))
+    fun getSecretKey(uid: String): SecretKey? {
+        return getKey(getSecretKeyName(getMyUID()!!, uid))
     }
 
-    fun decryptFile(file: File, uid: String, myUid: String) {
-        val secretKey = getSecretKey(uid, myUid)
-        if (secretKey != null) {
-            val decryptedByteArray = decrypt(secretKey, file.readBytes())
-            file.writeBytes(decryptedByteArray)
-        }
+    fun decryptFile(file: File, secretKey: SecretKey) {
+        val decryptedByteArray = decrypt(secretKey, file.readBytes())
+        file.writeBytes(decryptedByteArray)
     }
 
-    fun encryptFile(file: File, uid: String, myUid: String): ByteArray? {
-        val secretKey = getSecretKey(uid, myUid)
-        return if (secretKey != null) encrypt(secretKey, file.readBytes()) else null
-    }
+    fun encryptFile(file: File, secretKey: SecretKey) = encrypt(secretKey, file.readBytes())
 
-    fun decryptString(string: String, uid: String, myUid: String): String {
-        val secretKey = getSecretKey(uid, myUid)!!
-        return String(decrypt(secretKey, base64ToByteArray(string)))
+    fun decryptString(string: String, secretKey: SecretKey): String {
+        return String(decrypt(secretKey, keyValueStore.base64ToByteArray(string)))
     }
 
     fun encryptString(secretKey: SecretKey, string: String) =
-        byteArrayToBase64(encrypt(secretKey, string.toByteArray()))
+        keyValueStore.byteArrayToBase64(encrypt(secretKey, string.toByteArray()))
 
     fun generateSecretKey(
         publicKeyString: String,
-        uid: String,
-        myUid: String
+        uid: String
     ): Boolean {
+        val myUid = getMyUID()!!
         val privateKey = getPrivateKey(myUid, uid)
         return if (privateKey != null) {
-            val publicKeyByteArray = base64ToByteArray(publicKeyString)
+            val publicKeyByteArray = keyValueStore.base64ToByteArray(publicKeyString)
             val secretKey = genSharedSecretKey(privateKey, publicKeyByteArray)
             saveKey(getSecretKeyName(myUid, uid), secretKey)
             true
@@ -61,13 +53,13 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
         }
     }
 
-    fun generatePublicKey(uid: String, myUid: String): String? {
+    fun generatePublicKey(uid: String): String? {
         val keyPair = createKeyPair()
         val publicKeyByteArray = keyPair?.public?.encoded
         val privateKey = keyPair?.private
         return if (publicKeyByteArray != null && privateKey != null) {
-            saveKey(getPrivateKeyName(myUid, uid), privateKey)
-            byteArrayToBase64(publicKeyByteArray)
+            saveKey(getPrivateKeyName(getMyUID()!!, uid), privateKey)
+            keyValueStore.byteArrayToBase64(publicKeyByteArray)
         } else null
     }
 
@@ -183,12 +175,5 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
         return key
     }
 
-    companion object {
-
-        fun byteArrayToBase64(array: ByteArray): String =
-            android.util.Base64.encodeToString(array, DEFAULT)
-
-        fun base64ToByteArray(string: String): ByteArray =
-            android.util.Base64.decode(string, DEFAULT)
-    }
+    private fun getMyUID() = keyValueStore.getMyUID()
 }

@@ -4,7 +4,6 @@ import androidx.paging.DataSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import bogomolov.aa.anochat.repository.entity.ConversationEntity
 import bogomolov.aa.anochat.repository.entity.UserEntity
 
 @Dao

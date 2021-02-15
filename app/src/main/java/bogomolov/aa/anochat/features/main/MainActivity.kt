@@ -17,7 +17,8 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.MyWorkerFactory
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
 import bogomolov.aa.anochat.features.contacts.UpdateWorker
-import bogomolov.aa.anochat.repository.repositories.Repository
+import bogomolov.aa.anochat.repository.repositories.AuthRepository
+import bogomolov.aa.anochat.repository.repositories.UserRepository
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.android.AndroidInjection
@@ -35,7 +36,9 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
     @Inject
     internal lateinit var androidInjector: DispatchingAndroidInjector<Any>
     @Inject
-    internal lateinit var repository: Repository
+    internal lateinit var authRepository: AuthRepository
+    @Inject
+    internal lateinit var userRepository: UserRepository
 
     override fun androidInjector(): AndroidInjector<Any> = androidInjector
 
@@ -59,7 +62,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
                 Log.i("MainActivity", "destination $destination")
                 if (currentDestination.id != R.id.signInFragment) {
                     lifecycleScope.launch(Dispatchers.IO) {
-                        val signedIn = repository.authRepository.isSignedIn()
+                        val signedIn = authRepository.isSignedIn()
                         //Log.i("test", "signedIn $signedIn")
                         if (!signedIn) {
                             withContext(Dispatchers.Main) {
@@ -105,7 +108,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         val appContext = application as AnochatAplication
         val factory = appContext.workManagerConfiguration.workerFactory
                 as DelegatingWorkerFactory
-        factory.addFactory(MyWorkerFactory(repository))
+        factory.addFactory(MyWorkerFactory(userRepository))
 
         return WorkManager.getInstance(appContext)
     }

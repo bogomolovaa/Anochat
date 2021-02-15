@@ -9,7 +9,7 @@ import dagger.android.AndroidInjector
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [AndroidInjectionModule::class, ViewModelsModule::class, InjectionsModule::class, MainModule::class])
+@Component(modules = [AndroidInjectionModule::class, ViewModelsModule::class, InjectionsModule::class, ProvidesModule::class, BindsModule::class])
 interface AppComponent : AndroidInjector<AnochatAplication> {
 
     @Component.Builder

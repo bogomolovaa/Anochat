@@ -13,12 +13,17 @@ import androidx.core.app.NotificationCompat
 import androidx.navigation.NavDeepLinkBuilder
 import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.Message
-import bogomolov.aa.anochat.domain.Settings
-import bogomolov.aa.anochat.domain.User
+import bogomolov.aa.anochat.domain.UseCases
+import bogomolov.aa.anochat.domain.entity.Message
+import bogomolov.aa.anochat.domain.entity.Settings
+import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.main.MainActivity
-import bogomolov.aa.anochat.repository.*
-import bogomolov.aa.anochat.repository.repositories.Repository
+import bogomolov.aa.anochat.repository.getBitmap
+import bogomolov.aa.anochat.repository.getFilePath
+import bogomolov.aa.anochat.repository.getMiniPhotoFileName
+import bogomolov.aa.anochat.repository.repositories.ConversationRepository
+import bogomolov.aa.anochat.repository.repositories.MessageRepository
+import bogomolov.aa.anochat.repository.repositories.UserRepository
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.android.AndroidInjection
@@ -32,7 +37,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val TYPE_MESSAGE = "message"
-private const val TYPE_READ_REPORT = "report"
+private const val TYPE_REPORT = "report"
 private const val TYPE_KEY = "key"
 private const val TYPE_INIT_KEY = "init_key"
 private const val TAG = "FirebaseService"
@@ -40,7 +45,16 @@ private const val TAG = "FirebaseService"
 @SuppressLint("MissingFirebaseInstanceTokenRefresh")
 class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjector {
     @Inject
-    lateinit var repository: Repository
+    lateinit var useCases: UseCases
+
+    @Inject
+    lateinit var userRepository: UserRepository
+
+    @Inject
+    lateinit var conversationRepository: ConversationRepository
+
+    @Inject
+    lateinit var messageRepository: MessageRepository
 
     @Inject
     lateinit var androidInjector: DispatchingAndroidInjector<Any>
@@ -74,53 +88,38 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
             val messageId = data["messageId"]
             serviceScope.launch(Dispatchers.IO) {
                 when (type) {
-                    TYPE_KEY -> finallyReceivePublicKey(publicKey, uid)
-                    TYPE_INIT_KEY -> receiveAndSendPublicKey(publicKey, uid)
+                    TYPE_KEY -> useCases.finallyReceivedPublicKey(publicKey!!, uid!!)
+                    TYPE_INIT_KEY -> useCases.receivedPublicKey(publicKey!!, uid!!)
                     TYPE_MESSAGE -> receiveMessage(data)
-                    TYPE_READ_REPORT -> receiveReport(messageId, received, viewed)
+                    TYPE_REPORT -> messageRepository.receiveReport(messageId!!, received, viewed)
                 }
             }
         }
     }
 
-    private fun receiveAndSendPublicKey(publicKey: String?, uid: String?) {
-        if (uid != null && publicKey != null) {
-            repository.messageRepository.sendPublicKey(uid, false)
-            repository.messageRepository.generateSecretKey(publicKey, uid)
-        }
-    }
-
-    private suspend fun finallyReceivePublicKey(publicKey: String?, uid: String?) {
-        if (uid != null && publicKey != null) {
-            val generated = repository.messageRepository.generateSecretKey(publicKey, uid)
-            if (generated) repository.messageRepository.sendPendingMessages(uid)
-        }
-    }
 
     private suspend fun receiveMessage(data: Map<String, String>) {
         val text = data["body"] ?: ""
-        var image = data["image"]
-        var audio = data["audio"]
         val replyId = data["reply"]
-        if (image.isNullOrEmpty()) image = null
-        if (audio.isNullOrEmpty()) audio = null
         val messageId = data["messageId"]
         val uid = data["source"]
-        if (uid != null && messageId != null) {
-            val message = repository.messageRepository.receiveMessage(text, uid, messageId, replyId, image, audio)
-            if (message != null) {
-                val inBackground = (application as AnochatAplication).inBackground
-                val settings = repository.userRepository.getSettings()
-                if (inBackground && settings.notifications) {
-                    val conversation = repository.conversationRepository.getConversation(message.conversationId)
-                    sendNotification(message, conversation.user, settings)
-                }
-            }
-        }
+        var image = data["image"]
+        var audio = data["audio"]
+        if (image.isNullOrEmpty()) image = null
+        if (audio.isNullOrEmpty()) audio = null
+        if (uid != null && messageId != null)
+            useCases.receiveMessage(text, uid, messageId, replyId, image, audio)
+                ?.also { showNotification(it) }
     }
 
-    private fun receiveReport(messageId: String?, received: Int, viewed: Int) {
-        if (messageId != null) repository.messageRepository.receiveReport(messageId, received, viewed)
+    private fun showNotification(message: Message) {
+        val inBackground = (application as AnochatAplication).inBackground
+        val settings = userRepository.getSettings()
+        if (inBackground && settings.notifications) {
+            val conversation =
+                conversationRepository.getConversation(message.conversationId)
+            sendNotification(message, conversation.user, settings)
+        }
     }
 
     private fun sendNotification(message: Message, user: User, settings: Settings) {

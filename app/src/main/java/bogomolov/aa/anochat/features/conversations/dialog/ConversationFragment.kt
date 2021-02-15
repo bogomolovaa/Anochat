@@ -44,11 +44,8 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
-import bogomolov.aa.anochat.domain.Conversation
-import bogomolov.aa.anochat.domain.Message
-import bogomolov.aa.anochat.features.conversations.dialog.actions.DeleteMessagesAction
-import bogomolov.aa.anochat.features.conversations.dialog.actions.InitConversationAction
-import bogomolov.aa.anochat.features.conversations.dialog.actions.SendMessageAction
+import bogomolov.aa.anochat.domain.entity.Conversation
+import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView

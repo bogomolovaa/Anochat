@@ -21,7 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUserViewBinding
-import bogomolov.aa.anochat.domain.User
+import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.getFilePath

@@ -6,11 +6,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
-import bogomolov.aa.anochat.domain.Conversation
-import bogomolov.aa.anochat.domain.Message
-import bogomolov.aa.anochat.features.shared.mvi.*
-import bogomolov.aa.anochat.repository.repositories.Repository
-import kotlinx.coroutines.Dispatchers
+import bogomolov.aa.anochat.domain.UseCases
+import bogomolov.aa.anochat.domain.entity.Conversation
+import bogomolov.aa.anochat.domain.entity.Message
+import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
+import bogomolov.aa.anochat.features.shared.mvi.UiState
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import bogomolov.aa.anochat.repository.repositories.ConversationRepository
+import bogomolov.aa.anochat.repository.repositories.MessageRepository
+import bogomolov.aa.anochat.repository.repositories.UserRepository
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -41,15 +45,20 @@ class InitConversationAction(
 
 class DeleteMessagesAction(val ids: Set<Long>) : UserAction
 
-class ConversationViewModel @Inject constructor(private val repository: Repository) :
+class ConversationViewModel @Inject constructor(
+    private val userRepository: UserRepository,
+    private val conversationRepository: ConversationRepository,
+    private val messageRepository: MessageRepository,
+    private val useCases: UseCases
+) :
     BaseViewModel<DialogUiState>() {
 
     override fun createInitialState() = DialogUiState()
 
     override fun onCleared() {
         super.onCleared()
-        GlobalScope.launch(Dispatchers.IO) {
-            repository.conversationRepository.deleteConversationIfNoMessages(currentState.conversation!!)
+        GlobalScope.launch(dispatcher) {
+            conversationRepository.deleteConversationIfNoMessages(currentState.conversation!!)
         }
     }
 
@@ -59,7 +68,7 @@ class ConversationViewModel @Inject constructor(private val repository: Reposito
         if (action is DeleteMessagesAction) action.execute()
     }
 
-    private fun SendMessageAction.execute() {
+    private suspend fun SendMessageAction.execute() {
         val conversation = currentState.conversation
         if (conversation != null) {
             val message = Message(
@@ -70,16 +79,16 @@ class ConversationViewModel @Inject constructor(private val repository: Reposito
                 audio = audio,
                 image = image
             )
-            repository.messageRepository.sendMessage(message, conversation.user.uid)
+            useCases.sendMessage(message, conversation.user.uid)
         }
     }
 
     private fun DeleteMessagesAction.execute() {
-        repository.messageRepository.deleteMessages(ids)
+        messageRepository.deleteMessages(ids)
     }
 
     private suspend fun InitConversationAction.execute() {
-        val conversation = repository.conversationRepository.getConversation(conversationId)
+        val conversation = conversationRepository.getConversation(conversationId)
         setState { copy(conversation = conversation) }
         val pagedListLiveData = loadMessages(conversation)
         setState { copy(pagedListLiveData = pagedListLiveData) }
@@ -88,13 +97,19 @@ class ConversationViewModel @Inject constructor(private val repository: Reposito
 
     private fun InitConversationAction.loadMessages(conversation: Conversation) =
         LivePagedListBuilder(
-            repository.messageRepository.loadMessagesDataSource(conversation.id, viewModelScope)
+            messageRepository.loadMessagesDataSource(conversation.id)
+                .mapByPage {
+                    viewModelScope.launch(dispatcher) {
+                        messageRepository.notifyAsViewed(it)
+                    }
+                    it
+                }
                 .mapByPage(toMessageView), 10
         ).build()
 
     private fun subscribeToOnlineStatus(uid: String) {
-        val flow = repository.userRepository.addUserStatusListener(uid, viewModelScope)
-        viewModelScope.launch(Dispatchers.IO) {
+        val flow = userRepository.addUserStatusListener(uid, viewModelScope)
+        viewModelScope.launch(dispatcher) {
             flow.collect {
                 val online = it.first
                 val lastSeenTime = it.second

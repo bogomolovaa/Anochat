@@ -1,8 +1,7 @@
 package bogomolov.aa.anochat.repository
 
 import android.util.Log
-import bogomolov.aa.anochat.domain.User
-import bogomolov.aa.anochat.repository.repositories.AuthRepository
+import bogomolov.aa.anochat.domain.entity.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.database.*
@@ -20,9 +19,7 @@ import kotlin.coroutines.suspendCoroutine
 
 private const val TAG = "FirebaseRepository"
 
-class Firebase @Inject constructor(
-    private val keyValueStore: KeyValueStore
-) : AuthRepository {
+class Firebase @Inject constructor() {
     private lateinit var token: String
 
     init {
@@ -32,27 +29,25 @@ class Firebase @Inject constructor(
         }
     }
 
-    override fun signUp(name: String, email: String, password: String): Boolean {
+    fun signUp(name: String, email: String, password: String): Boolean {
         return true
     }
 
-    override suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean {
-        val uid = userSignIn(credential) ?: return false
-        setMyUID(uid)
+    suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): String? {
+        val uid = userSignIn(credential) ?: return null
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("user_tokens").child(uid)
             .setValue(mapOf("token" to token))
         myRef.child("users").child(uid)
             .updateChildren(mapOf("phone" to phoneNumber))
-        return true
+        return uid
     }
 
-    override fun signOut() {
+    fun signOut() {
         FirebaseAuth.getInstance().signOut()
-        setMyUID(null)
     }
 
-    override fun isSignedIn() = getUid() != null
+    fun isSignedIn() = getUid() != null
 
 
     fun addUserStatusListener(
@@ -194,29 +189,32 @@ class Firebase @Inject constructor(
         myRef.child("users").child(uid).updateChildren(mapOf("photo" to photo))
     }
 
-    fun uploadFile(
+    suspend fun uploadFile(
         fileName: String,
         uid: String,
         byteArray: ByteArray,
-        isPrivate: Boolean
-    ) {
-        val path = if (isPrivate) "/files/" else "/user/$uid/"
-        val fileRef = FirebaseStorage.getInstance().getReference(path).child(fileName)
-        Log.i("test", "start uploading $fileName to ${fileRef.path} myUid")
+        isPrivate: Boolean = false
+    ): Boolean =
+        suspendCoroutine { continuation ->
+            val path = if (isPrivate) "/files/" else "/user/$uid/"
+            val fileRef = FirebaseStorage.getInstance().getReference(path).child(fileName)
+            Log.i("test", "start uploading $fileName to ${fileRef.path} myUid")
 
-        fileRef.putBytes(byteArray).addOnSuccessListener {
-            Log.i("test", "uploaded $fileName")
-        }.addOnFailureListener {
-            Log.i("test", "NOT uploaded $fileName")
-            it.printStackTrace()
+            fileRef.putBytes(byteArray).addOnSuccessListener {
+                Log.i("test", "uploaded $fileName")
+                continuation.resume(true)
+            }.addOnFailureListener {
+                Log.i("test", "NOT uploaded $fileName")
+                it.printStackTrace()
+                continuation.resume(false)
+            }
         }
-    }
 
     suspend fun downloadFile(
         fileName: String,
         uid: String,
         localFile: File,
-        isPrivate: Boolean
+        isPrivate: Boolean = false
     ): Boolean =
         suspendCoroutine { continuation ->
             val path = if (isPrivate) "/files/" else "/user/$uid/"
@@ -253,9 +251,6 @@ class Firebase @Inject constructor(
         })
     }
 
-
-    private val UID = "uid"
-    private fun setMyUID(myUid: String?) = keyValueStore.setValue(UID, myUid)
 
     private fun updateOnlineStatus() {
         val uid = getUid()

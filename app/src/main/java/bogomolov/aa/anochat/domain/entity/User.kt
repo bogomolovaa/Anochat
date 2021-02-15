@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.domain
+package bogomolov.aa.anochat.domain.entity
 
 data class User(
     var id: Long = 0,

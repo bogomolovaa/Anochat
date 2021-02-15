@@ -3,9 +3,11 @@ package bogomolov.aa.anochat.features.contacts.user
 import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
-import bogomolov.aa.anochat.domain.User
-import bogomolov.aa.anochat.features.shared.mvi.*
-import bogomolov.aa.anochat.repository.repositories.Repository
+import bogomolov.aa.anochat.domain.entity.User
+import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
+import bogomolov.aa.anochat.features.shared.mvi.UiState
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import bogomolov.aa.anochat.repository.repositories.UserRepository
 import javax.inject.Inject
 
 data class UserUiState(
@@ -17,7 +19,7 @@ class LoadImagesAction(val id: Long) : UserAction
 class LoadUserAction(val id: Long) : UserAction
 
 class UserViewViewModel
-@Inject constructor(private val repository: Repository) : BaseViewModel<UserUiState>() {
+@Inject constructor(private val userRepository: UserRepository) : BaseViewModel<UserUiState>() {
     override fun createInitialState() = UserUiState()
 
     override suspend fun handleAction(action: UserAction) {
@@ -27,12 +29,12 @@ class UserViewViewModel
 
     private suspend fun LoadImagesAction.execute() {
         val pagedListLiveData =
-            LivePagedListBuilder(repository.userRepository.getImagesDataSource(id), 10).build()
+            LivePagedListBuilder(userRepository.getImagesDataSource(id), 10).build()
         setState { copy(pagedListLiveData = pagedListLiveData) }
     }
 
     private suspend fun LoadUserAction.execute() {
-        val user = repository.userRepository.getUser(id)
+        val user = userRepository.getUser(id)
         setState { copy(user = user) }
     }
 }

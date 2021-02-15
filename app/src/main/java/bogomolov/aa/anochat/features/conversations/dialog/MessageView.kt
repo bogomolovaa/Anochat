@@ -1,6 +1,6 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
-import bogomolov.aa.anochat.domain.Message
+import bogomolov.aa.anochat.domain.entity.Message
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList

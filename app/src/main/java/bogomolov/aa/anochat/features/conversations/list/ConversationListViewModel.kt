@@ -3,9 +3,12 @@ package bogomolov.aa.anochat.features.conversations.list
 import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
-import bogomolov.aa.anochat.domain.Conversation
-import bogomolov.aa.anochat.features.shared.mvi.*
-import bogomolov.aa.anochat.repository.repositories.Repository
+import bogomolov.aa.anochat.domain.entity.Conversation
+import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
+import bogomolov.aa.anochat.features.shared.mvi.UiState
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import bogomolov.aa.anochat.repository.repositories.AuthRepository
+import bogomolov.aa.anochat.repository.repositories.ConversationRepository
 import javax.inject.Inject
 
 data class ConversationsUiState(
@@ -17,7 +20,10 @@ class DeleteConversationsAction(val ids: Set<Long>) : UserAction
 class SignOutAction : UserAction
 
 class ConversationListViewModel
-@Inject constructor(private val repository: Repository) : BaseViewModel<ConversationsUiState>() {
+@Inject constructor(
+    private val conversationRepository: ConversationRepository,
+    private val authRepository: AuthRepository
+) : BaseViewModel<ConversationsUiState>() {
 
     override fun createInitialState() = ConversationsUiState()
 
@@ -29,15 +35,15 @@ class ConversationListViewModel
 
     private suspend fun InitConversationsAction.execute() {
         val pagedListLiveData =
-            LivePagedListBuilder(repository.conversationRepository.loadConversationsDataSource(), 10).build()
+            LivePagedListBuilder(conversationRepository.loadConversationsDataSource(), 10).build()
         setState { copy(pagedListLiveData = pagedListLiveData) }
     }
 
     private fun DeleteConversationsAction.execute() {
-        repository.conversationRepository.deleteConversations(HashSet(ids))
+        conversationRepository.deleteConversations(HashSet(ids))
     }
 
     private fun SignOutAction.execute() {
-        repository.authRepository.signOut()
+        authRepository.signOut()
     }
 }

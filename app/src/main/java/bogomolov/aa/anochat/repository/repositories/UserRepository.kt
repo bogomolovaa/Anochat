@@ -1,9 +1,14 @@
 package bogomolov.aa.anochat.repository.repositories
 
-import bogomolov.aa.anochat.domain.Settings
-import bogomolov.aa.anochat.domain.User
+import bogomolov.aa.anochat.domain.KeyValueStore
+import bogomolov.aa.anochat.domain.entity.Settings
+import bogomolov.aa.anochat.domain.entity.User
+import bogomolov.aa.anochat.domain.getMyUID
+import bogomolov.aa.anochat.domain.getValue
+import bogomolov.aa.anochat.domain.setValue
 import bogomolov.aa.anochat.repository.*
 import kotlinx.coroutines.CoroutineScope
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,12 +18,11 @@ private const val TAG = "UserRepository"
 class UserRepository @Inject constructor(
     private val db: AppDatabase,
     private val firebase: Firebase,
-    private val keyValueStore: KeyValueStore,
+    private val keyValueStore: KeyValueStore
 ) {
+    private val filesDir : String = keyValueStore.getValue(FILES_DIRECTORY)!!
     private val mapper = ModelEntityMapper()
 
-    private val UID = "uid"
-    private fun getMyUID() = keyValueStore.getValue<String>(UID)
 
     fun getImagesDataSource(userId: Long) = db.messageDao().getImages(userId)
 
@@ -27,52 +31,42 @@ class UserRepository @Inject constructor(
             mapper.entityToModel(it)!!
         }
 
-    suspend fun updateUsersByPhones(phones: List<String>): List<User> {
-        val myUid = getMyUID()!!
-        val users = if (phones.isNotEmpty())
+    suspend fun updateUsersByPhones(phones: List<String>) =
+        if (phones.isNotEmpty()) {
+            val myUid = getMyUID()!!
             firebase.receiveUsersByPhones(phones).filter { it.uid != myUid }
-        else listOf()
-        for (user in users) syncFromRemoteUser(user, loadFullPhoto = false)
-        return users
-    }
+                .onEach { user -> updateLocalUserFromRemote(user, loadFullPhoto = false) }
+        } else listOf()
 
     suspend fun updateUsersInConversations() {
         val myUid = getMyUID()!!
-        val users: List<User> = mapper.entityToModel(db.userDao().getOpenedConversationUsers(myUid))
-        for (user in users)
-            firebase.getUser(user.uid)?.let { syncFromRemoteUser(it) }
+        val users = mapper.entityToModel<User>(db.userDao().getOpenedConversationUsers(myUid))
+        users.forEach { user -> firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it) } }
     }
 
     suspend fun getMyUser(): User {
         val myUid = getMyUID()!!
-        var user = mapper.entityToModel(db.userDao().findByUid(myUid))
-        if (user == null) {
-            user = firebase.getUser(myUid)
-            syncFromRemoteUser(user!!)
-        }
-        return user
+        return getOrAddUser(myUid)
     }
 
     fun getUser(id: Long): User = mapper.entityToModel(db.userDao().getUser(id))!!
 
-    fun updateMyUser(user: User) {
+    suspend fun updateMyUser(user: User) {
         val savedUser = db.userDao().getUser(user.id)
         if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
         if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
         if (user.photo != null && user.photo != savedUser.photo) {
-            firebase.updatePhoto(user.uid, user.photo)
             uploadFile(user.photo, user.uid)
             uploadFile(getMiniPhotoFileName(user.photo), user.uid)
+            firebase.updatePhoto(user.uid, user.photo)
         }
         db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
     }
 
-    suspend fun searchByPhone(phone: String): List<User> {
-        val searchedUsers = firebase.findByPhone(phone)
-        for (user in searchedUsers)
-            syncFromRemoteUser(user, saveLocal = false, loadFullPhoto = false)
-        return searchedUsers
-    }
+    suspend fun searchByPhone(phone: String) =
+        firebase.findByPhone(phone).onEach { user ->
+            updateLocalUserFromRemote(user, saveLocal = false, loadFullPhoto = false)
+        }
 
     fun addUserStatusListener(uid: String, scope: CoroutineScope) =
         firebase.addUserStatusListener(uid, scope)
@@ -97,7 +91,16 @@ class UserRepository @Inject constructor(
     )
 
 
-    private suspend fun syncFromRemoteUser(
+
+    suspend fun getOrAddUser(uid: String): User {
+        val userEntity = db.userDao().findByUid(uid)
+        return mapper.entityToModel(userEntity) ?: firebase.getUser(uid)!!
+            .also { updateLocalUserFromRemote(it) }
+    }
+
+
+
+    private suspend fun updateLocalUserFromRemote(
         user: User,
         saveLocal: Boolean = true,
         loadFullPhoto: Boolean = true
@@ -118,4 +121,11 @@ class UserRepository @Inject constructor(
         }
     }
 
+    private suspend fun downloadFile(fileName: String, uid: String) =
+        firebase.downloadFile(fileName, uid, File(filesDir, fileName))
+
+    private suspend fun uploadFile(fileName: String, uid: String) =
+        firebase.uploadFile(fileName, uid, File(filesDir, fileName).readBytes())
+
+    private fun getMyUID() = keyValueStore.getMyUID()
 }

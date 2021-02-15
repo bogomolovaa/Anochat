@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.domain
+package bogomolov.aa.anochat.domain.entity
 
 import android.annotation.SuppressLint
 import java.text.SimpleDateFormat
@@ -9,12 +9,13 @@ data class Message(
     var text: String = "",
     val time: Long = 0L,
     val conversationId: Long = 0L,
-    val senderId: Long = 0L,
+    val isMine: Boolean = false,
     var messageId: String = "",
     var replyMessage: Message? = null,
     val image: String? = null,
     val audio: String? = null,
     var publicKey: String? = null,
+
     var sent: Int = 0,
     var received: Int = 0,
     var viewed: Int = 0
@@ -34,6 +35,7 @@ data class Message(
         return if (text.length > 30) text.take(30) + "..." else text
     }
 
-    fun isMine() = senderId == 0L
+
+    fun isNotSaved() = id == 0L
 
 }
