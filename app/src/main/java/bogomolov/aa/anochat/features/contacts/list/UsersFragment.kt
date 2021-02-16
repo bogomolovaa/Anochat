@@ -24,8 +24,6 @@ import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.isValidPhone
 import bogomolov.aa.anochat.view.adapters.AdapterHelper
-import bogomolov.aa.anochat.view.adapters.UsersAdapter
-import bogomolov.aa.anochat.view.adapters.UsersSearchAdapter
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -56,13 +54,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = DataBindingUtil.inflate(
-            inflater,
-            R.layout.fragment_users,
-            container,
-            false
-        )
-        binding.lifecycleOwner = this
+        binding = FragmentUsersBinding.inflate(inflater, container, false)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
@@ -77,7 +69,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState.pagedListLiveData!!)
         if (newState.searchedUsers != currentState.searchedUsers) setSearchedUsers(newState.searchedUsers!!)
         if (newState.conversationId != currentState.conversationId) navigateToConversation(newState.conversationId)
-        if (newState.synchronizationFinished != currentState.synchronizationFinished){
+        if (newState.synchronizationFinished != currentState.synchronizationFinished) {
             hideProgressBar()
             setPagedList(newState.pagedListLiveData!!)
         }

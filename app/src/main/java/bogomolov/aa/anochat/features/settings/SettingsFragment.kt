@@ -55,13 +55,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = DataBindingUtil.inflate(
-            inflater,
-            R.layout.fragment_settings,
-            container,
-            false
-        )
-        binding.lifecycleOwner = viewLifecycleOwner
+        binding = FragmentSettingsBinding.inflate(inflater, container, false)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)

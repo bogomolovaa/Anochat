@@ -36,13 +36,8 @@ class ImageViewFragment : Fragment(), View.OnTouchListener {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        binding = DataBindingUtil.inflate(
-            inflater,
-            R.layout.fragment_image_view,
-            container,
-            false
-        )
+    ): View {
+        binding = FragmentImageViewBinding.inflate(inflater, container, false)
         mainActivity = activity as MainActivity
         mainActivity.setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
@@ -131,10 +126,10 @@ class ImageViewFragment : Fragment(), View.OnTouchListener {
         return false
     }
 
-    private fun dxdy(view: View):Point{
+    private fun dxdy(view: View): Point {
         val dx = (view.scaledWidth() - view.width) / 2
         val dy = (view.scaledHeight() - view.height) / 2
-        return Point(dx,dy)
+        return Point(dx, dy)
     }
 
     private fun expand(exp: Boolean) {

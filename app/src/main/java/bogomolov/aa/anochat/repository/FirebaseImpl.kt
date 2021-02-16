@@ -93,15 +93,16 @@ class FirebaseImpl @Inject constructor() : Firebase {
     }
 
     override suspend fun findByPhone(phone: String): List<User> = suspendCoroutine {
+        Log.d(TAG, "findUsers")
         val users = ArrayList<User>()
-        val query = FirebaseDatabase.getInstance().getReference("users")
+        val respRef = FirebaseDatabase.getInstance().getReference("users")
             .orderByChild("phone")
             .equalTo(phone)
-        Log.i("test", "findUsers")
-        query.addListenerForSingleValueEvent(object : ValueEventListener {
+        respRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists())
                     for (user in snapshot.children) users += userFromRef(user)
+                respRef.removeEventListener(this)
                 it.resume(users)
             }
 
@@ -118,9 +119,8 @@ class FirebaseImpl @Inject constructor() : Firebase {
         val ref = FirebaseDatabase.getInstance().reference.child("requests").push()
         ref.setValue(phonesMap)
         val requestKey = ref.key
-        Log.i("test", "respRef.addValueEventListener")
         val respRef = FirebaseDatabase.getInstance().getReference("responses/$requestKey")
-        respRef.addListenerForSingleValueEvent(object : ValueEventListener {
+        respRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.value != null) {
                     val users = ArrayList<User>()
@@ -129,6 +129,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
                         users.add(user)
                     }
                     respRef.removeValue()
+                    respRef.removeEventListener(this)
                     it.resume(users)
                 }
             }
@@ -196,13 +197,13 @@ class FirebaseImpl @Inject constructor() : Firebase {
         suspendCoroutine { continuation ->
             val path = if (isPrivate) "/files/" else "/user/$uid/"
             val fileRef = FirebaseStorage.getInstance().getReference(path).child(fileName)
-            Log.i("test", "start uploading $fileName to ${fileRef.path} myUid")
+            Log.d(TAG, "start uploading $fileName to ${fileRef.path} myUid")
 
             fileRef.putBytes(byteArray).addOnSuccessListener {
-                Log.i("test", "uploaded $fileName")
+                Log.d(TAG, "uploaded $fileName")
                 continuation.resume(true)
             }.addOnFailureListener {
-                Log.i("test", "NOT uploaded $fileName")
+                Log.w(TAG, "NOT uploaded $fileName $it")
                 it.printStackTrace()
                 continuation.resume(false)
             }
@@ -218,14 +219,14 @@ class FirebaseImpl @Inject constructor() : Firebase {
             val path = if (isPrivate) "/files/" else "/user/$uid/"
             val fileRef = FirebaseStorage.getInstance()
                 .getReference(path).child(fileName)
-            Log.i("test", "start downloading: $fileName ref $fileRef")
+            Log.d(TAG, "start downloading: $fileName ref $fileRef")
 
             fileRef.getFile(localFile).addOnSuccessListener {
-                Log.i("test", "downloaded $fileName")
+                Log.d(TAG, "downloaded $fileName")
                 if (isPrivate) fileRef.delete()
                 continuation.resume(true)
             }.addOnFailureListener {
-                Log.i("test", "NOT downloaded $fileName")
+                Log.w(TAG, "NOT downloaded $fileName $it")
                 continuation.resume(false)
             }
         }
@@ -279,13 +280,13 @@ class FirebaseImpl @Inject constructor() : Firebase {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     Log.i(
-                        "test",
+                        TAG,
                         "Authentication succeeded name: phone: ${user!!.phoneNumber} uid: ${user.uid}"
                     )
                     it.resume(user.uid)
                 } else {
                     it.resume(null)
-                    Log.i("test", "Authentication failed ")
+                    Log.i(TAG, "Authentication failed: $task")
                 }
             }
     }
@@ -296,7 +297,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
                 if (!task.isSuccessful)
                     it.resumeWithException(Exception("getInstanceId failed"))
                 val token = task.result!!.token
-                Log.d("test", "token $token")
+                Log.d(TAG, "token $token")
                 it.resume(token)
             }
     }

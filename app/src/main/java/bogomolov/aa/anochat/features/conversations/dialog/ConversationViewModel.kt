@@ -72,6 +72,7 @@ class ConversationViewModel @Inject constructor(
             val message = Message(
                 text = text ?: "",
                 time = System.currentTimeMillis(),
+                isMine = true,
                 conversationId = conversation.id,
                 replyMessage = if (replyId != null) Message(messageId = replyId) else null,
                 audio = audio,

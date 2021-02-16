@@ -3,6 +3,7 @@ package bogomolov.aa.anochat.features.contacts.list
 import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
+import bogomolov.aa.anochat.domain.ConversationUseCases
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.repositories.ConversationRepository
@@ -26,7 +27,7 @@ class CreateConversationAction(val user: User) : UserAction
 class UsersViewModel
 @Inject constructor(
     private val userUseCases: UserUseCases,
-    private val conversationRepository: ConversationRepository
+    private val conversationUserCases: ConversationUseCases
 ) : BaseViewModel<ContactsUiState>() {
     private var usersList: List<User>? = null
 
@@ -57,7 +58,7 @@ class UsersViewModel
     }
 
     private suspend fun CreateConversationAction.execute() {
-        val conversationId = conversationRepository.createOrGetConversation(user)
+        val conversationId = conversationUserCases.startConversation(user.uid)
         setState { copy(conversationId = conversationId) }
     }
 }

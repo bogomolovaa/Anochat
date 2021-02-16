@@ -33,9 +33,8 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override fun deleteConversationIfNoMessages(conversation: Conversation) {
         val number = db.messageDao().getMessagesNumber(conversation.id)
-        if (number > 0) db.conversationDao().deleteByIds(setOf(conversation.id))
+        if (number == 0) db.conversationDao().deleteByIds(setOf(conversation.id))
     }
-
 
     override fun createOrGetConversation(user: User): Long {
         val myUid = keyValueStore.getMyUID()!!

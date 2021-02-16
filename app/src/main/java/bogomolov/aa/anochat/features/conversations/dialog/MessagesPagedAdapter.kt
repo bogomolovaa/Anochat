@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.*
 import android.view.animation.AccelerateInterpolator
+import android.widget.ImageView
 import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.FragmentNavigator
@@ -57,93 +58,83 @@ class MessagesPagedAdapter(
     override fun getId(item: MessageView) = item.message.id
 
     fun itemShowed(position: Int, binding: MessageLayoutBinding) {
-        val item = getItem(position)
-        if (item != null) loadImage(item.message, binding, 2)
+        val image = getItem(position)?.message?.image
+        if (image != null) loadImage(image, binding.imageView, 2)
     }
 
-    private fun loadImage(message: Message, binding: MessageLayoutBinding, quality: Int) {
-        if (message.image != null) {
-            val file = File(getFilesDir(activity), message.image)
-            if (file.exists()) {
-                binding.imageView.setImageBitmap(
-                    BitmapFactory.decodeFile(
-                        file.path,
-                        BitmapFactory.Options().apply { inSampleSize = quality }
-                    )
+    private fun loadImage(image: String, imageView: ImageView, quality: Int) {
+        val file = File(getFilesDir(activity), image)
+        if (file.exists()) {
+            imageView.setImageBitmap(
+                BitmapFactory.decodeFile(
+                    file.path,
+                    BitmapFactory.Options().apply { inSampleSize = quality }
                 )
-            }
+            )
         }
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun bind(item: MessageView?, binding: MessageLayoutBinding) {
         if (item != null) {
+            //Char.isSurrogate()
             binding.message = item
             binding.executePendingBindings()
-            if (item.hasImage()) {
-                //Char.isSurrogate()
-                loadImage(item.message, binding, 8)
 
-                binding.imageView.setOnClickListener {
-                    val navController =
-                        Navigation.findNavController(activity, R.id.nav_host_fragment)
-                    val extras = FragmentNavigator.Extras.Builder()
-                        .addSharedElement(binding.imageView, binding.imageView.transitionName)
-                        .build()
-                    val bundle = Bundle().apply { putString("image", item.message.image) }
-                    navController.navigate(R.id.imageViewFragment, bundle, null, extras)
-                }
+
+
+            val image = item.message.image
+            if (image != null) {
+                loadImage(image, binding.imageView, 8)
+                setImageClickListener(image, binding)
             }
-
-            if (item.hasReplyMessageImage()) {
-                val file = File(getFilesDir(activity), item.message.replyMessage?.image!!)
-                if (file.exists())
-                    binding.replyImage.setImageBitmap(
-                        BitmapFactory.decodeFile(
-                            file.path,
-                            BitmapFactory.Options().apply { inSampleSize = 16 })
-                    )
-            }
-
-            val detector =
-                GestureDetectorCompat(activity, object : GestureDetector.SimpleOnGestureListener() {
-                    override fun onDown(event: MotionEvent): Boolean {
-                        return true
-                    }
-
-                    override fun onFling(
-                        event1: MotionEvent?,
-                        event2: MotionEvent?,
-                        velocityX: Float,
-                        velocityY: Float
-                    ): Boolean {
-
-                        val displayMetrics = DisplayMetrics()
-                        activity.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-                        val length = displayMetrics.widthPixels.toFloat()
-
-                        binding.messageCardView.animate().translationX(length).setDuration(500)
-                            .setListener(object : AnimatorListenerAdapter() {
-                                override fun onAnimationEnd(var1: Animator) {
-                                    binding.messageCardView.translationX = 0f
-                                    onReply(item.message)
-                                }
-                            }).setInterpolator(AccelerateInterpolator()).start()
-
-                        return true
-                    }
-                })
-
-            binding.messageCardView.setOnTouchListener { view, event ->
-                if (event != null) detector.onTouchEvent(event)
+            val replyMessageImage = item.message.replyMessage?.image
+            if (replyMessageImage != null) loadImage(replyMessageImage, binding.replyImage, 16)
+            val detector = getGestureDetector(binding, item.message)
+            binding.messageCardView.setOnTouchListener { _, event ->
+                detector.onTouchEvent(event)
                 false
             }
             binding.layout.visibility = View.VISIBLE
         } else {
             binding.layout.visibility = View.GONE
         }
+    }
 
+    private fun getGestureDetector(binding: MessageLayoutBinding, message: Message) =
+        GestureDetectorCompat(activity, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(event: MotionEvent) = true
 
+            override fun onFling(
+                event1: MotionEvent?,
+                event2: MotionEvent?,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                val displayMetrics = DisplayMetrics()
+                activity.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+                val length = displayMetrics.widthPixels.toFloat()
+                binding.messageCardView.animate().translationX(length).setDuration(500)
+                    .setListener(object : AnimatorListenerAdapter() {
+                        override fun onAnimationEnd(var1: Animator) {
+                            binding.messageCardView.translationX = 0f
+                            onReply(message)
+                        }
+                    }).setInterpolator(AccelerateInterpolator()).start()
+                return true
+            }
+        })
+
+    private fun setImageClickListener(image: String, binding: MessageLayoutBinding) {
+        binding.imageView.setOnClickListener {
+            val navController =
+                Navigation.findNavController(activity, R.id.nav_host_fragment)
+            val extras = FragmentNavigator.Extras.Builder()
+                .addSharedElement(binding.imageView, binding.imageView.transitionName)
+                .build()
+            val bundle = Bundle().apply { putString("image", image) }
+            navController.navigate(R.id.imageViewFragment, bundle, null, extras)
+        }
     }
 
 }

@@ -31,12 +31,7 @@ class EditUserBottomDialogFragment(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = DataBindingUtil.inflate<UserEditLayoutBinding>(
-            inflater,
-            R.layout.user_edit_layout,
-            container,
-            false
-        )
+        val binding = UserEditLayoutBinding.inflate(inflater, container, false)
         binding.enterLabel.text = title
         binding.cancelButton.setOnClickListener {
             dismiss()

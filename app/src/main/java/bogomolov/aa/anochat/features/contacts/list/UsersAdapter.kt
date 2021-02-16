@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.view.adapters
+package bogomolov.aa.anochat.features.contacts.list
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -6,6 +6,8 @@ import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.databinding.UserLayoutBinding
 import bogomolov.aa.anochat.domain.entity.User
+import bogomolov.aa.anochat.view.adapters.AdapterHelper
+import bogomolov.aa.anochat.view.adapters.AdapterSelectable
 
 class UsersAdapter(private val helper: AdapterHelper<User, UserLayoutBinding> = AdapterHelper()) :
     PagedListAdapter<User, AdapterHelper<User, UserLayoutBinding>.VH>(helper.DIFF_CALLBACK),
@@ -80,4 +82,3 @@ class UsersSearchAdapter(private val helper: AdapterHelper<User, UserLayoutBindi
     }
 
 }
-

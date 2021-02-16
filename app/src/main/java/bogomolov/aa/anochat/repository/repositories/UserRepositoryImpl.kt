@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.repository.repositories
 
+import android.util.Log
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.getMyUID
@@ -19,7 +20,7 @@ class UserRepositoryImpl @Inject constructor(
     private val firebase: Firebase,
     private val keyValueStore: KeyValueStore
 ) : UserRepository {
-    private val filesDir : String = keyValueStore.getValue(FILES_DIRECTORY)!!
+    private val filesDir: String = keyValueStore.getValue(FILES_DIRECTORY)!!
     private val mapper = ModelEntityMapper()
 
 
@@ -38,9 +39,13 @@ class UserRepositoryImpl @Inject constructor(
         } else listOf()
 
     override suspend fun updateUsersInConversations() {
-        val myUid = getMyUID()!!
-        val users = mapper.entityToModel<User>(db.userDao().getOpenedConversationUsers(myUid))
-        users.forEach { user -> firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it) } }
+        val myUid = getMyUID()
+        if (myUid != null) {
+            val users = mapper.entityToModel<User>(db.userDao().getOpenedConversationUsers(myUid))
+            users.forEach { user ->
+                firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it) }
+            }
+        }
     }
 
     override suspend fun getMyUser(): User {
@@ -71,13 +76,12 @@ class UserRepositoryImpl @Inject constructor(
         firebase.addUserStatusListener(uid, scope)
 
 
-
     override suspend fun getOrAddUser(uid: String): User {
         val userEntity = db.userDao().findByUid(uid)
-        return mapper.entityToModel(userEntity) ?: firebase.getUser(uid)!!
-            .also { updateLocalUserFromRemote(it) }
+        val user = mapper.entityToModel(userEntity) ?: firebase.getUser(uid)!!
+        updateLocalUserFromRemote(user)
+        return user
     }
-
 
 
     private suspend fun updateLocalUserFromRemote(
@@ -86,11 +90,16 @@ class UserRepositoryImpl @Inject constructor(
         loadFullPhoto: Boolean = true
     ) {
         val savedUser = db.userDao().findByUid(user.uid)
+        Log.i("test", "updateLocalUserFromRemote savedUser $savedUser saveLocal $saveLocal")
         if (savedUser != null) {
             db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
-            if ((user.photo != savedUser.photo && user.photo != null)) {
-                if (loadFullPhoto) downloadFile(user.photo, user.uid)
-                downloadFile(getMiniPhotoFileName(user.photo), user.uid)
+            if (user.photo != null) {
+                val photoChanged = user.photo != savedUser.photo
+                if (photoChanged) downloadFile(getMiniPhotoFileName(user.photo), user.uid)
+                if (loadFullPhoto) {
+                    val fileExist = File(filesDir, user.photo).exists()
+                    if (photoChanged || !fileExist) downloadFile(user.photo, user.uid)
+                }
             }
         } else {
             if (saveLocal) user.id = db.userDao().add(mapper.modelToEntity(user))

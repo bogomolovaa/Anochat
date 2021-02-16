@@ -47,13 +47,7 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = DataBindingUtil.inflate(
-            inflater,
-            R.layout.fragment_sign_in,
-            container,
-            false
-        )
-        binding.lifecycleOwner = this
+        binding = FragmentSignInBinding.inflate(inflater, container, false)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)

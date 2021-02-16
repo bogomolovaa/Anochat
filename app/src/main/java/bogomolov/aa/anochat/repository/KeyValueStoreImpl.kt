@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.repository
 
 import android.content.Context
 import android.util.Base64
+import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.domain.KeyValueStore
@@ -16,7 +17,7 @@ class KeyValueStoreImpl @Inject constructor(context: Context) : KeyValueStore {
     private val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 
     init {
-        val filesDir = getFilesDir(context)
+        val filesDir = getFilesDir(context).path
         setValue(FILES_DIRECTORY, filesDir)
     }
 
@@ -42,6 +43,8 @@ class KeyValueStoreImpl @Inject constructor(context: Context) : KeyValueStore {
     }
 
     override fun setStringValue(key: String, value: String) {
+        //val saved = preferences.edit().putString(key, value).commit()
+        //Log.i("test","setStringValue key $key value $value saved $saved")
         preferences.edit(true) { putString(key, value) }
     }
 

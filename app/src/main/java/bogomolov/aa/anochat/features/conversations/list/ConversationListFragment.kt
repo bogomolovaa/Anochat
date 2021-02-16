@@ -59,13 +59,7 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = DataBindingUtil.inflate(
-            inflater,
-            R.layout.fragment_conversations_list,
-            container,
-            false
-        )
-        binding.lifecycleOwner = this
+        binding = FragmentConversationsListBinding.inflate(inflater, container, false)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         setHasOptionsMenu(true)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)

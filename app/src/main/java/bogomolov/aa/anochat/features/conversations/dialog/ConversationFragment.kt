@@ -104,15 +104,9 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = DataBindingUtil.inflate(
-            inflater,
-            R.layout.fragment_conversation,
-            container,
-            false
-        )
+        binding = FragmentConversationBinding.inflate(inflater, container, false)
         val mainActivity = activity as MainActivity
         val view = binding.root
-        binding.lifecycleOwner = viewLifecycleOwner
         mainActivity.setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)

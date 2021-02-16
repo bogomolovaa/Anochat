@@ -11,8 +11,17 @@ open class UserUseCases @Inject constructor(private val userRepository: UserRepo
     UserUseCasesInRepository by userRepository
 
 @Singleton
-open class ConversationUseCases @Inject constructor(private val conversationRepository: ConversationRepository) :
-    ConversationUseCasesInRepository by conversationRepository
+open class ConversationUseCases @Inject constructor(
+    private val conversationRepository: ConversationRepository,
+    private val userRepository: UserRepository
+) :
+    ConversationUseCasesInRepository by conversationRepository {
+
+    suspend fun startConversation(uid: String): Long {
+        val user = userRepository.getOrAddUser(uid)
+        return conversationRepository.createOrGetConversation(user)
+    }
+}
 
 private const val TAG = "MessageUseCases"
 

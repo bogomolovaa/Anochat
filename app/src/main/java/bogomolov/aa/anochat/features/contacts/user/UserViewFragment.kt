@@ -51,13 +51,7 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = DataBindingUtil.inflate(
-            inflater,
-            R.layout.fragment_user_view,
-            container,
-            false
-        )
-        binding.lifecycleOwner = viewLifecycleOwner
+        binding = FragmentUserViewBinding.inflate(inflater, container, false)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
@@ -70,10 +64,12 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
 
     override fun updateView(newState: UserUiState, currentState: UserUiState) {
         if (newState.user != currentState.user) showUser(newState.user!!)
-        if (newState.pagedListLiveData != currentState.pagedListLiveData) setImagesPagedList(newState.pagedListLiveData!!)
+        if (newState.pagedListLiveData != currentState.pagedListLiveData) setImagesPagedList(
+            newState.pagedListLiveData!!
+        )
     }
 
-    private fun setImagesPagedList(pagedListLiveData: LiveData<PagedList<String>>){
+    private fun setImagesPagedList(pagedListLiveData: LiveData<PagedList<String>>) {
         val adapter = ImagesPagedAdapter(requireContext())
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager =
@@ -99,7 +95,7 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
         }
     }
 
-    private fun setMainPhotoListener(navController: NavController){
+    private fun setMainPhotoListener(navController: NavController) {
         binding.userPhoto.setOnClickListener {
             val photo = viewModel.currentState.user?.photo
             if (photo != null) {

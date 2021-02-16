@@ -44,13 +44,7 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = DataBindingUtil.inflate(
-            inflater,
-            R.layout.fragment_miniature,
-            container,
-            false
-        )
-        binding.lifecycleOwner = viewLifecycleOwner
+        binding = FragmentMiniatureBinding.inflate(inflater, container, false)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)

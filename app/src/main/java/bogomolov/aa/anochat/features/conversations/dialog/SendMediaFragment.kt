@@ -27,6 +27,7 @@ class SendMediaFragment : Fragment() {
     internal lateinit var viewModelFactory: ViewModelFactory
     private val viewModel: ConversationViewModel by navGraphViewModels(R.id.dialog_graph) { viewModelFactory }
     private var conversationId = 0L
+    private lateinit var binding: FragmentSendMediaBinding
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -37,13 +38,7 @@ class SendMediaFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = DataBindingUtil.inflate<FragmentSendMediaBinding>(
-            inflater,
-            R.layout.fragment_send_media,
-            container,
-            false
-        )
-        binding.lifecycleOwner = this
+        binding = FragmentSendMediaBinding.inflate(inflater, container, false)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)

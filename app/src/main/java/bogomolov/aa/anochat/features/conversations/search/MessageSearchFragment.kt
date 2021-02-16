@@ -28,6 +28,7 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
     private val viewModel: MessageSearchViewModel by viewModels { viewModelFactory }
     private lateinit var navController: NavController
     private val adapter = ConversationsPagedAdapter(showFullMessage = true)
+    private lateinit var binding: FragmentMessageSearchBinding
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -43,13 +44,7 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = DataBindingUtil.inflate<FragmentMessageSearchBinding>(
-            inflater,
-            R.layout.fragment_message_search,
-            container,
-            false
-        )
-        binding.lifecycleOwner = viewLifecycleOwner
+        binding = FragmentMessageSearchBinding.inflate(inflater, container, false)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
