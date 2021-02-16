@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.domain.entity
+package bogomolov.aa.anochat.repository
 
 data class Settings(
     val notifications: Boolean = true,

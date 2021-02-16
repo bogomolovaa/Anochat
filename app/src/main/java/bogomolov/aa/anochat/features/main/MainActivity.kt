@@ -16,9 +16,9 @@ import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.MyWorkerFactory
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
+import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.features.contacts.UpdateWorker
 import bogomolov.aa.anochat.repository.repositories.AuthRepository
-import bogomolov.aa.anochat.repository.repositories.UserRepository
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.android.AndroidInjection
@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
     @Inject
     internal lateinit var authRepository: AuthRepository
     @Inject
-    internal lateinit var userRepository: UserRepository
+    internal lateinit var userUseCases: UserUseCases
 
     override fun androidInjector(): AndroidInjector<Any> = androidInjector
 
@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         val appContext = application as AnochatAplication
         val factory = appContext.workManagerConfiguration.workerFactory
                 as DelegatingWorkerFactory
-        factory.addFactory(MyWorkerFactory(userRepository))
+        factory.addFactory(MyWorkerFactory(userUseCases))
 
         return WorkManager.getInstance(appContext)
     }

@@ -3,12 +3,12 @@ package bogomolov.aa.anochat.features.conversations.list
 import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
+import bogomolov.aa.anochat.domain.ConversationUseCases
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import bogomolov.aa.anochat.repository.repositories.AuthRepository
-import bogomolov.aa.anochat.repository.repositories.ConversationRepository
 import javax.inject.Inject
 
 data class ConversationsUiState(
@@ -21,7 +21,7 @@ class SignOutAction : UserAction
 
 class ConversationListViewModel
 @Inject constructor(
-    private val conversationRepository: ConversationRepository,
+    private val conversationUseCases: ConversationUseCases,
     private val authRepository: AuthRepository
 ) : BaseViewModel<ConversationsUiState>() {
 
@@ -35,12 +35,12 @@ class ConversationListViewModel
 
     private suspend fun InitConversationsAction.execute() {
         val pagedListLiveData =
-            LivePagedListBuilder(conversationRepository.loadConversationsDataSource(), 10).build()
+            LivePagedListBuilder(conversationUseCases.loadConversationsDataSource(), 10).build()
         setState { copy(pagedListLiveData = pagedListLiveData) }
     }
 
     private fun DeleteConversationsAction.execute() {
-        conversationRepository.deleteConversations(HashSet(ids))
+        conversationUseCases.deleteConversations(HashSet(ids))
     }
 
     private fun SignOutAction.execute() {

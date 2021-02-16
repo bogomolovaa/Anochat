@@ -3,11 +3,11 @@ package bogomolov.aa.anochat.features.conversations.search
 import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
+import bogomolov.aa.anochat.domain.MessageUseCases
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
-import bogomolov.aa.anochat.repository.repositories.MessageRepository
 import javax.inject.Inject
 
 data class MessageSearchUiState(
@@ -17,7 +17,7 @@ data class MessageSearchUiState(
 class MessageSearchAction(val query: String) : UserAction
 
 class MessageSearchViewModel
-@Inject constructor(private val messageRepository: MessageRepository) : BaseViewModel<MessageSearchUiState>() {
+@Inject constructor(private val messageUseCases: MessageUseCases) : BaseViewModel<MessageSearchUiState>() {
 
     override fun createInitialState() = MessageSearchUiState()
 
@@ -27,7 +27,7 @@ class MessageSearchViewModel
 
     private suspend fun MessageSearchAction.execute() {
         val pagedListLiveData =
-            LivePagedListBuilder(messageRepository.searchMessagesDataSource(query), 10).build()
+            LivePagedListBuilder(messageUseCases.searchMessagesDataSource(query), 10).build()
         setState { copy(pagedListLiveData = pagedListLiveData) }
     }
 }

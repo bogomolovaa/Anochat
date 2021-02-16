@@ -13,17 +13,16 @@ import androidx.core.app.NotificationCompat
 import androidx.navigation.NavDeepLinkBuilder
 import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.UseCases
+import bogomolov.aa.anochat.domain.ConversationUseCases
+import bogomolov.aa.anochat.domain.MessageUseCases
 import bogomolov.aa.anochat.domain.entity.Message
-import bogomolov.aa.anochat.domain.entity.Settings
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.main.MainActivity
+import bogomolov.aa.anochat.repository.Settings
 import bogomolov.aa.anochat.repository.getBitmap
 import bogomolov.aa.anochat.repository.getFilePath
 import bogomolov.aa.anochat.repository.getMiniPhotoFileName
-import bogomolov.aa.anochat.repository.repositories.ConversationRepository
-import bogomolov.aa.anochat.repository.repositories.MessageRepository
-import bogomolov.aa.anochat.repository.repositories.UserRepository
+import bogomolov.aa.anochat.repository.repositories.AuthRepository
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.android.AndroidInjection
@@ -45,16 +44,13 @@ private const val TAG = "FirebaseService"
 @SuppressLint("MissingFirebaseInstanceTokenRefresh")
 class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjector {
     @Inject
-    lateinit var useCases: UseCases
+    lateinit var messageUseCases: MessageUseCases
 
     @Inject
-    lateinit var userRepository: UserRepository
+    lateinit var conversationUseCases: ConversationUseCases
 
     @Inject
-    lateinit var conversationRepository: ConversationRepository
-
-    @Inject
-    lateinit var messageRepository: MessageRepository
+    lateinit var authRepository: AuthRepository
 
     @Inject
     lateinit var androidInjector: DispatchingAndroidInjector<Any>
@@ -88,10 +84,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
             val messageId = data["messageId"]
             serviceScope.launch(Dispatchers.IO) {
                 when (type) {
-                    TYPE_KEY -> useCases.finallyReceivedPublicKey(publicKey!!, uid!!)
-                    TYPE_INIT_KEY -> useCases.receivedPublicKey(publicKey!!, uid!!)
+                    TYPE_KEY -> messageUseCases.finallyReceivedPublicKey(publicKey!!, uid!!)
+                    TYPE_INIT_KEY -> messageUseCases.receivedPublicKey(publicKey!!, uid!!)
                     TYPE_MESSAGE -> receiveMessage(data)
-                    TYPE_REPORT -> messageRepository.receiveReport(messageId!!, received, viewed)
+                    TYPE_REPORT -> messageUseCases.receiveReport(messageId!!, received, viewed)
                 }
             }
         }
@@ -108,16 +104,16 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         if (image.isNullOrEmpty()) image = null
         if (audio.isNullOrEmpty()) audio = null
         if (uid != null && messageId != null)
-            useCases.receiveMessage(text, uid, messageId, replyId, image, audio)
+            messageUseCases.receiveMessage(text, uid, messageId, replyId, image, audio)
                 ?.also { showNotification(it) }
     }
 
     private fun showNotification(message: Message) {
         val inBackground = (application as AnochatAplication).inBackground
-        val settings = userRepository.getSettings()
+        val settings = authRepository.getSettings()
         if (inBackground && settings.notifications) {
             val conversation =
-                conversationRepository.getConversation(message.conversationId)
+                conversationUseCases.getConversation(message.conversationId)
             sendNotification(message, conversation.user, settings)
         }
     }

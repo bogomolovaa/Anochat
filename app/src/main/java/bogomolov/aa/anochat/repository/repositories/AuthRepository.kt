@@ -1,8 +1,11 @@
 package bogomolov.aa.anochat.repository.repositories
 
 import bogomolov.aa.anochat.domain.KeyValueStore
+import bogomolov.aa.anochat.domain.getValue
 import bogomolov.aa.anochat.domain.setMyUID
+import bogomolov.aa.anochat.domain.setValue
 import bogomolov.aa.anochat.repository.Firebase
+import bogomolov.aa.anochat.repository.Settings
 import com.google.firebase.auth.PhoneAuthCredential
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,6 +15,9 @@ interface AuthRepository {
     suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean
     fun signOut()
     fun isSignedIn(): Boolean
+
+    fun updateSettings(settings: Settings)
+    fun getSettings(): Settings
 }
 
 @Singleton
@@ -37,5 +43,23 @@ class AuthRepositoryImpl @Inject constructor(
         firebase.signUp(name, email, password)
 
     override fun isSignedIn() = firebase.isSignedIn()
+
+    companion object {
+        private const val NOTIFICATIONS = "notifications"
+        private const val SOUND = "sound"
+        private const val VIBRATION = "vibration"
+    }
+
+    override fun updateSettings(settings: Settings) {
+        keyValueStore.setValue(NOTIFICATIONS, settings.notifications)
+        keyValueStore.setValue(SOUND, settings.sound)
+        keyValueStore.setValue(VIBRATION, settings.vibration)
+    }
+
+    override fun getSettings() = Settings(
+        notifications = keyValueStore.getValue(NOTIFICATIONS) ?: true,
+        sound = keyValueStore.getValue(SOUND) ?: true,
+        vibration = keyValueStore.getValue(VIBRATION) ?: true
+    )
 
 }

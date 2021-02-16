@@ -6,15 +6,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
-import bogomolov.aa.anochat.domain.UseCases
+import bogomolov.aa.anochat.domain.ConversationUseCases
+import bogomolov.aa.anochat.domain.MessageUseCases
+import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
-import bogomolov.aa.anochat.repository.repositories.ConversationRepository
-import bogomolov.aa.anochat.repository.repositories.MessageRepository
-import bogomolov.aa.anochat.repository.repositories.UserRepository
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -46,10 +45,9 @@ class InitConversationAction(
 class DeleteMessagesAction(val ids: Set<Long>) : UserAction
 
 class ConversationViewModel @Inject constructor(
-    private val userRepository: UserRepository,
-    private val conversationRepository: ConversationRepository,
-    private val messageRepository: MessageRepository,
-    private val useCases: UseCases
+    private val userUseCases: UserUseCases,
+    private val conversationUseCases: ConversationUseCases,
+    private val messageUseCases: MessageUseCases
 ) :
     BaseViewModel<DialogUiState>() {
 
@@ -58,7 +56,7 @@ class ConversationViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         GlobalScope.launch(dispatcher) {
-            conversationRepository.deleteConversationIfNoMessages(currentState.conversation!!)
+            conversationUseCases.deleteConversationIfNoMessages(currentState.conversation!!)
         }
     }
 
@@ -79,16 +77,17 @@ class ConversationViewModel @Inject constructor(
                 audio = audio,
                 image = image
             )
-            useCases.sendMessage(message, conversation.user.uid)
+            messageUseCases.sendMessage(message, conversation.user.uid)
         }
     }
 
     private fun DeleteMessagesAction.execute() {
-        messageRepository.deleteMessages(ids)
+        messageUseCases.deleteMessages(ids)
+        //useCases.deleteMessages(ids)
     }
 
     private suspend fun InitConversationAction.execute() {
-        val conversation = conversationRepository.getConversation(conversationId)
+        val conversation = conversationUseCases.getConversation(conversationId)
         setState { copy(conversation = conversation) }
         val pagedListLiveData = loadMessages(conversation)
         setState { copy(pagedListLiveData = pagedListLiveData) }
@@ -97,10 +96,10 @@ class ConversationViewModel @Inject constructor(
 
     private fun InitConversationAction.loadMessages(conversation: Conversation) =
         LivePagedListBuilder(
-            messageRepository.loadMessagesDataSource(conversation.id)
+            messageUseCases.loadMessagesDataSource(conversation.id)
                 .mapByPage {
                     viewModelScope.launch(dispatcher) {
-                        messageRepository.notifyAsViewed(it)
+                        messageUseCases.notifyAsViewed(it)
                     }
                     it
                 }
@@ -108,7 +107,7 @@ class ConversationViewModel @Inject constructor(
         ).build()
 
     private fun subscribeToOnlineStatus(uid: String) {
-        val flow = userRepository.addUserStatusListener(uid, viewModelScope)
+        val flow = userUseCases.addUserStatusListener(uid, viewModelScope)
         viewModelScope.launch(dispatcher) {
             flow.collect {
                 val online = it.first

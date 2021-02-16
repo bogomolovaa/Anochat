@@ -2,21 +2,27 @@ package bogomolov.aa.anochat.domain
 
 import android.util.Log
 import bogomolov.aa.anochat.domain.entity.Message
-import bogomolov.aa.anochat.repository.repositories.ConversationRepository
-import bogomolov.aa.anochat.repository.repositories.MessageRepository
-import bogomolov.aa.anochat.repository.repositories.UserRepository
+import bogomolov.aa.anochat.domain.repositories.*
 import javax.inject.Inject
 import javax.inject.Singleton
+
+@Singleton
+open class UserUseCases @Inject constructor(private val userRepository: UserRepository) :
+    UserUseCasesInRepository by userRepository
+
+@Singleton
+open class ConversationUseCases @Inject constructor(private val conversationRepository: ConversationRepository) :
+    ConversationUseCasesInRepository by conversationRepository
 
 private const val TAG = "MessageUseCases"
 
 @Singleton
-class UseCases @Inject constructor(
+open class MessageUseCases @Inject constructor(
     private val messageRepository: MessageRepository,
     private val conversationRepository: ConversationRepository,
     private val userRepository: UserRepository,
     private val crypto: Crypto
-) {
+) : MessageUseCasesInRepository by messageRepository {
 
     suspend fun receiveMessage(
         text: String,
@@ -85,8 +91,6 @@ class UseCases @Inject constructor(
         val generated = generateSecretKey(publicKey, uid)
         if (generated) sendPendingMessages(uid)
     }
-
-
 
 
     private fun sendPublicKey(uid: String, initiator: Boolean) {
