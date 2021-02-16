@@ -3,10 +3,9 @@ package bogomolov.aa.anochat
 
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
-import bogomolov.aa.anochat.domain.repositories.UserRepository
 import bogomolov.aa.anochat.features.settings.SettingsViewModel
 import bogomolov.aa.anochat.features.settings.UpdateStatusAction
-import bogomolov.aa.anochat.repository.repositories.AuthRepository
+import bogomolov.aa.anochat.features.shared.AuthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineDispatcher

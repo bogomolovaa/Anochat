@@ -68,9 +68,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
                     }
                 }
 
-                override fun onCancelled(error: DatabaseError) {
-
-                }
+                override fun onCancelled(error: DatabaseError) {}
             })
         val lastOnlineListener =
             userRef.child("lastOnline").addValueEventListener(object : ValueEventListener {
@@ -81,9 +79,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
                     }
                 }
 
-                override fun onCancelled(error: DatabaseError) {
-
-                }
+                override fun onCancelled(error: DatabaseError) {}
             })
         scope.launch(Dispatchers.IO) {
             try {

@@ -3,7 +3,7 @@ package bogomolov.aa.anochat.features.login
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
-import bogomolov.aa.anochat.repository.repositories.AuthRepository
+import bogomolov.aa.anochat.features.shared.AuthRepository
 import com.google.firebase.auth.PhoneAuthCredential
 import javax.inject.Inject
 

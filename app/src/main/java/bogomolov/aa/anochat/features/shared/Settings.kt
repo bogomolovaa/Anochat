@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.repository
+package bogomolov.aa.anochat.features.shared
 
 data class Settings(
     val notifications: Boolean = true,

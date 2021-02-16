@@ -1,11 +1,10 @@
 package bogomolov.aa.anochat.dagger
 
-import bogomolov.aa.anochat.domain.ConversationUseCases
 import bogomolov.aa.anochat.domain.KeyValueStore
-import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.repositories.ConversationRepository
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
 import bogomolov.aa.anochat.domain.repositories.UserRepository
+import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.FirebaseImpl
 import bogomolov.aa.anochat.repository.KeyValueStoreImpl

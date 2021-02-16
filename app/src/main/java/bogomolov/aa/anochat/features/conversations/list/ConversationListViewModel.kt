@@ -8,7 +8,7 @@ import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
-import bogomolov.aa.anochat.repository.repositories.AuthRepository
+import bogomolov.aa.anochat.features.shared.AuthRepository
 import javax.inject.Inject
 
 data class ConversationsUiState(

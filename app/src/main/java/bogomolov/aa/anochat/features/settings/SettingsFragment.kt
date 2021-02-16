@@ -26,7 +26,7 @@ import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSettingsBinding
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.repository.Settings
+import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.repository.resizeImage
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject

@@ -4,21 +4,12 @@ import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.getValue
 import bogomolov.aa.anochat.domain.setMyUID
 import bogomolov.aa.anochat.domain.setValue
+import bogomolov.aa.anochat.features.shared.AuthRepository
+import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.repository.Firebase
-import bogomolov.aa.anochat.repository.Settings
 import com.google.firebase.auth.PhoneAuthCredential
 import javax.inject.Inject
 import javax.inject.Singleton
-
-interface AuthRepository {
-    fun signUp(name: String, email: String, password: String): Boolean
-    suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): Boolean
-    fun signOut()
-    fun isSignedIn(): Boolean
-
-    fun updateSettings(settings: Settings)
-    fun getSettings(): Settings
-}
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(

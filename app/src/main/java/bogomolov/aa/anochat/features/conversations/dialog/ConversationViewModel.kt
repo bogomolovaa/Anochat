@@ -83,7 +83,6 @@ class ConversationViewModel @Inject constructor(
 
     private fun DeleteMessagesAction.execute() {
         messageUseCases.deleteMessages(ids)
-        //useCases.deleteMessages(ids)
     }
 
     private suspend fun InitConversationAction.execute() {

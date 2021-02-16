@@ -5,6 +5,7 @@ import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.getMyUID
 import bogomolov.aa.anochat.domain.getValue
 import bogomolov.aa.anochat.domain.repositories.UserRepository
+import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.*
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
