@@ -98,7 +98,7 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         }
     }
 
-    fun setOnClose(onClose: () -> Unit) {
+    fun onClose(onClose: () -> Unit) {
         val closeIcon: ImageView = findViewById(R.id.closePlayImage)
         closeIcon.visibility = View.VISIBLE
         closeIcon.setOnClickListener { onClose() }

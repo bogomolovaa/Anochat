@@ -47,6 +47,8 @@ class MessagesPagedAdapter(
             if (image != null) {
                 loadImage(image, binding.imageView, 8)
                 setImageClickListener(image, binding.imageView)
+            }else{
+                binding.imageView.setImageDrawable(null);
             }
             val replyMessageImage = item.message.replyMessage?.image
             if (replyMessageImage != null) loadImage(replyMessageImage, binding.replyImage, 16)
@@ -58,6 +60,7 @@ class MessagesPagedAdapter(
             binding.layout.visibility = View.VISIBLE
         } else {
             binding.layout.visibility = View.GONE
+            binding.message = null
         }
     }
 

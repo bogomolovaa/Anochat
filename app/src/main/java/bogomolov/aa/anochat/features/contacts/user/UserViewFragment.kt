@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnPreDraw
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
@@ -97,7 +96,7 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
 
     private fun setMainPhotoListener(navController: NavController) {
         binding.userPhoto.setOnClickListener {
-            val photo = viewModel.currentState.user?.photo
+            val photo = viewModel.state.user?.photo
             if (photo != null) {
                 val extras = FragmentNavigator.Extras.Builder()
                     .addSharedElement(binding.userPhoto, binding.userPhoto.transitionName)

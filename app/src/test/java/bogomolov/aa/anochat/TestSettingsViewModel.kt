@@ -59,7 +59,7 @@ class TestSettingsViewModel {
 
         verify(userUseCases).updateMyUser(capture(userCaptor))
         assertEquals(status, userCaptor.value.status)
-        assertEquals(status, viewModel.currentState.user?.status)
+        assertEquals(status, viewModel.state.user?.status)
     }
 
     private fun <T> capture(argumentCaptor: ArgumentCaptor<T>): T = argumentCaptor.capture()

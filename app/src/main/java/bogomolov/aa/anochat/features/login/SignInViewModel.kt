@@ -27,7 +27,7 @@ class SignInViewModel
     }
 
     private suspend fun SignInAction.execute() {
-        val phoneNumber = currentState.phoneNumber!!
+        val phoneNumber = state.phoneNumber!!
         val succeed = authRepository.signIn(phoneNumber, credential)
         val state = if (succeed) LoginState.LOGGED else LoginState.NOT_LOGGED
         setState { copy(state = state) }

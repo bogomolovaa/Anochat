@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
@@ -54,7 +53,7 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
         binding.toolbar.navigationIcon = null
 
         binding.fab.setOnClickListener {
-            when (viewModel.currentState.state) {
+            when (viewModel.state.state) {
                 LoginState.NOT_LOGGED -> verifyPhoneNumber()
                 else -> submitCode()
             }
@@ -64,10 +63,10 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
     }
 
     private fun submitCode() {
-        if (viewModel.currentState.verificationId != null) {
+        if (viewModel.state.verificationId != null) {
             val code = binding.codeInputText.text.toString()
             if (code.isNotEmpty()) {
-                val verificationId = viewModel.currentState.verificationId!!
+                val verificationId = viewModel.state.verificationId!!
                 val credential = PhoneAuthProvider.getCredential(verificationId, code)
                 viewModel.addAction(SignInAction(credential))
             } else {

@@ -39,7 +39,6 @@ import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
@@ -62,6 +61,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
+private const val TAG = "ConversationFragment"
 
 class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     @Inject
@@ -69,13 +69,8 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     private val viewModel: ConversationViewModel by navGraphViewModels(R.id.dialog_graph) { viewModelFactory }
     private lateinit var navController: NavController
     private lateinit var binding: FragmentConversationBinding
-
-    private var photoPath: String? = null
     private lateinit var emojiPopup: EmojiPopup
-    private var replyId: String? = null
-    private var recorder: MediaRecorder? = null
-    private var audioFile: String? = null
-    private var scrollEnd = false
+
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -113,15 +108,84 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         return binding.root
     }
 
+    private var currentFabIcon: Int? = null
+
     override fun updateView(newState: DialogUiState, currentState: DialogUiState) {
         if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState)
         if (newState.conversation != currentState.conversation) setConversation(newState.conversation!!)
         if (newState.onlineStatus != currentState.onlineStatus)
             binding.statusText.text = newState.onlineStatus
+
+        if (newState.fabExpanded != currentState.fabExpanded) {
+            if (newState.fabExpanded) {
+                binding.fabFile.visibility = View.VISIBLE
+                binding.fabMic.visibility = View.VISIBLE
+                binding.fabCamera.visibility = View.VISIBLE
+            } else {
+                binding.fabFile.visibility = View.INVISIBLE
+                binding.fabMic.visibility = View.INVISIBLE
+                binding.fabCamera.visibility = View.INVISIBLE
+            }
+        }
+        if (newState.replyMessage != currentState.replyMessage) {
+            if (newState.replyMessage == null) {
+                binding.replyLayout.visibility = View.INVISIBLE
+                binding.replyText.text = ""
+            } else {
+                binding.replyLayout.visibility = View.VISIBLE
+                binding.replyText.text = newState.replyMessage.text
+                if (newState.replyMessage.image != null) {
+                    val file = File(getFilesDir(requireContext()), newState.replyMessage.image)
+                    if (file.exists()) {
+                        binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
+                        binding.replyImage.visibility = View.VISIBLE
+                    }
+                } else {
+                    binding.replyImage.visibility = View.GONE
+                }
+                if (newState.replyMessage.audio != null) {
+                    binding.replayAudio.setFile(newState.replyMessage.audio)
+                    binding.replayAudio.visibility = View.VISIBLE
+                } else {
+                    binding.replayAudio.visibility = View.GONE
+                }
+            }
+        }
+        if (newState.text != currentState.text) binding.messageInputText.setText(newState.text)
+        if (newState.recorder != currentState.recorder || newState.audioFile != currentState.audioFile) {
+            if (newState.recorder != null) {
+                if (newState.audioFile != null) {
+                    binding.audioLayout.visibility = View.VISIBLE
+                    binding.textLayout.visibility = View.GONE
+                }
+            } else {
+                binding.audioLayout.visibility = View.GONE
+                if (newState.audioFile != null) {
+                    binding.playAudioInput.setFile(viewModel.state.audioFile!!)
+                    binding.playAudioInput.visibility = View.VISIBLE
+                }else{
+                    binding.playAudioInput.visibility = View.GONE
+                    binding.textLayout.visibility = View.VISIBLE
+                }
+            }
+        }
+
+        var fabIcon = R.drawable.plus_icon
+        if (newState.fabExpanded) fabIcon = R.drawable.clear_icon
+        if (newState.textEntered) fabIcon = R.drawable.send_icon
+        if (newState.recorder != null) {
+            if (newState.audioFile != null) fabIcon = R.drawable.stop_icon
+        } else {
+            if (newState.audioFile != null) fabIcon = R.drawable.send_icon
+        }
+        if (fabIcon != currentFabIcon) {
+            binding.fab.setImageResource(fabIcon)
+            currentFabIcon = fabIcon
+        }
     }
 
     private fun setConversation(conversation: Conversation) {
-        if (conversation.user.photo != null) binding.userPhoto.setFile(conversation.user.photo!!)
+        if (conversation.user.photo != null) binding.userPhoto.setFile(conversation.user.photo)
         binding.usernameText.text = conversation.user.name
         binding.usernameLayout.setOnClickListener {
             navController.navigate(
@@ -131,15 +195,14 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     }
 
     private fun setPagedList(uiState: DialogUiState) {
-        uiState.pagedListLiveData!!.observe(viewLifecycleOwner) {
+        uiState.pagedListLiveData!!.observe(viewLifecycleOwner) { pagedList ->
             Log.i("test", "pagedListLiveData UPDATED")
-            (binding.recyclerView.adapter as MessagesPagedAdapter).submitList(it)
+            (binding.recyclerView.adapter as MessagesPagedAdapter).submitList(pagedList)
             if (uiState.recyclerViewState != null) {
                 binding.recyclerView.layoutManager?.onRestoreInstanceState(uiState.recyclerViewState)
-                viewModel.setStateAsync { copy(recyclerViewState = null) }
             } else {
-                scrollEnd = true
-                binding.recyclerView.scrollToPosition(it.size - 1);
+                viewModel.setStateAsync { copy(scrollEnd = true) }
+                binding.recyclerView.scrollToPosition(pagedList.size - 1);
             }
             binding.recyclerView.doOnPreDraw {
                 startPostponedEnterTransition()
@@ -148,27 +211,23 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     }
 
     private fun setupUserInput(view: View) {
-        setFabDefaultOnClickListener()
+        setFabDefaultClickListener()
         binding.messageInputText.setOnFocusChangeListener { v, hasFocus ->
-            if (hasFocus) {
-                scrollEnd = true
-            }
+            if (hasFocus) viewModel.setStateAsync { copy(scrollEnd = true) }
         }
-        binding.messageInputText.doOnTextChanged { text, start, count, after ->
+        binding.messageInputText.doOnTextChanged { textInput, _, _, _ ->
             hideFabs()
-            if (!text.isNullOrEmpty()) {
-                binding.fab.setImageResource(R.drawable.send_icon)
-                textEntered = true
-                scrollEnd = true
+            val text = textInput.toString()
+            if (!textInput.isNullOrEmpty()) {
+                viewModel.setStateAsync { copy(text = text, scrollEnd = true, textEntered = true) }
             } else {
-                binding.fab.setImageResource(R.drawable.plus_icon)
-                textEntered = false
+                viewModel.setStateAsync { copy(text = text.toString(), textEntered = false) }
             }
         }
         binding.fabMic.setOnClickListener {
             hideFabs()
             requestMicrophonePermission()
-            scrollEnd = false
+            viewModel.setStateAsync { copy(scrollEnd = false) }
         }
         binding.fabFile.setOnClickListener {
             hideFabs()
@@ -186,11 +245,14 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
             emojiPopup.dismiss()
             navController.navigateUp()
         }
-        binding.playAudioInput.setOnClose {
-            binding.fab.setImageResource(R.drawable.plus_icon)
-            textEntered = false
-            binding.playAudioInput.visibility = View.GONE
-            binding.textLayout.visibility = View.VISIBLE
+        binding.playAudioInput.onClose {
+            viewModel.setStateAsync {
+                copy(
+                    scrollEnd = false,
+                    textEntered = false,
+                    audioFile = null
+                )
+            }
         }
     }
 
@@ -203,10 +265,10 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         recyclerView.layoutManager = linearLayoutManager
         recyclerView.addOnScrollListener(getScrollListener(linearLayoutManager, adapter))
         recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-            if (scrollEnd) { // && (bottom < oldBottom && adapter.itemCount > 0)
+            if (viewModel.state.scrollEnd) { // && (bottom < oldBottom && adapter.itemCount > 0)
                 binding.recyclerView.postDelayed({
                     binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
-                    scrollEnd = false
+                    viewModel.setStateAsync { copy(scrollEnd = false) }
                 }, 100)
             }
         }
@@ -268,120 +330,80 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         }
     }
 
-    private fun onReply(it: Message) {
-        binding.replyImage.visibility = View.GONE
-        binding.replayAudio.visibility = View.GONE
-        binding.replyText.text = it.text
-        replyId = it.messageId
+    private fun smoothScrollToLastPosition() {
         val lastPosition = binding.recyclerView.adapter?.itemCount ?: 0 - 1
         if (lastPosition > 0) binding.recyclerView.smoothScrollToPosition(lastPosition)
-        if (it.image != null) {
-            val file = File(getFilesDir(requireContext()), it.image)
-            if (file.exists()) {
-                binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
-                binding.replyImage.visibility = View.VISIBLE
-            }
-        }
-        if (it.audio != null) {
-            binding.replayAudio.setFile(it.audio)
-            binding.replayAudio.visibility = View.VISIBLE
-        }
-        binding.removeReply.setOnClickListener {
-            removeReply(binding)
-        }
-        binding.replyLayout.visibility = View.VISIBLE
     }
 
-
-    private var fabExpanded = false
-    private var textEntered = false
-
-    private fun sendMessageAction() {
-        val text = binding.messageInputText.text.toString()
-        if (audioFile != null) {
-            Log.i("test", "message audio: $audioFile")
-            binding.playAudioInput.visibility = View.GONE
-            binding.textLayout.visibility = View.VISIBLE
-            audioFile = null
-        } else if (text.isNotEmpty()) {
-            Log.i("test", "message text: $text")
-            binding.messageInputText.setText("")
-            removeReply(binding)
+    private fun onReply(message: Message) {
+        viewModel.setStateAsync { copy(replyMessage = message) }
+        smoothScrollToLastPosition()
+        binding.removeReply.setOnClickListener {
+            viewModel.setStateAsync { copy(replyMessage = null) }
         }
-        viewModel.addAction(SendMessageAction(text = text, replyId = replyId, audio = audioFile))
+    }
+
+    private fun setFabDefaultClickListener() {
+        binding.fab.setOnClickListener {
+            //viewModel.setStateAsync { copy(scrollEnd = false) }
+            if (viewModel.state.textEntered) {
+                viewModel.addAction(
+                    SendMessageAction(
+                        text = viewModel.state.text,
+                        audio = viewModel.state.audioFile,
+                        image = viewModel.state.photoPath
+                    )
+                )
+            } else {
+                if (viewModel.state.fabExpanded) {
+                    hideFabs()
+                } else {
+                    expandFabs()
+                }
+            }
+        }
     }
 
     private fun hideFabs() {
         binding.fabMic.animate()
             .translationY(0f).setListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(var1: Animator) {
-                    binding.fabMic.visibility = View.INVISIBLE
-                    fabExpanded = false
+                    viewModel.setStateAsync { copy(fabExpanded = false) }
                 }
             }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
         binding.fabFile.animate()
             .translationY(0f).setListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(var1: Animator) {
-                    binding.fabFile.visibility = View.INVISIBLE
-                    fabExpanded = false
-
+                    viewModel.setStateAsync { copy(fabExpanded = false) }
                 }
             }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
         binding.fabCamera.animate()
             .translationY(0f).setListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(var1: Animator) {
-                    binding.fabCamera.visibility = View.INVISIBLE
-                    fabExpanded = false
+                    viewModel.setStateAsync { copy(fabExpanded = false) }
                 }
             }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
-        binding.fab.setImageResource(R.drawable.plus_icon)
     }
 
     private fun expandFabs() {
-        binding.fabMic.visibility = View.VISIBLE
         binding.fabMic.animate()
             .translationY(-600f).setListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(var1: Animator) {
-                    fabExpanded = true
-                    binding.fab.setImageResource(R.drawable.clear_icon)
+                    viewModel.setStateAsync { copy(fabExpanded = true) }
                 }
             }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
-        binding.fabFile.visibility = View.VISIBLE
         binding.fabFile.animate()
             .translationY(-200f).setListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(var1: Animator) {
-                    fabExpanded = true
-                    binding.fab.setImageResource(R.drawable.clear_icon)
+                    viewModel.setStateAsync { copy(fabExpanded = true) }
                 }
             }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
-        binding.fabCamera.visibility = View.VISIBLE
         binding.fabCamera.animate()
             .translationY(-400f).setListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(var1: Animator) {
-                    fabExpanded = true
+                    viewModel.setStateAsync { copy(fabExpanded = true) }
                 }
             }).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
-    }
-
-    private fun setFabDefaultOnClickListener() {
-        binding.fab.setOnClickListener {
-            scrollEnd = false
-            if (textEntered) {
-                sendMessageAction()
-                textEntered = false
-            } else {
-                if (!fabExpanded) {
-                    expandFabs()
-                } else {
-                    hideFabs()
-                }
-            }
-        }
-    }
-
-    private fun removeReply(binding: FragmentConversationBinding) {
-        binding.replyLayout.visibility = View.INVISIBLE
-        replyId = null
     }
 
     override fun onPause() {
@@ -393,14 +415,13 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        //Log.i("test", "onActivityResult $resultCode $intent requestCode $requestCode")
         if (resultCode == RESULT_OK) {
             when (requestCode) {
                 FILE_CHOOSER_CODE -> {
                     val uri = intent?.data
                     if (uri != null) redirectToSendMediaFragment(uri = uri)
                 }
-                CAMERA_CODE -> redirectToSendMediaFragment(path = photoPath)
+                CAMERA_CODE -> redirectToSendMediaFragment(path = viewModel.state.photoPath)
             }
         }
         super.onActivityResult(requestCode, resultCode, intent)
@@ -410,7 +431,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         navController.navigate(R.id.sendMediaFragment, Bundle().apply {
             if (path != null) putString("path", path)
             if (uri != null) putParcelable("uri", uri)
-            putLong("conversationId", viewModel.currentState.conversation!!.id)
+            putLong("conversationId", viewModel.state.conversation!!.id)
         })
     }
 
@@ -418,22 +439,19 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "image/*"
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-
         try {
             startActivityForResult(
                 Intent.createChooser(intent, getString(R.string.select_file)),
                 FILE_CHOOSER_CODE
             )
         } catch (ex: ActivityNotFoundException) {
-            Log.w("ConversationFragment", "File manager not installed")
+            Log.w(TAG, "File manager not installed")
         }
     }
 
     @SuppressLint("SimpleDateFormat")
     private fun startRecording() {
-        audioFile = getRandomString(20) + ".3gp"
-        binding.textLayout.visibility = View.GONE
-        binding.audioLayout.visibility = View.VISIBLE
+        val audioFile = getRandomString(20) + ".3gp"
         val startTime = System.currentTimeMillis()
         val job = lifecycleScope.launch {
             while (true) {
@@ -443,7 +461,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
                 delay(1000)
             }
         }
-        binding.fab.setImageResource(R.drawable.stop_icon)
         binding.fab.setOnClickListener {
             job.cancel()
             stopRecording()
@@ -451,26 +468,21 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         val recorder = MediaRecorder()
         recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
         recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-        recorder.setOutputFile(File(getFilesDir(requireContext()), audioFile!!).path)
+        recorder.setOutputFile(File(getFilesDir(requireContext()), audioFile).path)
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
         recorder.prepare()
         recorder.start()
-        this.recorder = recorder
+        viewModel.setStateAsync { copy(audioFile = audioFile, recorder = recorder) }
     }
 
     private fun stopRecording() {
-        binding.audioLayout.visibility = View.GONE
+        val recorder = viewModel.state.recorder
         if (recorder != null) {
-            recorder!!.stop()
-            recorder!!.release()
+            recorder.stop()
+            recorder.release()
         }
-        recorder = null
-        binding.fab.setImageResource(R.drawable.plus_icon)
-        setFabDefaultOnClickListener()
-        binding.playAudioInput.setFile(audioFile!!)
-        binding.playAudioInput.visibility = View.VISIBLE
-        binding.fab.setImageResource(R.drawable.send_icon)
-        textEntered = true
+        setFabDefaultClickListener()
+        viewModel.setStateAsync { copy(textEntered = true, recorder = null) }
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -485,7 +497,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(requireActivity().packageManager) != null) {
             val photoFile = createTempImageFile()
-            photoPath = photoFile.path
+            viewModel.setStateAsync { copy(photoPath = photoFile.path) }
             val photoUri = FileProvider.getUriForFile(
                 requireContext(),
                 "bogomolov.aa.anochat.fileprovider",

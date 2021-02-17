@@ -21,14 +21,14 @@ abstract class BaseViewModel<S : UiState> : ViewModel() {
 
     var dispatcher: CoroutineDispatcher = Dispatchers.IO
 
-    val currentState: S
-        get() = uiState.value
+    val state: S
+        get() = stateFlow.value
 
     private val initialState: S by lazy { createInitialState() }
     abstract fun createInitialState(): S
 
     private val _uiState: MutableStateFlow<S> = MutableStateFlow(initialState)
-    val uiState = _uiState.asStateFlow()
+    val stateFlow = _uiState.asStateFlow()
 
     private val _actions = Channel<UserAction>()
     private val actions = _actions.receiveAsFlow()
@@ -55,7 +55,7 @@ abstract class BaseViewModel<S : UiState> : ViewModel() {
 
     suspend fun setState(reduce: S.() -> S) {
         mutex.withLock {
-            val newState = currentState.reduce()
+            val newState = state.reduce()
             _uiState.value = newState
         }
     }

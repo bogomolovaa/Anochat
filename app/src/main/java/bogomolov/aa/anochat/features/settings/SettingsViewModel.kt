@@ -39,21 +39,21 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun UpdateStatusAction.execute() {
-        val user = currentState.user!!
+        val user = state.user!!
         val changedUser = user.copy(status = status)
         setState { copy(user = changedUser) }
         userUseCases.updateMyUser(changedUser)
     }
 
     private suspend fun UpdatePhotoAction.execute() {
-        val user = currentState.user!!
+        val user = state.user!!
         val changedUser = user.copy(photo = photo)
         setState { copy(user = changedUser) }
         userUseCases.updateMyUser(changedUser)
     }
 
     private suspend fun UpdateNameAction.execute() {
-        val user = currentState.user!!
+        val user = state.user!!
         val changedUser = user.copy(name = name)
         setState { copy(user = changedUser) }
         userUseCases.updateMyUser(changedUser)
@@ -70,7 +70,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun ChangeSettingsAction.execute() {
-        val settings = currentState.settings.change()
+        val settings = state.settings.change()
         setState { copy(settings = settings) }
         authRepository.updateSettings(settings)
     }

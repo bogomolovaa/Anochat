@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.annotation.SuppressLint
+import android.media.MediaRecorder
 import android.os.Parcelable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
@@ -27,12 +28,22 @@ data class DialogUiState(
     val conversation: Conversation? = null,
     val onlineStatus: String = "",
     val pagedListLiveData: LiveData<PagedList<MessageView>>? = null,
-    var recyclerViewState: Parcelable? = null
+    var recyclerViewState: Parcelable? = null,
+
+    val scrollEnd: Boolean = false,
+    val fabExpanded: Boolean = false,
+    val textEntered: Boolean = false,
+
+    val replyMessage: Message? = null,
+    val audioFile: String? = null,
+    val photoPath: String? = null,
+    val text: String = "",
+
+    val recorder: MediaRecorder? = null
 ) : UiState
 
 class SendMessageAction(
     val text: String? = null,
-    val replyId: String? = null,
     val audio: String? = null,
     val image: String? = null
 ) : UserAction
@@ -55,7 +66,7 @@ class ConversationViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         GlobalScope.launch(dispatcher) {
-            conversationUseCases.deleteConversationIfNoMessages(currentState.conversation!!)
+            conversationUseCases.deleteConversationIfNoMessages(state.conversation!!)
         }
     }
 
@@ -66,10 +77,11 @@ class ConversationViewModel @Inject constructor(
     }
 
     private suspend fun SendMessageAction.execute() {
-        val conversation = currentState.conversation
+        val conversation = state.conversation
         if (conversation != null) {
+            val replyId = state.replyMessage?.messageId
             val message = Message(
-                text = text ?: "",
+                text = text?:"",
                 time = System.currentTimeMillis(),
                 isMine = true,
                 conversationId = conversation.id,
@@ -77,6 +89,7 @@ class ConversationViewModel @Inject constructor(
                 audio = audio,
                 image = image
             )
+            setState{ copy(photoPath = null, textEntered = false, replyMessage = null, text = "", audioFile = null) }
             messageUseCases.sendMessage(message, conversation.user.uid)
         }
     }
