@@ -5,11 +5,10 @@ import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.User
 
 interface ConversationRepository : ConversationUseCasesInRepository{
-
+    fun createOrGetConversation(user: User): Long
 }
 
 interface ConversationUseCasesInRepository{
-    fun createOrGetConversation(user: User): Long
     fun loadConversationsDataSource(): DataSource.Factory<Int, Conversation>
 
     fun getConversation(id: Long): Conversation

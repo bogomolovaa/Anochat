@@ -15,7 +15,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.databinding.BindingAdapter
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
@@ -28,9 +27,10 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
+import bogomolov.aa.anochat.features.shared.ActionModeData
+import bogomolov.aa.anochat.features.shared.ItemClickListener
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -93,20 +93,18 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
     }
 
     private fun setupRecyclerView() {
-        val actionsMap = HashMap<Int, (Set<Long>, Set<Conversation>) -> Unit>()
-        actionsMap[R.id.delete_conversations_action] =
-            { ids, items -> viewModel.addAction(DeleteConversationsAction(ids)) }
+        val data = ActionModeData<Conversation>(R.menu.conversations_menu, binding.toolbar)
+        data.actionsMap[R.id.delete_conversations_action] =
+            { ids, _ -> viewModel.addAction(DeleteConversationsAction(ids)) }
         val adapter =
-            ConversationsPagedAdapter(helper =
-            AdapterHelper(
-                R.menu.conversations_menu,
-                actionsMap,
-                binding.toolbar
-            ) {
-                navController.navigate(
-                    R.id.dialog_graph,
-                    Bundle().apply { putLong("id", it.id) })
-            })
+            ConversationsPagedAdapter(
+                actionModeData = data,
+                onClickListener = {
+                    navController.navigate(
+                        R.id.dialog_graph,
+                        Bundle().apply { putLong("id", it.id) })
+                }
+            )
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
     }
@@ -118,8 +116,6 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
 
         val searchView = SearchView(requireContext())
         val searchIcon = searchView.findViewById(androidx.appcompat.R.id.search_button) as ImageView
-        //searchIcon.backgroundTintList =
-        //    ContextCompat.getColorStateList(requireContext(), R.color.title_color)
         searchIcon.setImageDrawable(
             ContextCompat.getDrawable(requireContext(), R.drawable.search_icon)
         )
@@ -198,4 +194,3 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
 fun setTypeface(v: TextView, style: Int) {
     v.setTypeface(null, style);
 }
-

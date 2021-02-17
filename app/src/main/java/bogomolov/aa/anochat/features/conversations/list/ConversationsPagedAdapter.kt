@@ -2,54 +2,36 @@ package bogomolov.aa.anochat.features.conversations.list
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.paging.PagedListAdapter
 import bogomolov.aa.anochat.databinding.ConversationLayoutBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
-import bogomolov.aa.anochat.view.adapters.AdapterHelper
-import bogomolov.aa.anochat.view.adapters.AdapterSelectable
+import bogomolov.aa.anochat.features.shared.ActionModeData
+import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
+import bogomolov.aa.anochat.features.shared.ItemClickListener
 
 class ConversationsPagedAdapter(
     private val showFullMessage: Boolean = false,
-    private val helper: AdapterHelper<Conversation, ConversationLayoutBinding> = AdapterHelper()
-) :
-    PagedListAdapter<Conversation, AdapterHelper<Conversation, ConversationLayoutBinding>.VH>(
-        helper.DIFF_CALLBACK
-    ),
-    AdapterSelectable<Conversation, ConversationLayoutBinding> {
+    actionModeData: ActionModeData<Conversation>? = null,
+    onClickListener: ItemClickListener<Conversation>? = null
+) : ExtPagedListAdapter<Conversation, ConversationLayoutBinding>(actionModeData, onClickListener) {
 
-    init {
-        helper.adapter = this
-    }
-
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): AdapterHelper<Conversation, ConversationLayoutBinding>.VH {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding =
             ConversationLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.cardView
-        return helper.VH(cv, cv, binding)
+        return VH(cv, cv, binding)
     }
-
-    override fun onBindViewHolder(
-        holder: AdapterHelper<Conversation, ConversationLayoutBinding>.VH,
-        position: Int
-    ) = helper.onBindViewHolder(holder, position)
-
-    override fun getItem(position: Int) = super.getItem(position)
 
     override fun getId(item: Conversation) = item.id
 
-    override fun bind(conversation: Conversation?, binding: ConversationLayoutBinding) {
-        if (conversation != null) {
-            binding.conversation = conversation
+    override fun bind(item: Conversation?, binding: ConversationLayoutBinding) {
+        if (item != null) {
+            binding.conversation = item
             binding.messageText.text =
                 if (showFullMessage) {
-                    conversation.lastMessage?.text ?: ""
+                    item.lastMessage?.text ?: ""
                 } else {
-                    conversation.lastMessage?.shortText() ?: ""
+                    item.lastMessage?.shortText() ?: ""
                 }
         }
     }
-
 }

@@ -18,6 +18,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -30,7 +31,6 @@ import androidx.core.os.ConfigurationCompat
 import androidx.core.view.doOnPreDraw
 import androidx.core.widget.doOnTextChanged
 import androidx.databinding.BindingAdapter
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -43,15 +43,14 @@ import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
-import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.MainActivity
+import bogomolov.aa.anochat.features.shared.ActionModeData
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.getFilesDir
 import bogomolov.aa.anochat.repository.getRandomString
-import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import com.google.android.material.card.MaterialCardView
 import com.vanniktech.emoji.EmojiPopup
 import dagger.android.support.AndroidSupportInjection
@@ -62,7 +61,6 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
-import kotlin.collections.HashMap
 
 
 class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
@@ -105,16 +103,14 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentConversationBinding.inflate(inflater, container, false)
-        val mainActivity = activity as MainActivity
-        val view = binding.root
-        mainActivity.setSupportActionBar(binding.toolbar)
+        (activity as MainActivity).setSupportActionBar(binding.toolbar)
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         setupRecyclerView()
-        setupUserInput(view)
+        setupUserInput(binding.root)
 
-        return view
+        return binding.root
     }
 
     override fun updateView(newState: DialogUiState, currentState: DialogUiState) {
@@ -169,7 +165,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
                 textEntered = false
             }
         }
-
         binding.fabMic.setOnClickListener {
             hideFabs()
             requestMicrophonePermission()
@@ -183,8 +178,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
             hideFabs()
             requestCameraPermission()
         }
-
-
         emojiPopup = EmojiPopup.Builder.fromRootView(view).build(binding.messageInputText)
         binding.emojiIcon.setOnClickListener {
             emojiPopup.toggle()
@@ -201,66 +194,14 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         }
     }
 
-    private fun saveRecyclerViewPosition() {
-        viewModel.setStateAsync {
-            copy(recyclerViewState = binding.recyclerView.layoutManager?.onSaveInstanceState())
-        }
-    }
-
     private fun setupRecyclerView() {
         val recyclerView = binding.recyclerView
         recyclerView.setItemViewCacheSize(20)
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                if (newState == SCROLL_STATE_IDLE) saveRecyclerViewPosition()
-            }
-
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-
-            }
-        })
-
-        val actionsMap = HashMap<Int, (Set<Long>, Set<MessageView>) -> Unit>()
-        actionsMap[R.id.delete_messages_action] =
-            { _, items ->
-                viewModel.addAction(DeleteMessagesAction(items.map { it.message.id }.toSet()))
-            }
-        actionsMap[R.id.reply_message_action] = { ids, items ->
-            val message = items.iterator().next()
-            onReply(message.message)
-        }
-        val adapter =
-            MessagesPagedAdapter(
-                activity = requireActivity(),
-                onReply = ::onReply,
-                helper = AdapterHelper(
-                    menuId = R.menu.messages_menu,
-                    actionsMap = actionsMap,
-                    toolbar = binding.toolbar
-                )
-            )
-        adapter.setHasStableIds(true)
+        val adapter = createRecyclerViewAdapter()
         recyclerView.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
         recyclerView.layoutManager = linearLayoutManager
-        var loadImagesJob: Job? = null
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
-                val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
-                loadImagesJob?.cancel()
-                loadImagesJob = lifecycleScope.launch {
-                    delay(1000)
-                    for (id in firstId..lastId) if (id != -1) {
-                        val vh =
-                            recyclerView.findViewHolderForLayoutPosition(id) as AdapterHelper<MessageView, MessageLayoutBinding>.VH
-                        adapter.itemShowed(id, vh.binding)
-                    }
-                }
-            }
-        })
-
+        recyclerView.addOnScrollListener(getScrollListener(linearLayoutManager, adapter))
         recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (scrollEnd) { // && (bottom < oldBottom && adapter.itemCount > 0)
                 binding.recyclerView.postDelayed({
@@ -271,6 +212,61 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         }
     }
 
+    private fun createRecyclerViewAdapter(): MessagesPagedAdapter {
+        val data = ActionModeData<MessageView>(R.menu.messages_menu, binding.toolbar)
+        data.actionsMap[R.id.delete_messages_action] =
+            { _, items ->
+                viewModel.addAction(DeleteMessagesAction(items.map { it.message.id }.toSet()))
+            }
+        data.actionsMap[R.id.reply_message_action] = { _, items ->
+            val message = items.iterator().next()
+            onReply(message.message)
+        }
+        val adapter =
+            MessagesPagedAdapter(
+                windowWidth = getWindowWidth(),
+                onReply = ::onReply,
+                actionModeData = data
+            )
+        adapter.setHasStableIds(true)
+        return adapter
+    }
+
+    private fun getWindowWidth(): Int {
+        val displayMetrics = DisplayMetrics()
+        requireActivity().windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        return displayMetrics.widthPixels
+    }
+
+    private fun getScrollListener(
+        linearLayoutManager: LinearLayoutManager,
+        adapter: MessagesPagedAdapter
+    ): RecyclerView.OnScrollListener {
+        var loadImagesJob: Job? = null
+        return object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+                val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
+                loadImagesJob?.cancel()
+                loadImagesJob = lifecycleScope.launch {
+                    delay(1000)
+                    Log.i("test", "onScrolled [$firstId,$lastId]")
+                    for (id in firstId..lastId) if (id != -1) {
+                        val viewHolder = recyclerView.findViewHolderForLayoutPosition(id)
+                        if (viewHolder != null) adapter.loadDetailedImage(id, viewHolder)
+                    }
+                    saveRecyclerViewPosition()
+                }
+            }
+        }
+    }
+
+    private fun saveRecyclerViewPosition() {
+        viewModel.setStateAsync {
+            copy(recyclerViewState = binding.recyclerView.layoutManager?.onSaveInstanceState())
+        }
+    }
 
     private fun onReply(it: Message) {
         binding.replyImage.visibility = View.GONE
@@ -396,6 +392,20 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         imm.hideSoftInputFromWindow(requireView().windowToken, 0)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+        //Log.i("test", "onActivityResult $resultCode $intent requestCode $requestCode")
+        if (resultCode == RESULT_OK) {
+            when (requestCode) {
+                FILE_CHOOSER_CODE -> {
+                    val uri = intent?.data
+                    if (uri != null) redirectToSendMediaFragment(uri = uri)
+                }
+                CAMERA_CODE -> redirectToSendMediaFragment(path = photoPath)
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, intent)
+    }
+
     private fun redirectToSendMediaFragment(uri: Uri? = null, path: String? = null) {
         navController.navigate(R.id.sendMediaFragment, Bundle().apply {
             if (path != null) putString("path", path)
@@ -403,27 +413,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
             putLong("conversationId", viewModel.currentState.conversation!!.id)
         })
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        //Log.i("test", "onActivityResult $resultCode $intent requestCode $requestCode")
-        if (resultCode == RESULT_OK) {
-            var uri: Uri? = null
-            when (requestCode) {
-                FILE_CHOOSER_CODE -> {
-                    if (intent != null) {
-                        uri = intent.data
-                        if (uri != null)
-                            redirectToSendMediaFragment(uri = uri)
-                    }
-                }
-                CAMERA_CODE -> {
-                    redirectToSendMediaFragment(path = photoPath)
-                }
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, intent)
-    }
-
 
     private fun startFileChooser() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
@@ -438,7 +427,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         } catch (ex: ActivityNotFoundException) {
             Log.w("ConversationFragment", "File manager not installed")
         }
-
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -455,8 +443,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
                 delay(1000)
             }
         }
-
-
         binding.fab.setImageResource(R.drawable.stop_icon)
         binding.fab.setOnClickListener {
             job.cancel()
@@ -531,29 +517,12 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         permissions: Array<String>,
         grantResults: IntArray
     ) {
-        when (requestCode) {
-            READ_PERMISSIONS_CODE -> {
-                if (grantResults[0] == PERMISSION_GRANTED) {
-                    startFileChooser()
-                } else {
-                    Log.i("test", "read perm not granted")
-                }
+        if (grantResults[0] == PERMISSION_GRANTED)
+            when (requestCode) {
+                READ_PERMISSIONS_CODE -> startFileChooser()
+                CAMERA_PERMISSIONS_CODE -> takePictureFromCamera()
+                MICROPHONE_PERMISSIONS_CODE -> startRecording()
             }
-            CAMERA_PERMISSIONS_CODE -> {
-                if (grantResults[0] == PERMISSION_GRANTED) {
-                    takePictureFromCamera()
-                } else {
-                    Log.i("test", "camera perm not granted")
-                }
-            }
-            MICROPHONE_PERMISSIONS_CODE -> {
-                if (grantResults[0] == PERMISSION_GRANTED) {
-                    startRecording()
-                } else {
-                    Log.i("test", "camera perm not granted")
-                }
-            }
-        }
     }
 
     companion object {
@@ -566,8 +535,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         private const val CAMERA_PERMISSIONS_CODE = 1002
         private const val MICROPHONE_PERMISSIONS_CODE = 1003
     }
-
-
 }
 
 @BindingAdapter(value = ["android:layout_marginLeft", "android:layout_marginRight"])

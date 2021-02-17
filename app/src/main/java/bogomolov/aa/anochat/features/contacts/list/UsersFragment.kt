@@ -7,7 +7,6 @@ import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
@@ -23,7 +22,6 @@ import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.isValidPhone
-import bogomolov.aa.anochat.view.adapters.AdapterHelper
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -35,8 +33,8 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
 
     private lateinit var navController: NavController
     private lateinit var binding: FragmentUsersBinding
-    private val usersAdapter = UsersAdapter(AdapterHelper(onClick = getOnClick()))
-    private val searchAdapter = UsersSearchAdapter(AdapterHelper(onClick = getOnClick()))
+    private val usersAdapter = UsersAdapter(::createConversation)
+    private val searchAdapter = UsersSearchAdapter(::createConversation)
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -96,7 +94,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         searchAdapter.submitList(users)
     }
 
-    private fun getOnClick() = { user: User ->
+    private fun createConversation(user: User) {
         viewModel.addAction(CreateConversationAction(user))
     }
 

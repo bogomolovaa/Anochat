@@ -48,8 +48,7 @@ class ConversationViewModel @Inject constructor(
     private val userUseCases: UserUseCases,
     private val conversationUseCases: ConversationUseCases,
     private val messageUseCases: MessageUseCases
-) :
-    BaseViewModel<DialogUiState>() {
+) : BaseViewModel<DialogUiState>() {
 
     override fun createInitialState() = DialogUiState()
 

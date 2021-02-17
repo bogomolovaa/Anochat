@@ -2,37 +2,21 @@ package bogomolov.aa.anochat.features.contacts.list
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.paging.PagedListAdapter
-import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.databinding.UserLayoutBinding
+import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.User
-import bogomolov.aa.anochat.view.adapters.AdapterHelper
-import bogomolov.aa.anochat.view.adapters.AdapterSelectable
+import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
+import bogomolov.aa.anochat.features.shared.ItemClickListener
 
-class UsersAdapter(private val helper: AdapterHelper<User, UserLayoutBinding> = AdapterHelper()) :
-    PagedListAdapter<User, AdapterHelper<User, UserLayoutBinding>.VH>(helper.DIFF_CALLBACK),
-    AdapterSelectable<User, UserLayoutBinding> {
+class UsersAdapter(onClickListener: ItemClickListener<User>) :
+    ExtPagedListAdapter<User, UserLayoutBinding>(onClickListener = onClickListener) {
 
-    init {
-        helper.adapter = this
-    }
-
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): AdapterHelper<User, UserLayoutBinding>.VH {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding =
             UserLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.cardView
-        return helper.VH(cv, cv, binding)
+        return VH(cv, cv, binding)
     }
-
-    override fun onBindViewHolder(
-        holder: AdapterHelper<User, UserLayoutBinding>.VH,
-        position: Int
-    ) = helper.onBindViewHolder(holder, position)
-
-    override fun getItem(position: Int) = super.getItem(position)
 
     override fun getId(item: User) = item.id
 
@@ -41,29 +25,16 @@ class UsersAdapter(private val helper: AdapterHelper<User, UserLayoutBinding> = 
     }
 }
 
-class UsersSearchAdapter(private val helper: AdapterHelper<User, UserLayoutBinding> = AdapterHelper()) :
-    RecyclerView.Adapter<AdapterHelper<User, UserLayoutBinding>.VH>(),
-    AdapterSelectable<User, UserLayoutBinding> {
+class UsersSearchAdapter(onClickListener: ItemClickListener<User>) :
+    ExtPagedListAdapter<User, UserLayoutBinding>(onClickListener = onClickListener) {
     private val users = ArrayList<User>()
 
-    init {
-        helper.adapter = this
-    }
-
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): AdapterHelper<User, UserLayoutBinding>.VH {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding =
             UserLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.cardView
-        return helper.VH(cv, cv, binding)
+        return VH(cv, cv, binding)
     }
-
-    override fun onBindViewHolder(
-        holder: AdapterHelper<User, UserLayoutBinding>.VH,
-        position: Int
-    ) = helper.onBindViewHolder(holder, position)
 
     override fun getItem(position: Int) = users[position]
 
@@ -73,7 +44,6 @@ class UsersSearchAdapter(private val helper: AdapterHelper<User, UserLayoutBindi
         binding.user = item
     }
 
-    override fun getItemCount() = users.size
 
     fun submitList(list: List<User>) {
         users.clear()
@@ -81,4 +51,5 @@ class UsersSearchAdapter(private val helper: AdapterHelper<User, UserLayoutBindi
         notifyDataSetChanged()
     }
 
+    override fun getItemCount() = users.size
 }

@@ -48,10 +48,7 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getMyUser(): User {
-        val myUid = getMyUID()!!
-        return getOrAddUser(myUid)
-    }
+    override suspend fun getMyUser() = getOrAddUser(getMyUID()!!)
 
     override fun getUser(id: Long): User = mapper.entityToModel(db.userDao().getUser(id))!!
 
@@ -64,7 +61,7 @@ class UserRepositoryImpl @Inject constructor(
             uploadFile(getMiniPhotoFileName(user.photo), user.uid)
             firebase.updatePhoto(user.uid, user.photo)
         }
-        db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
+        db.userDao().update(mapper.modelToEntity(user))
     }
 
     override suspend fun searchByPhone(phone: String) =
@@ -90,22 +87,18 @@ class UserRepositoryImpl @Inject constructor(
         loadFullPhoto: Boolean = true
     ) {
         val savedUser = db.userDao().findByUid(user.uid)
-        Log.i("test", "updateLocalUserFromRemote savedUser $savedUser saveLocal $saveLocal")
         if (savedUser != null) {
-            db.userDao().updateUser(user.uid, user.phone, user.name, user.photo, user.status)
-            if (user.photo != null) {
-                val photoChanged = user.photo != savedUser.photo
-                if (photoChanged) downloadFile(getMiniPhotoFileName(user.photo), user.uid)
-                if (loadFullPhoto) {
-                    val fileExist = File(filesDir, user.photo).exists()
-                    if (photoChanged || !fileExist) downloadFile(user.photo, user.uid)
-                }
-            }
-        } else {
-            if (saveLocal) user.id = db.userDao().add(mapper.modelToEntity(user))
-            if (user.photo != null) {
-                if (loadFullPhoto) downloadFile(user.photo, user.uid)
-                downloadFile(getMiniPhotoFileName(user.photo), user.uid)
+            user.id = savedUser.id
+            db.userDao().update(mapper.modelToEntity(user))
+        } else if (saveLocal) {
+            user.id = db.userDao().add(mapper.modelToEntity(user))
+        }
+        if (user.photo != null) {
+            val photoChanged = user.photo != savedUser?.photo
+            if (photoChanged) downloadFile(getMiniPhotoFileName(user.photo), user.uid)
+            if (loadFullPhoto) {
+                val fileExist = File(filesDir, user.photo).exists()
+                if (photoChanged || !fileExist) downloadFile(user.photo, user.uid)
             }
         }
     }

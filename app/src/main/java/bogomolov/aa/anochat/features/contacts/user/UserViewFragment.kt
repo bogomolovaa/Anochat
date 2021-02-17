@@ -70,7 +70,7 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
     }
 
     private fun setImagesPagedList(pagedListLiveData: LiveData<PagedList<String>>) {
-        val adapter = ImagesPagedAdapter(requireContext())
+        val adapter = ImagesPagedAdapter()
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
