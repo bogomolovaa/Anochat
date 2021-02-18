@@ -37,6 +37,8 @@ class MessagesPagedAdapter(
 
     override fun getId(item: MessageView) = item.message.id
 
+    override fun getItemId(position: Int) = getItem(position)?.message?.id ?: 0
+
     @SuppressLint("ClickableViewAccessibility")
     override fun bind(item: MessageView?, binding: MessageLayoutBinding) {
         if (item != null) {

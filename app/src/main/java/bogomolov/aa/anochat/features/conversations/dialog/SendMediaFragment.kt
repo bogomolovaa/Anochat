@@ -8,7 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
 import androidx.navigation.navGraphViewModels
@@ -52,12 +51,7 @@ class SendMediaFragment : Fragment() {
         else
             resizeImage(mediaPath!!, requireContext())
         binding.imageView.setImageBitmap(
-            BitmapFactory.decodeFile(
-                getFilePath(
-                    requireContext(),
-                    resizedImage
-                )
-            )
+            BitmapFactory.decodeFile(getFilePath(requireContext(), resizedImage))
         )
         binding.messageInputLayout.setEndIconOnClickListener {
             val text = binding.messageInputText.text?.toString() ?: ""

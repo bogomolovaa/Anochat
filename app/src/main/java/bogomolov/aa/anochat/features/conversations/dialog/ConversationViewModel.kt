@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.media.MediaRecorder
 import android.os.Parcelable
 import androidx.lifecycle.LiveData
@@ -15,30 +16,39 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import bogomolov.aa.anochat.repository.getFilesDir
+import bogomolov.aa.anochat.repository.getRandomString
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
 private const val ONLINE_STATUS = "online"
 
+enum class InputStates {
+    INITIAL,
+    TEXT_ENTERED,
+    FAB_EXPAND,
+    VOICE_RECORDING,
+    VOICE_RECORDED
+}
+
 data class DialogUiState(
     val conversation: Conversation? = null,
     val onlineStatus: String = "",
     val pagedListLiveData: LiveData<PagedList<MessageView>>? = null,
     var recyclerViewState: Parcelable? = null,
-
-    val scrollEnd: Boolean = false,
-    val fabExpanded: Boolean = false,
-    val textEntered: Boolean = false,
-
+    val inputState: InputStates = InputStates.INITIAL,
     val replyMessage: Message? = null,
     val audioFile: String? = null,
     val photoPath: String? = null,
     val text: String = "",
-
+    val audioLengthText: String = "",
     val recorder: MediaRecorder? = null
 ) : UiState
 
@@ -55,11 +65,15 @@ class InitConversationAction(
 
 class DeleteMessagesAction(val ids: Set<Long>) : UserAction
 
+class StartRecordingAction(val context: Context) : UserAction
+class StopRecordingAction : UserAction
+
 class ConversationViewModel @Inject constructor(
     private val userUseCases: UserUseCases,
     private val conversationUseCases: ConversationUseCases,
     private val messageUseCases: MessageUseCases
 ) : BaseViewModel<DialogUiState>() {
+    private var recordingJob: Job? = null
 
     override fun createInitialState() = DialogUiState()
 
@@ -74,6 +88,46 @@ class ConversationViewModel @Inject constructor(
         if (action is SendMessageAction) action.execute()
         if (action is InitConversationAction) action.execute()
         if (action is DeleteMessagesAction) action.execute()
+        if (action is StartRecordingAction) action.execute()
+        if (action is StopRecordingAction) action.execute()
+    }
+
+    private suspend fun StartRecordingAction.execute() {
+        val audioFile = getRandomString(20) + ".3gp"
+        val recorder = MediaRecorder()
+        recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+        recorder.setOutputFile(File(getFilesDir(context), audioFile).path)
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+        recorder.prepare()
+        recorder.start()
+        setState {
+            copy(
+                audioFile = audioFile,
+                recorder = recorder,
+                inputState = InputStates.VOICE_RECORDING
+            )
+        }
+        recordingJob = viewModelScope.launch(dispatcher) {
+            val startTime = System.currentTimeMillis()
+            while (true) {
+                val time = System.currentTimeMillis() - startTime
+                val timeString = SimpleDateFormat("mm:ss").format(Date(time))
+                setState { copy(audioLengthText = timeString) }
+                delay(1000)
+            }
+        }
+    }
+
+    private suspend fun StopRecordingAction.execute() {
+        val recorder = state.recorder
+        if (recorder != null) {
+            recorder.stop()
+            recorder.reset()
+            recorder.release()
+        }
+        recordingJob?.cancel()
+        setState { copy(recorder = null, inputState = InputStates.VOICE_RECORDED) }
     }
 
     private suspend fun SendMessageAction.execute() {
@@ -81,7 +135,7 @@ class ConversationViewModel @Inject constructor(
         if (conversation != null) {
             val replyId = state.replyMessage?.messageId
             val message = Message(
-                text = text?:"",
+                text = text ?: "",
                 time = System.currentTimeMillis(),
                 isMine = true,
                 conversationId = conversation.id,
@@ -89,7 +143,15 @@ class ConversationViewModel @Inject constructor(
                 audio = audio,
                 image = image
             )
-            setState{ copy(photoPath = null, textEntered = false, replyMessage = null, text = "", audioFile = null) }
+            setState {
+                copy(
+                    inputState = InputStates.INITIAL,
+                    text = "",
+                    replyMessage = null,
+                    photoPath = null,
+                    audioFile = null
+                )
+            }
             messageUseCases.sendMessage(message, conversation.user.uid)
         }
     }
