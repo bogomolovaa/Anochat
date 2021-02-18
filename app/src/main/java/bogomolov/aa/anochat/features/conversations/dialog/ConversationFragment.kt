@@ -85,7 +85,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
     }
 
-
     override fun onStart() {
         super.onStart()
         postponeEnterTransition()
@@ -96,6 +95,11 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         super.onStop()
         if (viewModel.state.inputState == InputStates.FAB_EXPAND)
             viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        hideKeyBoard()
     }
 
     override fun onCreateView(
@@ -109,7 +113,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         setupRecyclerView()
-        setupUserInput(binding.root)
+        setupUserInput()
 
         return binding.root
     }
@@ -218,8 +222,26 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         }
     }
 
-    private fun setupUserInput(view: View) {
+    private fun setupUserInput() {
         setFabClickListener()
+        setMiniFabsClickListeners()
+        setMessageInputTextListeners()
+        setupEmojiKeyBoard()
+        binding.playAudioInput.onClose {
+            viewModel.setStateAsync { copy(inputState = InputStates.INITIAL, audioFile = null) }
+        }
+    }
+
+    private fun setupEmojiKeyBoard(){
+        emojiPopup = EmojiPopup.Builder.fromRootView(view).build(binding.messageInputText)
+        binding.emojiIcon.setOnClickListener { emojiPopup.toggle() }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            hideKeyBoard()
+            navController.navigateUp()
+        }
+    }
+
+    private fun setMessageInputTextListeners(){
         binding.messageInputText.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) scrollToEnd()
         }
@@ -235,6 +257,9 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
                 }
             }
         }
+    }
+
+    private fun setMiniFabsClickListeners(){
         binding.fabMic.setOnClickListener {
             hideFabs()
             requestMicrophonePermission()
@@ -247,23 +272,30 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
             hideFabs { viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) } }
             requestCameraPermission()
         }
-        emojiPopup = EmojiPopup.Builder.fromRootView(view).build(binding.messageInputText)
-        binding.emojiIcon.setOnClickListener { emojiPopup.toggle() }
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            hideKeyBoard()
-            navController.navigateUp()
-        }
-        binding.playAudioInput.onClose {
-            viewModel.setStateAsync { copy(inputState = InputStates.INITIAL, audioFile = null) }
+    }
+
+    private fun setFabClickListener() {
+        binding.fab.setOnClickListener {
+            when (viewModel.state.inputState) {
+                InputStates.INITIAL -> expandFabs()
+                InputStates.FAB_EXPAND -> hideFabs {
+                    viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) }
+                }
+                InputStates.TEXT_ENTERED ->
+                    viewModel.addAction(SendMessageAction(text = viewModel.state.text))
+                InputStates.VOICE_RECORDED ->
+                    viewModel.addAction(SendMessageAction(audio = viewModel.state.audioFile))
+                InputStates.VOICE_RECORDING -> viewModel.addAction(StopRecordingAction())
+            }
         }
     }
 
     private fun setupRecyclerView() {
         with(binding.recyclerView) {
             setItemViewCacheSize(20)
-            this.adapter = createRecyclerViewAdapter()
+            adapter = createRecyclerViewAdapter()
             layoutManager = LinearLayoutManager(context)
-            addOnScrollListener(getScrollListener())
+            addOnScrollListener(createRecyclerViewScrollListener())
         }
     }
 
@@ -296,7 +328,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         return displayMetrics.widthPixels
     }
 
-    private fun getScrollListener(): RecyclerView.OnScrollListener {
+    private fun createRecyclerViewScrollListener(): RecyclerView.OnScrollListener {
         val linearLayoutManager = binding.recyclerView.layoutManager as LinearLayoutManager
         val adapter = binding.recyclerView.adapter as MessagesPagedAdapter
         var loadImagesJob: Job? = null
@@ -332,22 +364,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         }
     }
 
-    private fun setFabClickListener() {
-        binding.fab.setOnClickListener {
-            when (viewModel.state.inputState) {
-                InputStates.INITIAL -> expandFabs()
-                InputStates.FAB_EXPAND -> hideFabs {
-                    viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) }
-                }
-                InputStates.TEXT_ENTERED ->
-                    viewModel.addAction(SendMessageAction(text = viewModel.state.text))
-                InputStates.VOICE_RECORDED ->
-                    viewModel.addAction(SendMessageAction(audio = viewModel.state.audioFile))
-                InputStates.VOICE_RECORDING -> viewModel.addAction(StopRecordingAction())
-            }
-        }
-    }
-
     private fun hideFabs(onAnimationEnd: () -> Unit = {}) {
         binding.fabMic.animate()
             .translationY(0f).setListener(object : AnimatorListenerAdapter() {
@@ -370,11 +386,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
             .translationY(-200f).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
         binding.fabCamera.animate()
             .translationY(-400f).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        hideKeyBoard()
     }
 
     private fun hideKeyBoard() {
