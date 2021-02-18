@@ -11,7 +11,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -29,26 +28,23 @@ import androidx.core.content.FileProvider
 import androidx.core.os.ConfigurationCompat
 import androidx.core.view.doOnPreDraw
 import androidx.core.widget.doOnTextChanged
-import androidx.databinding.BindingAdapter
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
+import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
-import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.features.shared.ActionModeData
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
-import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.repository.getFilesDir
-import com.google.android.material.card.MaterialCardView
 import com.vanniktech.emoji.EmojiPopup
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.coroutines.Job
@@ -61,12 +57,12 @@ import javax.inject.Inject
 
 private const val TAG = "ConversationFragment"
 
-class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
+class ConversationFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     private val viewModel: ConversationViewModel by navGraphViewModels(R.id.dialog_graph) { viewModelFactory }
     private lateinit var navController: NavController
-    private lateinit var binding: FragmentConversationBinding
+    lateinit var binding: FragmentConversationBinding
     private lateinit var emojiPopup: EmojiPopup
     private var recyclerViewRestored = false
 
@@ -82,7 +78,8 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
             val locale = ConfigurationCompat.getLocales(requireContext().resources.configuration)[0]
             MessageView.toMessageViewsWithDateDelimiters(it, locale)
         })
-        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
+        val updatableView = ConversationUpdatableView(this)
+        lifecycle.addObserver(StateLifecycleObserver(updatableView, viewModel))
     }
 
     override fun onStart() {
@@ -112,110 +109,23 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        setupRecyclerView()
         setupUserInput()
+        setupRecyclerView()
 
         return binding.root
     }
 
-    override fun updateView(newState: DialogUiState, currentState: DialogUiState) {
-        if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState)
-        if (newState.conversation != currentState.conversation) setConversation(newState.conversation!!)
-        if (newState.onlineStatus != currentState.onlineStatus)
-            binding.statusText.text = newState.onlineStatus
-        if (newState.audioLengthText != currentState.audioLengthText)
-            binding.audioLengthText.text = newState.audioLengthText
-        if (newState.replyMessage != currentState.replyMessage) setReplyMessage(newState.replyMessage)
-        if (newState.inputState != currentState.inputState) setInputState(newState)
-    }
-
-    private fun setReplyMessage(replyMessage: Message?) {
-        if (replyMessage == null) {
-            binding.replyLayout.visibility = View.GONE
-            binding.replyImage.visibility = View.INVISIBLE
-            binding.replayAudio.visibility = View.INVISIBLE
-        } else {
-            binding.replyLayout.visibility = View.VISIBLE
-            binding.replyText.text = replyMessage.text
-            if (replyMessage.image != null) {
-                val file = File(getFilesDir(requireContext()), replyMessage.image)
-                if (file.exists()) {
-                    binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
-                    binding.replyImage.visibility = View.VISIBLE
-                }
-            }
-            if (replyMessage.audio != null) {
-                binding.replayAudio.setFile(replyMessage.audio)
-                binding.replayAudio.visibility = View.VISIBLE
-            }
-        }
-    }
-
-    private fun setInputState(state: DialogUiState) {
-        hideInput(state)
-        if (state.inputState == InputStates.INITIAL) {
-            binding.textLayout.visibility = View.VISIBLE
-            binding.messageInputText.setText("")
-            binding.fab.setImageResource(R.drawable.plus_icon)
-        }
-        if (state.inputState == InputStates.TEXT_ENTERED) {
-            if (binding.messageInputText.text.toString() != state.text)
-                binding.messageInputText.setText(state.text)
-            binding.fab.setImageResource(R.drawable.send_icon)
-        }
-        if (state.inputState == InputStates.FAB_EXPAND) {
-            binding.textLayout.visibility = View.VISIBLE
-            binding.fabFile.visibility = View.VISIBLE
-            binding.fabMic.visibility = View.VISIBLE
-            binding.fabCamera.visibility = View.VISIBLE
-            binding.fab.setImageResource(R.drawable.clear_icon)
-        }
-        if (state.inputState == InputStates.VOICE_RECORDING) {
-            binding.audioLayout.visibility = View.VISIBLE
-            binding.fab.setImageResource(R.drawable.stop_icon)
-        }
-        if (state.inputState == InputStates.VOICE_RECORDED) {
-            binding.playAudioInput.visibility = View.VISIBLE
-            binding.playAudioInput.setFile(viewModel.state.audioFile!!)
-            binding.fab.setImageResource(R.drawable.send_icon)
-        }
-    }
-
-    private fun hideInput(state: DialogUiState) {
-        //fab
-        binding.fabFile.visibility = View.INVISIBLE
-        binding.fabMic.visibility = View.INVISIBLE
-        binding.fabCamera.visibility = View.INVISIBLE
-        //audio
-        binding.playAudioInput.visibility = View.GONE
-        binding.audioLayout.visibility = View.GONE
-        //text
-        if (state.inputState != InputStates.TEXT_ENTERED) binding.textLayout.visibility = View.GONE
-    }
-
-    private fun setConversation(conversation: Conversation) {
-        if (conversation.user.photo != null) binding.userPhoto.setFile(conversation.user.photo)
-        binding.usernameText.text = conversation.user.name
-        binding.usernameLayout.setOnClickListener {
-            navController.navigate(
-                R.id.userViewFragment,
-                Bundle().apply { putLong("id", conversation.user.id) })
-        }
-    }
-
-    private fun setPagedList(uiState: DialogUiState) {
-        uiState.pagedListLiveData!!.observe(viewLifecycleOwner) { pagedList ->
+    fun setPagedListLiveData(pagedListLiveData: LiveData<PagedList<MessageView>>) {
+        pagedListLiveData.observe(viewLifecycleOwner) { pagedList ->
             (binding.recyclerView.adapter as MessagesPagedAdapter).submitList(pagedList)
             restoreRecyclerViewPosition()
-            binding.recyclerView.doOnPreDraw {
-                startPostponedEnterTransition()
-            }
         }
     }
 
     private fun restoreRecyclerViewPosition() {
-        if (viewModel.state.recyclerViewState != null && !recyclerViewRestored) {
-            binding.recyclerView.layoutManager?.onRestoreInstanceState(viewModel.state.recyclerViewState)
+        val recyclerViewState = viewModel.state.recyclerViewState
+        if (recyclerViewState != null && !recyclerViewRestored) {
+            binding.recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
             recyclerViewRestored = true
         } else {
             scrollToEnd()
@@ -229,48 +139,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         setupEmojiKeyBoard()
         binding.playAudioInput.onClose {
             viewModel.setStateAsync { copy(inputState = InputStates.INITIAL, audioFile = null) }
-        }
-    }
-
-    private fun setupEmojiKeyBoard(){
-        emojiPopup = EmojiPopup.Builder.fromRootView(view).build(binding.messageInputText)
-        binding.emojiIcon.setOnClickListener { emojiPopup.toggle() }
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            hideKeyBoard()
-            navController.navigateUp()
-        }
-    }
-
-    private fun setMessageInputTextListeners(){
-        binding.messageInputText.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) scrollToEnd()
-        }
-        binding.messageInputText.doOnTextChanged { textInput, _, _, _ ->
-            val text = textInput.toString()
-            if (viewModel.state.text != text) {
-                if (text.isNotEmpty()) {
-                    viewModel.setStateAsync {
-                        copy(text = text, inputState = InputStates.TEXT_ENTERED)
-                    }
-                } else {
-                    viewModel.setStateAsync { copy(text = "", inputState = InputStates.INITIAL) }
-                }
-            }
-        }
-    }
-
-    private fun setMiniFabsClickListeners(){
-        binding.fabMic.setOnClickListener {
-            hideFabs()
-            requestMicrophonePermission()
-        }
-        binding.fabFile.setOnClickListener {
-            hideFabs { viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) } }
-            requestReadPermission()
-        }
-        binding.fabCamera.setOnClickListener {
-            hideFabs { viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) } }
-            requestCameraPermission()
         }
     }
 
@@ -290,18 +158,56 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         }
     }
 
+    private fun setMiniFabsClickListeners() {
+        binding.fabMic.setOnClickListener {
+            hideFabs()
+            requestMicrophonePermission()
+        }
+        binding.fabFile.setOnClickListener {
+            hideFabs { viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) } }
+            requestReadPermission()
+        }
+        binding.fabCamera.setOnClickListener {
+            hideFabs { viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) } }
+            requestCameraPermission()
+        }
+    }
+
+    private fun setMessageInputTextListeners() {
+        binding.messageInputText.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) scrollToEnd()
+        }
+        binding.messageInputText.doOnTextChanged { textInput, _, _, _ ->
+            val text = textInput.toString()
+            if (viewModel.state.text != text) {
+                if (text.isNotEmpty()) {
+                    viewModel.setStateAsync {
+                        copy(text = text, inputState = InputStates.TEXT_ENTERED)
+                    }
+                } else {
+                    viewModel.setStateAsync { copy(text = "", inputState = InputStates.INITIAL) }
+                }
+            }
+        }
+    }
+
+    private fun setupEmojiKeyBoard() {
+        emojiPopup = EmojiPopup.Builder.fromRootView(binding.root).build(binding.messageInputText)
+        binding.emojiIcon.setOnClickListener { emojiPopup.toggle() }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            hideKeyBoard()
+            navController.navigateUp()
+        }
+    }
+
     private fun setupRecyclerView() {
         with(binding.recyclerView) {
             setItemViewCacheSize(20)
             adapter = createRecyclerViewAdapter()
             layoutManager = LinearLayoutManager(context)
             addOnScrollListener(createRecyclerViewScrollListener())
+            doOnPreDraw { startPostponedEnterTransition() }
         }
-    }
-
-    private fun scrollToEnd() {
-        val adapter = binding.recyclerView.adapter!!
-        binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
     }
 
     private fun createRecyclerViewAdapter(): MessagesPagedAdapter {
@@ -320,6 +226,13 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         )
         adapter.setHasStableIds(true)
         return adapter
+    }
+
+    private fun onReply(message: Message) {
+        viewModel.setStateAsync { copy(replyMessage = message) }
+        binding.removeReply.setOnClickListener {
+            viewModel.setStateAsync { copy(replyMessage = null) }
+        }
     }
 
     private fun getWindowWidth(): Int {
@@ -357,13 +270,6 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         }
     }
 
-    private fun onReply(message: Message) {
-        viewModel.setStateAsync { copy(replyMessage = message) }
-        binding.removeReply.setOnClickListener {
-            viewModel.setStateAsync { copy(replyMessage = null) }
-        }
-    }
-
     private fun hideFabs(onAnimationEnd: () -> Unit = {}) {
         binding.fabMic.animate()
             .translationY(0f).setListener(object : AnimatorListenerAdapter() {
@@ -386,6 +292,11 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
             .translationY(-200f).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
         binding.fabCamera.animate()
             .translationY(-400f).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
+    }
+
+    private fun scrollToEnd() {
+        val adapter = binding.recyclerView.adapter!!
+        binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
     }
 
     private fun hideKeyBoard() {
@@ -492,11 +403,4 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         private const val CAMERA_PERMISSIONS_CODE = 1002
         private const val MICROPHONE_PERMISSIONS_CODE = 1003
     }
-}
-
-@BindingAdapter(value = ["android:layout_marginLeft", "android:layout_marginRight"])
-fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
-    val p = view.layoutParams as ViewGroup.MarginLayoutParams
-    p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin);
-    view.requestLayout()
 }

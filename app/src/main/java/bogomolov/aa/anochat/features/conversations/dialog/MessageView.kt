@@ -1,6 +1,9 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
+import android.view.ViewGroup
+import androidx.databinding.BindingAdapter
 import bogomolov.aa.anochat.domain.entity.Message
+import com.google.android.material.card.MaterialCardView
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -56,5 +59,11 @@ data class MessageView(val message: Message) {
             return list
         }
     }
+}
 
+@BindingAdapter(value = ["android:layout_marginLeft", "android:layout_marginRight"])
+fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
+    val p = view.layoutParams as ViewGroup.MarginLayoutParams
+    p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin);
+    view.requestLayout()
 }
