@@ -85,6 +85,7 @@ class ConversationFragment : Fragment(), UpdatableView<DialogUiState> {
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
     }
 
+
     override fun onStart() {
         super.onStart()
         postponeEnterTransition()

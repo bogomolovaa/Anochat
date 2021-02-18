@@ -49,7 +49,6 @@ data class DialogUiState(
     val photoPath: String? = null,
     val text: String = "",
     val audioLengthText: String = "",
-    val recorder: MediaRecorder? = null
 ) : UiState
 
 class SendMessageAction(
@@ -74,6 +73,7 @@ class ConversationViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases
 ) : BaseViewModel<DialogUiState>() {
     private var recordingJob: Job? = null
+    private var mediaRecorder: MediaRecorder? = null
 
     override fun createInitialState() = DialogUiState()
 
@@ -101,13 +101,8 @@ class ConversationViewModel @Inject constructor(
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
         recorder.prepare()
         recorder.start()
-        setState {
-            copy(
-                audioFile = audioFile,
-                recorder = recorder,
-                inputState = InputStates.VOICE_RECORDING
-            )
-        }
+        mediaRecorder = recorder
+        setState { copy(audioFile = audioFile, inputState = InputStates.VOICE_RECORDING) }
         recordingJob = viewModelScope.launch(dispatcher) {
             val startTime = System.currentTimeMillis()
             while (true) {
@@ -120,14 +115,14 @@ class ConversationViewModel @Inject constructor(
     }
 
     private suspend fun StopRecordingAction.execute() {
-        val recorder = state.recorder
+        val recorder = mediaRecorder
         if (recorder != null) {
             recorder.stop()
             recorder.reset()
             recorder.release()
         }
         recordingJob?.cancel()
-        setState { copy(recorder = null, inputState = InputStates.VOICE_RECORDED) }
+        setState { copy(inputState = InputStates.VOICE_RECORDED) }
     }
 
     private suspend fun SendMessageAction.execute() {
