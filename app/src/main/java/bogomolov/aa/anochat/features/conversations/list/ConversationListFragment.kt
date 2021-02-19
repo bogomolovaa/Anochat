@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.conversations.list
 
-
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -32,7 +31,6 @@ import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
-
 class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState> {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
@@ -62,17 +60,8 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        binding.fab.setOnClickListener {
-            requestContactsPermission()
-        }
-
-        val focus = requireActivity().currentFocus
-        if (focus != null) {
-            val imm =
-                requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager?
-            imm?.hideSoftInputFromWindow(focus.windowToken, 0)
-        }
-
+        binding.fab.setOnClickListener { requestContactsPermission() }
+        hideKeyBoard()
         setupRecyclerView()
 
         return binding.root
@@ -84,8 +73,7 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
 
     private fun setPagedList(pagedListLiveData: LiveData<PagedList<Conversation>>) {
         pagedListLiveData.observe(viewLifecycleOwner) {
-            val adapter = binding.recyclerView.adapter as ConversationsPagedAdapter
-            adapter.submitList(it)
+            (binding.recyclerView.adapter as ConversationsPagedAdapter).submitList(it)
         }
     }
 
@@ -93,15 +81,13 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         val data = ActionModeData<Conversation>(R.menu.conversations_menu, binding.toolbar)
         data.actionsMap[R.id.delete_conversations_action] =
             { ids, _ -> viewModel.addAction(DeleteConversationsAction(ids)) }
-        val adapter =
-            ConversationsPagedAdapter(
-                actionModeData = data,
-                onClickListener = {
-                    navController.navigate(
-                        R.id.dialog_graph,
-                        Bundle().apply { putLong("id", it.id) })
-                }
-            )
+        val adapter = ConversationsPagedAdapter(
+            actionModeData = data,
+            onClickListener = {
+                val bundle = Bundle().apply { putLong("id", it.id) }
+                navController.navigate(R.id.dialog_graph, bundle)
+            }
+        )
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
     }
@@ -110,53 +96,30 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         super.onCreateOptionsMenu(menu, inflater)
         menu.clear()
         inflater.inflate(R.menu.main_menu, menu)
+        val context = requireContext()
 
-        val searchView = SearchView(requireContext())
+        val searchView = SearchView(context)
+        searchView.setOnSubmitListener { query->
+            val bundle = Bundle().apply { putString("search", query) }
+            navController.navigate(R.id.messageSearchFragment, bundle)
+        }
+        searchView.setTextColor(R.color.title_color)
         val searchIcon = searchView.findViewById(androidx.appcompat.R.id.search_button) as ImageView
-        searchIcon.setImageDrawable(
-            ContextCompat.getDrawable(requireContext(), R.drawable.search_icon)
-        )
-
-
-        val searchAutoComplete =
-            searchView.findViewById(androidx.appcompat.R.id.search_src_text) as SearchView.SearchAutoComplete
-        searchAutoComplete.setHintTextColor(
-            ContextCompat.getColor(requireContext(), R.color.title_color)
-        )
-        searchAutoComplete.setTextColor(
-            ContextCompat.getColor(requireContext(), R.color.title_color)
-        )
-
+        searchIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.search_icon))
 
         menu.findItem(R.id.search_messages_action).apply {
             setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW or MenuItem.SHOW_AS_ACTION_IF_ROOM)
             actionView = searchView
         }
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                if (query != null && query.length >= 3) {
-                    val bundle = Bundle().apply { putString("search", query) }
-                    navController.navigate(R.id.messageSearchFragment, bundle)
-                    return true
-                }
-                return false
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                return false
-            }
-        })
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         if (item.itemId == R.id.menu_sign_out) {
             viewModel.addAction(SignOutAction())
             navController.navigate(R.id.signInFragment)
             return true
         }
-        return (NavigationUI.onNavDestinationSelected(item, navController)
-                || super.onOptionsItemSelected(item))
+        return NavigationUI.onNavDestinationSelected(item, navController)
     }
 
     override fun onRequestPermissionsResult(
@@ -165,9 +128,16 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         grantResults: IntArray
     ) {
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            when (requestCode) {
-                CONTACTS_PERMISSIONS_CODE -> navController.navigate(R.id.usersFragment)
-            }
+            if (requestCode == CONTACTS_PERMISSIONS_CODE) navController.navigate(R.id.usersFragment)
+    }
+
+    private fun hideKeyBoard() {
+        val focus = requireActivity().currentFocus
+        if (focus != null) {
+            val imm =
+                requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager?
+            imm?.hideSoftInputFromWindow(focus.windowToken, 0)
+        }
     }
 
     private fun requestContactsPermission() {
@@ -184,4 +154,23 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
 @BindingAdapter(value = ["android:textStyle"])
 fun setTypeface(v: TextView, style: Int) {
     v.setTypeface(null, style);
+}
+
+fun SearchView.setTextColor(colorId: Int) {
+    val searchAutoComplete =
+        findViewById<SearchView.SearchAutoComplete>(androidx.appcompat.R.id.search_src_text)
+    searchAutoComplete.setHintTextColor(ContextCompat.getColor(context, colorId))
+    searchAutoComplete.setTextColor(ContextCompat.getColor(context, colorId))
+}
+
+fun SearchView.setOnSubmitListener(onSubmit: (String) -> Unit) {
+    setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        override fun onQueryTextSubmit(query: String?) =
+            if (query != null && query.length >= 3) {
+                onSubmit(query)
+                true
+            } else false
+
+        override fun onQueryTextChange(newText: String?) = false
+    })
 }

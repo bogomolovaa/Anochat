@@ -24,7 +24,7 @@ class ConversationInputSetup(
         setFabClickListener()
         setMiniFabsClickListeners()
         setMessageInputTextListeners()
-        binding.playAudioInput.onClose {
+        binding.playAudioInput.setOnCloseListener {
             viewModel.setStateAsync { copy(inputState = InputStates.INITIAL, audioFile = null) }
         }
     }

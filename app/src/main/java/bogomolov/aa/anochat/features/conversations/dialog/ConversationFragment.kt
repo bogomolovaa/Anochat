@@ -61,7 +61,7 @@ class ConversationFragment : Fragment(), RequestPermission {
         val conversationId = arguments?.get("id") as Long
         viewModel.addAction(InitConversationAction(conversationId) {
             val locale = ConfigurationCompat.getLocales(requireContext().resources.configuration)[0]
-            MessageView.toMessageViewsWithDateDelimiters(it, locale)
+            toMessageViewsWithDateDelimiters(it, locale)
         })
         recyclerViewSetup = ConversationRecyclerViewSetup(this, viewModel)
         updatableView = ConversationUpdatableView(this, recyclerViewSetup)

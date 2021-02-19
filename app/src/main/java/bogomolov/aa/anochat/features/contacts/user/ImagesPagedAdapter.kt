@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.contacts.user
 
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -10,7 +9,7 @@ import androidx.navigation.fragment.FragmentNavigator
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.ImageLayoutBinding
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
-import bogomolov.aa.anochat.features.shared.getFilePath
+import bogomolov.aa.anochat.features.shared.getBitmap
 
 class ImagesPagedAdapter : ExtPagedListAdapter<String, ImageLayoutBinding>() {
 
@@ -23,11 +22,12 @@ class ImagesPagedAdapter : ExtPagedListAdapter<String, ImageLayoutBinding>() {
 
     override fun getId(item: String) = 0L
 
-    override fun bind(item: String?, binding: ImageLayoutBinding) {
-        if (item != null) {
-            binding.image.transitionName = item
-            setBitmap(binding.image, item)
-            setOnClickListener(binding.image, item)
+    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+    override fun bind(image: String?, binding: ImageLayoutBinding) {
+        if (image != null) {
+            binding.image.transitionName = image
+            binding.image.setImageBitmap(getBitmap(image, binding.image.context, 4))
+            setOnClickListener(binding.image, image)
         }
     }
 
@@ -43,12 +43,5 @@ class ImagesPagedAdapter : ExtPagedListAdapter<String, ImageLayoutBinding>() {
                 extras
             )
         }
-    }
-
-    private fun setBitmap(imageView: ImageView, image: String) {
-        imageView.setImageBitmap(BitmapFactory.decodeFile(
-            getFilePath(imageView.context, image),
-            BitmapFactory.Options().apply { inSampleSize = 4 }
-        ))
     }
 }

@@ -21,5 +21,4 @@ interface AppComponent : AndroidInjector<AnochatAplication> {
     }
 
     override fun inject(application: AnochatAplication)
-
 }

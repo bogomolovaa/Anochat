@@ -1,7 +1,6 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -15,7 +14,6 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
-import bogomolov.aa.anochat.features.shared.getFilePath
 import bogomolov.aa.anochat.features.shared.resizeImage
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject

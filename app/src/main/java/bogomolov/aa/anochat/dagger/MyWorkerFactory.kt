@@ -20,9 +20,7 @@ class MyWorkerFactory(
         return when (workerClassName) {
             UpdateWorker::class.java.name ->
                 UpdateWorker(appContext, workerParameters, userUseCases)
-            else ->
-                // Return null, so that the base class can delegate to the default WorkerFactory.
-                null
+            else -> null
         }
     }
 }

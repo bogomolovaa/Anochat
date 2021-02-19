@@ -1,7 +1,6 @@
 package bogomolov.aa.anochat.features.shared
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.util.AttributeSet
 import android.widget.FrameLayout
@@ -10,20 +9,18 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.databinding.BindingAdapter
 import bogomolov.aa.anochat.R
-import java.io.File
 
 
-class RoundedImageView(context: Context, attrs: AttributeSet) :
-    FrameLayout(context, attrs) {
-    var defaultDrawable: Int? = null
+class RoundedImageView(context: Context, attrs: AttributeSet) : FrameLayout(context, attrs) {
+    private var defaultDrawable: Int? = null
 
     init {
         ConstraintLayout.inflate(context, R.layout.rounded_image_layout, this)
         val a = context.obtainStyledAttributes(attrs, R.styleable.RoundedImageView, 0, 0)
         val tintColor = a.getColor(R.styleable.RoundedImageView_foregroundColor, Color.BLACK)
-        val roundFg: ImageView = findViewById(R.id.round_fg_image)
+        val roundFg = findViewById<ImageView>(R.id.round_fg_image)
         roundFg.setColorFilter(tintColor)
-        defaultDrawable = a.getResourceId(R.styleable.RoundedImageView_srcDrawable, -1);
+        defaultDrawable = a.getResourceId(R.styleable.RoundedImageView_srcDrawable, -1)
         setDefaultDrawable()
         val fileName = a.getString(R.styleable.RoundedImageView_srcFile)
         if (fileName != null) setFile(fileName)
@@ -40,9 +37,9 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
 
     fun setFile(fileName: String): Boolean {
         val imageView: ImageView = findViewById(R.id.round_image)
-        val filePath = getFilePath(context, getMiniPhotoFileName(fileName))
-        if (File(filePath).exists()) {
-            imageView.setImageBitmap(BitmapFactory.decodeFile(filePath))
+        val bitmap = getBitmap(getMiniPhotoFileName(fileName), context)
+        if (bitmap != null) {
+            imageView.setImageBitmap(bitmap)
             return true
         }
         return false

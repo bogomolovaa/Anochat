@@ -1,14 +1,12 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
-import android.graphics.BitmapFactory
 import android.view.View
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
+import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.features.shared.getFilesDir
-import java.io.File
 
 class ConversationUpdatableView(
     private val fragment: ConversationFragment,
@@ -37,9 +35,9 @@ class ConversationUpdatableView(
             binding.replyLayout.visibility = View.VISIBLE
             binding.replyText.text = replyMessage.text
             if (replyMessage.image != null) {
-                val file = File(getFilesDir(binding.root.context), replyMessage.image)
-                if (file.exists()) {
-                    binding.replyImage.setImageBitmap(BitmapFactory.decodeFile(file.path))
+                val bitmap = getBitmap(replyMessage.image, binding.root.context, 4)
+                if (bitmap != null) {
+                    binding.replyImage.setImageBitmap(bitmap)
                     binding.replyImage.visibility = View.VISIBLE
                 }
             }

@@ -28,7 +28,6 @@ class ViewModelFactory
             throw RuntimeException(e)
         }
     }
-
 }
 
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)

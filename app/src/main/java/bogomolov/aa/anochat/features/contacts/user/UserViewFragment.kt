@@ -1,7 +1,6 @@
 package bogomolov.aa.anochat.features.contacts.user
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -21,9 +20,9 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUserViewBinding
 import bogomolov.aa.anochat.domain.entity.User
+import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.features.shared.getFilePath
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -55,7 +54,8 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        setMainPhotoListener(navController)
+        setupImagesRecyclerView { startPostponedEnterTransition() }
+        setPhotoClickListener(navController)
         postponeEnterTransition()
 
         return binding.root
@@ -63,21 +63,13 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
 
     override fun updateView(newState: UserUiState, currentState: UserUiState) {
         if (newState.user != currentState.user) showUser(newState.user!!)
-        if (newState.pagedListLiveData != currentState.pagedListLiveData) setImagesPagedList(
-            newState.pagedListLiveData!!
-        )
+        if (newState.pagedListLiveData != currentState.pagedListLiveData)
+            setImagesPagedList(newState.pagedListLiveData!!)
     }
 
     private fun setImagesPagedList(pagedListLiveData: LiveData<PagedList<String>>) {
-        val adapter = ImagesPagedAdapter()
-        binding.recyclerView.adapter = adapter
-        binding.recyclerView.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         pagedListLiveData.observe(viewLifecycleOwner) {
-            adapter.submitList(it)
-            binding.recyclerView.doOnPreDraw {
-                startPostponedEnterTransition()
-            }
+            (binding.recyclerView.adapter as ImagesPagedAdapter).submitList(it)
         }
     }
 
@@ -87,14 +79,22 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
         binding.userPhone.text = user.phone
         (activity as AppCompatActivity).supportActionBar?.title = user.name
         if (user.photo != null) {
-            val bitmap = BitmapFactory.decodeFile(getFilePath(requireContext(), user.photo!!))
+            val bitmap = getBitmap(user.photo, requireContext())
             binding.userPhoto.setImageBitmap(bitmap)
         } else {
             binding.userPhoto.setImageResource(R.drawable.user_icon)
         }
     }
 
-    private fun setMainPhotoListener(navController: NavController) {
+    private fun setupImagesRecyclerView(onPreDraw: () -> Unit) {
+        val adapter = ImagesPagedAdapter()
+        binding.recyclerView.adapter = adapter
+        binding.recyclerView.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        binding.recyclerView.doOnPreDraw { onPreDraw() }
+    }
+
+    private fun setPhotoClickListener(navController: NavController) {
         binding.userPhoto.setOnClickListener {
             val photo = viewModel.state.user?.photo
             if (photo != null) {

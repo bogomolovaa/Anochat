@@ -16,7 +16,4 @@ class UpdateWorker(
         runBlocking { userUseCases.updateUsersInConversations() }
         return Result.success()
     }
-
-
-
 }

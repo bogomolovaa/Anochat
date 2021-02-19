@@ -21,7 +21,6 @@ import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.getBitmap
-import bogomolov.aa.anochat.features.shared.getFilePath
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -93,7 +92,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         }
     }
 
-
     private suspend fun receiveMessage(data: Map<String, String>) {
         val text = data["body"] ?: ""
         val replyId = data["reply"]
@@ -121,9 +119,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
     private fun sendNotification(message: Message, user: User, settings: Settings) {
         val context = applicationContext
         val bitmap = if (user.photo != null)
-            BitmapFactory.decodeFile(
-                getFilePath(context, getMiniPhotoFileName(user.photo))
-            )
+            getBitmap(getMiniPhotoFileName(user.photo), context)
         else
             BitmapFactory.decodeResource(context.resources, R.drawable.user_icon)
         val pendingIntent = NavDeepLinkBuilder(context)
@@ -151,11 +147,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         if (message.image != null)
             notificationBuilder.setStyle(
                 NotificationCompat.BigPictureStyle()
-                    .bigPicture(getBitmap(message.image, 4, context))
+                    .bigPicture(getBitmap(message.image, context, 4))
             )
 
-        val notificationManager =
-            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel =
                 NotificationChannel(channelId, channelId, NotificationManager.IMPORTANCE_DEFAULT)

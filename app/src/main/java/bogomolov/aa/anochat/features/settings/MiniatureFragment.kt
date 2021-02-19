@@ -3,7 +3,6 @@ package bogomolov.aa.anochat.features.settings
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.os.Bundle
 import android.view.*
@@ -17,21 +16,22 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentMiniatureBinding
 import bogomolov.aa.anochat.features.shared.getFilePath
-import bogomolov.aa.anochat.features.shared.getFilesDir
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import dagger.android.support.AndroidSupportInjection
-import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
 
-class MiniatureFragment : Fragment(), View.OnTouchListener {
+class MiniatureFragment : Fragment() {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
     private val viewModel: SettingsViewModel by navGraphViewModels(R.id.settings_graph) { viewModelFactory }
     private lateinit var binding: FragmentMiniatureBinding
     private lateinit var bitmap: Bitmap
+    private lateinit var scaleDetector: ScaleGestureDetector
+    private lateinit var relativeLayout: RelativeLayout
+
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -48,21 +48,19 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
+        relativeLayout = binding.layout
         bitmap = viewModel.miniature.bitmap
         binding.imageView.setImageBitmap(bitmap)
-
         binding.fab.setOnClickListener {
             createMiniature()
             viewModel.addAction(UpdatePhotoAction(viewModel.miniature.name))
             navController.navigateUp()
         }
-
-        relativeLayout = binding.layout
-        scaleDetector = ScaleGestureDetector(context, scaleListener)
-        binding.maskImage.setOnTouchListener(this)
-        binding.layout.setOnTouchListener { v, event ->
+        binding.maskImage.setOnTouchListener(maskImageOnTouchListener)
+        binding.layout.setOnTouchListener { _, event ->
             scaleDetector.onTouchEvent(event)
         }
+        scaleDetector = ScaleGestureDetector(context, scaleListener)
 
         return binding.root
     }
@@ -77,18 +75,16 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
 
         val miniBitmap = Bitmap.createBitmap(
             bitmap,
-            Math.max(x, 0),
-            Math.max(y, 0),
-            Math.min(bitmap.width - Math.max(x, 0), width),
-            Math.min(bitmap.height - Math.max(y, 0), height)
+            max(x, 0),
+            max(y, 0),
+            min(bitmap.width - Math.max(x, 0), width),
+            min(bitmap.height - Math.max(y, 0), height)
         )
         val miniPhotoPath = getFilePath(requireContext(), getMiniPhotoFileName(viewModel.miniature.name))
         miniBitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(miniPhotoPath))
     }
 
 
-    private var lastPoint: Point = Point()
-    private var relativeLayout: RelativeLayout? = null
     private var scaleFactor = 1f
     private var imageWidth = 0
     private var imageHeight = 0
@@ -101,15 +97,50 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
 
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             scaleFactor *= detector.scaleFactor
-
             scaleFactor = max(0.5f, min(scaleFactor, maxScale))
             binding.maskImage.scaleX = scaleFactor
             binding.maskImage.scaleY = scaleFactor
-
             return true
         }
     }
-    private lateinit var scaleDetector: ScaleGestureDetector
+
+    private val maskImageOnTouchListener = object : View.OnTouchListener {
+        private var lastPoint: Point = Point()
+
+        @SuppressLint("ClickableViewAccessibility")
+        override fun onTouch(view: View, event: MotionEvent): Boolean {
+            scaleDetector.onTouchEvent(event)
+            val point = Point(event.rawX.toInt(), event.rawY.toInt())
+            when (event.action and MotionEvent.ACTION_MASK) {
+                MotionEvent.ACTION_DOWN -> lastPoint = point
+                MotionEvent.ACTION_MOVE -> {
+                    val offset = Point(point.x - lastPoint.x, point.y - lastPoint.y)
+                    val layoutParams = view.layoutParams as RelativeLayout.LayoutParams
+                    layoutParams.leftMargin += offset.x
+                    layoutParams.topMargin += offset.y
+                    layoutParams.rightMargin =
+                        relativeLayout.measuredWidth - layoutParams.leftMargin + view.scaledWidth()
+                    layoutParams.bottomMargin =
+                        relativeLayout.measuredHeight - layoutParams.topMargin + view.scaledHeight()
+
+                    val dx = (view.scaledWidth() - view.width) / 2
+                    val dy = (view.scaledHeight() - view.height) / 2
+                    if (layoutParams.topMargin < dy) layoutParams.topMargin = dy
+                    if (layoutParams.leftMargin < dx) layoutParams.leftMargin = dx
+                    if (imageWidth == 0 && imageHeight == 0) setImageRealDimensions()
+                    if (layoutParams.leftMargin + view.width + dx > imageWidth)
+                        layoutParams.leftMargin = imageWidth - view.width - dx
+                    if (layoutParams.topMargin + view.height + dy > imageHeight)
+                        layoutParams.topMargin = imageHeight - view.height - dy
+                    maskX = layoutParams.leftMargin - dx
+                    maskY = layoutParams.topMargin - dy
+                    view.layoutParams = layoutParams
+                    lastPoint = point;
+                }
+            }
+            return true
+        }
+    }
 
     private fun setImageRealDimensions() {
         val koef1 = bitmap.width.toFloat() / bitmap.height.toFloat()
@@ -127,49 +158,6 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         val maxScaleX = imageWidth.toFloat() / binding.maskImage.measuredWidth.toFloat()
         val maxScaleY = imageHeight.toFloat() / binding.maskImage.measuredHeight.toFloat()
         maxScale = max(maxScaleX, maxScaleY)
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    override fun onTouch(view: View, event: MotionEvent): Boolean {
-        scaleDetector.onTouchEvent(event)
-
-        val point = Point(event.rawX.toInt(), event.rawY.toInt())
-
-
-        when (event.action and MotionEvent.ACTION_MASK) {
-            MotionEvent.ACTION_DOWN -> {
-                lastPoint = point
-            }
-            MotionEvent.ACTION_MOVE -> {
-                val offset = Point(point.x - lastPoint.x, point.y - lastPoint.y)
-                val layoutParams = view.layoutParams as RelativeLayout.LayoutParams
-                layoutParams.leftMargin += offset.x
-                layoutParams.topMargin += offset.y
-                layoutParams.rightMargin =
-                    relativeLayout!!.measuredWidth - layoutParams.leftMargin + view.scaledWidth()
-                layoutParams.bottomMargin =
-                    relativeLayout!!.measuredHeight - layoutParams.topMargin + view.scaledHeight()
-
-                val dx = (view.scaledWidth() - view.width) / 2
-                val dy = (view.scaledHeight() - view.height) / 2
-                if (layoutParams.topMargin < dy) layoutParams.topMargin = dy
-                if (layoutParams.leftMargin < dx) layoutParams.leftMargin = dx
-
-                if (imageWidth == 0 && imageHeight == 0) setImageRealDimensions()
-
-                if (layoutParams.leftMargin + view.width + dx > imageWidth)
-                    layoutParams.leftMargin = imageWidth - view.width - dx
-                if (layoutParams.topMargin + view.height + dy > imageHeight)
-                    layoutParams.topMargin = imageHeight - view.height - dy
-
-                maskX = layoutParams.leftMargin - dx
-                maskY = layoutParams.topMargin - dy
-
-                view.layoutParams = layoutParams
-                lastPoint = point;
-            }
-        }
-        return true
     }
 
     private fun View.scaledWidth(): Int = (scaleFactor * this.width).toInt()

@@ -30,7 +30,6 @@ import bogomolov.aa.anochat.features.shared.resizeImage
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
-
 class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     @Inject
     internal lateinit var viewModelFactory: ViewModelFactory
@@ -73,34 +72,38 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
                 binding.userPhoto.setFile(newState.user.photo!!)
             if (newState.user.name != currentState.user?.name) {
                 binding.usernameText.text = newState.user.name
-                binding.editUsername.setOnClickListener {
-                    val bottomSheetFragment = EditUserBottomDialogFragment(
-                        SettingType.EDIT_USERNAME,
-                        requireContext().resources.getString(R.string.enter_new_name),
-                        newState.user.name
-                    ) {
-                        if (it.isNotEmpty()) viewModel.addAction(UpdateNameAction(it))
-                    }
-                    bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
-                }
+                binding.editUsername.setOnClickListener { showEditNameDialog(newState.user.name) }
             }
             if (newState.user.status != currentState.user?.status) {
                 binding.statusText.text =
                     newState.user.status ?: requireContext().resources.getText(R.string.no_status)
-                binding.editStatus.setOnClickListener {
-                    val bottomSheetFragment = EditUserBottomDialogFragment(
-                        SettingType.EDIT_STATUS,
-                        requireContext().resources.getString(R.string.enter_new_status),
-                        newState.user.status
-                    ) {
-                        if (it.isNotEmpty()) viewModel.addAction(UpdateStatusAction(it))
-                    }
-                    bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
-                }
+                binding.editStatus.setOnClickListener { showEditStatusDialog(newState.user.status) }
             }
             if (newState.user.phone != currentState.user?.phone)
                 binding.phoneText.text = newState.user.phone
         }
+    }
+
+    private fun showEditNameDialog(name: String?) {
+        val bottomSheetFragment = EditUserBottomDialogFragment(
+            SettingType.EDIT_USERNAME,
+            requireContext().resources.getString(R.string.enter_new_name),
+            name
+        ) {
+            if (it.isNotEmpty()) viewModel.addAction(UpdateNameAction(it))
+        }
+        bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
+    }
+
+    private fun showEditStatusDialog(status: String?) {
+        val bottomSheetFragment = EditUserBottomDialogFragment(
+            SettingType.EDIT_STATUS,
+            requireContext().resources.getString(R.string.enter_new_status),
+            status
+        ) {
+            if (it.isNotEmpty()) viewModel.addAction(UpdateStatusAction(it))
+        }
+        bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
     }
 
     private fun addListeners() {
@@ -123,6 +126,14 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         startActivity(i)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+        if (resultCode == Activity.RESULT_OK && requestCode == FILE_CHOOSER_CODE) {
+            val uri = intent?.data
+            if (uri != null) updatePhoto(uri)
+        }
+        super.onActivityResult(requestCode, resultCode, intent)
+    }
+
     private fun updatePhoto(uri: Uri) {
         val miniature = resizeImage(uri = uri, context = requireContext())
         if (miniature != null) {
@@ -131,12 +142,13 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        if (resultCode == Activity.RESULT_OK && requestCode == FILE_CHOOSER_CODE) {
-            val uri = intent?.data
-            if (uri != null) updatePhoto(uri)
-        }
-        super.onActivityResult(requestCode, resultCode, intent)
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            if (requestCode == READ_PERMISSIONS_CODE) startFileChooser()
     }
 
     private fun startFileChooser() {
@@ -151,17 +163,6 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         } catch (ex: ActivityNotFoundException) {
             Log.w("SettingFragment", "File manager not installed")
         }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            when (requestCode) {
-                READ_PERMISSIONS_CODE -> startFileChooser()
-            }
     }
 
     private fun requestReadPermission() {

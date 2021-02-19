@@ -23,14 +23,15 @@ class ConversationsPagedAdapter(
 
     override fun getId(item: Conversation) = item.id
 
-    override fun bind(item: Conversation?, binding: ConversationLayoutBinding) {
-        if (item != null) {
-            binding.conversation = item
+    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+    override fun bind(conversation: Conversation?, binding: ConversationLayoutBinding) {
+        if (conversation != null) {
+            binding.conversation = conversation
             binding.messageText.text =
                 if (showFullMessage) {
-                    item.lastMessage?.text ?: ""
+                    conversation.lastMessage?.text ?: ""
                 } else {
-                    item.lastMessage?.shortText() ?: ""
+                    conversation.lastMessage?.shortText() ?: ""
                 }
         }
     }

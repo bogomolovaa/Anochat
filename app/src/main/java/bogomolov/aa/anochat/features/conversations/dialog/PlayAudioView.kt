@@ -12,11 +12,14 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.databinding.BindingAdapter
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.features.shared.getFilesDir
+import bogomolov.aa.anochat.features.shared.getFilePath
 import kotlinx.coroutines.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+
+private const val START_TIMER_TEXT = "0:00"
+private const val TAG = "PlayAudioView"
 
 class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(context, attrs) {
     private var player: MediaPlayer? = null
@@ -24,9 +27,14 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
     private var startTime: Long? = null
     private var pastDuration = 0L
 
-
     init {
         inflate(context, R.layout.play_audio_layout, this)
+    }
+
+    fun setOnCloseListener(onClose: () -> Unit) {
+        val closeIcon: ImageView = findViewById(R.id.closePlayImage)
+        closeIcon.visibility = View.VISIBLE
+        closeIcon.setOnClickListener { onClose() }
     }
 
     fun setFile(fileName: String) {
@@ -34,9 +42,9 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         val lengthText: TextView = findViewById(R.id.length_text)
         val progressBar: ProgressBar = findViewById(R.id.playProgressBar)
         val player = MediaPlayer()
-        Log.i("test", "audio file: " + File(getFilesDir(context), fileName).path)
-        if (File(getFilesDir(context), fileName).exists()) {
-            player.setDataSource(File(getFilesDir(context), fileName).path)
+        val filePath = getFilePath(context, fileName)
+        if (File(filePath).exists()) {
+            player.setDataSource(filePath)
             player.prepare()
             val duration = player.duration.toLong()
             progressBar.max = (duration / 1000).toInt()
@@ -48,56 +56,57 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
                 startTime = null
                 pastDuration = 0
                 progressBar.progress = 0
-                timerText.text = "0:00"
+                timerText.text = START_TIMER_TEXT
                 playPauseButton.setImageResource(R.drawable.send_icon)
                 playPauseButton.setOnClickListener { start() }
                 if (playJob != null) playJob!!.cancel()
             }
         } else {
-            Log.i("test", "error file: " + File(getFilesDir(context), fileName).path + " not exist")
+            Log.w(TAG, "error file: $filePath not exist")
         }
-        timerText.text = "0:00"
+        timerText.text = START_TIMER_TEXT
     }
 
-
-    @SuppressLint("SimpleDateFormat")
-    private fun timeToString(time: Long) = SimpleDateFormat("mm:ss").format(Date(time))
-
     private fun start() {
-        val progressBar: ProgressBar = findViewById(R.id.playProgressBar)
-        val timerText: TextView = findViewById(R.id.timer_text)
-        startTime = System.currentTimeMillis()
-        //todo: start in appropriate CoroutineScope
-        playJob = GlobalScope.launch(Dispatchers.Main) {
-            while (true) {
-                val time = System.currentTimeMillis() - startTime!! + pastDuration
-                progressBar.progress = (time / 1000).toInt()
-                timerText.text = timeToString(time)
-                delay(1000)
+        val player = this.player
+        if (player != null) {
+            val progressBar: ProgressBar = findViewById(R.id.playProgressBar)
+            val timerText: TextView = findViewById(R.id.timer_text)
+            startTime = System.currentTimeMillis()
+            //todo: start in viewModelScope
+            playJob = GlobalScope.launch(Dispatchers.Main) {
+                while (true) {
+                    val time = System.currentTimeMillis() - startTime!! + pastDuration
+                    progressBar.progress = (time / 1000).toInt()
+                    timerText.text = timeToString(time)
+                    delay(1000)
+                }
             }
+            player.start()
+            val playPauseButton: ImageView = findViewById(R.id.playPause)
+            playPauseButton.setImageResource(R.drawable.pause_icon)
+            playPauseButton.setOnClickListener { pause() }
+        }else{
+            Log.w(TAG, "Can't start, null player")
         }
-        player!!.start()
-        val playPauseButton: ImageView = findViewById(R.id.playPause)
-        playPauseButton.setImageResource(R.drawable.pause_icon)
-        playPauseButton.setOnClickListener { pause() }
     }
 
     private fun pause() {
-        pastDuration += System.currentTimeMillis() - startTime!!
-        if (playJob != null) playJob!!.cancel()
-        player!!.pause()
-        val playPauseButton: ImageView = findViewById(R.id.playPause)
-        playPauseButton.setImageResource(R.drawable.send_icon)
-        playPauseButton.setOnClickListener {
-            start()
+        val player = this.player
+        if (player != null) {
+            pastDuration += System.currentTimeMillis() - startTime!!
+            playJob?.cancel()
+            player.pause()
+            val playPauseButton: ImageView = findViewById(R.id.playPause)
+            playPauseButton.setImageResource(R.drawable.send_icon)
+            playPauseButton.setOnClickListener { start() }
+        }else{
+            Log.w(TAG, "Can't pause, null player")
         }
     }
 
-    fun onClose(onClose: () -> Unit) {
-        val closeIcon: ImageView = findViewById(R.id.closePlayImage)
-        closeIcon.visibility = View.VISIBLE
-        closeIcon.setOnClickListener { onClose() }
-    }
+    @SuppressLint("SimpleDateFormat")
+    private fun timeToString(time: Long) = SimpleDateFormat("mm:ss").format(Date(time))
 }
 
 @BindingAdapter("app:fileName")

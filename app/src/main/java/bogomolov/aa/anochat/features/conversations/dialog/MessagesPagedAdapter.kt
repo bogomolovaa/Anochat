@@ -3,7 +3,6 @@ package bogomolov.aa.anochat.features.conversations.dialog
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.*
 import android.view.animation.AccelerateInterpolator
@@ -17,9 +16,8 @@ import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.ActionModeData
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
-import bogomolov.aa.anochat.features.shared.getFilesDir
+import bogomolov.aa.anochat.features.shared.getBitmap
 import com.google.android.material.card.MaterialCardView
-import java.io.File
 
 class MessagesPagedAdapter(
     private val windowWidth: Int,
@@ -48,7 +46,7 @@ class MessagesPagedAdapter(
             if (image != null) {
                 loadImage(image, binding.imageView, 8)
                 setImageClickListener(image, binding.imageView)
-            }else{
+            } else {
                 binding.imageView.setImageDrawable(null);
             }
             val replyMessageImage = item.message.replyMessage?.image
@@ -73,15 +71,7 @@ class MessagesPagedAdapter(
     }
 
     private fun loadImage(image: String, imageView: ImageView, quality: Int) {
-        val file = File(getFilesDir(imageView.context), image)
-        if (file.exists()) {
-            imageView.setImageBitmap(
-                BitmapFactory.decodeFile(
-                    file.path,
-                    BitmapFactory.Options().apply { inSampleSize = quality }
-                )
-            )
-        }
+        imageView.setImageBitmap(getBitmap(image, imageView.context, quality))
     }
 
     private fun getGestureDetector(messageCardView: MaterialCardView, message: Message) =

@@ -49,5 +49,4 @@ abstract class InjectionsModule {
 
     @ContributesAndroidInjector
     abstract fun bindMyFirebaseMessagingService(): MyFirebaseMessagingService
-
 }

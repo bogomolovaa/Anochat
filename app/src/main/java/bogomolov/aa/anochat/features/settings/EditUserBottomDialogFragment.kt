@@ -32,12 +32,9 @@ class EditUserBottomDialogFragment(
     ): View {
         val binding = UserEditLayoutBinding.inflate(inflater, container, false)
         binding.enterLabel.text = title
-        binding.cancelButton.setOnClickListener {
-            dismiss()
-        }
+        binding.cancelButton.setOnClickListener { dismiss() }
         binding.saveButton.setOnClickListener {
-            val text = binding.enterText.text.toString()
-            onSave(text)
+            onSave(binding.enterText.text.toString())
             dismiss()
         }
         var maxLength = 0

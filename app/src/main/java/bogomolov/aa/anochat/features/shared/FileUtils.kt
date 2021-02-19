@@ -23,7 +23,7 @@ fun getFilesDir(context: Context): File = context.filesDir
 
 fun getRandomFileName() = (1..20).map { allowedChars.random() }.joinToString(separator = "")
 
-fun getBitmap(fileName: String, quality: Int, context: Context): Bitmap {
+fun getBitmap(fileName: String, context: Context, quality: Int = 1): Bitmap? {
     val bitmapOptions = BitmapFactory.Options().apply { inSampleSize = quality }
     return BitmapFactory.decodeFile(getFilePath(context, fileName), bitmapOptions)
 }

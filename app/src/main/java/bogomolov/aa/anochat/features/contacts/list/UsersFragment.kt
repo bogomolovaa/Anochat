@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.features.contacts.list
 
 import android.content.Context
+import android.database.Cursor
 import android.os.Bundle
 import android.provider.ContactsContract
 import android.view.*
@@ -63,7 +64,8 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
     }
 
     override fun updateView(newState: ContactsUiState, currentState: ContactsUiState) {
-        if (newState.pagedListLiveData != currentState.pagedListLiveData) setContactsPagedList(newState.pagedListLiveData!!)
+        if (newState.pagedListLiveData != currentState.pagedListLiveData)
+            setContactsPagedList(newState.pagedListLiveData!!)
         if (newState.searchedUsers != currentState.searchedUsers) setSearchedUsers(newState.searchedUsers!!)
         if (newState.conversationId != currentState.conversationId) navigateToConversation(newState.conversationId)
         onSynchronization(newState.synchronizationFinished)
@@ -88,10 +90,9 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
 
     private fun navigateToConversation(conversationId: Long) {
         if (conversationId != 0L) {
-            navController.navigate(
-                R.id.dialog_graph,
-                Bundle().apply { putLong("id", conversationId) })
+            val bundle = Bundle().apply { putLong("id", conversationId) }
             viewModel.setStateAsync { copy(conversationId = 0) }
+            navController.navigate(R.id.dialog_graph, bundle)
         }
     }
 
@@ -101,20 +102,9 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
 
     private fun getContactsPhones(): List<String> {
         val phones = HashSet<String>()
-        val projection = arrayOf(
-            ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
-            ContactsContract.Contacts.DISPLAY_NAME,
-            ContactsContract.CommonDataKinds.Phone.NUMBER
-        )
-        requireContext().contentResolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            projection,
-            null,
-            null,
-            null
-        )?.use { cursor ->
-            val numberIndex =
-                cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+        val cursor = queryContacts()
+        if (cursor != null) {
+            val numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
             while (cursor.moveToNext()) {
                 val number = cursor.getString(numberIndex)
                 val clearNumber =
@@ -123,6 +113,21 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
             }
         }
         return ArrayList(phones)
+    }
+
+    private fun queryContacts(): Cursor? {
+        val projection = arrayOf(
+            ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+            ContactsContract.Contacts.DISPLAY_NAME,
+            ContactsContract.CommonDataKinds.Phone.NUMBER
+        )
+        return requireContext().contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            projection,
+            null,
+            null,
+            null
+        )
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -135,17 +140,13 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
             actionView = searchView
         }
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
+            override fun onQueryTextSubmit(query: String?) =
                 if (query != null) {
                     viewModel.addAction(SearchAction(query))
-                    return true
-                }
-                return false
-            }
+                    true
+                } else false
 
-            override fun onQueryTextChange(newText: String?): Boolean {
-                return false
-            }
+            override fun onQueryTextChange(newText: String?) = false
         })
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
         closeButton.setOnClickListener { setContactsPagedList() }

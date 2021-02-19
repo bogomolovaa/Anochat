@@ -19,8 +19,9 @@ class UsersAdapter(onClickListener: ItemClickListener<User>) :
 
     override fun getId(item: User) = item.id
 
-    override fun bind(item: User?, binding: UserLayoutBinding) {
-        binding.user = item
+    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+    override fun bind(user: User?, binding: UserLayoutBinding) {
+        binding.user = user
     }
 }
 
@@ -39,10 +40,10 @@ class UsersSearchAdapter(onClickListener: ItemClickListener<User>) :
 
     override fun getId(item: User) = item.id
 
-    override fun bind(item: User?, binding: UserLayoutBinding) {
-        binding.user = item
+    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+    override fun bind(user: User?, binding: UserLayoutBinding) {
+        binding.user = user
     }
-
 
     fun submitList(list: List<User>) {
         users.clear()

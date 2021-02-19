@@ -15,9 +15,9 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSignInBinding
+import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.domain.entity.isValidPhone
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
@@ -51,15 +51,21 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
         navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         binding.toolbar.navigationIcon = null
-
         binding.fab.setOnClickListener {
-            when (viewModel.state.state) {
-                LoginState.NOT_LOGGED -> verifyPhoneNumber()
-                else -> submitCode()
-            }
+            if (viewModel.state.state == LoginState.NOT_LOGGED)
+                verifyPhoneNumber()
+            else submitCode()
         }
 
         return binding.root
+    }
+
+    override fun updateView(newState: SignInUiState, currentState: SignInUiState) {
+        binding.phoneInputText.setText(newState.phoneNumber)
+        binding.codeInputLayout.visibility =
+            if (newState.state == LoginState.CODE_SENT) View.VISIBLE else View.INVISIBLE
+        if (newState.state == LoginState.LOGGED)
+            navController.navigate(R.id.action_signInFragment_to_conversationsListFragment)
     }
 
     private fun submitCode() {
@@ -72,8 +78,6 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
             } else {
                 binding.codeInputLayout.error = resources.getString(R.string.empty_code)
             }
-        } else {
-            Log.i("test", "viewModel.verificationId null")
         }
     }
 
@@ -90,18 +94,8 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
             binding.codeInputLayout.visibility = View.VISIBLE
             viewModel.setStateAsync { copy(phoneNumber = phoneNumber) }
         } else {
-            binding.phoneInputLayout.error =
-                resources.getString(R.string.enter_valid_phone)
+            binding.phoneInputLayout.error = resources.getString(R.string.enter_valid_phone)
         }
-    }
-
-    override fun updateView(newState: SignInUiState, currentState: SignInUiState) {
-        Log.i("SignInFragment", "updateView newState:\n$newState")
-        binding.phoneInputText.setText(newState.phoneNumber)
-        binding.codeInputLayout.visibility =
-            if (newState.state == LoginState.CODE_SENT) View.VISIBLE else View.INVISIBLE
-        if (newState.state == LoginState.LOGGED)
-            navController.navigate(R.id.action_signInFragment_to_conversationsListFragment)
     }
 
     private val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
