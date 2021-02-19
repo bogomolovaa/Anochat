@@ -1,24 +1,24 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.graphics.BitmapFactory
-import android.os.Bundle
 import android.view.View
-import androidx.navigation.findNavController
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.getFilesDir
 import java.io.File
 
-class ConversationUpdatableView(private val fragment: ConversationFragment) :
-    UpdatableView<DialogUiState> {
-    private val binding
-        get() = fragment.binding
+class ConversationUpdatableView(
+    private val fragment: ConversationFragment,
+    private var recyclerViewSetup: ConversationRecyclerViewSetup
+) : UpdatableView<DialogUiState> {
+    lateinit var binding: FragmentConversationBinding
 
     override fun updateView(newState: DialogUiState, currentState: DialogUiState) {
         if (newState.pagedListLiveData != currentState.pagedListLiveData)
-            fragment.setPagedListLiveData(newState.pagedListLiveData!!)
+            recyclerViewSetup.setPagedListLiveData(newState.pagedListLiveData!!)
         if (newState.conversation != currentState.conversation) setConversation(newState.conversation!!)
         if (newState.onlineStatus != currentState.onlineStatus)
             binding.statusText.text = newState.onlineStatus
@@ -95,10 +95,6 @@ class ConversationUpdatableView(private val fragment: ConversationFragment) :
     private fun setConversation(conversation: Conversation) {
         if (conversation.user.photo != null) binding.userPhoto.setFile(conversation.user.photo)
         binding.usernameText.text = conversation.user.name
-        binding.usernameLayout.setOnClickListener {
-            binding.root.findNavController().navigate(
-                R.id.userViewFragment,
-                Bundle().apply { putLong("id", conversation.user.id) })
-        }
+        binding.usernameLayout.setOnClickListener { fragment.navigateToUserFragment(conversation.user.id) }
     }
 }
