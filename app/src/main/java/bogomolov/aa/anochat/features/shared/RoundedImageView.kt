@@ -10,8 +10,6 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.databinding.BindingAdapter
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.repository.getFilePath
-import bogomolov.aa.anochat.repository.getMiniPhotoFileName
 import java.io.File
 
 
@@ -21,18 +19,14 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
 
     init {
         ConstraintLayout.inflate(context, R.layout.rounded_image_layout, this)
-
         val a = context.obtainStyledAttributes(attrs, R.styleable.RoundedImageView, 0, 0)
-
         val tintColor = a.getColor(R.styleable.RoundedImageView_foregroundColor, Color.BLACK)
         val roundFg: ImageView = findViewById(R.id.round_fg_image)
         roundFg.setColorFilter(tintColor)
-
         defaultDrawable = a.getResourceId(R.styleable.RoundedImageView_srcDrawable, -1);
         setDefaultDrawable()
         val fileName = a.getString(R.styleable.RoundedImageView_srcFile)
         if (fileName != null) setFile(fileName)
-
         a.recycle()
     }
 
@@ -53,7 +47,6 @@ class RoundedImageView(context: Context, attrs: AttributeSet) :
         }
         return false
     }
-
 }
 
 @BindingAdapter("app:srcFile")

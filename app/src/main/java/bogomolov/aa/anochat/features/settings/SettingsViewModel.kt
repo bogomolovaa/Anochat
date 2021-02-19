@@ -1,12 +1,14 @@
 package bogomolov.aa.anochat.features.settings
 
+import android.graphics.Bitmap
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
+import bogomolov.aa.anochat.features.shared.AuthRepository
+import bogomolov.aa.anochat.features.shared.BitmapWithName
+import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
-import bogomolov.aa.anochat.features.shared.Settings
-import bogomolov.aa.anochat.features.shared.AuthRepository
 import javax.inject.Inject
 
 data class SettingsUiState(
@@ -24,8 +26,8 @@ class ChangeSettingsAction(val change: Settings.() -> Settings) : UserAction
 class SettingsViewModel @Inject constructor(
     private val userUseCases: UserUseCases,
     private val authRepository: AuthRepository
-) :
-    BaseViewModel<SettingsUiState>() {
+) : BaseViewModel<SettingsUiState>() {
+    lateinit var miniature: BitmapWithName
 
     override fun createInitialState() = SettingsUiState()
 

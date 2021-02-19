@@ -7,7 +7,8 @@ data class User(
     val name: String = "",
     val photo: String? = null,
     val status: String? = null
-) {
+)
 
-    //override fun hashCode() : Int = id.toString().hashCode()
-}
+fun isNotValidPhone(string: String) = string.contains("[^+0-9]".toRegex())
+
+fun isValidPhone(string: String) = !isNotValidPhone(string)

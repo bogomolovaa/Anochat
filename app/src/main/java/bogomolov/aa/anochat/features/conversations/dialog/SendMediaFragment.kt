@@ -15,8 +15,8 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
-import bogomolov.aa.anochat.repository.getFilePath
-import bogomolov.aa.anochat.repository.resizeImage
+import bogomolov.aa.anochat.features.shared.getFilePath
+import bogomolov.aa.anochat.features.shared.resizeImage
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -46,20 +46,15 @@ class SendMediaFragment : Fragment() {
         val mediaUri = arguments?.getParcelable("uri") as Uri?
         conversationId = arguments?.getLong("conversationId")!!
 
-        val resizedImage = if (mediaUri != null)
-            resizeImage(mediaUri, requireContext())
-        else
-            resizeImage(mediaPath!!, requireContext())
-        binding.imageView.setImageBitmap(
-            BitmapFactory.decodeFile(getFilePath(requireContext(), resizedImage))
-        )
-        binding.messageInputLayout.setEndIconOnClickListener {
-            val text = binding.messageInputText.text?.toString() ?: ""
-            viewModel.addAction(SendMessageAction(image = resizedImage, text = text))
-            navController.popBackStack()
+        val resizedImage = resizeImage(mediaUri, mediaPath, requireContext())
+        if (resizedImage != null) {
+            binding.imageView.setImageBitmap(resizedImage.bitmap)
+            binding.messageInputLayout.setEndIconOnClickListener {
+                val text = binding.messageInputText.text?.toString() ?: ""
+                viewModel.addAction(SendMessageAction(image = resizedImage.name, text = text))
+                navController.popBackStack()
+            }
         }
-
         return binding.root
     }
-
 }

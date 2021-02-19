@@ -9,7 +9,6 @@ import android.os.Bundle
 import android.view.*
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
 import androidx.navigation.navGraphViewModels
@@ -17,9 +16,9 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentMiniatureBinding
-import bogomolov.aa.anochat.repository.getFilePath
-import bogomolov.aa.anochat.repository.getFilesDir
-import bogomolov.aa.anochat.repository.getMiniPhotoFileName
+import bogomolov.aa.anochat.features.shared.getFilePath
+import bogomolov.aa.anochat.features.shared.getFilesDir
+import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import dagger.android.support.AndroidSupportInjection
 import java.io.File
 import java.io.FileOutputStream
@@ -49,15 +48,12 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        val imageName = arguments?.getString("image")!!
-        val imagePath = File(getFilesDir(requireContext()), imageName).path
-
-        bitmap = BitmapFactory.decodeFile(imagePath)
+        bitmap = viewModel.miniature.bitmap
         binding.imageView.setImageBitmap(bitmap)
 
         binding.fab.setOnClickListener {
-            createMiniature(imageName)
-            viewModel.addAction(UpdatePhotoAction(imageName))
+            createMiniature()
+            viewModel.addAction(UpdatePhotoAction(viewModel.miniature.name))
             navController.navigateUp()
         }
 
@@ -71,7 +67,7 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         return binding.root
     }
 
-    private fun createMiniature(photo: String) {
+    private fun createMiniature() {
         val maskWidth = binding.maskImage.scaledWidth()
         val maskHeight = binding.maskImage.scaledHeight()
         val x = (maskX / initialImageScale).toInt()
@@ -79,9 +75,6 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
         val width = (maskWidth / initialImageScale).toInt()
         val height = (maskHeight / initialImageScale).toInt()
 
-        val context = requireContext()
-        val filePath = getFilePath(context, photo)
-        val bitmap = BitmapFactory.decodeFile(filePath)
         val miniBitmap = Bitmap.createBitmap(
             bitmap,
             Math.max(x, 0),
@@ -89,7 +82,7 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
             Math.min(bitmap.width - Math.max(x, 0), width),
             Math.min(bitmap.height - Math.max(y, 0), height)
         )
-        val miniPhotoPath = getFilePath(context, getMiniPhotoFileName(photo))
+        val miniPhotoPath = getFilePath(requireContext(), getMiniPhotoFileName(viewModel.miniature.name))
         miniBitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(miniPhotoPath))
     }
 
@@ -181,5 +174,4 @@ class MiniatureFragment : Fragment(), View.OnTouchListener {
 
     private fun View.scaledWidth(): Int = (scaleFactor * this.width).toInt()
     private fun View.scaledHeight(): Int = (scaleFactor * this.height).toInt()
-
 }

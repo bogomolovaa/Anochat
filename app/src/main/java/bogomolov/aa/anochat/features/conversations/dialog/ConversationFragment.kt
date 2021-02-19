@@ -20,6 +20,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.core.content.FileProvider
 import androidx.core.os.ConfigurationCompat
+import androidx.databinding.BindingAdapter
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
@@ -30,6 +31,7 @@ import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
+import com.google.android.material.card.MaterialCardView
 import com.vanniktech.emoji.EmojiPopup
 import dagger.android.support.AndroidSupportInjection
 import java.io.File
@@ -214,4 +216,11 @@ class ConversationFragment : Fragment(), RequestPermission {
         private const val CAMERA_PERMISSIONS_CODE = 1002
         private const val MICROPHONE_PERMISSIONS_CODE = 1003
     }
+}
+
+@BindingAdapter(value = ["android:layout_marginLeft", "android:layout_marginRight"])
+fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
+    val p = view.layoutParams as ViewGroup.MarginLayoutParams
+    p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin);
+    view.requestLayout()
 }

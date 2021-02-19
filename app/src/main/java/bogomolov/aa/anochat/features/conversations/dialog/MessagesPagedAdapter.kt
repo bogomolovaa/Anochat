@@ -9,7 +9,6 @@ import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
 import androidx.core.view.GestureDetectorCompat
-import androidx.databinding.BindingAdapter
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.FragmentNavigator
 import androidx.recyclerview.widget.RecyclerView
@@ -18,7 +17,7 @@ import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.ActionModeData
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
-import bogomolov.aa.anochat.repository.getFilesDir
+import bogomolov.aa.anochat.features.shared.getFilesDir
 import com.google.android.material.card.MaterialCardView
 import java.io.File
 

@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.os.Bundle
 import android.view.*
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
@@ -14,7 +13,6 @@ import androidx.transition.TransitionInflater
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentImageViewBinding
 import bogomolov.aa.anochat.features.main.MainActivity
-import bogomolov.aa.anochat.repository.getFilesDir
 import java.io.File
 import kotlin.math.max
 import kotlin.math.min
@@ -91,9 +89,7 @@ class ImageViewFragment : Fragment(), View.OnTouchListener {
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(view: View, event: MotionEvent): Boolean {
         scaleDetector.onTouchEvent(event)
-
         val point = Point(event.rawX.toInt(), event.rawY.toInt())
-
 
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {

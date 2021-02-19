@@ -12,7 +12,7 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.databinding.BindingAdapter
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.repository.getFilesDir
+import bogomolov.aa.anochat.features.shared.getFilesDir
 import kotlinx.coroutines.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -34,8 +34,8 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         val lengthText: TextView = findViewById(R.id.length_text)
         val progressBar: ProgressBar = findViewById(R.id.playProgressBar)
         val player = MediaPlayer()
-        Log.i("test","audio file: "+File(getFilesDir(context), fileName).path)
-        if(File(getFilesDir(context), fileName).exists()) {
+        Log.i("test", "audio file: " + File(getFilesDir(context), fileName).path)
+        if (File(getFilesDir(context), fileName).exists()) {
             player.setDataSource(File(getFilesDir(context), fileName).path)
             player.prepare()
             val duration = player.duration.toLong()
@@ -43,22 +43,18 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
             lengthText.text = timeToString(duration)
             this.player = player
             val playPauseButton: ImageView = findViewById(R.id.playPause)
-            playPauseButton.setOnClickListener {
-                start()
-            }
+            playPauseButton.setOnClickListener { start() }
             player.setOnCompletionListener {
                 startTime = null
                 pastDuration = 0
                 progressBar.progress = 0
                 timerText.text = "0:00"
                 playPauseButton.setImageResource(R.drawable.send_icon)
-                playPauseButton.setOnClickListener {
-                    start()
-                }
+                playPauseButton.setOnClickListener { start() }
                 if (playJob != null) playJob!!.cancel()
             }
-        }else{
-            Log.i("test","error file: "+File(getFilesDir(context), fileName).path+" not exist")
+        } else {
+            Log.i("test", "error file: " + File(getFilesDir(context), fileName).path + " not exist")
         }
         timerText.text = "0:00"
     }
@@ -71,6 +67,7 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         val progressBar: ProgressBar = findViewById(R.id.playProgressBar)
         val timerText: TextView = findViewById(R.id.timer_text)
         startTime = System.currentTimeMillis()
+        //todo: start in appropriate CoroutineScope
         playJob = GlobalScope.launch(Dispatchers.Main) {
             while (true) {
                 val time = System.currentTimeMillis() - startTime!! + pastDuration
@@ -82,9 +79,7 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         player!!.start()
         val playPauseButton: ImageView = findViewById(R.id.playPause)
         playPauseButton.setImageResource(R.drawable.pause_icon)
-        playPauseButton.setOnClickListener {
-            pause()
-        }
+        playPauseButton.setOnClickListener { pause() }
     }
 
     private fun pause() {

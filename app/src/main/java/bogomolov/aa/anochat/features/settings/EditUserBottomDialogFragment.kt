@@ -6,7 +6,6 @@ import android.text.InputFilter.LengthFilter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.UserEditLayoutBinding
@@ -48,6 +47,4 @@ class EditUserBottomDialogFragment(
         if (!currentValue.isNullOrEmpty()) binding.enterText.setText(currentValue)
         return binding.root
     }
-
-
 }

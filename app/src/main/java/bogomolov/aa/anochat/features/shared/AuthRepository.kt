@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.shared
 
-import bogomolov.aa.anochat.features.shared.Settings
 import com.google.firebase.auth.PhoneAuthCredential
 
 interface AuthRepository {

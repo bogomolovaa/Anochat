@@ -13,11 +13,11 @@ import bogomolov.aa.anochat.domain.MessageUseCases
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
+import bogomolov.aa.anochat.features.shared.getFilesDir
+import bogomolov.aa.anochat.features.shared.getRandomFileName
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
-import bogomolov.aa.anochat.repository.getFilesDir
-import bogomolov.aa.anochat.repository.getRandomString
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -93,7 +93,7 @@ class ConversationViewModel @Inject constructor(
     }
 
     private suspend fun StartRecordingAction.execute() {
-        val audioFile = getRandomString(20) + ".3gp"
+        val audioFile = "${getRandomFileName()}.3gp"
         val recorder = MediaRecorder()
         recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
         recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)

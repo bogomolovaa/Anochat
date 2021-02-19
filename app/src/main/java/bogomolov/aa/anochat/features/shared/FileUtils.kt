@@ -1,107 +1,91 @@
-package bogomolov.aa.anochat.repository
+package bogomolov.aa.anochat.features.shared
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
 import kotlin.math.max
+import kotlin.math.min
 
-const val MAX_IMAGE_DIM = 1024
+private const val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz1234567890"
+private const val MAX_IMAGE_DIM = 1024f
 
-fun getBitmap(fileName: String, quality: Int, context: Context): Bitmap =
-    BitmapFactory.decodeFile(getFilePath(context, fileName), BitmapFactory.Options().apply {
-        inSampleSize = quality
-    })
+data class BitmapWithName(val name: String, val bitmap: Bitmap)
 
-fun resizeImage(uri: Uri, context: Context): String {
-    var bitmapOptions = BitmapFactory.Options()
-    bitmapOptions.inJustDecodeBounds = true
-
-    val ins = context.contentResolver.openInputStream(uri)
-
-    BitmapFactory.decodeStream(ins, null, bitmapOptions)
-    ins?.close()
-    val bitmapWidth = bitmapOptions.outWidth
-    val bitmapHeight = bitmapOptions.outHeight
-
-    var ratio = MAX_IMAGE_DIM / max(bitmapWidth, bitmapHeight).toFloat()
-    if (ratio > 1) ratio = 1.0f
-    val outWidth = (ratio * bitmapWidth).toInt()
-
-    bitmapOptions = BitmapFactory.Options()
-    bitmapOptions.inScaled = true
-    bitmapOptions.inSampleSize = 4
-    bitmapOptions.inDensity = bitmapWidth
-    bitmapOptions.inTargetDensity = outWidth * bitmapOptions.inSampleSize
-
-    val ins2 = context.contentResolver.openInputStream(uri)
-    val resized = BitmapFactory.decodeStream(ins2, null, bitmapOptions)
-    ins2?.close()
-    val fileName = "${getRandomString(20)}.jpg"
-    try {
-        if (resized != null) {
-            val stream = FileOutputStream(getFilePath(context, fileName))
-            resized.compress(Bitmap.CompressFormat.JPEG, 80, stream)
-            stream.flush()
-            stream.close()
-        } else {
-            throw IOException("can't decode $uri")
-        }
-    } catch (e: IOException) {
-        e.printStackTrace()
-    }
-    return fileName
-}
-
-fun resizeImage(path: String, context: Context): String {
-    var bitmapOptions = BitmapFactory.Options()
-    bitmapOptions.inJustDecodeBounds = true
-
-    BitmapFactory.decodeFile(path, bitmapOptions)
-    val bitmapWidth = bitmapOptions.outWidth
-    val bitmapHeight = bitmapOptions.outHeight
-
-    var ratio = MAX_IMAGE_DIM / max(bitmapWidth, bitmapHeight).toFloat()
-    if (ratio > 1) ratio = 1.0f
-    val outWidth = (ratio * bitmapWidth).toInt()
-
-    bitmapOptions = BitmapFactory.Options()
-    bitmapOptions.inScaled = true
-    bitmapOptions.inSampleSize = 4
-    bitmapOptions.inDensity = bitmapWidth
-    bitmapOptions.inTargetDensity = outWidth * bitmapOptions.inSampleSize
-    val resized = BitmapFactory.decodeFile(path, bitmapOptions)
-    val fileName = "${getRandomString(20)}.jpg"
-    try {
-        val stream = FileOutputStream(getFilePath(context, fileName))
-        resized.compress(Bitmap.CompressFormat.JPEG, 80, stream)
-        stream.flush()
-        stream.close()
-    } catch (e: IOException) {
-        e.printStackTrace()
-    }
-    return fileName
-}
-
-
-fun isNotValidPhone(string: String) = string.contains("[^+0-9]".toRegex())
-
-fun isValidPhone(string: String) = !isNotValidPhone(string)
-
-
-fun getMiniPhotoFileName(fileName: String) =
-    File(fileName).nameWithoutExtension + "_mini.jpg"
+fun getMiniPhotoFileName(fileName: String) = File(fileName).nameWithoutExtension + "_mini.jpg"
 
 fun getFilePath(context: Context, fileName: String) = File(getFilesDir(context), fileName).path
 
-fun getFilesDir(context: Context) = context.filesDir
+fun getFilesDir(context: Context): File = context.filesDir
 
-fun getRandomString(length: Int): String {
-    val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz1234567890"
-    return (1..length)
-        .map { allowedChars.random() }
-        .joinToString("")
+fun getRandomFileName() = (1..20).map { allowedChars.random() }.joinToString(separator = "")
+
+fun getBitmap(fileName: String, quality: Int, context: Context): Bitmap {
+    val bitmapOptions = BitmapFactory.Options().apply { inSampleSize = quality }
+    return BitmapFactory.decodeFile(getFilePath(context, fileName), bitmapOptions)
+}
+
+fun resizeImage(uri: Uri? = null, path: String? = null, context: Context): BitmapWithName? {
+    val dimensionsBitmapOptions = getImageDimensions(uri, path, context)
+    val bitmapWidth = dimensionsBitmapOptions.outWidth
+    val bitmapHeight = dimensionsBitmapOptions.outHeight
+
+    val ratio = min(MAX_IMAGE_DIM / max(bitmapWidth, bitmapHeight), 1.0f)
+    val bitmapOptions = BitmapFactory.Options().apply { inSampleSize = (1 / ratio).toInt() }
+    val fastResizedBitmap = loadBitmap(bitmapOptions, uri, path, context)
+
+    val width = (ratio * bitmapWidth).toInt()
+    val height = (ratio * bitmapHeight).toInt()
+    val fileName = "${getRandomFileName()}.jpg"
+    val filePath = getFilePath(context, fileName)
+    try {
+        val resizedBitmap = Bitmap.createScaledBitmap(fastResizedBitmap!!, width, height, true)
+        saveImage(resizedBitmap, filePath)
+        return BitmapWithName(fileName, resizedBitmap)
+    } catch (e: Exception) {
+        Log.w("resizeImage", "${e.message}")
+    }
+    return null
+}
+
+private fun saveImage(bitmap: Bitmap?, filePath: String) {
+    val stream = FileOutputStream(filePath)
+    bitmap?.compress(Bitmap.CompressFormat.JPEG, 80, stream)
+    stream.flush()
+    stream.close()
+}
+
+private fun loadBitmap(
+    bitmapOptions: BitmapFactory.Options,
+    uri: Uri? = null,
+    path: String? = null,
+    context: Context
+): Bitmap? {
+    return if (uri != null) {
+        val ins2 = context.contentResolver.openInputStream(uri)
+        BitmapFactory.decodeStream(ins2, null, bitmapOptions).also { ins2?.close() }
+    } else {
+        BitmapFactory.decodeFile(path, bitmapOptions)
+    }
+}
+
+private fun getImageDimensions(
+    uri: Uri? = null,
+    path: String? = null,
+    context: Context
+): BitmapFactory.Options {
+    val bitmapOptions = BitmapFactory.Options()
+    bitmapOptions.inJustDecodeBounds = true
+
+    if (uri != null) {
+        val ins = context.contentResolver.openInputStream(uri)
+        BitmapFactory.decodeStream(ins, null, bitmapOptions)
+        ins?.close()
+    } else if (path != null) {
+        BitmapFactory.decodeFile(path, bitmapOptions)
+    }
+    return bitmapOptions
 }

@@ -10,7 +10,7 @@ import androidx.navigation.fragment.FragmentNavigator
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.ImageLayoutBinding
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
-import bogomolov.aa.anochat.repository.getFilePath
+import bogomolov.aa.anochat.features.shared.getFilePath
 
 class ImagesPagedAdapter : ExtPagedListAdapter<String, ImageLayoutBinding>() {
 

@@ -8,7 +8,10 @@ import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.FirebaseImpl
 import bogomolov.aa.anochat.repository.KeyValueStoreImpl
-import bogomolov.aa.anochat.repository.repositories.*
+import bogomolov.aa.anochat.repository.repositories.AuthRepositoryImpl
+import bogomolov.aa.anochat.repository.repositories.ConversationRepositoryImpl
+import bogomolov.aa.anochat.repository.repositories.MessageRepositoryImpl
+import bogomolov.aa.anochat.repository.repositories.UserRepositoryImpl
 import dagger.Binds
 import dagger.Module
 

@@ -18,11 +18,11 @@ import bogomolov.aa.anochat.domain.MessageUseCases
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.main.MainActivity
-import bogomolov.aa.anochat.features.shared.Settings
-import bogomolov.aa.anochat.repository.getBitmap
-import bogomolov.aa.anochat.repository.getFilePath
-import bogomolov.aa.anochat.repository.getMiniPhotoFileName
 import bogomolov.aa.anochat.features.shared.AuthRepository
+import bogomolov.aa.anochat.features.shared.Settings
+import bogomolov.aa.anochat.features.shared.getBitmap
+import bogomolov.aa.anochat.features.shared.getFilePath
+import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.android.AndroidInjection

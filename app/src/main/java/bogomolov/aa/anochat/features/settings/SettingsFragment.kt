@@ -15,7 +15,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Switch
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
@@ -24,10 +23,10 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSettingsBinding
+import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.features.shared.Settings
-import bogomolov.aa.anochat.repository.resizeImage
+import bogomolov.aa.anochat.features.shared.resizeImage
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -125,24 +124,17 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     }
 
     private fun updatePhoto(uri: Uri) {
-        //val path = getPath(requireContext(), uri)
-        val resizedImage = resizeImage(uri, requireContext())
-        val bundle = Bundle().apply { putString("image", resizedImage) }
-        navController.navigate(R.id.miniatureFragment, bundle)
-        //binding.userPhoto.setFile(resizedImage)
-        //viewModel.updatePhoto(resizedImage)
+        val miniature = resizeImage(uri = uri, context = requireContext())
+        if (miniature != null) {
+            viewModel.miniature = miniature
+            navController.navigate(R.id.miniatureFragment)
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        if (resultCode == Activity.RESULT_OK) {
-            when (requestCode) {
-                FILE_CHOOSER_CODE -> {
-                    if (intent != null) {
-                        val uri = intent.data
-                        if (uri != null) updatePhoto(uri)
-                    }
-                }
-            }
+        if (resultCode == Activity.RESULT_OK && requestCode == FILE_CHOOSER_CODE) {
+            val uri = intent?.data
+            if (uri != null) updatePhoto(uri)
         }
         super.onActivityResult(requestCode, resultCode, intent)
     }
@@ -151,7 +143,6 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "image/*"
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-
         try {
             startActivityForResult(
                 Intent.createChooser(intent, getString(R.string.select_file)),
@@ -160,7 +151,6 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         } catch (ex: ActivityNotFoundException) {
             Log.w("SettingFragment", "File manager not installed")
         }
-
     }
 
     override fun onRequestPermissionsResult(
@@ -168,15 +158,10 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         permissions: Array<String>,
         grantResults: IntArray
     ) {
-        when (requestCode) {
-            READ_PERMISSIONS_CODE -> {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    startFileChooser()
-                } else {
-                    Log.i("test", "read perm not granted")
-                }
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            when (requestCode) {
+                READ_PERMISSIONS_CODE -> startFileChooser()
             }
-        }
     }
 
     private fun requestReadPermission() {

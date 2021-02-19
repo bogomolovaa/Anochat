@@ -3,7 +3,6 @@ package bogomolov.aa.anochat.features.contacts.list
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import bogomolov.aa.anochat.databinding.UserLayoutBinding
-import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
 import bogomolov.aa.anochat.features.shared.ItemClickListener

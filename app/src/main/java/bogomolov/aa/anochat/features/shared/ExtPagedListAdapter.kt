@@ -1,7 +1,6 @@
 package bogomolov.aa.anochat.features.shared
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
@@ -31,7 +30,6 @@ abstract class ExtPagedListAdapter<T, B>(
             holder.cardView.isChecked = selectedIds.contains(getId(item))
         bind(item, holder.binding)
     }
-
 
     inner class VH(
         viewHolder: View,

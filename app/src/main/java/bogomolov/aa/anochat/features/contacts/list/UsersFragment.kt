@@ -19,9 +19,9 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
 import bogomolov.aa.anochat.domain.entity.User
+import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.repository.isValidPhone
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -58,19 +58,32 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
         setHasOptionsMenu(true)
-        showProgressBar()
 
         return binding.root
     }
 
     override fun updateView(newState: ContactsUiState, currentState: ContactsUiState) {
-        if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState.pagedListLiveData!!)
+        if (newState.pagedListLiveData != currentState.pagedListLiveData) setContactsPagedList(newState.pagedListLiveData!!)
         if (newState.searchedUsers != currentState.searchedUsers) setSearchedUsers(newState.searchedUsers!!)
         if (newState.conversationId != currentState.conversationId) navigateToConversation(newState.conversationId)
-        if (newState.synchronizationFinished != currentState.synchronizationFinished) {
-            hideProgressBar()
-            setPagedList(newState.pagedListLiveData!!)
+        onSynchronization(newState.synchronizationFinished)
+    }
+
+    private fun onSynchronization(finished: Boolean) {
+        binding.progressBar.visibility = if (finished) View.INVISIBLE else View.VISIBLE
+        if (finished) usersAdapter.notifyDataSetChanged()
+    }
+
+    private fun setContactsPagedList(pagedListLiveData: LiveData<PagedList<User>>? = null) {
+        binding.recyclerView.adapter = usersAdapter
+        pagedListLiveData?.observe(viewLifecycleOwner) {
+            usersAdapter.submitList(it)
         }
+    }
+
+    private fun setSearchedUsers(users: List<User>) {
+        binding.recyclerView.adapter = searchAdapter
+        searchAdapter.submitList(users)
     }
 
     private fun navigateToConversation(conversationId: Long) {
@@ -82,28 +95,8 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         }
     }
 
-    private fun setPagedList(pagedListLiveData: LiveData<PagedList<User>>) {
-        binding.recyclerView.adapter = usersAdapter
-        pagedListLiveData.observe(viewLifecycleOwner) {
-            usersAdapter.submitList(it)
-        }
-    }
-
-    private fun setSearchedUsers(users: List<User>) {
-        binding.recyclerView.adapter = searchAdapter
-        searchAdapter.submitList(users)
-    }
-
     private fun createConversation(user: User) {
         viewModel.addAction(CreateConversationAction(user))
-    }
-
-    private fun showProgressBar() {
-        binding.progressBar.visibility = View.VISIBLE
-    }
-
-    private fun hideProgressBar() {
-        binding.progressBar.visibility = View.INVISIBLE
     }
 
     private fun getContactsPhones(): List<String> {
@@ -155,9 +148,6 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
             }
         })
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
-        closeButton.setOnClickListener {
-            binding.recyclerView.adapter = usersAdapter
-        }
-
+        closeButton.setOnClickListener { setContactsPagedList() }
     }
 }

@@ -6,11 +6,10 @@ import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.ConversationUseCases
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
-import bogomolov.aa.anochat.domain.repositories.ConversationRepository
+import bogomolov.aa.anochat.domain.entity.isNotValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
-import bogomolov.aa.anochat.repository.isNotValidPhone
 import javax.inject.Inject
 
 data class ContactsUiState(

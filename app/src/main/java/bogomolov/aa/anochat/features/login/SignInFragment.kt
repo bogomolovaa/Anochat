@@ -17,7 +17,7 @@ import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSignInBinding
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.repository.isValidPhone
+import bogomolov.aa.anochat.domain.entity.isValidPhone
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
@@ -129,5 +129,4 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
             Log.w("SignInFragment", "onVerificationFailed", e)
         }
     }
-
 }

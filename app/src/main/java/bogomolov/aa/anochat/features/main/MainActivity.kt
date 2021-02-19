@@ -118,11 +118,4 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         EmojiCompat.init(config)
         EmojiManager.install(IosEmojiProvider())
     }
-
 }
-
-
-
-
-
-

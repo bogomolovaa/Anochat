@@ -7,7 +7,7 @@ import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.repository.getFilesDir
+import bogomolov.aa.anochat.features.shared.getFilesDir
 import java.io.File
 
 class ConversationUpdatableView(

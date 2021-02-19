@@ -38,7 +38,6 @@ class AnochatAplication: Application(), HasAndroidInjector, LifecycleObserver, C
         return androidInjector
     }
 
-
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     fun onAppDestroy() {
         inBackground = true
@@ -54,4 +53,3 @@ class AnochatAplication: Application(), HasAndroidInjector, LifecycleObserver, C
         inBackground = false
     }
 }
-

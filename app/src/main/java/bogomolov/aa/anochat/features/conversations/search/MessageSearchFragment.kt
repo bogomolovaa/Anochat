@@ -6,7 +6,6 @@ import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
@@ -105,6 +104,5 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
                 return true
             }
         })
-
     }
 }

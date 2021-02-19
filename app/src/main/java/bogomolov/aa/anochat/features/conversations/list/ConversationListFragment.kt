@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
@@ -28,7 +27,6 @@ import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.shared.ActionModeData
-import bogomolov.aa.anochat.features.shared.ItemClickListener
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.android.support.AndroidSupportInjection
@@ -51,7 +49,6 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         super.onCreate(savedInstanceState)
         viewModel.addAction(InitConversationsAction())
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
-
     }
 
     override fun onCreateView(
@@ -167,15 +164,10 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         permissions: Array<String>,
         grantResults: IntArray
     ) {
-        when (requestCode) {
-            CONTACTS_PERMISSIONS_CODE -> {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    navController.navigate(R.id.usersFragment)
-                } else {
-                    Log.i("test", "contacts perm not granted")
-                }
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            when (requestCode) {
+                CONTACTS_PERMISSIONS_CODE -> navController.navigate(R.id.usersFragment)
             }
-        }
     }
 
     private fun requestContactsPermission() {
@@ -187,7 +179,6 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         private const val CONTACTS_PERMISSIONS = Manifest.permission.READ_CONTACTS
         private const val CONTACTS_PERMISSIONS_CODE = 1001
     }
-
 }
 
 @BindingAdapter(value = ["android:textStyle"])

@@ -2,11 +2,11 @@ package bogomolov.aa.anochat.repository
 
 import android.content.Context
 import android.util.Base64
-import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.setValue
+import bogomolov.aa.anochat.features.shared.getFilesDir
 import javax.inject.Inject
 import javax.inject.Singleton
 
