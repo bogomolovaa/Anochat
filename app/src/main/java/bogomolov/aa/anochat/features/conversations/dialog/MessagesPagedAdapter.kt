@@ -17,13 +17,17 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.ActionModeData
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
 import bogomolov.aa.anochat.features.shared.getBitmap
+import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import com.google.android.material.card.MaterialCardView
 
 class MessagesPagedAdapter(
     private val windowWidth: Int,
     private val onReply: (Message) -> Unit,
+    private val actionExecutor: ActionExecutor,
     actionModeData: ActionModeData<MessageView>? = null,
 ) : ExtPagedListAdapter<MessageView, MessageLayoutBinding>(actionModeData) {
+    val messagesMap = HashMap<String, PlayAudioView>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding =
@@ -55,6 +59,11 @@ class MessagesPagedAdapter(
             binding.messageCardView.setOnTouchListener { _, event ->
                 detector.onTouchEvent(event)
                 false
+            }
+            if (item.message.audio != null) {
+                binding.playAudioInput.actionExecutor = actionExecutor
+                binding.playAudioInput.set(item.message.audio, item.message.messageId)
+                messagesMap[item.message.messageId] = binding.playAudioInput
             }
             binding.layout.visibility = View.VISIBLE
         } else {

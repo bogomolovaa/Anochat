@@ -147,7 +147,7 @@ class ConversationFragment : Fragment(), RequestPermission {
                 READ_PERMISSIONS_CODE -> startFileChooser()
                 CAMERA_PERMISSIONS_CODE -> takePictureFromCamera()
                 MICROPHONE_PERMISSIONS_CODE ->
-                    viewModel.addAction(StartRecordingAction(requireContext()))
+                    viewModel.addAction(StartRecordingAction())
             }
     }
 

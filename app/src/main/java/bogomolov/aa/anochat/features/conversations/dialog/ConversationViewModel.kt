@@ -2,8 +2,10 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.os.Parcelable
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.LivePagedListBuilder
@@ -18,16 +20,15 @@ import bogomolov.aa.anochat.features.shared.getRandomFileName
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
 private const val ONLINE_STATUS = "online"
+private const val TAG = "DialogUiState"
 
 enum class InputStates {
     INITIAL,
@@ -48,7 +49,16 @@ data class DialogUiState(
     val photoPath: String? = null,
     val text: String = "",
     val audioLengthText: String = "",
+    val playingState: PlayingState? = null
 ) : UiState
+
+data class PlayingState(
+    val audioFile: String,
+    val duration: Long = 0,
+    val elapsed: Long = 0,
+    val messageId: String? = null,
+    val paused: Boolean = false
+)
 
 class SendMessageAction(
     val text: String? = null,
@@ -62,17 +72,24 @@ class InitConversationAction(
 ) : UserAction
 
 class DeleteMessagesAction(val ids: Set<Long>) : UserAction
-
-class StartRecordingAction(val context: Context) : UserAction
+class StartRecordingAction() : UserAction
 class StopRecordingAction : UserAction
+class StartPlayingAction(val audioFile: String? = null, val messageId: String? = null) : UserAction
+class PausePlayingAction : UserAction
 
+@SuppressLint("StaticFieldLeak")
 class ConversationViewModel @Inject constructor(
+    private val context: Context,
     private val userUseCases: UserUseCases,
     private val conversationUseCases: ConversationUseCases,
     private val messageUseCases: MessageUseCases
 ) : BaseViewModel<DialogUiState>() {
     private var recordingJob: Job? = null
     private var mediaRecorder: MediaRecorder? = null
+    private var mediaPlayer: MediaPlayer? = null
+    private var playJob: Job? = null
+    private var startTime = 0L
+    private var tempElapsed = 0L
 
     override fun createInitialState() = DialogUiState()
 
@@ -89,6 +106,66 @@ class ConversationViewModel @Inject constructor(
         if (action is DeleteMessagesAction) action.execute()
         if (action is StartRecordingAction) action.execute()
         if (action is StopRecordingAction) action.execute()
+        if (action is StartPlayingAction) action.execute()
+        if (action is PausePlayingAction) action.execute()
+    }
+
+    private suspend fun StartPlayingAction.execute() {
+        var playingState = state.playingState
+        if (playingState == null && audioFile != null) {
+            val duration = initPlayer(audioFile)
+            playingState =
+                PlayingState(audioFile = audioFile, duration = duration, messageId = messageId)
+        }
+        if (mediaPlayer != null) {
+            startPlay()
+            playingState = playingState?.copy(paused = false)
+            setState { copy(playingState = playingState) }
+        }
+    }
+
+    private fun initPlayer(audioFile: String): Long {
+        val player = MediaPlayer()
+        val filePath = getFilePath(context, audioFile)
+        if (File(filePath).exists()) {
+            player.setDataSource(filePath)
+            player.prepare()
+            val duration = player.duration.toLong()
+            player.setOnCompletionListener {
+                playJob?.cancel()
+                setStateAsync { copy(playingState = null) }
+                mediaPlayer = null
+            }
+            mediaPlayer = player
+            return duration
+        } else {
+            Log.w(TAG, "error file: $filePath not exist")
+        }
+        return 0
+    }
+
+    private suspend fun startPlay() {
+        mediaPlayer?.start()
+        startTime = System.currentTimeMillis()
+        playJob = viewModelScope.launch(dispatcher) {
+            while (true) {
+                delay(1000)
+                val time = System.currentTimeMillis() - startTime + tempElapsed
+                val playingState = state.playingState?.copy(elapsed = time)
+                if (playingState != null) setState { copy(playingState = playingState) }
+            }
+        }
+    }
+
+    private suspend fun PausePlayingAction.execute() {
+        val player = mediaPlayer
+        if (player != null) {
+            tempElapsed += System.currentTimeMillis() - startTime
+            playJob?.cancel()
+            player.pause()
+            val playingState = state.playingState?.copy(paused = true)
+            setState { copy(playingState = playingState) }
+        }
     }
 
     private suspend fun StartRecordingAction.execute() {

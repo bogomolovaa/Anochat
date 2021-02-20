@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
+import android.util.Log
 import android.view.View
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
@@ -10,7 +11,7 @@ import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 
 class ConversationUpdatableView(
     private val fragment: ConversationFragment,
-    private var recyclerViewSetup: ConversationRecyclerViewSetup
+    private val recyclerViewSetup: ConversationRecyclerViewSetup
 ) : UpdatableView<DialogUiState> {
     lateinit var binding: FragmentConversationBinding
 
@@ -24,7 +25,26 @@ class ConversationUpdatableView(
             binding.audioLengthText.text = newState.audioLengthText
         if (newState.replyMessage != currentState.replyMessage) setReplyMessage(newState.replyMessage)
         if (newState.inputState != currentState.inputState) setInputState(newState)
+        if (newState.playingState != currentState.playingState) setPlayingState(newState.playingState)
     }
+
+    private fun setPlayingState(playingState: PlayingState?) {
+        if (playingState != null) {
+            val playAudioView = findPlayAudioView(playingState.messageId)
+            if (playAudioView == null) Log.i(
+                "test",
+                "playAudioView not found for ${playingState.messageId}"
+            )
+            playAudioView?.setPlayingState(playingState)
+        }
+    }
+
+    private fun findPlayAudioView(messageId: String?) =
+        if (messageId == null) {
+            binding.playAudioInput
+        } else {
+            recyclerViewSetup.getPlayAudioView(messageId)
+        }
 
     private fun setReplyMessage(replyMessage: Message?) {
         if (replyMessage == null) {
@@ -42,7 +62,7 @@ class ConversationUpdatableView(
                 }
             }
             if (replyMessage.audio != null) {
-                binding.replayAudio.setFile(replyMessage.audio)
+                binding.replayAudio.set(replyMessage.audio)
                 binding.replayAudio.visibility = View.VISIBLE
             }
         }
@@ -73,7 +93,7 @@ class ConversationUpdatableView(
         }
         if (state.inputState == InputStates.VOICE_RECORDED) {
             binding.playAudioInput.visibility = View.VISIBLE
-            binding.playAudioInput.setFile(state.audioFile!!)
+            if (state.audioFile != null) binding.playAudioInput.set(state.audioFile)
             binding.fab.setImageResource(R.drawable.send_icon)
         }
     }

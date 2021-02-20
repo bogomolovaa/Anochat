@@ -32,7 +32,6 @@ class MiniatureFragment : Fragment() {
     private lateinit var scaleDetector: ScaleGestureDetector
     private lateinit var relativeLayout: RelativeLayout
 
-
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
         super.onAttach(context)

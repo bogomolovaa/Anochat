@@ -27,6 +27,8 @@ class ConversationInputSetup(
         binding.playAudioInput.setOnCloseListener {
             viewModel.setStateAsync { copy(inputState = InputStates.INITIAL, audioFile = null) }
         }
+        binding.playAudioInput.actionExecutor = viewModel
+        binding.replayAudio.actionExecutor = viewModel
     }
 
     private fun setFabClickListener() {

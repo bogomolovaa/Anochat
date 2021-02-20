@@ -16,7 +16,7 @@ import kotlinx.coroutines.sync.withLock
 interface UiState
 interface UserAction
 
-abstract class BaseViewModel<S : UiState> : ViewModel() {
+abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
     private val mutex = Mutex()
 
     var dispatcher: CoroutineDispatcher = Dispatchers.IO
@@ -46,7 +46,7 @@ abstract class BaseViewModel<S : UiState> : ViewModel() {
 
     protected abstract suspend fun handleAction(action: UserAction)
 
-    fun addAction(action: UserAction) {
+    override fun addAction(action: UserAction) {
         viewModelScope.launch(dispatcher) {
             mutex.withLock { if (!subscribed) subscribeToActions() }
             _actions.send(action)
@@ -66,4 +66,8 @@ abstract class BaseViewModel<S : UiState> : ViewModel() {
         }
     }
 
+}
+
+interface ActionExecutor {
+    fun addAction(action: UserAction)
 }

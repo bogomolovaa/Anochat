@@ -12,6 +12,7 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.ActionModeData
+import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -22,18 +23,22 @@ class ConversationRecyclerViewSetup(
 ) {
     private var recyclerViewRestored = false
     private lateinit var binding: FragmentConversationBinding
+    private lateinit var messagesPagedAdapter: MessagesPagedAdapter
 
     fun setup(binding: FragmentConversationBinding, onPreDraw: () -> Unit) {
         this.binding = binding
         recyclerViewRestored = false
+        messagesPagedAdapter = createRecyclerViewAdapter()
         with(binding.recyclerView) {
             setItemViewCacheSize(20)
-            adapter = createRecyclerViewAdapter()
+            adapter = messagesPagedAdapter
             layoutManager = LinearLayoutManager(context)
             addOnScrollListener(createRecyclerViewScrollListener())
-            doOnPreDraw { onPreDraw()}
+            doOnPreDraw { onPreDraw() }
         }
     }
+
+    fun getPlayAudioView(messageId: String) = messagesPagedAdapter.messagesMap[messageId]
 
     fun setPagedListLiveData(pagedListLiveData: LiveData<PagedList<MessageView>>) {
         pagedListLiveData.observe(fragment.viewLifecycleOwner) { pagedList ->
@@ -59,6 +64,7 @@ class ConversationRecyclerViewSetup(
         val adapter = MessagesPagedAdapter(
             windowWidth = getWindowWidth(),
             onReply = ::onReply,
+            actionExecutor = viewModel,
             actionModeData = data
         )
         adapter.setHasStableIds(true)
