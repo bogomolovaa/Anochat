@@ -28,16 +28,22 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
     fun set(audioFile: String, messageId: String? = null) {
         this.audioFile = audioFile
         this.messageId = messageId
-        val playPauseButton: ImageView = findViewById(R.id.playPause)
-        playPauseButton.setOnClickListener {
-            actionExecutor.addAction(StartPlayingAction(audioFile, messageId))
-        }
+        setInitialState()
     }
 
     fun setOnCloseListener(onClose: () -> Unit) {
         val closeIcon: ImageView = findViewById(R.id.closePlayImage)
         closeIcon.visibility = View.VISIBLE
         closeIcon.setOnClickListener { onClose() }
+    }
+
+    fun setInitialState(){
+        val playPauseButton: ImageView = findViewById(R.id.playPause)
+        playPauseButton.setImageResource(R.drawable.send_icon)
+        playPauseButton.setOnClickListener {
+            playPauseButton.setImageResource(R.drawable.pause_icon)
+            actionExecutor.addAction(StartPlayingAction(audioFile, messageId))
+        }
     }
 
     fun setPlayingState(state: PlayingState) {
@@ -50,14 +56,14 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         timerText.text = timeToString(state.elapsed)
         val playPauseButton: ImageView = findViewById(R.id.playPause)
         if (state.paused) {
+            playPauseButton.setImageResource(R.drawable.send_icon)
+            playPauseButton.setOnClickListener {
+                actionExecutor.addAction(StartPlayingAction(audioFile, messageId))
+            }
+        } else {
             playPauseButton.setImageResource(R.drawable.pause_icon)
             playPauseButton.setOnClickListener {
                 actionExecutor.addAction(PausePlayingAction())
-            }
-        } else {
-            playPauseButton.setImageResource(R.drawable.send_icon)
-            playPauseButton.setOnClickListener {
-                actionExecutor.addAction(StartPlayingAction(state.audioFile, state.messageId))
             }
         }
     }

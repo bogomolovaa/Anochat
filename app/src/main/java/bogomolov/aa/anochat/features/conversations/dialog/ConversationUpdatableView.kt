@@ -14,6 +14,7 @@ class ConversationUpdatableView(
     private val recyclerViewSetup: ConversationRecyclerViewSetup
 ) : UpdatableView<DialogUiState> {
     lateinit var binding: FragmentConversationBinding
+    private var lastPlayAudioView: PlayAudioView? = null
 
     override fun updateView(newState: DialogUiState, currentState: DialogUiState) {
         if (newState.pagedListLiveData != currentState.pagedListLiveData)
@@ -31,11 +32,10 @@ class ConversationUpdatableView(
     private fun setPlayingState(playingState: PlayingState?) {
         if (playingState != null) {
             val playAudioView = findPlayAudioView(playingState.messageId)
-            if (playAudioView == null) Log.i(
-                "test",
-                "playAudioView not found for ${playingState.messageId}"
-            )
             playAudioView?.setPlayingState(playingState)
+            lastPlayAudioView = playAudioView
+        }else{
+            lastPlayAudioView?.setInitialState()
         }
     }
 
