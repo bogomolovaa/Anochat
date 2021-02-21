@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
-import android.util.Log
 import android.view.View
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
@@ -14,7 +13,8 @@ class ConversationUpdatableView(
     private val recyclerViewSetup: ConversationRecyclerViewSetup
 ) : UpdatableView<DialogUiState> {
     lateinit var binding: FragmentConversationBinding
-    private var lastPlayAudioView: PlayAudioView? = null
+    private var lastMessageAudioView: PlayAudioView? = null
+    private var lastReplyMessageAudioView: PlayAudioView? = null
 
     override fun updateView(newState: DialogUiState, currentState: DialogUiState) {
         if (newState.pagedListLiveData != currentState.pagedListLiveData)
@@ -26,25 +26,35 @@ class ConversationUpdatableView(
             binding.audioLengthText.text = newState.audioLengthText
         if (newState.replyMessage != currentState.replyMessage) setReplyMessage(newState.replyMessage)
         if (newState.inputState != currentState.inputState) setInputState(newState)
-        if (newState.playingState != currentState.playingState) setPlayingState(newState.playingState)
+        if (newState.playingState != currentState.playingState) setPlayingState(newState)
     }
 
-    private fun setPlayingState(playingState: PlayingState?) {
+    private fun setPlayingState(state: DialogUiState) {
+        val playingState = state.playingState
         if (playingState != null) {
-            val playAudioView = findPlayAudioView(playingState.messageId)
-            playAudioView?.setPlayingState(playingState)
-            lastPlayAudioView = playAudioView
-        }else{
-            lastPlayAudioView?.setInitialState()
+            val messageId = playingState.messageId
+            if (messageId != null) {
+                val messageAudioView = recyclerViewSetup.getMessageAudioView(messageId)
+                messageAudioView?.setPlayingState(playingState)
+                lastMessageAudioView = messageAudioView
+                val replyMessageAudioView = recyclerViewSetup.getReplyMessageAudioView(messageId)
+                replyMessageAudioView?.setPlayingState(playingState)
+                lastReplyMessageAudioView = replyMessageAudioView
+
+                if (state.replyMessage?.messageId == messageId)
+                    binding.replayAudio.setPlayingState(playingState)
+            } else {
+                val inputAudioView = binding.playAudioInput
+                inputAudioView.setPlayingState(playingState)
+            }
+        } else {
+            lastMessageAudioView?.setInitialState()
+            lastReplyMessageAudioView?.setInitialState()
+            binding.playAudioInput.setInitialState()
+            binding.replayAudio.setInitialState()
         }
     }
 
-    private fun findPlayAudioView(messageId: String?) =
-        if (messageId == null) {
-            binding.playAudioInput
-        } else {
-            recyclerViewSetup.getPlayAudioView(messageId)
-        }
 
     private fun setReplyMessage(replyMessage: Message?) {
         if (replyMessage == null) {
@@ -62,7 +72,7 @@ class ConversationUpdatableView(
                 }
             }
             if (replyMessage.audio != null) {
-                binding.replayAudio.set(replyMessage.audio)
+                binding.replayAudio.set(replyMessage.audio, replyMessage.messageId)
                 binding.replayAudio.visibility = View.VISIBLE
             }
         }

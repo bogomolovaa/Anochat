@@ -18,7 +18,6 @@ import bogomolov.aa.anochat.features.shared.ActionModeData
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
 import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
-import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import com.google.android.material.card.MaterialCardView
 
 class MessagesPagedAdapter(
@@ -28,6 +27,7 @@ class MessagesPagedAdapter(
     actionModeData: ActionModeData<MessageView>? = null,
 ) : ExtPagedListAdapter<MessageView, MessageLayoutBinding>(actionModeData) {
     val messagesMap = HashMap<String, PlayAudioView>()
+    val replyMessagesMap = HashMap<String, PlayAudioView>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding =
@@ -60,15 +60,20 @@ class MessagesPagedAdapter(
                 detector.onTouchEvent(event)
                 false
             }
-            if (item.message.audio != null) {
-                binding.playAudioInput.actionExecutor = actionExecutor
-                binding.playAudioInput.set(item.message.audio, item.message.messageId)
-                messagesMap[item.message.messageId] = binding.playAudioInput
-            }
+            initPlayAudioView(item.message, binding.playAudioInput, messagesMap)
+            initPlayAudioView(item.message.replyMessage, binding.replayAudio, replyMessagesMap)
             binding.layout.visibility = View.VISIBLE
         } else {
             binding.layout.visibility = View.GONE
             binding.message = null
+        }
+    }
+
+    private fun initPlayAudioView(message: Message?, audioView: PlayAudioView, map: HashMap<String, PlayAudioView>){
+        if (message?.audio != null) {
+            audioView.set(message.audio, message.messageId)
+            audioView.actionExecutor = actionExecutor
+            map[message.messageId] = audioView
         }
     }
 

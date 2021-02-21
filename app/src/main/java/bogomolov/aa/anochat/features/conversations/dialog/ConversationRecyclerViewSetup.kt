@@ -1,7 +1,9 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.app.Activity
+import android.os.Parcelable
 import android.util.DisplayMetrics
+import android.util.Log
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
@@ -32,13 +34,16 @@ class ConversationRecyclerViewSetup(
         with(binding.recyclerView) {
             setItemViewCacheSize(20)
             adapter = messagesPagedAdapter
-            layoutManager = LinearLayoutManager(context)
+            layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, true)
             addOnScrollListener(createRecyclerViewScrollListener())
             doOnPreDraw { onPreDraw() }
         }
     }
 
-    fun getPlayAudioView(messageId: String) = messagesPagedAdapter.messagesMap[messageId]
+    fun getMessageAudioView(messageId: String) = messagesPagedAdapter.messagesMap[messageId]
+
+    fun getReplyMessageAudioView(messageId: String) =
+        messagesPagedAdapter.replyMessagesMap[messageId]
 
     fun setPagedListLiveData(pagedListLiveData: LiveData<PagedList<MessageView>>) {
         pagedListLiveData.observe(fragment.viewLifecycleOwner) { pagedList ->
@@ -48,8 +53,7 @@ class ConversationRecyclerViewSetup(
     }
 
     fun scrollToEnd() {
-        val adapter = binding.recyclerView.adapter!!
-        binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
+        binding.recyclerView.scrollToPosition(0)
     }
 
     private fun createRecyclerViewAdapter(): MessagesPagedAdapter {
@@ -97,21 +101,21 @@ class ConversationRecyclerViewSetup(
                 val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
                 loadImagesJob?.cancel()
                 loadImagesJob = fragment.lifecycleScope.launch {
-                    delay(1000)
+                    delay(500)
+                    val saveState = binding.recyclerView.layoutManager?.onSaveInstanceState()
+                    saveRecyclerViewPosition(saveState)
                     for (id in firstId..lastId) if (id != -1) {
                         val viewHolder = recyclerView.findViewHolderForLayoutPosition(id)
                         if (viewHolder != null) adapter.loadDetailedImage(id, viewHolder)
                     }
-                    saveRecyclerViewPosition()
+                    binding.recyclerView.layoutManager?.onRestoreInstanceState(saveState)
                 }
             }
         }
     }
 
-    private fun saveRecyclerViewPosition() {
-        viewModel.setStateAsync {
-            copy(recyclerViewState = binding.recyclerView.layoutManager?.onSaveInstanceState())
-        }
+    private fun saveRecyclerViewPosition(state: Parcelable?) {
+        viewModel.setStateAsync { copy(recyclerViewState = state) }
     }
 
     private fun restoreRecyclerViewPosition() {

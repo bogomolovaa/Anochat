@@ -14,8 +14,6 @@ import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
 import java.text.SimpleDateFormat
 import java.util.*
 
-private const val START_TIMER_TEXT = "0:00"
-
 class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(context, attrs) {
     private var audioFile: String? = null
     private var messageId: String? = null
