@@ -47,6 +47,7 @@ class ConversationRecyclerViewSetup(
 
     fun setPagedListLiveData(pagedListLiveData: LiveData<PagedList<MessageView>>) {
         pagedListLiveData.observe(fragment.viewLifecycleOwner) { pagedList ->
+            Log.i("test", "pagedList updated")
             (binding.recyclerView.adapter as MessagesPagedAdapter).submitList(pagedList)
             restoreRecyclerViewPosition()
         }
@@ -103,12 +104,12 @@ class ConversationRecyclerViewSetup(
                 loadImagesJob = fragment.lifecycleScope.launch {
                     delay(500)
                     val saveState = binding.recyclerView.layoutManager?.onSaveInstanceState()
-                    saveRecyclerViewPosition(saveState)
                     for (id in firstId..lastId) if (id != -1) {
                         val viewHolder = recyclerView.findViewHolderForLayoutPosition(id)
                         if (viewHolder != null) adapter.loadDetailedImage(id, viewHolder)
                     }
                     binding.recyclerView.layoutManager?.onRestoreInstanceState(saveState)
+                    saveRecyclerViewPosition(saveState)
                 }
             }
         }

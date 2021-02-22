@@ -4,9 +4,11 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.FragmentNavigator
@@ -19,6 +21,8 @@ import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
 import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
 import com.google.android.material.card.MaterialCardView
+import kotlin.math.min
+
 
 class MessagesPagedAdapter(
     private val windowWidth: Int,
@@ -50,8 +54,9 @@ class MessagesPagedAdapter(
             if (image != null) {
                 loadImage(image, binding.imageView, 8)
                 setImageClickListener(image, binding.imageView)
+
             } else {
-                binding.imageView.setImageDrawable(null);
+                //binding.imageView.setImageDrawable(null);
             }
             val replyMessageImage = item.message.replyMessage?.image
             if (replyMessageImage != null) loadImage(replyMessageImage, binding.replyImage, 16)
@@ -69,7 +74,11 @@ class MessagesPagedAdapter(
         }
     }
 
-    private fun initPlayAudioView(message: Message?, audioView: PlayAudioView, map: HashMap<String, PlayAudioView>){
+    private fun initPlayAudioView(
+        message: Message?,
+        audioView: PlayAudioView,
+        map: HashMap<String, PlayAudioView>
+    ) {
         if (message?.audio != null) {
             audioView.set(message.audio, message.messageId)
             audioView.actionExecutor = actionExecutor
@@ -85,7 +94,22 @@ class MessagesPagedAdapter(
     }
 
     private fun loadImage(image: String, imageView: ImageView, quality: Int) {
-        imageView.setImageBitmap(getBitmap(image, imageView.context, quality))
+        val bitmap = getBitmap(image, imageView.context, quality)
+        if (bitmap != null) {
+            val density = imageView.context.resources.displayMetrics.density;
+            val width = (250 * density).toInt()
+            imageView.setImageBitmap(bitmap)
+            if (imageView.layoutParams is LinearLayout.LayoutParams) {
+                val ratio = 1f * bitmap.height / bitmap.width
+                val height = (ratio * width).toInt()
+                val savedParams = imageView.layoutParams as LinearLayout.LayoutParams
+                val layoutParams = LinearLayout.LayoutParams(width, min(height, width))
+                layoutParams.leftMargin = savedParams.leftMargin
+                layoutParams.rightMargin = savedParams.rightMargin
+                layoutParams.topMargin = savedParams.topMargin
+                imageView.layoutParams = layoutParams
+            }
+        }
     }
 
     private fun getGestureDetector(messageCardView: MaterialCardView, message: Message) =

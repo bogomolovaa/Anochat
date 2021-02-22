@@ -34,10 +34,11 @@ class ImageViewFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         sharedElementEnterTransition =
-            TransitionInflater.from(context).inflateTransition(android.R.transition.move)
-        sharedElementReturnTransition =
-            TransitionInflater.from(context).inflateTransition(android.R.transition.move)
+            TransitionInflater.from(context).inflateTransition(R.transition.change_image_transform)
+        //sharedElementReturnTransition =
+        //    TransitionInflater.from(context).inflateTransition(R.transition.change_image_transform)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -58,6 +59,8 @@ class ImageViewFragment : Fragment() {
         binding.imageView.setImageBitmap(bitmap)
         binding.imageView.setOnTouchListener(imageOnTouchListener)
         scaleDetector = ScaleGestureDetector(context, scaleListener)
+
+
 
         systemUiVisibility = requireActivity().window.decorView.systemUiVisibility
         showSystemUI()

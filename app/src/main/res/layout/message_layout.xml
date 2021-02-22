@@ -76,10 +76,11 @@
                 app:cardBackgroundColor="@{message.message.isMine? @color/my_message_color : @color/not_my_message_color}"
                 app:cardElevation="2dp">
 
-                <androidx.constraintlayout.widget.ConstraintLayout
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minWidth="120dp">
+                    android:minWidth="120dp"
+                    android:orientation="vertical">
 
 
                     <androidx.constraintlayout.widget.ConstraintLayout
@@ -135,101 +136,101 @@
 
                     <bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView
                         android:id="@+id/playAudioInput"
-                        android:layout_width="250dp"
+                        android:minWidth="250dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:visibility="@{message.hasAudio()? View.VISIBLE : View.GONE}"
-                        app:layout_constraintBottom_toTopOf="@+id/message_text"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/reply_layout"
-                        app:layout_constraintWidth_min="200dp"
-                        tools:visibility="visible" />
+                        tools:visibility="invisible" />
 
                     <ImageView
                         android:id="@+id/imageView"
                         android:layout_width="250dp"
-                        android:layout_height="250dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginTop="8dp"
                         android:layout_marginEnd="8dp"
-                        android:adjustViewBounds="false"
-                        android:cropToPadding="false"
-                        android:duplicateParentState="true"
+                        android:adjustViewBounds="true"
                         android:scaleType="centerCrop"
                         android:transitionName="@{message.message.image}"
                         android:visibility="@{message.hasImage()? View.VISIBLE : View.GONE}"
-                        app:layout_constraintBottom_toTopOf="@+id/message_text"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/reply_layout"
-                        tools:srcCompat="@android:drawable/ic_media_ff"
+                        app:layout_constraintHeight_max="250dp"
+                        tools:srcCompat="@drawable/misha"
                         tools:visibility="visible" />
 
-                    <androidx.emoji.widget.EmojiTextView
-                        android:id="@+id/message_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:paddingTop="4dp"
-                        android:text="@{message.message.text}"
-                        app:layout_constraintBottom_toTopOf="@+id/time_text"
-                        app:layout_constraintEnd_toStartOf="@+id/time_text"
-                        app:layout_constraintHorizontal_bias="0.0"
-                        app:layout_constraintStart_toStartOf="parent"
-                        tools:text="text" />
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-                    <TextView
-                        android:id="@+id/time_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="bottom|end"
-                        android:layout_marginEnd="6dp"
-                        android:layout_marginBottom="4dp"
-                        android:text="@{message.message.shortTimeString()}"
-                        android:textSize="12sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toStartOf="@+id/status_layout"
-                        tools:text="15:20" />
-
-                    <LinearLayout
-                        android:id="@+id/status_layout"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="4dp"
-                        android:layout_marginBottom="4dp"
-                        android:orientation="horizontal"
-                        android:visibility="@{message.message.isMine? View.VISIBLE : View.GONE}"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent">
-
-                        <TextView
-                            android:id="@+id/received_status"
+                        <androidx.emoji.widget.EmojiTextView
+                            android:id="@+id/message_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="/"
-                            android:textColor="@{message.received()? @color/report_message_color1 : @color/report_message_color0}"
-                            android:visibility="@{!message.error()? View.VISIBLE : View.GONE}" />
+                            android:layout_marginStart="8dp"
+                            android:paddingTop="4dp"
+                            android:text="@{message.message.text}"
+                            app:layout_constraintBottom_toTopOf="@+id/time_text"
+                            app:layout_constraintEnd_toStartOf="@+id/time_text"
+                            app:layout_constraintHorizontal_bias="0.0"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            tools:text="text" />
 
                         <TextView
-                            android:id="@+id/viewed_status"
+                            android:id="@+id/time_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="/"
-                            android:textColor="@{message.viewed()? @color/report_message_color1 : @color/report_message_color0}"
-                            android:visibility="@{!message.error()? View.VISIBLE : View.GONE}" />
+                            android:layout_gravity="bottom|end"
+                            android:layout_marginEnd="6dp"
+                            android:layout_marginBottom="4dp"
+                            android:text="@{message.message.shortTimeString()}"
+                            android:textSize="12sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@+id/status_layout"
+                            tools:text="15:20" />
 
-                        <TextView
-                            android:id="@+id/error_status"
+                        <LinearLayout
+                            android:id="@+id/status_layout"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="!"
-                            android:textColor="#ff0000"
-                            android:textSize="20sp"
-                            android:textStyle="bold"
-                            android:visibility="@{message.error()? View.VISIBLE : View.GONE}" />
+                            android:layout_marginEnd="4dp"
+                            android:layout_marginBottom="4dp"
+                            android:orientation="horizontal"
+                            android:visibility="@{message.message.isMine? View.VISIBLE : View.GONE}"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent">
 
-                    </LinearLayout>
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                            <TextView
+                                android:id="@+id/received_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="/"
+                                android:textColor="@{message.received()? @color/report_message_color1 : @color/report_message_color0}"
+                                android:visibility="@{!message.error()? View.VISIBLE : View.GONE}" />
+
+                            <TextView
+                                android:id="@+id/viewed_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="/"
+                                android:textColor="@{message.viewed()? @color/report_message_color1 : @color/report_message_color0}"
+                                android:visibility="@{!message.error()? View.VISIBLE : View.GONE}" />
+
+                            <TextView
+                                android:id="@+id/error_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="!"
+                                android:textColor="#ff0000"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:visibility="@{message.error()? View.VISIBLE : View.GONE}" />
+
+                        </LinearLayout>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                </LinearLayout>
+
             </com.google.android.material.card.MaterialCardView>
 
         </RelativeLayout>
