@@ -26,6 +26,7 @@ import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
+import androidx.transition.TransitionInflater
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
@@ -67,6 +68,9 @@ class ConversationFragment : Fragment(), RequestPermission {
         updatableView = ConversationUpdatableView(this, recyclerViewSetup)
         conversationInputSetup = ConversationInputSetup(this, viewModel, recyclerViewSetup)
         lifecycle.addObserver(StateLifecycleObserver(updatableView, viewModel))
+
+        exitTransition =
+            TransitionInflater.from(context).inflateTransition(R.transition.conversation_exit_transition)
     }
 
     override fun onStart() {

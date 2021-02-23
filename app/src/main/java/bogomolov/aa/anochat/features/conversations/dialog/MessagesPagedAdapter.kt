@@ -90,7 +90,7 @@ class MessagesPagedAdapter(
         val binding =
             (viewHolder as ExtPagedListAdapter<MessageView, MessageLayoutBinding>.VH).binding
         val image = getItem(position)?.message?.image
-        if (image != null) loadImage(image, binding.imageView, 2)
+        if (image != null) loadImage(image, binding.imageView, 1)
     }
 
     private fun loadImage(image: String, imageView: ImageView, quality: Int) {

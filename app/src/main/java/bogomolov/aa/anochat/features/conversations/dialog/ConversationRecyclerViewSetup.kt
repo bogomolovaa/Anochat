@@ -24,12 +24,14 @@ class ConversationRecyclerViewSetup(
     private val viewModel: ConversationViewModel,
 ) {
     private var recyclerViewRestored = false
+    private var enterAnimationFinished = false
     private lateinit var binding: FragmentConversationBinding
     private lateinit var messagesPagedAdapter: MessagesPagedAdapter
 
     fun setup(binding: FragmentConversationBinding, onPreDraw: () -> Unit) {
         this.binding = binding
         recyclerViewRestored = false
+        enterAnimationFinished = false
         messagesPagedAdapter = createRecyclerViewAdapter()
         with(binding.recyclerView) {
             setItemViewCacheSize(20)
@@ -97,12 +99,14 @@ class ConversationRecyclerViewSetup(
         return object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
+                Log.i("test","onScrolled [$dx,$dy]")
                 if (dy != 0) fragment.hideKeyBoard()
-                val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
-                val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition()
+                val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition() - 1
+                val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition() + 1
                 loadImagesJob?.cancel()
                 loadImagesJob = fragment.lifecycleScope.launch {
-                    delay(500)
+                    if(enterAnimationFinished) delay(500)
+                    enterAnimationFinished = true
                     val saveState = binding.recyclerView.layoutManager?.onSaveInstanceState()
                     for (id in firstId..lastId) if (id != -1) {
                         val viewHolder = recyclerView.findViewHolderForLayoutPosition(id)
