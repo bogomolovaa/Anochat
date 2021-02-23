@@ -6,6 +6,7 @@ import android.graphics.Point
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
@@ -25,7 +26,7 @@ class ImageViewFragment : Fragment() {
     private lateinit var mainActivity: MainActivity
     private lateinit var scaleDetector: ScaleGestureDetector
     private var systemUiVisibility = 0
-    private var scaleFactor = 1f
+    private var scale = 1f
     private var expanded = false
 
     override fun onPause() {
@@ -58,20 +59,8 @@ class ImageViewFragment : Fragment() {
         binding.imageView.transitionName = imageName
         bitmap = getBitmap(imageName, requireContext())
         binding.imageView.setImageBitmap(bitmap)
-        binding.imageView.setOnClickListener { }
         scaleDetector = ScaleGestureDetector(context, scaleListener)
-        binding.touchLayout.setOnClickListener { }
         binding.touchLayout.setOnTouchListener(imageOnTouchListener)
-        /*
-        binding.imageView4.setOnTouchListener { _, event ->
-            Log.i("test","imageView4 onTouch")
-            scaleDetector.onTouchEvent(event)
-            false
-        }
-        */
-
-
-
 
         systemUiVisibility = requireActivity().window.decorView.systemUiVisibility
         //showSystemUI()
@@ -82,46 +71,51 @@ class ImageViewFragment : Fragment() {
     private var scaling = false
 
     private val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-        private var initWidth = 0
-        private var initHeight = 0
 
         override fun onScaleBegin(scaleGestureDetector: ScaleGestureDetector): Boolean {
-            if (scaleFactor == 1f) {
-                initWidth = binding.imageView.width
-                initHeight = binding.imageView.height
-            }
-            Log.i("test", "onScaleBegin")
             scaling = true
             return true
         }
 
         override fun onScaleEnd(detector: ScaleGestureDetector) {
             scaling = false
-            Log.i("test", "onScaleEnd")
         }
 
         override fun onScale(detector: ScaleGestureDetector): Boolean {
-            val prevScaleFactor = scaleFactor
+            val width = binding.imageView.width
+            val height = binding.imageView.height
+            val prevScale = scale
             val imageView = binding.imageView
-            scaleFactor *= detector.scaleFactor
-            scaleFactor = max(MIN_SCALE, min(scaleFactor, MAX_SCALE))
-            imageView.scaleX = scaleFactor
-            imageView.scaleY = scaleFactor
+            scale *= detector.scaleFactor
+            scale = max(MIN_SCALE, min(scale, MAX_SCALE))
+            imageView.scaleX = scale
+            imageView.scaleY = scale
 
-            val deltaWidth = (scaleFactor - prevScaleFactor) * initWidth
-            val deltaHeight = (scaleFactor - prevScaleFactor) * initHeight
+            val deltaWidth = (scale - prevScale) * width
+            val deltaHeight = (scale - prevScale) * height
 
-            val focusX = detector.focusX
-            val focusY = detector.focusY
-            imageView.translationX += (deltaWidth / 2) * ((initWidth / 2 - focusX) / (initWidth / 2))
-            imageView.translationY += (deltaHeight / 2) * ((initHeight / 2 - focusY) / (initHeight / 2))
+            val focusX = detector.focusX + (scale - 1) * width / 2 - imageView.translationX
+            val focusY = detector.focusY + (scale - 1) * height / 2 - imageView.translationY
+            imageView.translationX += (deltaWidth / 2) * (1 - focusX / (scale * width / 2))
+            imageView.translationY += (deltaHeight / 2) * (1 - focusY / (scale * height / 2))
 
-            Log.i(
-                "test",
-                "scaleFactor $scaleFactor detector ${detector.scaleFactor}"
-            )
+            checkBounds()
             return true
         }
+    }
+
+    private fun checkBounds() {
+        val imageView = binding.imageView
+        if (imageView.translationX > (scale - 1) * imageView.width / 2)
+            imageView.translationX = (scale - 1) * imageView.width / 2
+        if (imageView.translationX < -(scale - 1) * imageView.width / 2)
+            imageView.translationX = -(scale - 1) * imageView.width / 2
+
+        val height = imageView.width * bitmap!!.height / bitmap!!.width
+        if (imageView.translationY > (scale - 1) * height / 2)
+            imageView.translationY = (scale - 1) * height / 2
+        if (imageView.translationY < -(scale - 1) * height / 2)
+            imageView.translationY = -(scale - 1) * height / 2
     }
 
     private val imageOnTouchListener = object : View.OnTouchListener {
@@ -131,7 +125,6 @@ class ImageViewFragment : Fragment() {
         @SuppressLint("ClickableViewAccessibility")
         override fun onTouch(view: View, event: MotionEvent): Boolean {
             scaleDetector.onTouchEvent(event)
-            Log.i("test","onTouch")
             if (!scaling) {
                 val imageView = binding.imageView
                 val point = Point(event.rawX.toInt(), event.rawY.toInt())
@@ -139,35 +132,20 @@ class ImageViewFragment : Fragment() {
                     MotionEvent.ACTION_DOWN -> {
                         lastPoint = point
                         canMove = true
-                        //Log.i("test", "ACTION_DOWN canMove $canMove $point")
                     }
-                    MotionEvent.ACTION_POINTER_DOWN -> {
-                        canMove = false
-                        //Log.i("test", "ACTION_POINTER_DOWN moved $canMove $lastPoint")
-                    }
+                    MotionEvent.ACTION_POINTER_DOWN -> canMove = false
                     MotionEvent.ACTION_MOVE -> {
-                        //Log.i("test", "ACTION_MOVE canMove $canMove $point")
                         if (canMove) {
                             val offset = Point(point.x - lastPoint.x, point.y - lastPoint.y)
                             imageView.translationX += offset.x
                             imageView.translationY += offset.y
-                            val dx = (imageView.scaledWidth() - imageView.width) / 2
-                            val dy = (imageView.scaledHeight() - imageView.height) / 2
-
-                            if (imageView.translationX < -dx) imageView.translationX = -dx.toFloat()
-                            if (imageView.translationY < -dy) imageView.translationY = -dy.toFloat()
-
-                            if (imageView.translationX > dx) imageView.translationX = dx.toFloat()
-                            if (imageView.translationY > dy) imageView.translationY = dy.toFloat()
+                            checkBounds()
                             //expand(true)
                         }
                         lastPoint = point
                     }
                     //MotionEvent.ACTION_UP -> if (!moved) expand(!expanded)
-                    MotionEvent.ACTION_UP -> {
-                        canMove = false
-                        //Log.i("test", "ACTION_UP canMove $canMove $point")
-                    }
+                    MotionEvent.ACTION_UP -> canMove = false
                 }
             }
             return false
@@ -182,9 +160,6 @@ class ImageViewFragment : Fragment() {
             showSystemUI()
         }
     }
-
-    private fun View.scaledWidth(): Int = (scaleFactor * this.width).toInt()
-    private fun View.scaledHeight(): Int = (scaleFactor * this.height).toInt()
 
     private fun hideSystemUI() {
         requireActivity().window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE

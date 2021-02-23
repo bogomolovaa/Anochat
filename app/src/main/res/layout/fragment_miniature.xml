@@ -27,6 +27,8 @@
         android:layout_height="0dp"
         android:contentDescription="@string/selected_image"
         android:scaleType="fitStart"
+        android:clickable="true"
+        android:focusable="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -34,24 +36,15 @@
         app:layout_constraintVertical_bias="0.0" />
 
 
-    <RelativeLayout
-        android:id="@+id/layout"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+    <ImageView
+        android:id="@+id/maskImage"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/rounded_fg"
+        android:tint="#FFFFFF"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar">
-
-        <ImageView
-            android:id="@+id/maskImage"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:src="@drawable/rounded_fg"
-            android:tint="#FFFFFF"
-            tools:ignore="ContentDescription" />
-
-    </RelativeLayout>
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        tools:ignore="ContentDescription" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"

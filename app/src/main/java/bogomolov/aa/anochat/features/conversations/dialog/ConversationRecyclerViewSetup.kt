@@ -49,7 +49,6 @@ class ConversationRecyclerViewSetup(
 
     fun setPagedListLiveData(pagedListLiveData: LiveData<PagedList<MessageView>>) {
         pagedListLiveData.observe(fragment.viewLifecycleOwner) { pagedList ->
-            Log.i("test", "pagedList updated")
             (binding.recyclerView.adapter as MessagesPagedAdapter).submitList(pagedList)
             restoreRecyclerViewPosition()
         }
@@ -99,7 +98,6 @@ class ConversationRecyclerViewSetup(
         return object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                Log.i("test","onScrolled [$dx,$dy]")
                 if (dy != 0) fragment.hideKeyBoard()
                 val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition() - 1
                 val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition() + 1
