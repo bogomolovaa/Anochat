@@ -42,7 +42,7 @@ abstract class ExtPagedListAdapter<T, B>(
             if (onClickListener != null) cardView.setOnClickListener(this)
         }
 
-        override fun onClick(v: View) {
+        override fun onClick(view: View) {
             if (adapterPosition == RecyclerView.NO_POSITION) return
             val position = adapterPosition
             val item = getItem(position)
@@ -58,7 +58,7 @@ abstract class ExtPagedListAdapter<T, B>(
                     }
                     notifyItemChanged(position)
                 } else {
-                    onClickListener?.onClick(item)
+                    onClickListener?.onClick(item, view)
                 }
             }
         }
@@ -125,7 +125,7 @@ private fun <T> createDiffCallback() = object : DiffUtil.ItemCallback<T>() {
 }
 
 fun interface ItemClickListener<T> {
-    fun onClick(item: T)
+    fun onClick(item: T, view: View?)
 }
 
 class ActionModeData<T>(val actionModeMenuId: Int, val toolbar: Toolbar) {

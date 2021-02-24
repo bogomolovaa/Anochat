@@ -7,6 +7,7 @@ import kotlin.collections.ArrayList
 
 data class MessageView(val message: Message) {
     var dateDelimiter: String? = null
+    var detailedImageLoaded = false
 
     fun isTimeMessage() = dateDelimiter != null
     fun hasImage() = message.image != null

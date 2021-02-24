@@ -83,8 +83,8 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
             { ids, _ -> viewModel.addAction(DeleteConversationsAction(ids)) }
         val adapter = ConversationsPagedAdapter(
             actionModeData = data,
-            onClickListener = {
-                val bundle = Bundle().apply { putLong("id", it.id) }
+            onClickListener = { conversation, _ ->
+                val bundle = Bundle().apply { putLong("id", conversation.id) }
                 navController.navigate(R.id.dialog_graph, bundle)
             }
         )

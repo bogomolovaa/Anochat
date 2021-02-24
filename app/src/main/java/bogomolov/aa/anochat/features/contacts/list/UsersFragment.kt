@@ -34,8 +34,8 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
 
     private lateinit var navController: NavController
     private lateinit var binding: FragmentUsersBinding
-    private val usersAdapter = UsersAdapter(::createConversation)
-    private val searchAdapter = UsersSearchAdapter(::createConversation)
+    private val usersAdapter = UsersAdapter { user, _ -> createConversation(user) }
+    private val searchAdapter = UsersSearchAdapter { user, _ -> createConversation(user) }
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)

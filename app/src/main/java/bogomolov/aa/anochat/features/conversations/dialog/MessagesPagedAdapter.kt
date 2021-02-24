@@ -52,11 +52,9 @@ class MessagesPagedAdapter(
             binding.executePendingBindings()
             val image = item.message.image
             if (image != null) {
+                item.detailedImageLoaded = false
                 loadImage(image, binding.imageView, 8)
                 setImageClickListener(image, binding.imageView)
-
-            } else {
-                //binding.imageView.setImageDrawable(null);
             }
             val replyMessageImage = item.message.replyMessage?.image
             if (replyMessageImage != null) loadImage(replyMessageImage, binding.replyImage, 16)
@@ -90,7 +88,11 @@ class MessagesPagedAdapter(
         val binding =
             (viewHolder as ExtPagedListAdapter<MessageView, MessageLayoutBinding>.VH).binding
         val image = getItem(position)?.message?.image
-        if (image != null) loadImage(image, binding.imageView, 1)
+        val item = getItem(position)!!
+        if (image != null && !item.detailedImageLoaded) {
+            item.detailedImageLoaded = true
+            loadImage(image, binding.imageView, 2)
+        }
     }
 
     private fun loadImage(image: String, imageView: ImageView, quality: Int) {
@@ -141,7 +143,10 @@ class MessagesPagedAdapter(
             val extras = FragmentNavigator.Extras.Builder()
                 .addSharedElement(imageView, imageView.transitionName)
                 .build()
-            val bundle = Bundle().apply { putString("image", image) }
+            val bundle = Bundle().apply {
+                putString("image", image)
+                putInt("quality", 2)
+            }
             navController.navigate(R.id.imageViewFragment, bundle, null, extras)
         }
     }

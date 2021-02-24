@@ -98,26 +98,28 @@ class ConversationRecyclerViewSetup(
         return object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
+                Log.i("test", "onScrolled [$dx,$dy]")
                 if (dy != 0) fragment.hideKeyBoard()
                 val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition() - 1
                 val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition() + 1
                 loadImagesJob?.cancel()
                 loadImagesJob = fragment.lifecycleScope.launch {
-                    if(enterAnimationFinished) delay(500)
-                    enterAnimationFinished = true
+                    if (enterAnimationFinished) delay(300)
                     val saveState = binding.recyclerView.layoutManager?.onSaveInstanceState()
                     for (id in firstId..lastId) if (id != -1) {
                         val viewHolder = recyclerView.findViewHolderForLayoutPosition(id)
                         if (viewHolder != null) adapter.loadDetailedImage(id, viewHolder)
                     }
-                    binding.recyclerView.layoutManager?.onRestoreInstanceState(saveState)
-                    saveRecyclerViewPosition(saveState)
+                    enterAnimationFinished = true
+                    //binding.recyclerView.layoutManager?.onRestoreInstanceState(saveState)
+                    if (dy != 0) saveRecyclerViewPosition(saveState)
                 }
             }
         }
     }
 
     private fun saveRecyclerViewPosition(state: Parcelable?) {
+        Log.i("test","saveRecyclerViewPosition")
         viewModel.setStateAsync { copy(recyclerViewState = state) }
     }
 

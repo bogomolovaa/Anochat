@@ -7,10 +7,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.ImageView
+import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
+import androidx.transition.Transition
 import androidx.transition.TransitionInflater
+import androidx.transition.TransitionListenerAdapter
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentImageViewBinding
 import bogomolov.aa.anochat.features.main.MainActivity
@@ -28,6 +31,8 @@ class ImageViewFragment : Fragment() {
     private var systemUiVisibility = 0
     private var scale = 1f
     private var expanded = false
+    private lateinit var imageName: String
+    private var quality = 1
 
     override fun onPause() {
         super.onPause()
@@ -36,11 +41,15 @@ class ImageViewFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enterTransition =
-            TransitionInflater.from(context)
-                .inflateTransition(R.transition.image_view_exit_transition)
         sharedElementEnterTransition =
             TransitionInflater.from(context).inflateTransition(R.transition.change_image_transform)
+
+    }
+
+    private val onTransitionEndListener = object : TransitionListenerAdapter(){
+        override fun onTransitionEnd(transition: Transition) {
+            if (quality > 1) loadImage(1)
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -55,17 +64,35 @@ class ImageViewFragment : Fragment() {
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         mainActivity.supportActionBar?.title = ""
 
-        val imageName = arguments?.getString("image")!!
+        imageName = arguments?.getString("image")!!
+        quality = arguments?.getInt("quality")!!
         binding.imageView.transitionName = imageName
-        bitmap = getBitmap(imageName, requireContext())
-        binding.imageView.setImageBitmap(bitmap)
+        loadImage(quality)
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         binding.touchLayout.setOnTouchListener(imageOnTouchListener)
 
         systemUiVisibility = requireActivity().window.decorView.systemUiVisibility
         //showSystemUI()
 
+        binding.toolbar.setNavigationOnClickListener {
+            if (quality > 1) loadImage(quality)
+            navController.navigateUp()
+        }
+
+        (sharedElementEnterTransition as Transition).addListener(onTransitionEndListener)
+
+
         return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        (sharedElementEnterTransition as Transition).removeListener(onTransitionEndListener)
+    }
+
+    private fun loadImage(quality: Int) {
+        bitmap = getBitmap(imageName, requireContext(), quality)
+        binding.imageView.setImageBitmap(bitmap)
     }
 
     private var scaling = false

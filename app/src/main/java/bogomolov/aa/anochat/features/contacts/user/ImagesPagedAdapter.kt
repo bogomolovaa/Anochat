@@ -1,17 +1,14 @@
 package bogomolov.aa.anochat.features.contacts.user
 
-import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.ImageView
-import androidx.navigation.Navigation
-import androidx.navigation.fragment.FragmentNavigator
-import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.ImageLayoutBinding
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
+import bogomolov.aa.anochat.features.shared.ItemClickListener
 import bogomolov.aa.anochat.features.shared.getBitmap
 
-class ImagesPagedAdapter : ExtPagedListAdapter<String, ImageLayoutBinding>() {
+class ImagesPagedAdapter(onClickListener: ItemClickListener<String>) :
+    ExtPagedListAdapter<String, ImageLayoutBinding>(onClickListener = onClickListener) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding =
@@ -26,22 +23,7 @@ class ImagesPagedAdapter : ExtPagedListAdapter<String, ImageLayoutBinding>() {
     override fun bind(image: String?, binding: ImageLayoutBinding) {
         if (image != null) {
             binding.image.transitionName = image
-            binding.image.setImageBitmap(getBitmap(image, binding.image.context, 4))
-            setOnClickListener(binding.image, image)
-        }
-    }
-
-    private fun setOnClickListener(imageView: ImageView, image: String) {
-        imageView.setOnClickListener { view ->
-            val extras = FragmentNavigator.Extras.Builder()
-                .addSharedElement(imageView, imageView.transitionName)
-                .build()
-            Navigation.findNavController(view).navigate(
-                R.id.imageViewFragment,
-                Bundle().apply { putString("image", image) },
-                null,
-                extras
-            )
+            binding.image.setImageBitmap(getBitmap(image, binding.image.context, 8))
         }
     }
 }

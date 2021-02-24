@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
@@ -16,6 +17,9 @@ import androidx.navigation.fragment.FragmentNavigator
 import androidx.navigation.ui.NavigationUI
 import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.transition.Fade
+import androidx.transition.Transition
+import androidx.transition.TransitionInflater
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUserViewBinding
@@ -23,6 +27,7 @@ import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
+import com.google.android.material.card.MaterialCardView
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -31,6 +36,8 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
     internal lateinit var viewModelFactory: ViewModelFactory
     private val viewModel: UserViewViewModel by viewModels { viewModelFactory }
     private lateinit var binding: FragmentUserViewBinding
+    private lateinit var navController: NavController
+    private lateinit var transition: Transition
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -43,7 +50,16 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
         viewModel.addAction(LoadUserAction(userId))
         viewModel.addAction(LoadImagesAction(userId))
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
+
+        transition = Fade().apply { duration = 375 }
+        transition.addTarget(R.id.toolbar)
+        transition.addTarget(R.id.user_info)
+        //transition.addTarget(R.id.userPhoto)
+
+        exitTransition = transition
     }
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,12 +67,14 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
     ): View {
         binding = FragmentUserViewBinding.inflate(inflater, container, false)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        setupImagesRecyclerView { startPostponedEnterTransition() }
-        setPhotoClickListener(navController)
+        setupImagesRecyclerView {
+            startPostponedEnterTransition()
+        }
         postponeEnterTransition()
+        setPhotoClickListener(navController)
 
         return binding.root
     }
@@ -87,7 +105,23 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
     }
 
     private fun setupImagesRecyclerView(onPreDraw: () -> Unit) {
-        val adapter = ImagesPagedAdapter()
+        val adapter = ImagesPagedAdapter { image, view ->
+            val cardView = view as MaterialCardView
+            val imageView = cardView.findViewById(R.id.image) as ImageView
+            val extras =
+                FragmentNavigator.Extras.Builder().addSharedElement(imageView, image).build()
+            transition.removeTarget(R.id.userPhoto)
+            transition.addTarget(R.id.userPhoto)
+            navController.navigate(
+                R.id.imageViewFragment,
+                Bundle().apply {
+                    putString("image", image)
+                    putInt("quality", 8)
+                },
+                null,
+                extras
+            )
+        }
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
@@ -97,11 +131,15 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
     private fun setPhotoClickListener(navController: NavController) {
         binding.userPhoto.setOnClickListener {
             val photo = viewModel.state.user?.photo
+            transition.removeTarget(R.id.userPhoto)
             if (photo != null) {
                 val extras = FragmentNavigator.Extras.Builder()
-                    .addSharedElement(binding.userPhoto, binding.userPhoto.transitionName)
+                    .addSharedElement(binding.userPhoto, photo)
                     .build()
-                val bundle = Bundle().apply { putString("image", photo) }
+                val bundle = Bundle().apply {
+                    putString("image", photo)
+                    putInt("quality", 1)
+                }
                 navController.navigate(R.id.imageViewFragment, bundle, null, extras)
             }
         }

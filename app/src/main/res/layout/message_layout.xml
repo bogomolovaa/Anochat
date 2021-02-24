@@ -136,11 +136,10 @@
 
                     <bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView
                         android:id="@+id/playAudioInput"
-                        android:minWidth="250dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:visibility="@{message.hasAudio()? View.VISIBLE : View.GONE}"
-                        tools:visibility="invisible" />
+                        android:minWidth="250dp"
+                        android:visibility="@{message.hasAudio()? View.VISIBLE : View.GONE}" />
 
                     <ImageView
                         android:id="@+id/imageView"
