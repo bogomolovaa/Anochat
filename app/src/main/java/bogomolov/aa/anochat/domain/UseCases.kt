@@ -14,8 +14,7 @@ open class UserUseCases @Inject constructor(private val userRepository: UserRepo
 open class ConversationUseCases @Inject constructor(
     private val conversationRepository: ConversationRepository,
     private val userRepository: UserRepository
-) :
-    ConversationUseCasesInRepository by conversationRepository {
+) : ConversationUseCasesInRepository by conversationRepository {
 
     suspend fun startConversation(uid: String): Long {
         val user = userRepository.getOrAddUser(uid)

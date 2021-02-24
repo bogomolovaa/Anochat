@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -97,6 +98,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
     }
 
     private fun createConversation(user: User) {
+        Log.i("test","createConversation")
         viewModel.addAction(CreateConversationAction(user))
     }
 

@@ -1,6 +1,8 @@
 package bogomolov.aa.anochat.features.contacts.list
 
+import android.util.Log
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.viewModelScope
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.ConversationUseCases
@@ -10,6 +12,7 @@ import bogomolov.aa.anochat.domain.entity.isNotValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ContactsUiState(
@@ -52,8 +55,10 @@ class UsersViewModel
         val pagedListLiveData =
             LivePagedListBuilder(userUseCases.getUsersByPhonesDataSource(phones), 10).build()
         setState { copy(pagedListLiveData = pagedListLiveData) }
-        usersList = userUseCases.updateUsersByPhones(phones)
-        setState { copy(synchronizationFinished = true) }
+        viewModelScope.launch(dispatcher) {
+            usersList = userUseCases.updateUsersByPhones(phones)
+            setState { copy(synchronizationFinished = true) }
+        }
     }
 
     private suspend fun CreateConversationAction.execute() {

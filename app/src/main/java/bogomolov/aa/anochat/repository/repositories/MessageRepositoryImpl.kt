@@ -11,6 +11,9 @@ import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.FILES_DIRECTORY
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -71,9 +74,14 @@ class MessageRepositoryImpl @Inject constructor(
             message.replyMessage?.messageId,
             message.image,
             message.audio,
-            uid
+            uid,
+            onSuccess = {
+                GlobalScope.launch(Dispatchers.IO) {
+                    db.messageDao().updateAsSent(message.id)
+                }
+            }
         )
-        db.messageDao().updateMessageIdAndSent(message.id, message.messageId)
+        db.messageDao().updateMessageId(message.id, message.messageId)
     }
 
     override fun getAttachmentFile(fileName: String) = File(filesDir, fileName)

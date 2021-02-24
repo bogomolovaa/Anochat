@@ -9,6 +9,7 @@ import android.view.*
 import android.widget.ImageView
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
+import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.transition.Transition
@@ -46,7 +47,7 @@ class ImageViewFragment : Fragment() {
 
     }
 
-    private val onTransitionEndListener = object : TransitionListenerAdapter(){
+    private val onTransitionEndListener = object : TransitionListenerAdapter() {
         override fun onTransitionEnd(transition: Transition) {
             if (quality > 1) loadImage(1)
         }
@@ -74,15 +75,18 @@ class ImageViewFragment : Fragment() {
         systemUiVisibility = requireActivity().window.decorView.systemUiVisibility
         //showSystemUI()
 
-        binding.toolbar.setNavigationOnClickListener {
-            if (quality > 1) loadImage(quality)
-            navController.navigateUp()
-        }
+        binding.toolbar.setNavigationOnClickListener { onBackPressed(navController) }
+        requireActivity().onBackPressedDispatcher.addCallback { onBackPressed(navController) }
 
         (sharedElementEnterTransition as Transition).addListener(onTransitionEndListener)
 
 
         return binding.root
+    }
+
+    private fun onBackPressed(navController: NavController) {
+        if (quality > 1) loadImage(quality)
+        navController.navigateUp()
     }
 
     override fun onDestroyView() {

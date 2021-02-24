@@ -18,6 +18,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.TextView
 import androidx.core.content.FileProvider
 import androidx.core.os.ConfigurationCompat
 import androidx.databinding.BindingAdapter
@@ -226,6 +227,13 @@ class ConversationFragment : Fragment(), RequestPermission {
 @BindingAdapter(value = ["android:layout_marginLeft", "android:layout_marginRight"])
 fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
     val p = view.layoutParams as ViewGroup.MarginLayoutParams
-    p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin);
+    p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin)
+    view.requestLayout()
+}
+
+@BindingAdapter(value = ["android:layout_marginRight"])
+fun setLayoutMargin(view: TextView, marginRight: Float) {
+    val p = view.layoutParams as ViewGroup.MarginLayoutParams
+    p.setMargins(p.leftMargin, p.topMargin, marginRight.toInt(), p.bottomMargin)
     view.requestLayout()
 }

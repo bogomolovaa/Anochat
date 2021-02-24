@@ -12,9 +12,14 @@ data class MessageView(val message: Message) {
     fun isTimeMessage() = dateDelimiter != null
     fun hasImage() = message.image != null
     fun hasAudio() = message.audio != null
-    fun error() = message.received == -1
+
+    fun sent() = message.sent == 1
     fun received() = message.received == 1
+    fun error() = message.received == -1
     fun viewed() = message.viewed == 1
+    fun sentAndNotReceived() = sent() && !received() && !error()
+    fun receivedAndNotViewed() = received() && !viewed()
+
     fun hasReplyMessageImage() = message.replyMessage?.image != null
     fun hasReplyMessage() = message.replyMessage != null
     fun getReplyText() = message.replyMessage?.text ?: ""

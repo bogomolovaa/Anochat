@@ -28,7 +28,8 @@ interface Firebase {
         audio: String? = null,
         uid: String,
         publicKey: String? = null,
-        initiator: Boolean = false
+        initiator: Boolean = false,
+        onSuccess: () -> Unit = {}
     ): String
 
     fun renameUser(uid: String, name: String)

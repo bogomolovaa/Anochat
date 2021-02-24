@@ -98,7 +98,7 @@ class ConversationRecyclerViewSetup(
         return object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                Log.i("test", "onScrolled [$dx,$dy]")
+                //Log.i("test", "onScrolled [$dx,$dy]")
                 if (dy != 0) fragment.hideKeyBoard()
                 val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition() - 1
                 val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition() + 1

@@ -26,6 +26,8 @@ class FirebaseImpl @Inject constructor() : Firebase {
 
     init {
         GlobalScope.launch(Dispatchers.IO) {
+            FirebaseDatabase.getInstance().setLogLevel(Logger.Level.DEBUG)
+            FirebaseDatabase.getInstance().setPersistenceEnabled(true)
             token = getToken()
             updateOnlineStatus()
         }
@@ -155,8 +157,10 @@ class FirebaseImpl @Inject constructor() : Firebase {
         audio: String?,
         uid: String,
         publicKey: String?,
-        initiator: Boolean
+        initiator: Boolean,
+        onSuccess: () -> Unit
     ): String {
+        Log.i(TAG, "firebase sendMessage")
         val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
         ref.setValue(
             mapOf(
@@ -169,7 +173,11 @@ class FirebaseImpl @Inject constructor() : Firebase {
                 "key" to publicKey,
                 "initiator" to if (initiator) 1 else 0
             )
-        )
+        ).addOnFailureListener {
+            Log.w(TAG, "sendMessage failure $it")
+        }.addOnSuccessListener {
+            onSuccess()
+        }
         return ref.key!!
     }
 
