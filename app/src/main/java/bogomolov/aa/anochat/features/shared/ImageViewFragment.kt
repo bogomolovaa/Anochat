@@ -77,11 +77,11 @@ class ImageViewFragment : Fragment() {
         //showSystemUI()
 
         binding.toolbar.setNavigationOnClickListener { onBackPressed(navController) }
-        requireActivity().onBackPressedDispatcher.addCallback { onBackPressed(navController) }
+        requireActivity().onBackPressedDispatcher.addCallback(owner = viewLifecycleOwner) {
+            onBackPressed(navController)
+        }
 
         (sharedElementEnterTransition as Transition).addListener(onTransitionEndListener)
-
-
         return binding.root
     }
 
