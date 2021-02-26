@@ -19,6 +19,8 @@ import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import com.google.firebase.FirebaseException
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
 import dagger.android.support.AndroidSupportInjection
@@ -52,20 +54,70 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         binding.toolbar.navigationIcon = null
         binding.fab.setOnClickListener {
-            if (viewModel.state.state == LoginState.NOT_LOGGED)
-                verifyPhoneNumber()
-            else submitCode()
+            when (viewModel.state.state) {
+                LoginState.INITIAL -> submitPhoneNumber()
+                LoginState.VERIFICATION_ID_RECEIVED, LoginState.NOT_LOGGED -> submitCode()
+                else -> {
+                }
+            }
         }
-
         return binding.root
     }
 
     override fun updateView(newState: SignInUiState, currentState: SignInUiState) {
         binding.phoneInputText.setText(newState.phoneNumber)
-        binding.codeInputLayout.visibility =
-            if (newState.state == LoginState.CODE_SENT) View.VISIBLE else View.INVISIBLE
-        if (newState.state == LoginState.LOGGED)
-            navController.navigate(R.id.action_signInFragment_to_conversationsListFragment)
+        setError(newState.error)
+        when (newState.state) {
+            LoginState.INITIAL -> {
+                binding.progressBar.visibility = View.INVISIBLE
+                binding.codeInputLayout.visibility = View.INVISIBLE
+                binding.fab.isEnabled = true
+            }
+            LoginState.PHONE_SENT -> {
+                binding.codeInputLayout.visibility = View.INVISIBLE
+                binding.fab.isEnabled = false
+                binding.progressBar.visibility = View.VISIBLE
+            }
+            LoginState.VERIFICATION_ID_RECEIVED -> {
+                binding.progressBar.visibility = View.INVISIBLE
+                binding.codeInputLayout.visibility = View.VISIBLE
+                binding.codeInputText.setText(newState.code)
+                binding.fab.isEnabled = true
+            }
+            LoginState.CODE_SENT -> {
+                binding.codeInputLayout.visibility = View.VISIBLE
+                binding.codeInputText.setText(newState.code)
+                binding.fab.isEnabled = false
+                binding.progressBar.visibility = View.VISIBLE
+            }
+            LoginState.LOGGED ->
+                navController.navigate(R.id.action_signInFragment_to_conversationsListFragment)
+            LoginState.NOT_LOGGED -> {
+                binding.progressBar.visibility = View.INVISIBLE
+                binding.codeInputLayout.visibility = View.VISIBLE
+                binding.codeInputText.setText(newState.code)
+                binding.fab.isEnabled = true
+            }
+        }
+    }
+
+    private fun setError(error: ErrorType?){
+        when (error) {
+            ErrorType.WRONG_PHONE ->
+                binding.phoneInputText.error = resources.getText(R.string.wrong_phone)
+            ErrorType.PHONE_NO_CONNECTION ->
+                binding.phoneInputText.error = resources.getText(R.string.no_connection)
+            ErrorType.EMPTY_CODE ->
+                binding.codeInputLayout.error = resources.getString(R.string.empty_code)
+            ErrorType.WRONG_CODE ->
+                binding.codeInputLayout.error = resources.getString(R.string.wrong_code)
+            ErrorType.CODE_NO_CONNECTION ->
+                binding.codeInputLayout.error = resources.getText(R.string.no_connection)
+            null -> {
+                binding.phoneInputText.error = null
+                binding.codeInputLayout.error = null
+            }
+        }
     }
 
     private fun submitCode() {
@@ -74,16 +126,19 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
             if (code.isNotEmpty()) {
                 val verificationId = viewModel.state.verificationId!!
                 val credential = PhoneAuthProvider.getCredential(verificationId, code)
-                viewModel.addAction(SignInAction(credential))
+                viewModel.addAction(SignInAction(credential, code))
             } else {
-                binding.codeInputLayout.error = resources.getString(R.string.empty_code)
+                viewModel.setStateAsync { copy(error = ErrorType.EMPTY_CODE) }
             }
         }
     }
 
-    private fun verifyPhoneNumber() {
+    private fun submitPhoneNumber() {
         val phoneNumber = binding.phoneInputText.text.toString()
         if (phoneNumber.isNotEmpty() && isValidPhone(phoneNumber)) {
+            viewModel.setStateAsync {
+                copy(phoneNumber = phoneNumber, state = LoginState.PHONE_SENT)
+            }
             PhoneAuthProvider.getInstance().verifyPhoneNumber(
                 phoneNumber,
                 60,
@@ -91,10 +146,8 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
                 requireActivity(),
                 callbacks
             )
-            binding.codeInputLayout.visibility = View.VISIBLE
-            viewModel.setStateAsync { copy(phoneNumber = phoneNumber) }
         } else {
-            binding.phoneInputLayout.error = resources.getString(R.string.enter_valid_phone)
+            viewModel.setStateAsync { copy(phoneNumber = phoneNumber, error = ErrorType.WRONG_PHONE) }
         }
     }
 
@@ -102,7 +155,7 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
 
         override fun onVerificationCompleted(credential: PhoneAuthCredential) {
             Log.d("SignInFragment", "onVerificationCompleted: $credential")
-            viewModel.addAction(SignInAction(credential))
+            viewModel.addAction(SignInAction(credential, credential.smsCode))
         }
 
         override fun onCodeSent(
@@ -111,7 +164,11 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
         ) {
             Log.d("SignInFragment", "onCodeSent: $verificationId")
             viewModel.setStateAsync {
-                copy(verificationId = verificationId, state = LoginState.CODE_SENT)
+                copy(
+                    verificationId = verificationId,
+                    state = LoginState.VERIFICATION_ID_RECEIVED,
+                    error = null
+                )
             }
         }
 
@@ -121,6 +178,14 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
         //FirebaseTooManyRequestsException - The SMS quota for the project has been exceeded
         override fun onVerificationFailed(e: FirebaseException) {
             Log.w("SignInFragment", "onVerificationFailed", e)
+            val error = when (e) {
+                is FirebaseNetworkException -> ErrorType.PHONE_NO_CONNECTION
+                is FirebaseAuthInvalidCredentialsException -> ErrorType.WRONG_PHONE
+                else -> null
+            }
+            viewModel.setStateAsync {
+                copy(state = LoginState.INITIAL, error = error)
+            }
         }
     }
 }

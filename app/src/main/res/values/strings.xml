@@ -42,6 +42,9 @@
 
     <string name="enter_valid_phone">Enter valid phone number</string>
     <string name="empty_code">Empty code</string>
+    <string name="wrong_code">Wrong code</string>
+    <string name="wrong_phone">Wrong phone number format</string>
+    <string name="no_connection">No connection</string>
     <string name="delete">Delete</string>
     <string name="reply">Reply</string>
 

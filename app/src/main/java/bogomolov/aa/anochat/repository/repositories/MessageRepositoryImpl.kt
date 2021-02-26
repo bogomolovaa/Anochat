@@ -6,7 +6,6 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.getMyUID
 import bogomolov.aa.anochat.domain.getValue
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
-import bogomolov.aa.anochat.domain.setValue
 import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.FILES_DIRECTORY
 import bogomolov.aa.anochat.repository.Firebase
@@ -86,12 +85,14 @@ class MessageRepositoryImpl @Inject constructor(
 
     override fun getAttachmentFile(fileName: String) = File(filesDir, fileName)
 
-    override suspend fun sendAttachment(fileName: String, uid: String, byteArray: ByteArray) {
+    override suspend fun sendAttachment(fileName: String, uid: String, byteArray: ByteArray) =
         firebase.uploadFile(fileName, uid, byteArray, isPrivate = true)
-    }
 
-    override suspend fun receiveAttachment(fileName: String, uid: String, localFile: File) {
+    override suspend fun receiveAttachment(fileName: String, uid: String, localFile: File) =
         firebase.downloadFile(fileName, uid, localFile, isPrivate = true)
+
+    override fun updateAsReceived(message: Message){
+        db.messageDao().updateAsReceived(message.id)
     }
 
     override fun notifyAsReceived(messageId: String) {
@@ -102,20 +103,8 @@ class MessageRepositoryImpl @Inject constructor(
         firebase.sendReport(messageId, -1, 0)
     }
 
-    override fun keyIsNotSentTo(uid: String): Boolean {
-        val sentSettingName = getSentSettingName(uid)
-        return !(keyValueStore.getValue<Boolean>(sentSettingName) ?: false)
-    }
-
-    override fun setKeyAsSentTo(uid: String) {
-        val sentSettingName = getSentSettingName(uid)
-        keyValueStore.setValue(sentSettingName, false)
-    }
-
     override fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean) {
-        val sentSettingName = getSentSettingName(uid)
         firebase.sendMessage(uid = uid, publicKey = publicKey, initiator = initiator)
-        keyValueStore.setValue(sentSettingName, true)
     }
 
     override fun notifyAsViewed(messages: List<Message>) {
@@ -129,8 +118,5 @@ class MessageRepositoryImpl @Inject constructor(
         if (ids.size > 0) db.messageDao().updateAsViewed(ids)
     }
 
-
     private fun getMyUID() = keyValueStore.getMyUID()
-
-    private fun getSentSettingName(uid: String) = "${getMyUID()!!}${uid}_sent"
 }

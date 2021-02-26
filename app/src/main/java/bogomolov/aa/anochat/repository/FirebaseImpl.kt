@@ -26,7 +26,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
 
     init {
         GlobalScope.launch(Dispatchers.IO) {
-            FirebaseDatabase.getInstance().setLogLevel(Logger.Level.DEBUG)
+            //FirebaseDatabase.getInstance().setLogLevel(Logger.Level.DEBUG)
             FirebaseDatabase.getInstance().setPersistenceEnabled(true)
             token = getToken()
             updateOnlineStatus()
@@ -174,7 +174,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
                 "initiator" to if (initiator) 1 else 0
             )
         ).addOnFailureListener {
-            Log.w(TAG, "sendMessage failure $it")
+            Log.w(TAG, "sendMessage failure", it)
         }.addOnSuccessListener {
             onSuccess()
         }
@@ -287,14 +287,9 @@ class FirebaseImpl @Inject constructor() : Firebase {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    Log.i(
-                        TAG,
-                        "Authentication succeeded name: phone: ${user!!.phoneNumber} uid: ${user.uid}"
-                    )
-                    it.resume(user.uid)
+                    it.resume(user?.uid)
                 } else {
-                    it.resume(null)
-                    Log.i(TAG, "Authentication failed: $task")
+                    it.resumeWithException(task.exception!!)
                 }
             }
     }
@@ -302,12 +297,13 @@ class FirebaseImpl @Inject constructor() : Firebase {
     private suspend fun getToken(): String = suspendCoroutine {
         FirebaseInstanceId.getInstance().instanceId
             .addOnCompleteListener { task ->
-                if (!task.isSuccessful)
-                    it.resumeWithException(Exception("getInstanceId failed"))
-                val token = task.result!!.token
-                Log.d(TAG, "token $token")
-                it.resume(token)
+                if (!task.isSuccessful) {
+                    Log.w(TAG, "getToken() failed", task.exception)
+                } else {
+                    val token = task.result!!.token
+                    Log.d(TAG, "token $token")
+                    it.resume(token)
+                }
             }
     }
-
 }

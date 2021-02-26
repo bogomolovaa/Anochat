@@ -89,7 +89,7 @@
                 android:layout_marginEnd="4dp"
                 android:layout_marginBottom="4dp"
                 android:tint="@color/green"
-                android:visibility="@{(conversation.lastMessage!=null &amp;&amp; !conversation.lastMessage.isMine() &amp;&amp; conversation.lastMessage.viewed==0)? View.VISIBLE : View.GONE}"
+                android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:srcCompat="@drawable/circle_icon"

@@ -65,4 +65,7 @@ interface MessageDao {
     @Query("update MessageEntity set viewed = 1 where id in (:ids)")
     fun updateAsViewed(ids: List<Long>)
 
+    @Query("update MessageEntity set received = 1 where id = :id")
+    fun updateAsReceived(id: Long)
+
 }

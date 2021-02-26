@@ -5,10 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
-import android.util.Log
 import android.view.*
-import android.widget.FrameLayout
-import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment

@@ -4,7 +4,6 @@ import android.content.Context
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.ContactsContract
-import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -69,12 +68,12 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
             setContactsPagedList(newState.pagedListLiveData!!)
         if (newState.searchedUsers != currentState.searchedUsers) setSearchedUsers(newState.searchedUsers!!)
         if (newState.conversationId != currentState.conversationId) navigateToConversation(newState.conversationId)
-        onSynchronization(newState.synchronizationFinished)
+        onLoading(newState.loading)
     }
 
-    private fun onSynchronization(finished: Boolean) {
-        binding.progressBar.visibility = if (finished) View.INVISIBLE else View.VISIBLE
-        if (finished) usersAdapter.notifyDataSetChanged()
+    private fun onLoading(loading: Boolean) {
+        binding.progressBar.visibility = if (loading) View.VISIBLE else View.INVISIBLE
+        if (!loading) usersAdapter.notifyDataSetChanged()
     }
 
     private fun setContactsPagedList(pagedListLiveData: LiveData<PagedList<User>>? = null) {
@@ -98,7 +97,6 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
     }
 
     private fun createConversation(user: User) {
-        Log.i("test","createConversation")
         viewModel.addAction(CreateConversationAction(user))
     }
 

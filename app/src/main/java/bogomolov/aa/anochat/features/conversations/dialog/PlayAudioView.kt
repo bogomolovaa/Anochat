@@ -8,7 +8,6 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.databinding.BindingAdapter
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
 import java.text.SimpleDateFormat
@@ -23,7 +22,7 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         inflate(context, R.layout.play_audio_layout, this)
     }
 
-    fun set(audioFile: String, messageId: String? = null) {
+    fun set(audioFile: String?, messageId: String? = null) {
         this.audioFile = audioFile
         this.messageId = messageId
         setInitialState()
@@ -35,12 +34,16 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         closeIcon.setOnClickListener { onClose() }
     }
 
-    fun setInitialState(){
+    fun setInitialState() {
         val playPauseButton: ImageView = findViewById(R.id.playPause)
-        playPauseButton.setImageResource(R.drawable.send_icon)
-        playPauseButton.setOnClickListener {
-            playPauseButton.setImageResource(R.drawable.pause_icon)
-            actionExecutor.addAction(StartPlayingAction(audioFile, messageId))
+        if (audioFile != null) {
+            playPauseButton.setImageResource(R.drawable.send_icon)
+            playPauseButton.setOnClickListener {
+                playPauseButton.setImageResource(R.drawable.pause_icon)
+                actionExecutor.addAction(StartPlayingAction(audioFile, messageId))
+            }
+        }else{
+            playPauseButton.setImageResource(R.drawable.ic_error_outline)
         }
     }
 

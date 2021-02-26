@@ -1,6 +1,6 @@
 package bogomolov.aa.anochat.features.settings
 
-import android.graphics.Bitmap
+import androidx.lifecycle.viewModelScope
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.AuthRepository
@@ -9,6 +9,7 @@ import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SettingsUiState(
@@ -40,25 +41,26 @@ class SettingsViewModel @Inject constructor(
         if (action is ChangeSettingsAction) action.execute()
     }
 
-    private suspend fun UpdateStatusAction.execute() {
-        val user = state.user!!
-        val changedUser = user.copy(status = status)
-        setState { copy(user = changedUser) }
-        userUseCases.updateMyUser(changedUser)
+    private fun UpdateStatusAction.execute() {
+        val user = state.user
+        if (user != null) updateMyUser(user.copy(status = status))
     }
 
-    private suspend fun UpdatePhotoAction.execute() {
-        val user = state.user!!
-        val changedUser = user.copy(photo = photo)
-        setState { copy(user = changedUser) }
-        userUseCases.updateMyUser(changedUser)
+    private fun UpdatePhotoAction.execute() {
+        val user = state.user
+        if (user != null) updateMyUser(user.copy(photo = photo))
     }
 
-    private suspend fun UpdateNameAction.execute() {
-        val user = state.user!!
-        val changedUser = user.copy(name = name)
-        setState { copy(user = changedUser) }
-        userUseCases.updateMyUser(changedUser)
+    private fun UpdateNameAction.execute() {
+        val user = state.user
+        if (user != null) updateMyUser(user.copy(name = name))
+    }
+
+    private fun updateMyUser(user: User) {
+        viewModelScope.launch(dispatcher) {
+            setState { copy(user = user) }
+            userUseCases.updateMyUser(user)
+        }
     }
 
     private suspend fun LoadSettingsAction.execute() {
@@ -67,8 +69,10 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun LoadMyUserAction.execute() {
-        val user = userUseCases.getMyUser()
-        setState { copy(user = user) }
+        viewModelScope.launch(dispatcher) {
+            val user = userUseCases.getMyUser()
+            setState { copy(user = user) }
+        }
     }
 
     private suspend fun ChangeSettingsAction.execute() {

@@ -157,6 +157,48 @@
                         tools:visibility="visible" />
 
                     <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/image_progress_layout"
+                        android:layout_width="250dp"
+                        android:layout_height="250dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="#EEEDED"
+                        android:visibility="gone"
+                        tools:visibility="visible"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageView
+                            android:id="@+id/error_loading_image"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:tint="#ff0000"
+                            android:visibility="invisible"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:srcCompat="@drawable/ic_error_outline"
+                            tools:visibility="visible" />
+
+                        <ProgressBar
+                            android:id="@+id/imageProgressBar"
+                            style="?android:attr/progressBarStyle"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:indeterminate="true"
+                            android:visibility="invisible"
+                            tools:visibility="visible"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
@@ -246,6 +288,8 @@
                         </LinearLayout>
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
+
+
 
                 </LinearLayout>
 

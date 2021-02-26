@@ -42,9 +42,7 @@ class KeyValueStoreImpl @Inject constructor(context: Context) : KeyValueStore {
         preferences.edit(true) { putString(key, string) }
     }
 
-    override fun setStringValue(key: String, value: String) {
-        //val saved = preferences.edit().putString(key, value).commit()
-        //Log.i("test","setStringValue key $key value $value saved $saved")
+    override fun setStringValue(key: String, value: String?) {
         preferences.edit(true) { putString(key, value) }
     }
 

@@ -14,7 +14,7 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.ActionModeData
-import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -55,7 +55,10 @@ class ConversationRecyclerViewSetup(
     }
 
     fun scrollToEnd() {
-        binding.recyclerView.scrollToPosition(0)
+        fragment.lifecycleScope.launch(Dispatchers.Main) {
+            delay(100)
+            binding.recyclerView.scrollToPosition(0)
+        }
     }
 
     private fun createRecyclerViewAdapter(): MessagesPagedAdapter {
@@ -73,7 +76,7 @@ class ConversationRecyclerViewSetup(
             actionExecutor = viewModel,
             actionModeData = data
         )
-        adapter.setHasStableIds(true)
+        //adapter.setHasStableIds(true)
         return adapter
     }
 
@@ -119,7 +122,6 @@ class ConversationRecyclerViewSetup(
     }
 
     private fun saveRecyclerViewPosition(state: Parcelable?) {
-        Log.i("test","saveRecyclerViewPosition")
         viewModel.setStateAsync { copy(recyclerViewState = state) }
     }
 

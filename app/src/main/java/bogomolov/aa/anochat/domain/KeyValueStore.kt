@@ -7,7 +7,7 @@ interface KeyValueStore {
     fun getStringValue(key: String): String?
     fun getBooleanValue(key: String): Boolean
     fun setByteArrayValue(key: String, value: ByteArray)
-    fun setStringValue(key: String, value: String)
+    fun setStringValue(key: String, value: String?)
     fun setBooleanValue(key: String, value: Boolean)
 
     fun byteArrayToBase64(array: ByteArray): String
@@ -18,10 +18,10 @@ fun KeyValueStore.setMyUID(myUid: String?) = setValue(UID, myUid)
 
 fun KeyValueStore.getMyUID() = getValue<String>(UID)
 
-inline fun <reified T> KeyValueStore.setValue(key: String, value: T) {
+inline fun <reified T> KeyValueStore.setValue(key: String, value: T?) {
     when (T::class) {
         ByteArray::class -> setByteArrayValue(key, value as ByteArray)
-        String::class -> setStringValue(key, value as String)
+        String::class -> setStringValue(key, value as String?)
         Boolean::class -> setBooleanValue(key, value as Boolean)
     }
 }

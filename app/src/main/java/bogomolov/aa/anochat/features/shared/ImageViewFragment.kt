@@ -4,9 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
-import android.util.Log
 import android.view.*
-import android.widget.ImageView
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController

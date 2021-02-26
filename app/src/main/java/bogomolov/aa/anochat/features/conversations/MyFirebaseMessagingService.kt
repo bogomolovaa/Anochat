@@ -102,8 +102,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
         if (image.isNullOrEmpty()) image = null
         if (audio.isNullOrEmpty()) audio = null
         if (uid != null && messageId != null)
-            messageUseCases.receiveMessage(text, uid, messageId, replyId, image, audio)
-                ?.also { showNotification(it) }
+            messageUseCases.receiveMessage(text, uid, messageId, replyId, image, audio) {
+                showNotification(it)
+            }?.also { showNotification(it) }
     }
 
     private fun showNotification(message: Message) {

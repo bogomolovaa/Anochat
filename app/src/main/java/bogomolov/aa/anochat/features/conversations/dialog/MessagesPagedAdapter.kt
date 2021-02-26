@@ -3,8 +3,8 @@ package bogomolov.aa.anochat.features.conversations.dialog
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
@@ -23,6 +23,7 @@ import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
 import com.google.android.material.card.MaterialCardView
 import kotlin.math.min
 
+private const val WAITING_IMAGE_TIMEOUT = 180
 
 class MessagesPagedAdapter(
     private val windowWidth: Int,
@@ -48,16 +49,20 @@ class MessagesPagedAdapter(
     override fun bind(item: MessageView?, binding: MessageLayoutBinding) {
         if (item != null) {
             //Char.isSurrogate()
+            val context = binding.root.context
             binding.message = item
+            binding.imageProgressLayout.visibility = View.GONE
             binding.executePendingBindings()
             val image = item.message.image
-            if (image != null) {
+            if (!image.isNullOrEmpty()) {
                 item.detailedImageLoaded = false
-                loadImage(image, binding.imageView, 8)
-                setImageClickListener(image, binding.imageView)
+                if (!loadImage(image, binding.imageView, 8))
+                    showImageNotLoaded(binding, item.message.time)
+                setImageClickListener(item.message, binding.imageView)
             }
             val replyMessageImage = item.message.replyMessage?.image
-            if (replyMessageImage != null) loadImage(replyMessageImage, binding.replyImage, 16)
+            if (replyMessageImage != null)
+                binding.replyImage.setImageBitmap(getBitmap(replyMessageImage, context, 16))
             val detector = getGestureDetector(binding.messageCardView, item.message)
             binding.messageCardView.setOnTouchListener { _, event ->
                 detector.onTouchEvent(event)
@@ -78,7 +83,8 @@ class MessagesPagedAdapter(
         map: HashMap<String, PlayAudioView>
     ) {
         if (message?.audio != null) {
-            audioView.set(message.audio, message.messageId)
+            val audio = if (message.received == 1 || message.isMine) message.audio else null
+            audioView.set(audio, message.messageId)
             audioView.actionExecutor = actionExecutor
             map[message.messageId] = audioView
         }
@@ -87,31 +93,48 @@ class MessagesPagedAdapter(
     fun loadDetailedImage(position: Int, viewHolder: RecyclerView.ViewHolder) {
         val binding =
             (viewHolder as ExtPagedListAdapter<MessageView, MessageLayoutBinding>.VH).binding
-        val image = getItem(position)?.message?.image
         val item = getItem(position)!!
-        if (image != null && !item.detailedImageLoaded) {
+        val image = item.message.image
+        if (!image.isNullOrEmpty() && !item.detailedImageLoaded) {
             item.detailedImageLoaded = true
-            loadImage(image, binding.imageView, 2)
+            if (!loadImage(image, binding.imageView, 2))
+                showImageNotLoaded(binding, item.message.time)
         }
     }
 
-    private fun loadImage(image: String, imageView: ImageView, quality: Int) {
+    private fun loadImage(image: String, imageView: ImageView, quality: Int): Boolean {
         val bitmap = getBitmap(image, imageView.context, quality)
         if (bitmap != null) {
-            val density = imageView.context.resources.displayMetrics.density;
-            val width = (250 * density).toInt()
+            imageView.visibility = View.VISIBLE
             imageView.setImageBitmap(bitmap)
-            if (imageView.layoutParams is LinearLayout.LayoutParams) {
-                val ratio = 1f * bitmap.height / bitmap.width
-                val height = (ratio * width).toInt()
-                val savedParams = imageView.layoutParams as LinearLayout.LayoutParams
-                val layoutParams = LinearLayout.LayoutParams(width, min(height, width))
-                layoutParams.leftMargin = savedParams.leftMargin
-                layoutParams.rightMargin = savedParams.rightMargin
-                layoutParams.topMargin = savedParams.topMargin
-                imageView.layoutParams = layoutParams
-            }
+            setImageSize(imageView, bitmap)
+            return true
         }
+        return false
+    }
+
+    private fun showImageNotLoaded(binding: MessageLayoutBinding, receivedTime: Long) {
+        binding.imageView.visibility = View.GONE
+        binding.imageProgressLayout.visibility = View.VISIBLE
+        val elapsed = System.currentTimeMillis() - receivedTime
+        if (elapsed / 1000 < WAITING_IMAGE_TIMEOUT) {
+            binding.imageProgressBar.visibility = View.VISIBLE
+        } else {
+            binding.errorLoadingImage.visibility = View.VISIBLE
+        }
+    }
+
+    private fun setImageSize(imageView: ImageView, bitmap: Bitmap) {
+        val density = imageView.context.resources.displayMetrics.density
+        val width = (250 * density).toInt()
+        val ratio = 1f * bitmap.height / bitmap.width
+        val height = (ratio * width).toInt()
+        val savedParams = imageView.layoutParams as LinearLayout.LayoutParams
+        val layoutParams = LinearLayout.LayoutParams(width, min(height, width))
+        layoutParams.leftMargin = savedParams.leftMargin
+        layoutParams.rightMargin = savedParams.rightMargin
+        layoutParams.topMargin = savedParams.topMargin
+        imageView.layoutParams = layoutParams
     }
 
     private fun getGestureDetector(messageCardView: MaterialCardView, message: Message) =
@@ -137,17 +160,19 @@ class MessagesPagedAdapter(
                 }
             })
 
-    private fun setImageClickListener(image: String, imageView: ImageView) {
+    private fun setImageClickListener(message: Message, imageView: ImageView) {
         imageView.setOnClickListener {
-            val navController = Navigation.findNavController(imageView)
-            val extras = FragmentNavigator.Extras.Builder()
-                .addSharedElement(imageView, imageView.transitionName)
-                .build()
-            val bundle = Bundle().apply {
-                putString("image", image)
-                putInt("quality", 2)
+            if (message.received == 1) {
+                val navController = Navigation.findNavController(imageView)
+                val extras = FragmentNavigator.Extras.Builder()
+                    .addSharedElement(imageView, imageView.transitionName)
+                    .build()
+                val bundle = Bundle().apply {
+                    putString("image", message.image)
+                    putInt("quality", 2)
+                }
+                navController.navigate(R.id.imageViewFragment, bundle, null, extras)
             }
-            navController.navigate(R.id.imageViewFragment, bundle, null, extras)
         }
     }
 }

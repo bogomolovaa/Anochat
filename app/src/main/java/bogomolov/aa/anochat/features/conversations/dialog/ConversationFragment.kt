@@ -28,8 +28,6 @@ import androidx.navigation.Navigation
 import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
 import androidx.transition.Fade
-import androidx.transition.Transition
-import androidx.transition.TransitionInflater
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding

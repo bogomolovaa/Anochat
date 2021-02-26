@@ -68,6 +68,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         binding.soundSwitch.isChecked = newState.settings.sound
         binding.vibrationSwitch.isChecked = newState.settings.vibration
         if (newState.user != null) {
+            binding.progressBar.visibility = View.INVISIBLE
             if (newState.user.photo != currentState.user?.photo)
                 binding.userPhoto.setFile(newState.user.photo!!)
             if (newState.user.name != currentState.user?.name) {
@@ -81,6 +82,8 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
             }
             if (newState.user.phone != currentState.user?.phone)
                 binding.phoneText.text = newState.user.phone
+        } else {
+            binding.progressBar.visibility = View.VISIBLE
         }
     }
 
@@ -108,7 +111,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
 
     private fun addListeners() {
         binding.privacyPolicy.setOnClickListener { openPrivacyPolicy() }
-        binding.editPhoto.setOnClickListener { requestReadPermission() }
+        binding.editPhoto.setOnClickListener { if (viewModel.state.user != null) requestReadPermission() }
         observeChangesFor(binding.notificationsSwitch) { checked -> copy(notifications = checked) }
         observeChangesFor(binding.soundSwitch) { checked -> copy(sound = checked) }
         observeChangesFor(binding.vibrationSwitch) { checked -> copy(vibration = checked) }

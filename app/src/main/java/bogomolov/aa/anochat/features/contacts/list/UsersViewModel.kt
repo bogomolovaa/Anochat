@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.contacts.list
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.LivePagedListBuilder
@@ -19,7 +18,7 @@ data class ContactsUiState(
     val searchedUsers: List<User>? = null,
     val pagedListLiveData: LiveData<PagedList<User>>? = null,
     val conversationId: Long = 0,
-    val synchronizationFinished: Boolean = false
+    val loading: Boolean = true
 ) : UiState
 
 class SearchAction(val query: String) : UserAction
@@ -46,8 +45,10 @@ class UsersViewModel
             val searchedUsers = usersList?.filter { it.name.startsWith(query) }
             setState { copy(searchedUsers = searchedUsers) }
         } else {
-            val searchedUsers = userUseCases.searchByPhone(query)
-            setState { copy(searchedUsers = searchedUsers) }
+            viewModelScope.launch(dispatcher) {
+                val searchedUsers = userUseCases.searchByPhone(query)
+                setState { copy(searchedUsers = searchedUsers) }
+            }
         }
     }
 
@@ -57,12 +58,15 @@ class UsersViewModel
         setState { copy(pagedListLiveData = pagedListLiveData) }
         viewModelScope.launch(dispatcher) {
             usersList = userUseCases.updateUsersByPhones(phones)
-            setState { copy(synchronizationFinished = true) }
+            setState { copy(loading = false) }
         }
     }
 
     private suspend fun CreateConversationAction.execute() {
-        val conversationId = conversationUserCases.startConversation(user.uid)
-        setState { copy(conversationId = conversationId) }
+        setState { copy(loading = true) }
+        viewModelScope.launch(dispatcher) {
+            val conversationId = conversationUserCases.startConversation(user.uid)
+            setState { copy(conversationId = conversationId, loading = false) }
+        }
     }
 }
