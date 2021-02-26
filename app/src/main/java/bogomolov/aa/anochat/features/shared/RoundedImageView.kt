@@ -23,7 +23,7 @@ class RoundedImageView(context: Context, attrs: AttributeSet) : FrameLayout(cont
         defaultDrawable = a.getResourceId(R.styleable.RoundedImageView_srcDrawable, -1)
         setDefaultDrawable()
         val fileName = a.getString(R.styleable.RoundedImageView_srcFile)
-        if (fileName != null) setFile(fileName)
+        if (fileName != null) setImage(fileName)
         a.recycle()
     }
 
@@ -36,7 +36,7 @@ class RoundedImageView(context: Context, attrs: AttributeSet) : FrameLayout(cont
         }
     }
 
-    fun setFile(fileName: String): Boolean {
+    fun setImage(fileName: String): Boolean {
         val imageView: ImageView = findViewById(R.id.round_image)
         val bitmap = getBitmap(getMiniPhotoFileName(fileName), context)
         if (bitmap != null) {
@@ -47,9 +47,9 @@ class RoundedImageView(context: Context, attrs: AttributeSet) : FrameLayout(cont
     }
 }
 
-@BindingAdapter("app:srcFile")
-fun setFileName(view: RoundedImageView, fileName: String?) {
-    if (fileName != null && view.setFile(fileName)) {
+@BindingAdapter("app:srcImage")
+fun setImage(view: RoundedImageView, fileName: String?) {
+    if (fileName != null && view.setImage(fileName)) {
         //view.requestLayout()
     } else {
         view.setDefaultDrawable()

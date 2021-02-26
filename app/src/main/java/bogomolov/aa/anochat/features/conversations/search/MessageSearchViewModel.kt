@@ -8,6 +8,7 @@ import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 data class MessageSearchUiState(
@@ -16,6 +17,7 @@ data class MessageSearchUiState(
 
 class MessageSearchAction(val query: String) : UserAction
 
+@HiltViewModel
 class MessageSearchViewModel
 @Inject constructor(private val messageUseCases: MessageUseCases) : BaseViewModel<MessageSearchUiState>() {
 

@@ -1,15 +1,11 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
-
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Activity.RESULT_OK
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -26,43 +22,34 @@ import androidx.core.content.FileProvider
 import androidx.core.os.ConfigurationCompat
 import androidx.databinding.BindingAdapter
 import androidx.fragment.app.Fragment
+import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
-import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
-import androidx.transition.ChangeTransform
 import androidx.transition.Fade
 import androidx.transition.Slide
-import androidx.transition.TransitionInflater
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import com.google.android.material.card.MaterialCardView
 import com.vanniktech.emoji.EmojiPopup
-import dagger.android.support.AndroidSupportInjection
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import javax.inject.Inject
 
 private const val TAG = "ConversationFragment"
 
+@AndroidEntryPoint
 class ConversationFragment : Fragment(), RequestPermission {
-    @Inject
-    internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: ConversationViewModel by navGraphViewModels(R.id.dialog_graph) { viewModelFactory }
+    private val viewModel: ConversationViewModel by hiltNavGraphViewModels(R.id.dialog_graph)
     private lateinit var navController: NavController
     private lateinit var emojiPopup: EmojiPopup
     private lateinit var updatableView: ConversationUpdatableView
     private lateinit var recyclerViewSetup: ConversationRecyclerViewSetup
     private lateinit var conversationInputSetup: ConversationInputSetup
 
-    override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
-        super.onAttach(context)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

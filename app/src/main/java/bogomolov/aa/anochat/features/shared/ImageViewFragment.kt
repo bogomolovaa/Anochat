@@ -17,7 +17,6 @@ import androidx.transition.TransitionListenerAdapter
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentImageViewBinding
 import bogomolov.aa.anochat.features.main.MainActivity
-import java.lang.Exception
 import kotlin.math.max
 import kotlin.math.min
 

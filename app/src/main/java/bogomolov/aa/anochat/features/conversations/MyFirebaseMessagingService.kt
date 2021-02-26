@@ -24,10 +24,7 @@ import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import dagger.android.AndroidInjection
-import dagger.android.AndroidInjector
-import dagger.android.DispatchingAndroidInjector
-import dagger.android.HasAndroidInjector
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -41,7 +38,8 @@ private const val TYPE_INIT_KEY = "init_key"
 private const val TAG = "FirebaseService"
 
 @SuppressLint("MissingFirebaseInstanceTokenRefresh")
-class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjector {
+@AndroidEntryPoint
+class MyFirebaseMessagingService : FirebaseMessagingService() {
     @Inject
     lateinit var messageUseCases: MessageUseCases
 
@@ -51,20 +49,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService(), HasAndroidInjecto
     @Inject
     lateinit var authRepository: AuthRepository
 
-    @Inject
-    lateinit var androidInjector: DispatchingAndroidInjector<Any>
 
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
-    override fun androidInjector(): AndroidInjector<Any> {
-        return androidInjector
-    }
-
-    override fun onCreate() {
-        AndroidInjection.inject(this)
-        super.onCreate()
-    }
 
     override fun onDestroy() {
         super.onDestroy()

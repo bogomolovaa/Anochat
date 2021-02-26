@@ -1,7 +1,6 @@
 package bogomolov.aa.anochat.features.settings
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
@@ -9,33 +8,26 @@ import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
 import androidx.navigation.Navigation
-import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentMiniatureBinding
 import bogomolov.aa.anochat.features.shared.getFilePath
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
-import dagger.android.support.AndroidSupportInjection
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_miniature.*
 import java.io.FileOutputStream
-import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
 
+@AndroidEntryPoint
 class MiniatureFragment : Fragment() {
-    @Inject
-    internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: SettingsViewModel by navGraphViewModels(R.id.settings_graph) { viewModelFactory }
+    private val viewModel: SettingsViewModel by hiltNavGraphViewModels(R.id.settings_graph)
     private lateinit var binding: FragmentMiniatureBinding
     private lateinit var bitmap: Bitmap
     private lateinit var scaleDetector: ScaleGestureDetector
 
-    override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
-        super.onAttach(context)
-    }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(

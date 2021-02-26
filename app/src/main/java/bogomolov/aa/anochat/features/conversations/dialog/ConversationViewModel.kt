@@ -20,6 +20,8 @@ import bogomolov.aa.anochat.features.shared.getRandomFileName
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -81,8 +83,9 @@ class StartPlayingAction(val audioFile: String? = null, val messageId: String? =
 class PausePlayingAction : UserAction
 
 @SuppressLint("StaticFieldLeak")
+@HiltViewModel
 class ConversationViewModel @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val userUseCases: UserUseCases,
     private val conversationUseCases: ConversationUseCases,
     private val messageUseCases: MessageUseCases

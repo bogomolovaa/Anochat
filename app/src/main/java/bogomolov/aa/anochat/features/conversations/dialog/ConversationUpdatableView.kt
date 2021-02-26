@@ -122,7 +122,7 @@ class ConversationUpdatableView(
     }
 
     private fun setConversation(conversation: Conversation) {
-        if (conversation.user.photo != null) binding.userPhoto.setFile(conversation.user.photo)
+        if (conversation.user.photo != null) binding.userPhoto.setImage(conversation.user.photo)
         binding.usernameText.text = conversation.user.name
         binding.usernameLayout.setOnClickListener { fragment.navigateToUserFragment(conversation.user.id) }
     }

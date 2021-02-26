@@ -9,6 +9,7 @@ import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,6 +25,7 @@ class LoadSettingsAction : UserAction
 class LoadMyUserAction : UserAction
 class ChangeSettingsAction(val change: Settings.() -> Settings) : UserAction
 
+@HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val userUseCases: UserUseCases,
     private val authRepository: AuthRepository

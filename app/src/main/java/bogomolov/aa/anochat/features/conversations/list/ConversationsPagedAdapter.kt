@@ -4,13 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.navigation.findNavController
-import androidx.navigation.fragment.FragmentNavigator
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.ConversationLayoutBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.shared.ActionModeData
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
-import bogomolov.aa.anochat.features.shared.ItemClickListener
 
 class ConversationsPagedAdapter(
     private val showFullMessage: Boolean = false,

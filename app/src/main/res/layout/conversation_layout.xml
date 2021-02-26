@@ -80,7 +80,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcDrawable="@drawable/user_icon"
-                app:srcFile="@{conversation.user.photo}" />
+                app:srcImage="@{conversation.user.photo}" />
 
             <ImageView
                 android:id="@+id/newMessageStatus"

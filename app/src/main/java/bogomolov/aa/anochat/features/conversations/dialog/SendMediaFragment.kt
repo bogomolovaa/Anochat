@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
-import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,28 +7,19 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
 import androidx.navigation.Navigation
-import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
 import bogomolov.aa.anochat.features.shared.resizeImage
-import dagger.android.support.AndroidSupportInjection
-import javax.inject.Inject
+import dagger.hilt.android.AndroidEntryPoint
 
-
+@AndroidEntryPoint
 class SendMediaFragment : Fragment() {
-    @Inject
-    internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: ConversationViewModel by navGraphViewModels(R.id.dialog_graph) { viewModelFactory }
+    private val viewModel: ConversationViewModel by hiltNavGraphViewModels(R.id.dialog_graph)
     private var conversationId = 0L
     private lateinit var binding: FragmentSendMediaBinding
-
-    override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
-        super.onAttach(context)
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

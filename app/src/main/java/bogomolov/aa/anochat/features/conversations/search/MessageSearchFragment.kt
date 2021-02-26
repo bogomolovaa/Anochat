@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.conversations.search
 
-import android.content.Context
 import android.os.Bundle
 import android.view.*
 import android.widget.ImageView
@@ -13,27 +12,20 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentMessageSearchBinding
 import bogomolov.aa.anochat.features.conversations.list.ConversationsPagedAdapter
 import bogomolov.aa.anochat.features.conversations.list.setOnSubmitListener
 import bogomolov.aa.anochat.features.conversations.list.setTextColor
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import dagger.android.support.AndroidSupportInjection
-import javax.inject.Inject
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
-    @Inject
-    internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: MessageSearchViewModel by viewModels { viewModelFactory }
+    private val viewModel: MessageSearchViewModel by viewModels()
     private lateinit var navController: NavController
     private val adapter = ConversationsPagedAdapter(showFullMessage = true)
 
-    override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
-        super.onAttach(context)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

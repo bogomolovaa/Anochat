@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.dagger
+package bogomolov.aa.anochat.di
 
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.repositories.ConversationRepository
@@ -14,8 +14,11 @@ import bogomolov.aa.anochat.repository.repositories.MessageRepositoryImpl
 import bogomolov.aa.anochat.repository.repositories.UserRepositoryImpl
 import dagger.Binds
 import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 
 @Module
+@InstallIn(SingletonComponent::class)
 abstract class BindsModule {
 
     @Binds

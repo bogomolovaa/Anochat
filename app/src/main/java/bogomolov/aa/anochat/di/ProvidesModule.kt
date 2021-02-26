@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.dagger
+package bogomolov.aa.anochat.di
 
 import android.app.Application
 import android.content.Context
@@ -7,10 +7,13 @@ import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.DB_NAME
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
-class ProvidesModule {
+@InstallIn(SingletonComponent::class)
+object ProvidesModule {
 
     @Singleton
     @Provides

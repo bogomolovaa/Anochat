@@ -8,6 +8,7 @@ import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 data class UserUiState(
@@ -18,6 +19,7 @@ data class UserUiState(
 class LoadImagesAction(val id: Long) : UserAction
 class LoadUserAction(val id: Long) : UserAction
 
+@HiltViewModel
 class UserViewViewModel
 @Inject constructor(private val userUseCases: UserUseCases) : BaseViewModel<UserUiState>() {
     override fun createInitialState() = UserUiState()

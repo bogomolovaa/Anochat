@@ -1,9 +1,7 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
-import android.app.Activity
 import android.os.Parcelable
 import android.util.DisplayMetrics
-import android.util.Log
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
@@ -89,8 +87,7 @@ class ConversationRecyclerViewSetup(
 
     private fun getWindowWidth(): Int {
         val displayMetrics = DisplayMetrics()
-        val activity = binding.root.context as Activity
-        activity.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        fragment.requireActivity().windowManager?.defaultDisplay?.getMetrics(displayMetrics)
         return displayMetrics.widthPixels
     }
 

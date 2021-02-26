@@ -1,14 +1,18 @@
 package bogomolov.aa.anochat.features.contacts
 
 import android.content.Context
+import androidx.hilt.work.HiltWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import bogomolov.aa.anochat.domain.UserUseCases
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.runBlocking
 
-class UpdateWorker(
-    appContext: Context,
-    workerParams: WorkerParameters,
+@HiltWorker
+class UpdateWorker @AssistedInject constructor(
+    @Assisted appContext: Context,
+    @Assisted workerParams: WorkerParameters,
     private val userUseCases: UserUseCases
 ) : Worker(appContext, workerParams) {
 

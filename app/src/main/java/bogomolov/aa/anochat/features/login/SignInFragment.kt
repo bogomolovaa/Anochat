@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.login
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,7 +12,6 @@ import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentSignInBinding
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
@@ -23,21 +21,15 @@ import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
-import dagger.android.support.AndroidSupportInjection
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
+@AndroidEntryPoint
 class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
-    @Inject
-    internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: SignInViewModel by viewModels { viewModelFactory }
+    private val viewModel: SignInViewModel by viewModels()
     private lateinit var navController: NavController
     private lateinit var binding: FragmentSignInBinding
 
-    override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
-        super.onAttach(context)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,7 +93,7 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
         }
     }
 
-    private fun setError(error: ErrorType?){
+    private fun setError(error: ErrorType?) {
         when (error) {
             ErrorType.WRONG_PHONE ->
                 binding.phoneInputText.error = resources.getText(R.string.wrong_phone)
@@ -147,7 +139,12 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
                 callbacks
             )
         } else {
-            viewModel.setStateAsync { copy(phoneNumber = phoneNumber, error = ErrorType.WRONG_PHONE) }
+            viewModel.setStateAsync {
+                copy(
+                    phoneNumber = phoneNumber,
+                    error = ErrorType.WRONG_PHONE
+                )
+            }
         }
     }
 

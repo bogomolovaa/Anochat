@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.contacts.user
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -20,28 +19,21 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.transition.Fade
 import androidx.transition.Transition
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUserViewBinding
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import com.google.android.material.card.MaterialCardView
-import dagger.android.support.AndroidSupportInjection
-import javax.inject.Inject
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
-    @Inject
-    internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: UserViewViewModel by viewModels { viewModelFactory }
+    private val viewModel: UserViewViewModel by viewModels()
     private lateinit var binding: FragmentUserViewBinding
     private lateinit var navController: NavController
     private lateinit var transition: Transition
 
-    override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
-        super.onAttach(context)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,8 +49,6 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
 
         exitTransition = transition
     }
-
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

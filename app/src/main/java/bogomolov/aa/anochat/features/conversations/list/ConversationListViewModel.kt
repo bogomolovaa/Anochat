@@ -9,6 +9,7 @@ import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 data class ConversationsUiState(
@@ -19,6 +20,7 @@ class InitConversationsAction : UserAction
 class DeleteConversationsAction(val ids: Set<Long>) : UserAction
 class SignOutAction : UserAction
 
+@HiltViewModel
 class ConversationListViewModel
 @Inject constructor(
     private val conversationUseCases: ConversationUseCases,

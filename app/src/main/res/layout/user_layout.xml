@@ -49,7 +49,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcDrawable="@drawable/user_icon"
-                app:srcFile="@{user.photo}" />
+                app:srcImage="@{user.photo}" />
 
             <TextView
                 android:id="@+id/user_status"

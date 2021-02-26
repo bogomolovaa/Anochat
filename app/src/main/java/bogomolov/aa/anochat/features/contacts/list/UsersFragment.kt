@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.contacts.list
 
-import android.content.Context
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.ContactsContract
@@ -17,30 +16,20 @@ import androidx.navigation.ui.NavigationUI
 import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import dagger.android.support.AndroidSupportInjection
-import javax.inject.Inject
+import dagger.hilt.android.AndroidEntryPoint
 
-
+@AndroidEntryPoint
 class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
-    @Inject
-    internal lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: UsersViewModel by viewModels { viewModelFactory }
-
+    private val viewModel: UsersViewModel by viewModels()
     private lateinit var navController: NavController
     private lateinit var binding: FragmentUsersBinding
     private val usersAdapter = UsersAdapter { user, _ -> createConversation(user) }
     private val searchAdapter = UsersSearchAdapter { user, _ -> createConversation(user) }
-
-    override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
-        super.onAttach(context)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

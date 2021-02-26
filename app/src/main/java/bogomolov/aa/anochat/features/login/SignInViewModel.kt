@@ -7,6 +7,7 @@ import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.PhoneAuthCredential
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 enum class LoginState {
@@ -36,6 +37,7 @@ data class SignInUiState(
 
 class SignInAction(val credential: PhoneAuthCredential, val smsCode: String?) : UserAction
 
+@HiltViewModel
 class SignInViewModel
 @Inject constructor(private val authRepository: AuthRepository) : BaseViewModel<SignInUiState>() {
 

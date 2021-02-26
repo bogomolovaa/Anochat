@@ -11,6 +11,7 @@ import bogomolov.aa.anochat.domain.entity.isNotValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,6 +27,7 @@ class SearchAction(val query: String) : UserAction
 class LoadContactsAction(val phones: List<String>) : UserAction
 class CreateConversationAction(val user: User) : UserAction
 
+@HiltViewModel
 class UsersViewModel
 @Inject constructor(
     private val userUseCases: UserUseCases,
