@@ -114,7 +114,6 @@ class ConversationRecyclerViewSetup(
                         if (viewHolder != null) adapter.loadDetailedImage(id, viewHolder)
                     }
                     enterAnimationFinished = true
-                    //binding.recyclerView.layoutManager?.onRestoreInstanceState(saveState)
                     if (dy != 0) saveRecyclerViewPosition(saveState)
                 }
             }

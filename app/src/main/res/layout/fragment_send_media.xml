@@ -16,7 +16,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:theme="@style/AppTheme.Toolbar"
+        android:theme="@style/AppTheme.Toolbar"
         app:titleTextColor="@color/title_color" />
 
     <com.google.android.material.textfield.TextInputLayout

@@ -68,13 +68,10 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
             setContactsPagedList(newState.pagedListLiveData!!)
         if (newState.searchedUsers != currentState.searchedUsers) setSearchedUsers(newState.searchedUsers!!)
         if (newState.conversationId != currentState.conversationId) navigateToConversation(newState.conversationId)
-        onLoading(newState.loading)
+        if (newState.usersUpdated) usersAdapter.notifyDataSetChanged()
+        binding.progressBar.visibility = if (newState.loading) View.VISIBLE else View.INVISIBLE
     }
 
-    private fun onLoading(loading: Boolean) {
-        binding.progressBar.visibility = if (loading) View.VISIBLE else View.INVISIBLE
-        if (!loading) usersAdapter.notifyDataSetChanged()
-    }
 
     private fun setContactsPagedList(pagedListLiveData: LiveData<PagedList<User>>? = null) {
         binding.recyclerView.adapter = usersAdapter

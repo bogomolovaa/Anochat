@@ -27,6 +27,7 @@ class ConversationUpdatableView(
         if (newState.replyMessage != currentState.replyMessage) setReplyMessage(newState.replyMessage)
         if (newState.inputState != currentState.inputState) setInputState(newState)
         if (newState.playingState != currentState.playingState) setPlayingState(newState)
+
     }
 
     private fun setPlayingState(state: DialogUiState) {

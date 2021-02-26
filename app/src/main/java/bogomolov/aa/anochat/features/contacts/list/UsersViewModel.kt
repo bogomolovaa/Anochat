@@ -18,7 +18,8 @@ data class ContactsUiState(
     val searchedUsers: List<User>? = null,
     val pagedListLiveData: LiveData<PagedList<User>>? = null,
     val conversationId: Long = 0,
-    val loading: Boolean = true
+    val loading: Boolean = true,
+    val usersUpdated: Boolean = false
 ) : UiState
 
 class SearchAction(val query: String) : UserAction
@@ -43,11 +44,11 @@ class UsersViewModel
     private suspend fun SearchAction.execute() {
         if (isNotValidPhone(query)) {
             val searchedUsers = usersList?.filter { it.name.startsWith(query) }
-            setState { copy(searchedUsers = searchedUsers) }
+            setState { copy(searchedUsers = searchedUsers, usersUpdated = false) }
         } else {
             viewModelScope.launch(dispatcher) {
                 val searchedUsers = userUseCases.searchByPhone(query)
-                setState { copy(searchedUsers = searchedUsers) }
+                setState { copy(searchedUsers = searchedUsers, usersUpdated = false) }
             }
         }
     }
@@ -58,15 +59,15 @@ class UsersViewModel
         setState { copy(pagedListLiveData = pagedListLiveData) }
         viewModelScope.launch(dispatcher) {
             usersList = userUseCases.updateUsersByPhones(phones)
-            setState { copy(loading = false) }
+            setState { copy(loading = false, usersUpdated = true) }
         }
     }
 
     private suspend fun CreateConversationAction.execute() {
-        setState { copy(loading = true) }
+        setState { copy(loading = true, usersUpdated = false) }
         viewModelScope.launch(dispatcher) {
             val conversationId = conversationUserCases.startConversation(user.uid)
-            setState { copy(conversationId = conversationId, loading = false) }
+            setState { copy(conversationId = conversationId, usersUpdated = false, loading = false) }
         }
     }
 }

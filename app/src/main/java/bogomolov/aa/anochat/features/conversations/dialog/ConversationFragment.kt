@@ -8,12 +8,15 @@ import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,7 +30,10 @@ import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.navGraphViewModels
 import androidx.navigation.ui.NavigationUI
+import androidx.transition.ChangeTransform
 import androidx.transition.Fade
+import androidx.transition.Slide
+import androidx.transition.TransitionInflater
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
@@ -70,7 +76,9 @@ class ConversationFragment : Fragment(), RequestPermission {
         conversationInputSetup = ConversationInputSetup(this, viewModel, recyclerViewSetup)
         lifecycle.addObserver(StateLifecycleObserver(updatableView, viewModel))
 
+        enterTransition = Slide(Gravity.END).apply { duration = 375 }
         exitTransition = Fade().apply { duration = 375 }
+        requireActivity().window.decorView.setBackgroundResource(R.color.conversation_background)
     }
 
     override fun onStart() {
@@ -226,12 +234,12 @@ class ConversationFragment : Fragment(), RequestPermission {
 fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
     val p = view.layoutParams as ViewGroup.MarginLayoutParams
     p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin)
-    view.requestLayout()
+    //view.requestLayout()
 }
 
 @BindingAdapter(value = ["android:layout_marginRight"])
 fun setLayoutMargin(view: TextView, marginRight: Float) {
     val p = view.layoutParams as ViewGroup.MarginLayoutParams
     p.setMargins(p.leftMargin, p.topMargin, marginRight.toInt(), p.bottomMargin)
-    view.requestLayout()
+    //view.requestLayout()
 }

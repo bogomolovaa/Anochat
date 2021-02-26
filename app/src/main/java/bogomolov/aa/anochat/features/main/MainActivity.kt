@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
@@ -34,8 +36,10 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity(), HasAndroidInjector {
     @Inject
     internal lateinit var androidInjector: DispatchingAndroidInjector<Any>
+
     @Inject
     internal lateinit var authRepository: AuthRepository
+
     @Inject
     internal lateinit var userUseCases: UserUseCases
 
@@ -51,33 +55,21 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         startWorkManager()
     }
 
-    private fun addSignInListener(){
+    private fun addSignInListener() {
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
         navController.addOnDestinationChangedListener { controller, destination, _ ->
-            val currentDestination = controller.currentDestination
-            Log.i("MainActivity", "currentDestination $currentDestination")
-            if (currentDestination != null) {
-                Log.i("MainActivity", "destination $destination")
-                if (currentDestination.id != R.id.signInFragment) {
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        val signedIn = authRepository.isSignedIn()
-                        //Log.i("test", "signedIn $signedIn")
-                        if (!signedIn) {
-                            withContext(Dispatchers.Main) {
-                                val navOptions =
-                                    NavOptions.Builder().setPopUpTo(destination.id, true).build()
-                                //Log.i("test", "controller.navigate R.id.signInFragment")
-                                super.onPostResume()
-                                controller.navigate(R.id.signInFragment, null, navOptions)
-                            }
-                        }
-                    }
-                }
-            }
-
+            if (destination.id != R.id.signInFragment && !authRepository.isSignedIn())
+                navigateToSignIn(controller, destination)
         }
+    }
+
+    private fun navigateToSignIn(navController: NavController, destination: NavDestination) {
+        val navOptions =
+            NavOptions.Builder().setPopUpTo(destination.id, true).build()
+        onPostResume()
+        navController.navigate(R.id.signInFragment, null, navOptions)
     }
 
     private fun clearPreferences() {

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
@@ -16,11 +17,13 @@ import androidx.transition.TransitionListenerAdapter
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentImageViewBinding
 import bogomolov.aa.anochat.features.main.MainActivity
+import java.lang.Exception
 import kotlin.math.max
 import kotlin.math.min
 
 private const val MAX_SCALE = 10f
 private const val MIN_SCALE = 1f
+private const val TAG = "ImageViewFragment"
 
 class ImageViewFragment : Fragment() {
     private lateinit var binding: FragmentImageViewBinding
@@ -42,7 +45,7 @@ class ImageViewFragment : Fragment() {
         super.onCreate(savedInstanceState)
         sharedElementEnterTransition =
             TransitionInflater.from(context).inflateTransition(R.transition.change_image_transform)
-
+        requireActivity().window.decorView.setBackgroundResource(R.color.black)
     }
 
     private val onTransitionEndListener = object : TransitionListenerAdapter() {
@@ -93,8 +96,12 @@ class ImageViewFragment : Fragment() {
     }
 
     private fun loadImage(quality: Int) {
-        bitmap = getBitmap(imageName, requireContext(), quality)
-        binding.imageView.setImageBitmap(bitmap)
+        try {
+            bitmap = getBitmap(imageName, requireContext(), quality)
+            binding.imageView.setImageBitmap(bitmap)
+        } catch (e: Exception) {
+            Log.w(TAG, "image not loaded", e)
+        }
     }
 
     private var scaling = false

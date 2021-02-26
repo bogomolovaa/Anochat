@@ -27,6 +27,7 @@ class RoundedImageView(context: Context, attrs: AttributeSet) : FrameLayout(cont
         a.recycle()
     }
 
+
     fun setDefaultDrawable() {
         if (defaultDrawable != -1) {
             val imageView: ImageView = findViewById(R.id.round_image)
@@ -49,7 +50,7 @@ class RoundedImageView(context: Context, attrs: AttributeSet) : FrameLayout(cont
 @BindingAdapter("app:srcFile")
 fun setFileName(view: RoundedImageView, fileName: String?) {
     if (fileName != null && view.setFile(fileName)) {
-        view.requestLayout()
+        //view.requestLayout()
     } else {
         view.setDefaultDrawable()
     }

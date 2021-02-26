@@ -3,6 +3,8 @@ package bogomolov.aa.anochat.features.conversations.list
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.view.*
@@ -12,15 +14,21 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnPreDraw
 import androidx.databinding.BindingAdapter
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.navigation.fragment.FragmentNavigator
 import androidx.navigation.ui.NavigationUI
 import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.transition.Fade
+import androidx.transition.Slide
+import androidx.transition.TransitionInflater
+import androidx.transition.Visibility
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.dagger.ViewModelFactory
 import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
@@ -47,6 +55,9 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         super.onCreate(savedInstanceState)
         viewModel.addAction(InitConversationsAction())
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
+
+        exitTransition = Fade().apply { duration = 375 }
+        requireActivity().window.decorView.setBackgroundResource(R.color.conversation_background)
     }
 
     override fun onCreateView(
@@ -81,14 +92,7 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         val data = ActionModeData<Conversation>(R.menu.conversations_menu, binding.toolbar)
         data.actionsMap[R.id.delete_conversations_action] =
             { ids, _ -> viewModel.addAction(DeleteConversationsAction(ids)) }
-        val adapter = ConversationsPagedAdapter(
-            actionModeData = data,
-            onClickListener = { conversation, _ ->
-                val bundle = Bundle().apply { putLong("id", conversation.id) }
-                navController.navigate(R.id.dialog_graph, bundle)
-            }
-        )
-        binding.recyclerView.adapter = adapter
+        binding.recyclerView.adapter = ConversationsPagedAdapter(actionModeData = data)
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
     }
 
@@ -99,7 +103,7 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         val context = requireContext()
 
         val searchView = SearchView(context)
-        searchView.setOnSubmitListener { query->
+        searchView.setOnSubmitListener { query ->
             val bundle = Bundle().apply { putString("search", query) }
             navController.navigate(R.id.messageSearchFragment, bundle)
         }
