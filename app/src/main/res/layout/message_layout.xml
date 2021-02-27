@@ -15,21 +15,21 @@
 
     </data>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="4dp"
-        android:orientation="vertical"
-        android:visibility="gone"
-        tools:visibility="visible">
+        android:layout_margin="4dp">
 
         <RelativeLayout
-            android:layout_width="match_parent"
+            android:id="@+id/relativeLayout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
             android:gravity="center"
-            android:visibility="@{message.isTimeMessage? View.VISIBLE : View.GONE}">
+            android:visibility="@{message.isTimeMessage? View.VISIBLE : View.GONE}"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/dateCardView"
@@ -60,9 +60,14 @@
         </RelativeLayout>
 
         <RelativeLayout
-            android:layout_width="match_parent"
+            android:id="@+id/messageLayout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="@{message.message.isMine? Gravity.RIGHT : Gravity.LEFT}">
+            android:gravity="@{message.message.isMine? Gravity.RIGHT : Gravity.LEFT}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/relativeLayout">
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/messageCardView"
@@ -72,7 +77,6 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginRight="@{message.message.isMine? @dimen/margin_4dp : @dimen/margin_64dp}"
                 android:layout_marginBottom="4dp"
-                android:checkable="true"
                 app:cardBackgroundColor="@{message.message.isMine? @color/my_message_color : @color/not_my_message_color}"
                 app:cardElevation="2dp">
 
@@ -165,10 +169,10 @@
                         android:layout_marginEnd="8dp"
                         android:background="#EEEDED"
                         android:visibility="gone"
-                        tools:visibility="visible"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:visibility="visible">
 
                         <ImageView
                             android:id="@+id/error_loading_image"
@@ -190,11 +194,11 @@
                             android:layout_height="100dp"
                             android:indeterminate="true"
                             android:visibility="invisible"
-                            tools:visibility="visible"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
+                            app:layout_constraintTop_toTopOf="parent"
+                            tools:visibility="visible" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -290,13 +294,12 @@
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
         </RelativeLayout>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </layout>

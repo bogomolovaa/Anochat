@@ -28,8 +28,8 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
     private val viewModel: UsersViewModel by viewModels()
     private lateinit var navController: NavController
     private lateinit var binding: FragmentUsersBinding
-    private val usersAdapter = UsersAdapter { user, _ -> createConversation(user) }
-    private val searchAdapter = UsersSearchAdapter { user, _ -> createConversation(user) }
+    private val usersAdapter = UsersAdapter (::createConversation)
+    private val searchAdapter = UsersSearchAdapter(::createConversation)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

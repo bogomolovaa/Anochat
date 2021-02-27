@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.features.conversations.list
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
@@ -42,6 +43,7 @@ class ConversationListViewModel
     }
 
     private fun DeleteConversationsAction.execute() {
+        Log.i("test","deleteConversations $ids")
         conversationUseCases.deleteConversations(HashSet(ids))
     }
 

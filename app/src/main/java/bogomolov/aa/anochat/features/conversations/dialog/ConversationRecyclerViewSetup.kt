@@ -2,6 +2,8 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.os.Parcelable
 import android.util.DisplayMetrics
+import android.util.Log
+import android.view.ViewGroup
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
@@ -10,8 +12,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
+import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.ActionModeData
+import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -34,7 +38,9 @@ class ConversationRecyclerViewSetup(
         with(binding.recyclerView) {
             setItemViewCacheSize(20)
             adapter = messagesPagedAdapter
-            layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, true)
+            layoutManager = object : LinearLayoutManager(context, RecyclerView.VERTICAL, true) {
+                override fun isAutoMeasureEnabled() = false
+            }
             addOnScrollListener(createRecyclerViewScrollListener())
             doOnPreDraw { onPreDraw() }
         }
@@ -65,17 +71,17 @@ class ConversationRecyclerViewSetup(
             viewModel.addAction(DeleteMessagesAction(items.map { it.message.id }.toSet()))
         }
         data.actionsMap[R.id.reply_message_action] = { _, items ->
-            val message = items.iterator().next()
-            onReply(message.message)
+            if (items.isNotEmpty()) {
+                val message = items.last()
+                onReply(message.message)
+            }
         }
-        val adapter = MessagesPagedAdapter(
+        return MessagesPagedAdapter(
             windowWidth = getWindowWidth(),
             onReply = ::onReply,
             actionExecutor = viewModel,
             actionModeData = data
         )
-        //adapter.setHasStableIds(true)
-        return adapter
     }
 
     private fun onReply(message: Message) {
@@ -102,6 +108,8 @@ class ConversationRecyclerViewSetup(
                 if (dy != 0) fragment.hideKeyBoard()
                 val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition() - 1
                 val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition() + 1
+
+
                 loadImagesJob?.cancel()
                 loadImagesJob = fragment.lifecycleScope.launch {
                     if (enterAnimationFinished) delay(300)

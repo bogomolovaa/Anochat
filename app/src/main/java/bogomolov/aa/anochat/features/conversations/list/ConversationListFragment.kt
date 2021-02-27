@@ -18,6 +18,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.navigation.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -78,7 +79,11 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         val data = ActionModeData<Conversation>(R.menu.conversations_menu, binding.toolbar)
         data.actionsMap[R.id.delete_conversations_action] =
             { ids, _ -> viewModel.addAction(DeleteConversationsAction(ids)) }
-        binding.recyclerView.adapter = ConversationsPagedAdapter(actionModeData = data)
+        binding.recyclerView.adapter =
+            ConversationsPagedAdapter(actionModeData = data) { conversation ->
+                val bundle = Bundle().apply { putLong("id", conversation.id) }
+                navController.navigate(R.id.dialog_graph, bundle)
+            }
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
     }
 

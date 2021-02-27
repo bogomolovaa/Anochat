@@ -94,22 +94,9 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
     }
 
     private fun setupImagesRecyclerView(onPreDraw: () -> Unit) {
-        val adapter = ImagesPagedAdapter { image, view ->
-            val cardView = view as MaterialCardView
-            val imageView = cardView.findViewById(R.id.image) as ImageView
-            val extras =
-                FragmentNavigator.Extras.Builder().addSharedElement(imageView, image).build()
+        val adapter = ImagesPagedAdapter {
             transition.removeTarget(R.id.userPhoto)
             transition.addTarget(R.id.userPhoto)
-            navController.navigate(
-                R.id.imageViewFragment,
-                Bundle().apply {
-                    putString("image", image)
-                    putInt("quality", 8)
-                },
-                null,
-                extras
-            )
         }
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager =

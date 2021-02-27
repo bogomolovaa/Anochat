@@ -5,10 +5,12 @@ import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.FragmentNavigator
@@ -46,19 +48,19 @@ class MessagesPagedAdapter(
     override fun getItemId(position: Int) = getItem(position)?.message?.id ?: 0
 
     @SuppressLint("ClickableViewAccessibility")
-    override fun bind(item: MessageView?, binding: MessageLayoutBinding) {
+    override fun bind(item: MessageView?, holder: VH) {
+        val binding = holder.binding
         if (item != null) {
             //Char.isSurrogate()
             val context = binding.root.context
             binding.message = item
             binding.imageProgressLayout.visibility = View.GONE
-            binding.executePendingBindings()
             val image = item.message.image
             if (!image.isNullOrEmpty()) {
                 item.detailedImageLoaded = false
                 if (!loadImage(image, binding.imageView, 8))
                     showImageNotLoaded(binding, item.message.time)
-                setImageClickListener(item.message, binding.imageView)
+                setImageClickListener(item.message, binding.imageView, holder)
             }
             val replyMessageImage = item.message.replyMessage?.image
             if (replyMessageImage != null)
@@ -70,9 +72,14 @@ class MessagesPagedAdapter(
             }
             initPlayAudioView(item.message, binding.playAudioInput, messagesMap)
             initPlayAudioView(item.message.replyMessage, binding.replayAudio, replyMessagesMap)
-            binding.layout.visibility = View.VISIBLE
+
+            val color = if (isChecked(item))
+                ContextCompat.getColor(context, R.color.my_message_color)
+            else
+                ContextCompat.getColor(context, R.color.conversation_background)
+            binding.messageLayout.setBackgroundColor(color)
+            binding.executePendingBindings()
         } else {
-            binding.layout.visibility = View.GONE
             binding.message = null
         }
     }
@@ -93,12 +100,14 @@ class MessagesPagedAdapter(
     fun loadDetailedImage(position: Int, viewHolder: RecyclerView.ViewHolder) {
         val binding =
             (viewHolder as ExtPagedListAdapter<MessageView, MessageLayoutBinding>.VH).binding
-        val item = getItem(position)!!
-        val image = item.message.image
-        if (!image.isNullOrEmpty() && !item.detailedImageLoaded) {
-            item.detailedImageLoaded = true
-            if (!loadImage(image, binding.imageView, 2))
-                showImageNotLoaded(binding, item.message.time)
+        val item = getItem(position)
+        if (item != null) {
+            val image = item.message.image
+            if (!image.isNullOrEmpty() && !item.detailedImageLoaded) {
+                item.detailedImageLoaded = true
+                if (!loadImage(image, binding.imageView, 2))
+                    showImageNotLoaded(binding, item.message.time)
+            }
         }
     }
 
@@ -160,19 +169,27 @@ class MessagesPagedAdapter(
                 }
             })
 
-    private fun setImageClickListener(message: Message, imageView: ImageView) {
+    private fun setImageClickListener(message: Message, imageView: ImageView, holder: VH) {
         imageView.setOnClickListener {
-            if (message.received == 1) {
-                val navController = Navigation.findNavController(imageView)
-                val extras = FragmentNavigator.Extras.Builder()
-                    .addSharedElement(imageView, imageView.transitionName)
-                    .build()
-                val bundle = Bundle().apply {
-                    putString("image", message.image)
-                    putInt("quality", 2)
+            if (!selectionMode) {
+                if (message.received == 1) {
+                    val navController = Navigation.findNavController(imageView)
+                    val extras = FragmentNavigator.Extras.Builder()
+                        .addSharedElement(imageView, imageView.transitionName)
+                        .build()
+                    val bundle = Bundle().apply {
+                        putString("image", message.image)
+                        putInt("quality", 2)
+                    }
+                    navController.navigate(R.id.imageViewFragment, bundle, null, extras)
                 }
-                navController.navigate(R.id.imageViewFragment, bundle, null, extras)
+            } else {
+                holder.onClick()
             }
+        }
+        imageView.setOnLongClickListener {
+            holder.onLongClick()
+            true
         }
     }
 }

@@ -1,10 +1,8 @@
 package bogomolov.aa.anochat.features.shared
 
 import android.annotation.SuppressLint
-import android.view.ActionMode
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.util.Log
+import android.view.*
 import androidx.appcompat.widget.Toolbar
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -17,35 +15,45 @@ abstract class ExtPagedListAdapter<T, B>(
 ) : PagedListAdapter<T, ExtPagedListAdapter<T, B>.VH>(createDiffCallback()) {
     private val selectedIds: MutableSet<Long> = HashSet()
     private val selectedItems: MutableSet<T> = HashSet()
-    private var selectionMode = false
+    var selectionMode = false
     private var actionMode: ActionMode? = null
 
     abstract fun getId(item: T): Long
 
-    abstract fun bind(item: T?, binding: B)
+    abstract fun bind(item: T?, holder: VH)
+
+    protected fun isChecked(item: T) =
+        if (item != null) selectedIds.contains(getId(item)) else false
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = getItem(position)
-        if (item != null)
-            holder.cardView.isChecked = selectedIds.contains(getId(item))
-        bind(item, holder.binding)
+        bind(item, holder)
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     inner class VH(
         viewHolder: View,
         val cardView: MaterialCardView,
         val binding: B
-    ) : RecyclerView.ViewHolder(viewHolder), View.OnClickListener, View.OnLongClickListener {
+    ) : RecyclerView.ViewHolder(viewHolder) {
 
         init {
-            if (actionModeData != null) cardView.setOnLongClickListener(this)
-            if (onClickListener != null) cardView.setOnClickListener(this)
+            if (actionModeData != null || onClickListener != null)
+                viewHolder.setOnTouchListener { v, event ->
+                    if (event.action and MotionEvent.ACTION_MASK == MotionEvent.ACTION_UP) onClick()
+                    false
+                }
+            if (actionModeData != null)
+                viewHolder.setOnLongClickListener {
+                    onLongClick()
+                    true
+                }
+
         }
 
-        override fun onClick(view: View) {
+        fun onClick() {
             if (adapterPosition == RecyclerView.NO_POSITION) return
-            val position = adapterPosition
-            val item = getItem(position)
+            val item = getItem(adapterPosition)
             if (item != null) {
                 if (selectionMode) {
                     val id = getId(item)
@@ -56,28 +64,28 @@ abstract class ExtPagedListAdapter<T, B>(
                         selectedIds.add(id)
                         selectedItems.add(item)
                     }
-                    notifyItemChanged(position)
+                    notifyItemChanged(adapterPosition)
                 } else {
-                    onClickListener?.onClick(item, view)
+                    onClickListener?.onClick(item)
                 }
             }
         }
 
-        override fun onLongClick(view: View): Boolean {
+        fun onLongClick() {
             selectionMode = true
             selectedIds.clear()
             selectedItems.clear()
-            onClick(view)
+            onClick()
             notifyDataSetChanged()
             if (actionModeData != null) {
                 if (actionMode == null)
                     actionMode = actionModeData.toolbar.startActionMode(actionModeCallback)
                 else
-                    actionMode!!.finish()
+                    actionMode?.finish()
             }
-            return true
         }
     }
+
 
     private val actionModeCallback = object : ActionMode.Callback {
 
@@ -91,13 +99,14 @@ abstract class ExtPagedListAdapter<T, B>(
         }
 
         override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-            for ((actionId, action) in actionModeData?.actionsMap!!) {
-                if (item.itemId == actionId) {
-                    action(selectedIds, selectedItems)
-                    actionMode!!.finish()
-                    break
+            if (actionModeData != null)
+                for ((actionId, action) in actionModeData.actionsMap) {
+                    if (item.itemId == actionId) {
+                        action(HashSet(selectedIds), HashSet(selectedItems))
+                        actionMode?.finish()
+                        break
+                    }
                 }
-            }
             return true
         }
 
@@ -125,7 +134,7 @@ private fun <T> createDiffCallback() = object : DiffUtil.ItemCallback<T>() {
 }
 
 fun interface ItemClickListener<T> {
-    fun onClick(item: T, view: View?)
+    fun onClick(item: T)
 }
 
 class ActionModeData<T>(val actionModeMenuId: Int, val toolbar: Toolbar) {
