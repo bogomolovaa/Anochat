@@ -2,6 +2,8 @@ package bogomolov.aa.anochat.features.conversations.list
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.ConversationLayoutBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.shared.ActionModeData
@@ -18,7 +20,7 @@ class ConversationsPagedAdapter(
         val binding =
             ConversationLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.cardView
-        return VH(cv, cv, binding)
+        return VH(cv, binding)
     }
 
     override fun getId(item: Conversation) = item.id
@@ -34,6 +36,13 @@ class ConversationsPagedAdapter(
                 } else {
                     conversation.lastMessage?.shortText() ?: ""
                 }
+            val context = binding.root.context
+            val color = if (isChecked(conversation))
+                ContextCompat.getColor(context, R.color.not_my_message_color)
+            else
+                ContextCompat.getColor(context, R.color.my_message_color)
+            binding.cardView.setCardBackgroundColor(color)
+            binding.userPhoto.setForegroundColor(color)
         }
     }
 }

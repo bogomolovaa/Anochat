@@ -14,7 +14,7 @@ class UsersAdapter(onClickListener: ItemClickListener<User>) :
         val binding =
             UserLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.cardView
-        return VH(cv, cv, binding)
+        return VH(cv, binding)
     }
 
     override fun getId(item: User) = item.id
@@ -33,7 +33,7 @@ class UsersSearchAdapter(onClickListener: ItemClickListener<User>) :
         val binding =
             UserLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.cardView
-        return VH(cv, cv, binding)
+        return VH(cv, binding)
     }
 
     override fun getItem(position: Int) = users[position]

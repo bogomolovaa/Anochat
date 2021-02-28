@@ -13,18 +13,23 @@ import bogomolov.aa.anochat.R
 
 class RoundedImageView(context: Context, attrs: AttributeSet) : FrameLayout(context, attrs) {
     private var defaultDrawable: Int? = null
+    private val roundFg: ImageView
 
     init {
         ConstraintLayout.inflate(context, R.layout.rounded_image_layout, this)
         val a = context.obtainStyledAttributes(attrs, R.styleable.RoundedImageView, 0, 0)
-        val tintColor = a.getColor(R.styleable.RoundedImageView_foregroundColor, Color.BLACK)
-        val roundFg = findViewById<ImageView>(R.id.round_fg_image)
-        roundFg.setColorFilter(tintColor)
+        roundFg = findViewById<ImageView>(R.id.round_fg_image)
+        val color = a.getColor(R.styleable.RoundedImageView_foregroundColor, Color.BLACK)
+        setForegroundColor(color)
         defaultDrawable = a.getResourceId(R.styleable.RoundedImageView_srcDrawable, -1)
         setDefaultDrawable()
         val fileName = a.getString(R.styleable.RoundedImageView_srcFile)
         if (fileName != null) setImage(fileName)
         a.recycle()
+    }
+
+    fun setForegroundColor(color: Int){
+        roundFg.setColorFilter(color)
     }
 
 

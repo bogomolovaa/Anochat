@@ -33,22 +33,17 @@ abstract class ExtPagedListAdapter<T, B>(
     @SuppressLint("ClickableViewAccessibility")
     inner class VH(
         viewHolder: View,
-        val cardView: MaterialCardView,
         val binding: B
     ) : RecyclerView.ViewHolder(viewHolder) {
 
         init {
             if (actionModeData != null || onClickListener != null)
-                viewHolder.setOnTouchListener { v, event ->
-                    if (event.action and MotionEvent.ACTION_MASK == MotionEvent.ACTION_UP) onClick()
-                    false
-                }
+                viewHolder.setOnClickListener { onClick() }
             if (actionModeData != null)
                 viewHolder.setOnLongClickListener {
                     onLongClick()
                     true
                 }
-
         }
 
         fun onClick() {

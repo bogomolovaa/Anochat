@@ -18,7 +18,7 @@ class ImagesPagedAdapter(private val onClick: () -> Unit) :
         val binding =
             ImageLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.cardView
-        return VH(cv, cv, binding)
+        return VH(cv, binding)
     }
 
     override fun getId(item: String) = 0L

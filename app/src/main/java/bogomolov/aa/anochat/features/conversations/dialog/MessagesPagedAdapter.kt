@@ -40,7 +40,7 @@ class MessagesPagedAdapter(
         val binding =
             MessageLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         val cv = binding.messageCardView
-        return VH(binding.root, cv, binding)
+        return VH(binding.root, binding)
     }
 
     override fun getId(item: MessageView) = item.message.id
