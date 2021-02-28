@@ -2,7 +2,7 @@ package bogomolov.aa.anochat
 
 import org.junit.Test
 
-class TestCrypto {
+class TestCrypto1 {
     @Test
     fun test_encryptDecrypt() {
         /*
@@ -27,5 +27,8 @@ class TestCrypto {
 
         assertEquals(testString,decryptedString)
         */
+
+
+
     }
 }

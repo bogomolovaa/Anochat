@@ -47,21 +47,23 @@ open class MessageUseCases @Inject constructor(
         audio: String?,
         onAttachmentReceived: (Message) -> Unit
     ): Message? {
+        Log.d(TAG, "receiveMessage $messageId $text replyId $replyId")
         val secretKey = crypto.getSecretKey(uid)
-        return if (secretKey != null) {
-            Log.i(TAG, "receiveMessage $messageId $text replyId $replyId")
+        try {
+            if (secretKey == null) throw WrongSecretKeyException("null secret key")
+            val decryptedText = crypto.decryptString(text, secretKey)
             val user = userRepository.getOrAddUser(uid)
-            val conversationId = conversationRepository.createOrGetConversation(user)
             val message = Message(
+                text = decryptedText,
                 time = System.currentTimeMillis(),
-                conversationId = conversationId,
+                conversationId = conversationRepository.createOrGetConversation(user),
                 messageId = messageId,
                 image = image,
                 audio = audio
             )
-            if (text.isNotEmpty()) message.text = crypto.decryptString(text, secretKey)
-            if (!replyId.isNullOrEmpty()) message.replyMessage =
-                messageRepository.getMessage(replyId)
+            if (!replyId.isNullOrEmpty())
+                message.replyMessage = messageRepository.getMessage(replyId)
+            messageRepository.saveMessage(message)
             val fileName = message.audio ?: message.image
             if (fileName != null) {
                 val localFile = messageRepository.getAttachmentFile(fileName)
@@ -71,14 +73,13 @@ open class MessageUseCases @Inject constructor(
                     onAttachmentReceived(message)
                 }
             }
-            messageRepository.saveMessage(message)
             messageRepository.notifyAsReceived(messageId)
-            message
-        } else {
-            Log.i(TAG, "not received message $messageId from $uid: null secretKey")
+            return message
+        } catch (e: WrongSecretKeyException) {
+            Log.w(TAG, "not received message $messageId from $uid: ${e.message}")
             messageRepository.notifyAsNotReceived(messageId)
             sendPublicKey(uid, initiator = true)
-            null
+            return null
         }
     }
 
@@ -150,7 +151,8 @@ open class MessageUseCases @Inject constructor(
     }
 
     private fun generateSecretKey(publicKey: String, uid: String): Boolean {
-        val generated = crypto.generateSecretKey(publicKey, uid)
+        val secretKey = crypto.generateSecretKey(publicKey, uid)
+        val generated = secretKey != null
         if (generated) {
             Log.i(TAG, "secret key generated")
             resetKeyAsSent(uid)

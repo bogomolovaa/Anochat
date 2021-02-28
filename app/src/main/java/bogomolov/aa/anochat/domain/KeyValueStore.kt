@@ -1,6 +1,6 @@
 package bogomolov.aa.anochat.domain
 
-private const val UID = "uid"
+const val UID = "uid"
 
 interface KeyValueStore {
     fun getByteArrayValue(key: String): ByteArray?

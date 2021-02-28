@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.domain
 
 import java.io.*
+import java.lang.Exception
 import java.math.BigInteger
 import java.security.*
 import java.security.spec.InvalidKeySpecException
@@ -40,16 +41,16 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
     fun generateSecretKey(
         publicKeyString: String,
         uid: String
-    ): Boolean {
+    ): SecretKey? {
         val myUid = getMyUID()!!
         val privateKey = getPrivateKey(myUid, uid)
         return if (privateKey != null) {
             val publicKeyByteArray = keyValueStore.base64ToByteArray(publicKeyString)
             val secretKey = genSharedSecretKey(privateKey, publicKeyByteArray)
             saveKey(getSecretKeyName(myUid, uid), secretKey)
-            true
+            secretKey
         } else {
-            false
+            null
         }
     }
 
@@ -147,12 +148,16 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
     }
 
     private fun decrypt(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
-        val raw = secretKey.encoded
-        val skeySpec = SecretKeySpec(raw, "AES")
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        val spec = GCMParameterSpec(128, IV)
-        cipher.init(Cipher.DECRYPT_MODE, skeySpec, spec)
-        return cipher.doFinal(encrypted)
+        try {
+            val raw = secretKey.encoded
+            val skeySpec = SecretKeySpec(raw, "AES")
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            val spec = GCMParameterSpec(128, IV)
+            cipher.init(Cipher.DECRYPT_MODE, skeySpec, spec)
+            return cipher.doFinal(encrypted)
+        } catch (e: javax.crypto.AEADBadTagException) {
+            throw WrongSecretKeyException("wrong secret key")
+        }
     }
 
     private fun <T> serializeKey(key: T): ByteArray {
@@ -177,3 +182,5 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
 
     private fun getMyUID() = keyValueStore.getMyUID()
 }
+
+class WrongSecretKeyException(message: String) : Exception(message)

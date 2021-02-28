@@ -71,7 +71,6 @@ abstract class ExtPagedListAdapter<T, B>(
             selectedIds.clear()
             selectedItems.clear()
             onClick()
-            notifyDataSetChanged()
             if (actionModeData != null) {
                 if (actionMode == null)
                     actionMode = actionModeData.toolbar.startActionMode(actionModeCallback)
