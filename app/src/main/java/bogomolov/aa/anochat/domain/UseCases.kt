@@ -3,11 +3,7 @@ package bogomolov.aa.anochat.domain
 import android.util.Log
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.repositories.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.io.File
+import kotlinx.coroutines.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,81 +27,57 @@ private const val TAG = "MessageUseCases"
 
 @Singleton
 open class MessageUseCases @Inject constructor(
-    private val messageRepository: MessageRepository,
-    private val conversationRepository: ConversationRepository,
-    private val userRepository: UserRepository,
+    private val messageRep: MessageRepository,
+    private val conversationRep: ConversationRepository,
+    private val userRep: UserRepository,
     private val keyValueStore: KeyValueStore,
     private val crypto: Crypto
-) : MessageUseCasesInRepository by messageRepository {
+) : MessageUseCasesInRepository by messageRep {
+    var dispatcher: CoroutineDispatcher = Dispatchers.IO
 
-    suspend fun receiveMessage(
-        text: String,
-        uid: String,
-        messageId: String,
-        replyId: String?,
-        image: String?,
-        audio: String?,
-        onAttachmentReceived: (Message) -> Unit
-    ): Message? {
-        Log.d(TAG, "receiveMessage $messageId $text replyId $replyId")
-        val secretKey = crypto.getSecretKey(uid)
+    suspend fun receiveMessage(message: Message, uid: String, onSuccess: (Message) -> Unit) {
+        Log.d(TAG, "receiveMessage $message")
         try {
-            if (secretKey == null) throw WrongSecretKeyException("null secret key")
-            val decryptedText = crypto.decryptString(text, secretKey)
-            val user = userRepository.getOrAddUser(uid)
-            val message = Message(
-                text = decryptedText,
-                time = System.currentTimeMillis(),
-                conversationId = conversationRepository.createOrGetConversation(user),
-                messageId = messageId,
-                image = image,
-                audio = audio
-            )
-            if (!replyId.isNullOrEmpty())
-                message.replyMessage = messageRepository.getMessage(replyId)
-            messageRepository.saveMessage(message)
-            val fileName = message.audio ?: message.image
-            if (fileName != null) {
-                val localFile = messageRepository.getAttachmentFile(fileName)
-                tryReceiveAttachment(fileName, localFile, uid) {
-                    crypto.decryptFile(localFile, secretKey)
-                    messageRepository.updateAsReceived(message)
-                    onAttachmentReceived(message)
+            val secretKey = crypto.getSecretKey(uid) ?: throw WrongSecretKeyException("null")
+            message.text = crypto.decryptString(message.text, secretKey)
+            val user = userRep.getOrAddUser(uid)
+            message.conversationId = conversationRep.createOrGetConversation(user)
+            val replyId = message.replyMessageId
+            if (!replyId.isNullOrEmpty()) message.replyMessage = messageRep.getMessage(replyId)
+            messageRep.saveMessage(message)
+            if (message.hasAttachment())
+                tryReceiveAttachment(message, uid, { crypto.decrypt(secretKey, it) }) {
+                    onSuccess(message)
                 }
-            }
-            messageRepository.notifyAsReceived(messageId)
-            return message
+            messageRep.notifyAsReceived(message.messageId)
+            onSuccess(message)
         } catch (e: WrongSecretKeyException) {
-            Log.w(TAG, "not received message $messageId from $uid: ${e.message}")
-            messageRepository.notifyAsNotReceived(messageId)
-            sendPublicKey(uid, initiator = true)
-            return null
+            Log.w(TAG, "not received message $message from $uid: ${e.message} secret key")
+            messageRep.notifyAsNotReceived(message.messageId)
+            if (keyIsNotSentTo(uid))
+                sendPublicKey(crypto.generatePublicKey(uid), uid, initiator = true)
         }
     }
 
     fun sendMessage(message: Message, uid: String) {
-        Log.i("test", "sendMessage message")
-        if (message.isNotSaved()) messageRepository.saveMessage(message)
+        Log.d(TAG, "sendMessage $message to uid $uid")
+        if (message.isNotSaved()) messageRep.saveMessage(message)
         val secretKey = crypto.getSecretKey(uid)
         if (secretKey != null) {
-            val fileName = message.audio ?: message.image
-            if (fileName != null) {
-                val localFile = messageRepository.getAttachmentFile(fileName)
-                val byteArray = crypto.encryptFile(localFile, secretKey)
-                GlobalScope.launch(Dispatchers.IO) {
-                    messageRepository.sendAttachment(fileName, uid, byteArray)
+            if (message.hasAttachment())
+                GlobalScope.launch(dispatcher) {
+                    messageRep.sendAttachment(message, uid) { crypto.encrypt(secretKey, it) }
                 }
-            }
             message.text = crypto.encryptString(secretKey, message.text)
-            messageRepository.sendMessage(message, uid)
-        } else {
-            sendPublicKey(uid, initiator = true)
-        }
+            messageRep.sendMessage(message, uid)
+        } else if (keyIsNotSentTo(uid))
+            sendPublicKey(crypto.generatePublicKey(uid), uid, initiator = true)
     }
 
     fun receivedPublicKey(publicKey: String, uid: String) {
-        sendPublicKey(uid, initiator = false)
+        val myPublicKey = crypto.generatePublicKey(uid)
         generateSecretKey(publicKey, uid)
+        sendPublicKey(myPublicKey, uid, initiator = false)
     }
 
     fun finallyReceivedPublicKey(publicKey: String, uid: String) {
@@ -113,18 +85,17 @@ open class MessageUseCases @Inject constructor(
         if (generated) sendPendingMessages(uid)
     }
 
-
     private fun tryReceiveAttachment(
-        fileName: String,
-        localFile: File,
+        message: Message,
         uid: String,
+        convert: (ByteArray) -> ByteArray,
         onSuccess: () -> Unit
     ) {
         val attempts = 10
-        GlobalScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(dispatcher) {
             var counter = 0
             while (counter < attempts) {
-                if (messageRepository.receiveAttachment(fileName, uid, localFile)) {
+                if (messageRep.receiveAttachment(message, uid, convert)) {
                     onSuccess()
                     break
                 } else {
@@ -137,16 +108,13 @@ open class MessageUseCases @Inject constructor(
         }
     }
 
-    private fun sendPublicKey(uid: String, initiator: Boolean) {
-        if (keyIsNotSentTo(uid)) {
-            val publicKey = crypto.generatePublicKey(uid)
-            if (publicKey != null) {
-                messageRepository.sendPublicKey(publicKey, uid, initiator)
-                setKeyAsSent(uid)
-                Log.i(TAG, "send publicKey for $uid")
-            } else {
-                Log.i(TAG, "publicKey not generated for $uid")
-            }
+    private fun sendPublicKey(publicKey: String?, uid: String, initiator: Boolean) {
+        if (publicKey != null) {
+            Log.d(TAG, "send publicKey for $uid")
+            messageRep.sendPublicKey(publicKey, uid, initiator)
+            setKeyAsSent(uid)
+        } else {
+            Log.d(TAG, "publicKey not generated for $uid")
         }
     }
 
@@ -154,16 +122,16 @@ open class MessageUseCases @Inject constructor(
         val secretKey = crypto.generateSecretKey(publicKey, uid)
         val generated = secretKey != null
         if (generated) {
-            Log.i(TAG, "secret key generated")
+            Log.d(TAG, "secret key generated for $uid")
             resetKeyAsSent(uid)
         } else {
-            Log.i(TAG, "secret key not generated: privateKey null")
+            Log.i(TAG, "secret key not generated for $uid: privateKey null")
         }
         return generated
     }
 
     private fun sendPendingMessages(uid: String) {
-        for (message in messageRepository.getPendingMessages(uid)) sendMessage(message, uid)
+        for (message in messageRep.getPendingMessages(uid)) sendMessage(message, uid)
     }
 
     private fun keyIsNotSentTo(uid: String): Boolean {

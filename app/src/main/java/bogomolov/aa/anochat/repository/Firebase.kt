@@ -46,9 +46,8 @@ interface Firebase {
     suspend fun downloadFile(
         fileName: String,
         uid: String,
-        localFile: File,
         isPrivate: Boolean = false
-    ): Boolean
+    ): ByteArray?
 
     fun deleteRemoteMessage(messageId: String)
 

@@ -7,13 +7,21 @@ import java.io.File
 
 interface MessageRepository : MessageUseCasesInRepository {
     fun saveMessage(message: Message)
-    fun updateAsReceived(message: Message)
     fun getPendingMessages(uid: String): List<Message>
     fun getMessage(messageId: String): Message?
     fun sendMessage(message: Message, uid: String)
-    fun getAttachmentFile(fileName: String): File
-    suspend fun sendAttachment(fileName: String, uid: String, byteArray: ByteArray): Boolean
-    suspend fun receiveAttachment(fileName: String, uid: String, localFile: File): Boolean
+    suspend fun sendAttachment(
+        message: Message,
+        uid: String,
+        convert: (ByteArray) -> ByteArray
+    ): Boolean
+
+    suspend fun receiveAttachment(
+        message: Message,
+        uid: String,
+        convert: (ByteArray) -> ByteArray
+    ): Boolean
+
     fun notifyAsReceived(messageId: String)
     fun notifyAsNotReceived(messageId: String)
     fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean)

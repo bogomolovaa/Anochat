@@ -7,8 +7,8 @@ fun i(tag: String, msg: String): Int {
     return 0
 }
 
-fun e(tag: String, msg: String): Int {
-    println("E: $tag: $msg")
+fun d(tag: String, msg: String): Int {
+    println("D: $tag: $msg")
     return 0
 }
 

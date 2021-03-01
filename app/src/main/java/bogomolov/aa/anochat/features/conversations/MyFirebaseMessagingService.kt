@@ -89,10 +89,19 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         var audio = data["audio"]
         if (image.isNullOrEmpty()) image = null
         if (audio.isNullOrEmpty()) audio = null
-        if (uid != null && messageId != null)
-            messageUseCases.receiveMessage(text, uid, messageId, replyId, image, audio) {
+        if (uid != null && messageId != null) {
+            val message = Message(
+                text = text,
+                time = System.currentTimeMillis(),
+                messageId = messageId,
+                replyMessageId = replyId,
+                image = image,
+                audio = audio
+            )
+            messageUseCases.receiveMessage(message, uid) {
                 showNotification(it)
-            }?.also { showNotification(it) }
+            }
+        }
     }
 
     private fun showNotification(message: Message) {
@@ -133,11 +142,14 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,
             AudioManager.STREAM_NOTIFICATION
         )
-        if (message.image != null)
-            notificationBuilder.setStyle(
+        val image = message.image
+        if (image != null) {
+            val imageBitmap = getBitmap(image, context, 4)
+            if (imageBitmap != null) notificationBuilder.setStyle(
                 NotificationCompat.BigPictureStyle()
-                    .bigPicture(getBitmap(message.image, context, 4))
+                    .bigPicture(imageBitmap)
             )
+        }
 
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

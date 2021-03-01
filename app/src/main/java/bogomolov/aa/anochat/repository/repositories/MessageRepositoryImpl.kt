@@ -12,6 +12,7 @@ import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -43,7 +44,7 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
     override fun receiveReport(messageId: String, received: Int, viewed: Int) {
-        Log.i(TAG, "receiveReport received $received viewed $viewed")
+        Log.d(TAG, "receiveReport received $received viewed $viewed")
         db.messageDao().updateReport(messageId, received, viewed)
         if (viewed == 1 || received == -1) firebase.deleteRemoteMessage(messageId)
     }
@@ -83,16 +84,26 @@ class MessageRepositoryImpl @Inject constructor(
         db.messageDao().updateMessageId(message.id, message.messageId)
     }
 
-    override fun getAttachmentFile(fileName: String) = File(filesDir, fileName)
+    override suspend fun sendAttachment(
+        message: Message,
+        uid: String,
+        convert: (ByteArray) -> ByteArray
+    ): Boolean {
+        val fileName = message.getAttachment() ?: return false
+        val file = File(filesDir, fileName)
+        return firebase.uploadFile(fileName, uid, convert(file.readBytes()), isPrivate = true)
+    }
 
-    override suspend fun sendAttachment(fileName: String, uid: String, byteArray: ByteArray) =
-        firebase.uploadFile(fileName, uid, byteArray, isPrivate = true)
-
-    override suspend fun receiveAttachment(fileName: String, uid: String, localFile: File) =
-        firebase.downloadFile(fileName, uid, localFile, isPrivate = true)
-
-    override fun updateAsReceived(message: Message){
+    override suspend fun receiveAttachment(
+        message: Message,
+        uid: String,
+        convert: (ByteArray) -> ByteArray
+    ): Boolean {
+        val fileName = message.getAttachment() ?: return false
+        val byteArray = firebase.downloadFile(fileName, uid, isPrivate = true) ?: return false
+        File(filesDir, fileName).writeBytes(convert(byteArray))
         db.messageDao().updateAsReceived(message.id)
+        return true
     }
 
     override fun notifyAsReceived(messageId: String) {
@@ -117,6 +128,7 @@ class MessageRepositoryImpl @Inject constructor(
             }
         if (ids.size > 0) db.messageDao().updateAsViewed(ids)
     }
+
 
     private fun getMyUID() = keyValueStore.getMyUID()
 }

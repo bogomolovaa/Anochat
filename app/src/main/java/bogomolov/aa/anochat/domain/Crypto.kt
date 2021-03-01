@@ -24,12 +24,27 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
         return getKey(getSecretKeyName(getMyUID()!!, uid))
     }
 
-    fun decryptFile(file: File, secretKey: SecretKey) {
-        val decryptedByteArray = decrypt(secretKey, file.readBytes())
-        file.writeBytes(decryptedByteArray)
+    fun encrypt(secretKey: SecretKey, clear: ByteArray): ByteArray {
+        val raw = secretKey.encoded
+        val skeySpec = SecretKeySpec(raw, "AES")
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        val spec = GCMParameterSpec(128, IV)
+        cipher.init(Cipher.ENCRYPT_MODE, skeySpec, spec)
+        return cipher.doFinal(clear)
     }
 
-    fun encryptFile(file: File, secretKey: SecretKey) = encrypt(secretKey, file.readBytes())
+    fun decrypt(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
+        try {
+            val raw = secretKey.encoded
+            val skeySpec = SecretKeySpec(raw, "AES")
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            val spec = GCMParameterSpec(128, IV)
+            cipher.init(Cipher.DECRYPT_MODE, skeySpec, spec)
+            return cipher.doFinal(encrypted)
+        } catch (e: javax.crypto.AEADBadTagException) {
+            throw WrongSecretKeyException("wrong")
+        }
+    }
 
     fun decryptString(string: String, secretKey: SecretKey): String {
         return String(decrypt(secretKey, keyValueStore.base64ToByteArray(string)))
@@ -136,28 +151,6 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
             e.printStackTrace()
         }
         return null
-    }
-
-    private fun encrypt(secretKey: SecretKey, clear: ByteArray): ByteArray {
-        val raw = secretKey.encoded
-        val skeySpec = SecretKeySpec(raw, "AES")
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        val spec = GCMParameterSpec(128, IV)
-        cipher.init(Cipher.ENCRYPT_MODE, skeySpec, spec)
-        return cipher.doFinal(clear)
-    }
-
-    private fun decrypt(secretKey: SecretKey, encrypted: ByteArray): ByteArray {
-        try {
-            val raw = secretKey.encoded
-            val skeySpec = SecretKeySpec(raw, "AES")
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            val spec = GCMParameterSpec(128, IV)
-            cipher.init(Cipher.DECRYPT_MODE, skeySpec, spec)
-            return cipher.doFinal(encrypted)
-        } catch (e: javax.crypto.AEADBadTagException) {
-            throw WrongSecretKeyException("wrong secret key")
-        }
     }
 
     private fun <T> serializeKey(key: T): ByteArray {

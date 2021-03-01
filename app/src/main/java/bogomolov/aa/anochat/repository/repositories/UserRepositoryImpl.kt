@@ -106,7 +106,7 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     private suspend fun downloadFile(fileName: String, uid: String) =
-        firebase.downloadFile(fileName, uid, File(filesDir, fileName))
+        firebase.downloadFile(fileName, uid)
 
     private suspend fun uploadFile(fileName: String, uid: String) =
         firebase.uploadFile(fileName, uid, File(filesDir, fileName).readBytes())

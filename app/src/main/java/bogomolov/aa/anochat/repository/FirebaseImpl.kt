@@ -176,7 +176,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
         ).addOnFailureListener {
             Log.w(TAG, "sendMessage failure", it)
         }.addOnSuccessListener {
-            onSuccess()
+                onSuccess()
         }
         return ref.key!!
     }
@@ -220,22 +220,21 @@ class FirebaseImpl @Inject constructor() : Firebase {
     override suspend fun downloadFile(
         fileName: String,
         uid: String,
-        localFile: File,
         isPrivate: Boolean
-    ): Boolean =
+    ): ByteArray? =
         suspendCoroutine { continuation ->
             val path = if (isPrivate) "/files/" else "/user/$uid/"
             val fileRef = FirebaseStorage.getInstance()
                 .getReference(path).child(fileName)
             Log.d(TAG, "start downloading: $fileName ref $fileRef")
 
-            fileRef.getFile(localFile).addOnSuccessListener {
+            fileRef.getBytes(Long.MAX_VALUE).addOnSuccessListener {
                 Log.d(TAG, "downloaded $fileName")
                 if (isPrivate) fileRef.delete()
-                continuation.resume(true)
+                continuation.resume(it)
             }.addOnFailureListener {
                 Log.w(TAG, "NOT downloaded $fileName $it")
-                continuation.resume(false)
+                continuation.resume(null)
             }
         }
 

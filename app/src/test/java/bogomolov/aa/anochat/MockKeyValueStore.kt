@@ -12,7 +12,9 @@ class MockKeyValueStore(myUid: String) : KeyValueStore {
         stringMap[UID] = myUid
     }
 
-    override fun getByteArrayValue(key: String) = bytesMap[key]
+    override fun getByteArrayValue(key: String): ByteArray? {
+        return bytesMap[key]
+    }
 
     override fun getStringValue(key: String) = stringMap[key]
 

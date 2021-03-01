@@ -35,6 +35,7 @@ open class ModelEntityMapper {
                 from.isMine == 1,
                 from.messageId,
                 entityToModel(from.replyMessage),
+                from.replyMessage?.messageId,
                 from.image,
                 from.audio,
                 from.publicKey,
@@ -77,15 +78,6 @@ open class ModelEntityMapper {
                 entityToModel(from.lastMessage)
             )
         else null
-
-
-    fun modelToEntity(from: Conversation, uid: String) =
-        ConversationEntity(
-            from.id,
-            from.user.id,
-            from.lastMessage?.id ?: 0,
-            uid
-        )
 
 
     inline fun <reified T> entityToModel(fromList: List<*>): List<T> {
