@@ -46,7 +46,7 @@ open class MessageUseCases @Inject constructor(
             if (!replyId.isNullOrEmpty()) message.replyMessage = messageRep.getMessage(replyId)
             messageRep.saveMessage(message)
             if (message.hasAttachment())
-                tryReceiveAttachment(message, uid, { crypto.decrypt(secretKey, it) }) {
+                tryReceiveAttachment(message, uid, { crypto.decrypt(secretKey, this) }) {
                     onSuccess(message)
                 }
             messageRep.notifyAsReceived(message.messageId)
@@ -66,7 +66,7 @@ open class MessageUseCases @Inject constructor(
         if (secretKey != null) {
             if (message.hasAttachment())
                 GlobalScope.launch(dispatcher) {
-                    messageRep.sendAttachment(message, uid) { crypto.encrypt(secretKey, it) }
+                    messageRep.sendAttachment(message, uid) { crypto.encrypt(secretKey, this) }
                 }
             message.text = crypto.encryptString(secretKey, message.text)
             messageRep.sendMessage(message, uid)
@@ -88,7 +88,7 @@ open class MessageUseCases @Inject constructor(
     private fun tryReceiveAttachment(
         message: Message,
         uid: String,
-        convert: (ByteArray) -> ByteArray,
+        convert: ByteArray.() -> ByteArray,
         onSuccess: () -> Unit
     ) {
         val attempts = 10

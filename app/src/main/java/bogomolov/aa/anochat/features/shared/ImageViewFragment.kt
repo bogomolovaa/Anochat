@@ -33,6 +33,7 @@ class ImageViewFragment : Fragment() {
     private var scale = 1f
     private var expanded = false
     private lateinit var imageName: String
+    private var fromGallery = false
     private var quality = 1
 
     override fun onPause() {
@@ -67,6 +68,7 @@ class ImageViewFragment : Fragment() {
 
         imageName = arguments?.getString("image")!!
         quality = arguments?.getInt("quality")!!
+        fromGallery = arguments?.getBoolean("gallery") ?: false
         binding.imageView.transitionName = imageName
         loadImage(quality)
         scaleDetector = ScaleGestureDetector(context, scaleListener)
@@ -96,7 +98,8 @@ class ImageViewFragment : Fragment() {
 
     private fun loadImage(quality: Int) {
         try {
-            bitmap = getBitmap(imageName, requireContext(), quality)
+            bitmap = if (fromGallery) getBitmapFromGallery(imageName, requireContext(), quality)
+            else getBitmap(imageName, requireContext(), quality)
             binding.imageView.setImageBitmap(bitmap)
         } catch (e: Exception) {
             Log.w(TAG, "image not loaded", e)

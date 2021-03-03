@@ -5,27 +5,16 @@ import android.util.Base64
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import bogomolov.aa.anochat.domain.KeyValueStore
-import bogomolov.aa.anochat.domain.setValue
-import bogomolov.aa.anochat.features.shared.getFilesDir
 import javax.inject.Inject
 import javax.inject.Singleton
-
-const val FILES_DIRECTORY = "files"
 
 @Singleton
 class KeyValueStoreImpl @Inject constructor(context: Context) : KeyValueStore {
     private val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 
-    init {
-        val filesDir = getFilesDir(context).path
-        setValue(FILES_DIRECTORY, filesDir)
-    }
-
-    //java.util.Base64.getEncoder()
     override fun byteArrayToBase64(array: ByteArray): String =
         Base64.encodeToString(array, Base64.DEFAULT)
 
-    //java.util.Base64.getDecoder()
     override fun base64ToByteArray(string: String): ByteArray =
         Base64.decode(string, Base64.DEFAULT)
 

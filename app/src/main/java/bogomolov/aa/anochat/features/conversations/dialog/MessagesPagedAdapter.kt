@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
@@ -20,7 +19,7 @@ import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.ActionModeData
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
-import bogomolov.aa.anochat.features.shared.getBitmap
+import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
 import com.google.android.material.card.MaterialCardView
 import kotlin.math.min
@@ -39,7 +38,6 @@ class MessagesPagedAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding =
             MessageLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        val cv = binding.messageCardView
         return VH(binding.root, binding)
     }
 
@@ -63,8 +61,10 @@ class MessagesPagedAdapter(
                 setImageClickListener(item.message, binding.imageView, holder)
             }
             val replyMessageImage = item.message.replyMessage?.image
-            if (replyMessageImage != null)
-                binding.replyImage.setImageBitmap(getBitmap(replyMessageImage, context, 16))
+            if (replyMessageImage != null) {
+                val bitmap = getBitmapFromGallery(replyMessageImage, context, 16)
+                binding.replyImage.setImageBitmap(bitmap)
+            }
             val detector = getGestureDetector(binding.messageCardView, item.message)
             binding.messageCardView.setOnTouchListener { _, event ->
                 detector.onTouchEvent(event)
@@ -112,7 +112,7 @@ class MessagesPagedAdapter(
     }
 
     private fun loadImage(image: String, imageView: ImageView, quality: Int): Boolean {
-        val bitmap = getBitmap(image, imageView.context, quality)
+        val bitmap = getBitmapFromGallery(image, imageView.context, quality)
         if (bitmap != null) {
             imageView.visibility = View.VISIBLE
             imageView.setImageBitmap(bitmap)
@@ -172,7 +172,7 @@ class MessagesPagedAdapter(
     private fun setImageClickListener(message: Message, imageView: ImageView, holder: VH) {
         imageView.setOnClickListener {
             if (!selectionMode) {
-                if (message.received == 1) {
+                if (message.received == 1 || message.isMine) {
                     val navController = Navigation.findNavController(imageView)
                     val extras = FragmentNavigator.Extras.Builder()
                         .addSharedElement(imageView, imageView.transitionName)
@@ -180,6 +180,7 @@ class MessagesPagedAdapter(
                     val bundle = Bundle().apply {
                         putString("image", message.image)
                         putInt("quality", 2)
+                        putBoolean("gallery", true)
                     }
                     navController.navigate(R.id.imageViewFragment, bundle, null, extras)
                 }

@@ -13,13 +13,13 @@ interface MessageRepository : MessageUseCasesInRepository {
     suspend fun sendAttachment(
         message: Message,
         uid: String,
-        convert: (ByteArray) -> ByteArray
+        convert: ByteArray.() -> ByteArray
     ): Boolean
 
     suspend fun receiveAttachment(
         message: Message,
         uid: String,
-        convert: (ByteArray) -> ByteArray
+        convert: ByteArray.() -> ByteArray
     ): Boolean
 
     fun notifyAsReceived(messageId: String)

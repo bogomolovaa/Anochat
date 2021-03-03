@@ -18,10 +18,7 @@ import bogomolov.aa.anochat.domain.MessageUseCases
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.main.MainActivity
-import bogomolov.aa.anochat.features.shared.AuthRepository
-import bogomolov.aa.anochat.features.shared.Settings
-import bogomolov.aa.anochat.features.shared.getBitmap
-import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
+import bogomolov.aa.anochat.features.shared.*
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
@@ -144,7 +141,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         )
         val image = message.image
         if (image != null) {
-            val imageBitmap = getBitmap(image, context, 4)
+            val imageBitmap = getBitmapFromGallery(image, context, 4)
             if (imageBitmap != null) notificationBuilder.setStyle(
                 NotificationCompat.BigPictureStyle()
                     .bigPicture(imageBitmap)

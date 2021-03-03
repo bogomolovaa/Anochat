@@ -38,6 +38,7 @@
     <string name="contacts">Contacts</string>
     <string name="sign_in">Sign in</string>
     <string name="set_avatar">Set avatar</string>
+    <string name="save_to_gallery">Save photos to gallery</string>
 
 
     <string name="enter_valid_phone">Enter valid phone number</string>

@@ -10,16 +10,13 @@ import bogomolov.aa.anochat.domain.repositories.MessageRepository
 import bogomolov.aa.anochat.domain.repositories.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import java.util.*
 
 private const val UID1 = "uid1"
 private const val UID2 = "uid2"
@@ -48,6 +45,7 @@ class TestMessageUseCases {
         val user = User(uid = UID2)
         `when`(userRep2.getOrAddUser(UID1)).thenReturn(user)
         `when`(conversationRep2.createOrGetConversation(user)).thenReturn(1L)
+
 
         val text = "Some text"
         val message1 = Message(text = text, image = "some_file.jpg", messageId = "messageId_123")

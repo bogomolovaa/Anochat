@@ -1,30 +1,29 @@
 package bogomolov.aa.anochat.repository.repositories
 
+import android.content.Context
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.getMyUID
-import bogomolov.aa.anochat.domain.getValue
 import bogomolov.aa.anochat.domain.repositories.UserRepository
+import bogomolov.aa.anochat.features.shared.fileExists
+import bogomolov.aa.anochat.features.shared.getByteArray
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import bogomolov.aa.anochat.repository.AppDatabase
-import bogomolov.aa.anochat.repository.FILES_DIRECTORY
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
-import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
-
 
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val db: AppDatabase,
     private val firebase: Firebase,
-    private val keyValueStore: KeyValueStore
+    private val keyValueStore: KeyValueStore,
+    @ApplicationContext private val context: Context
 ) : UserRepository {
-    private val filesDir: String = keyValueStore.getValue(FILES_DIRECTORY)!!
     private val mapper = ModelEntityMapper()
-
 
     override fun getImagesDataSource(userId: Long) = db.messageDao().getImages(userId)
 
@@ -99,7 +98,7 @@ class UserRepositoryImpl @Inject constructor(
             val photoChanged = user.photo != savedUser?.photo
             if (photoChanged) downloadFile(getMiniPhotoFileName(user.photo), user.uid)
             if (loadFullPhoto) {
-                val fileExist = File(filesDir, user.photo).exists()
+                val fileExist = fileExists(user.photo, context)
                 if (photoChanged || !fileExist) downloadFile(user.photo, user.uid)
             }
         }
@@ -108,8 +107,10 @@ class UserRepositoryImpl @Inject constructor(
     private suspend fun downloadFile(fileName: String, uid: String) =
         firebase.downloadFile(fileName, uid)
 
-    private suspend fun uploadFile(fileName: String, uid: String) =
-        firebase.uploadFile(fileName, uid, File(filesDir, fileName).readBytes())
+    private suspend fun uploadFile(fileName: String, uid: String) {
+        val byteArray = getByteArray(false, fileName, context) ?: return
+        firebase.uploadFile(fileName, uid, byteArray)
+    }
 
     private fun getMyUID() = keyValueStore.getMyUID()
 }

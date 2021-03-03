@@ -5,7 +5,7 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
-import bogomolov.aa.anochat.features.shared.getBitmap
+import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 
 class ConversationUpdatableView(
@@ -66,7 +66,7 @@ class ConversationUpdatableView(
             binding.replyLayout.visibility = View.VISIBLE
             binding.replyText.text = replyMessage.text
             if (replyMessage.image != null) {
-                val bitmap = getBitmap(replyMessage.image, binding.root.context, 4)
+                val bitmap = getBitmapFromGallery(replyMessage.image, binding.root.context, 4)
                 if (bitmap != null) {
                     binding.replyImage.setImageBitmap(bitmap)
                     binding.replyImage.visibility = View.VISIBLE

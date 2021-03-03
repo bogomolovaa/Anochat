@@ -35,22 +35,18 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun isSignedIn() = firebase.isSignedIn()
 
-    companion object {
-        private const val NOTIFICATIONS = "notifications"
-        private const val SOUND = "sound"
-        private const val VIBRATION = "vibration"
-    }
-
     override fun updateSettings(settings: Settings) {
-        keyValueStore.setValue(NOTIFICATIONS, settings.notifications)
-        keyValueStore.setValue(SOUND, settings.sound)
-        keyValueStore.setValue(VIBRATION, settings.vibration)
+        keyValueStore.setValue(Settings.NOTIFICATIONS, settings.notifications)
+        keyValueStore.setValue(Settings.SOUND, settings.sound)
+        keyValueStore.setValue(Settings.VIBRATION, settings.vibration)
+        keyValueStore.setValue(Settings.GALLERY, settings.gallery)
     }
 
     override fun getSettings() = Settings(
-        notifications = keyValueStore.getValue(NOTIFICATIONS) ?: true,
-        sound = keyValueStore.getValue(SOUND) ?: true,
-        vibration = keyValueStore.getValue(VIBRATION) ?: true
+        notifications = keyValueStore.getBooleanValue(Settings.NOTIFICATIONS),
+        sound = keyValueStore.getBooleanValue(Settings.SOUND),
+        vibration = keyValueStore.getBooleanValue(Settings.VIBRATION),
+        gallery = keyValueStore.getBooleanValue(Settings.GALLERY)
     )
 
 }

@@ -18,7 +18,7 @@ class RoundedImageView(context: Context, attrs: AttributeSet) : FrameLayout(cont
     init {
         ConstraintLayout.inflate(context, R.layout.rounded_image_layout, this)
         val a = context.obtainStyledAttributes(attrs, R.styleable.RoundedImageView, 0, 0)
-        roundFg = findViewById<ImageView>(R.id.round_fg_image)
+        roundFg = findViewById(R.id.round_fg_image)
         val color = a.getColor(R.styleable.RoundedImageView_foregroundColor, Color.BLACK)
         setForegroundColor(color)
         defaultDrawable = a.getResourceId(R.styleable.RoundedImageView_srcDrawable, -1)

@@ -1,20 +1,19 @@
 package bogomolov.aa.anochat.repository.repositories
 
+import android.content.Context
 import android.util.Log
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.getMyUID
-import bogomolov.aa.anochat.domain.getValue
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
+import bogomolov.aa.anochat.features.shared.*
 import bogomolov.aa.anochat.repository.AppDatabase
-import bogomolov.aa.anochat.repository.FILES_DIRECTORY
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -24,9 +23,9 @@ private const val TAG = "MessageRepository"
 class MessageRepositoryImpl @Inject constructor(
     private val db: AppDatabase,
     private val firebase: Firebase,
-    private val keyValueStore: KeyValueStore
+    private val keyValueStore: KeyValueStore,
+    @ApplicationContext private val context: Context
 ) : MessageRepository {
-    private val filesDir: String = keyValueStore.getValue(FILES_DIRECTORY)!!
     private val mapper = ModelEntityMapper()
 
     override fun searchMessagesDataSource(search: String) =
@@ -87,21 +86,23 @@ class MessageRepositoryImpl @Inject constructor(
     override suspend fun sendAttachment(
         message: Message,
         uid: String,
-        convert: (ByteArray) -> ByteArray
+        convert: ByteArray.() -> ByteArray
     ): Boolean {
         val fileName = message.getAttachment() ?: return false
-        val file = File(filesDir, fileName)
-        return firebase.uploadFile(fileName, uid, convert(file.readBytes()), isPrivate = true)
+        val fromGallery = message.image != null
+        val byteArray = getByteArray(fromGallery, fileName, context) ?: return false
+        return firebase.uploadFile(fileName, uid, byteArray.convert(), isPrivate = true)
     }
 
     override suspend fun receiveAttachment(
         message: Message,
         uid: String,
-        convert: (ByteArray) -> ByteArray
+        convert: ByteArray.() -> ByteArray
     ): Boolean {
         val fileName = message.getAttachment() ?: return false
-        val byteArray = firebase.downloadFile(fileName, uid, isPrivate = true) ?: return false
-        File(filesDir, fileName).writeBytes(convert(byteArray))
+        val byteArray = firebase.downloadFile(fileName, uid, true) ?: return false
+        val toGallery = Settings.get(Settings.GALLERY, context) && message.image != null
+        byteArray.convert().save(toGallery, fileName, context)
         db.messageDao().updateAsReceived(message.id)
         return true
     }
@@ -128,7 +129,6 @@ class MessageRepositoryImpl @Inject constructor(
             }
         if (ids.size > 0) db.messageDao().updateAsViewed(ids)
     }
-
 
     private fun getMyUID() = keyValueStore.getMyUID()
 }

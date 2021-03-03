@@ -9,7 +9,7 @@ import androidx.navigation.fragment.FragmentNavigator
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.ImageLayoutBinding
 import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
-import bogomolov.aa.anochat.features.shared.getBitmap
+import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 
 class ImagesPagedAdapter(private val onClick: () -> Unit) :
     ExtPagedListAdapter<String, ImageLayoutBinding>() {
@@ -28,7 +28,7 @@ class ImagesPagedAdapter(private val onClick: () -> Unit) :
         val binding = holder.binding
         if (image != null) {
             binding.image.transitionName = image
-            binding.image.setImageBitmap(getBitmap(image, binding.image.context, 8))
+            binding.image.setImageBitmap(getBitmapFromGallery(image, binding.image.context, 8))
             setOnClickListener(binding.image, image)
         }
     }
@@ -44,6 +44,7 @@ class ImagesPagedAdapter(private val onClick: () -> Unit) :
                 Bundle().apply {
                     putString("image", image)
                     putInt("quality", 8)
+                    putBoolean("gallery", true)
                 },
                 null,
                 extras
