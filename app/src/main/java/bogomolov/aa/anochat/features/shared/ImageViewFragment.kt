@@ -1,12 +1,14 @@
 package bogomolov.aa.anochat.features.shared
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import androidx.activity.addCallback
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
@@ -19,6 +21,7 @@ import bogomolov.aa.anochat.databinding.FragmentImageViewBinding
 import bogomolov.aa.anochat.features.main.MainActivity
 import kotlin.math.max
 import kotlin.math.min
+
 
 private const val MAX_SCALE = 10f
 private const val MIN_SCALE = 1f
@@ -46,6 +49,15 @@ class ImageViewFragment : Fragment() {
         sharedElementEnterTransition =
             TransitionInflater.from(context).inflateTransition(R.transition.change_image_transform)
         requireActivity().window.decorView.setBackgroundResource(R.color.black)
+
+        requireActivity().window.statusBarColor =
+            ContextCompat.getColor(requireContext(), R.color.black)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        requireActivity().window.statusBarColor =
+            ContextCompat.getColor(requireContext(), R.color.colorPrimaryDark)
     }
 
     private val onTransitionEndListener = object : TransitionListenerAdapter() {
@@ -65,6 +77,7 @@ class ImageViewFragment : Fragment() {
         val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         mainActivity.supportActionBar?.title = ""
+        setHasOptionsMenu(true)
 
         imageName = arguments?.getString("image")!!
         quality = arguments?.getInt("quality")!!
@@ -75,7 +88,7 @@ class ImageViewFragment : Fragment() {
         binding.touchLayout.setOnTouchListener(imageOnTouchListener)
 
         systemUiVisibility = requireActivity().window.decorView.systemUiVisibility
-        //showSystemUI()
+        showSystemUI()
 
         binding.toolbar.setNavigationOnClickListener { onBackPressed(navController) }
         requireActivity().onBackPressedDispatcher.addCallback(owner = viewLifecycleOwner) {
@@ -86,6 +99,27 @@ class ImageViewFragment : Fragment() {
         return binding.root
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        menu.clear()
+        inflater.inflate(R.menu.image_view_menu, menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.menu_share) {
+            val uri = getUri(imageName, requireContext())
+            if (uri != null) {
+                val intent = Intent(Intent.ACTION_SEND)
+                intent.type = "image/jpeg"
+                intent.putExtra(Intent.EXTRA_STREAM, uri)
+                val title = resources.getString(R.string.share_image)
+                startActivity(Intent.createChooser(intent, title))
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun onBackPressed(navController: NavController) {
         if (quality > 1) loadImage(quality)
         navController.navigateUp()
@@ -93,6 +127,7 @@ class ImageViewFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        requireActivity().window.decorView.systemUiVisibility = systemUiVisibility
         (sharedElementEnterTransition as Transition).removeListener(onTransitionEndListener)
     }
 
@@ -107,11 +142,14 @@ class ImageViewFragment : Fragment() {
     }
 
     private var scaling = false
+    private var canExpand = true
+
 
     private val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
 
         override fun onScaleBegin(scaleGestureDetector: ScaleGestureDetector): Boolean {
             scaling = true
+            canExpand = false
             return true
         }
 
@@ -170,6 +208,7 @@ class ImageViewFragment : Fragment() {
                     MotionEvent.ACTION_DOWN -> {
                         lastPoint = point
                         canMove = true
+                        canExpand = true
                     }
                     MotionEvent.ACTION_POINTER_DOWN -> canMove = false
                     MotionEvent.ACTION_MOVE -> {
@@ -178,12 +217,14 @@ class ImageViewFragment : Fragment() {
                             imageView.translationX += offset.x
                             imageView.translationY += offset.y
                             checkBounds()
-                            //expand(true)
+                            canExpand = false
                         }
                         lastPoint = point
                     }
-                    //MotionEvent.ACTION_UP -> if (!moved) expand(!expanded)
-                    MotionEvent.ACTION_UP -> canMove = false
+                    MotionEvent.ACTION_UP -> {
+                        canMove = false
+                        if (canExpand) expand(!expanded)
+                    }
                 }
             }
             return false
@@ -200,17 +241,17 @@ class ImageViewFragment : Fragment() {
     }
 
     private fun hideSystemUI() {
-        requireActivity().window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
-        mainActivity.supportActionBar?.hide()
+        requireActivity().window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                )
     }
 
     private fun showSystemUI() {
-        mainActivity.supportActionBar?.show()
         requireActivity().window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION

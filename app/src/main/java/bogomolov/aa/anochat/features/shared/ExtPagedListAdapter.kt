@@ -15,6 +15,7 @@ abstract class ExtPagedListAdapter<T, B>(
 ) : PagedListAdapter<T, ExtPagedListAdapter<T, B>.VH>(createDiffCallback()) {
     private val selectedIds: MutableSet<Long> = HashSet()
     private val selectedItems: MutableSet<T> = HashSet()
+    private val selectedVH: MutableSet<VH> = HashSet()
     var selectionMode = false
     private var actionMode: ActionMode? = null
 
@@ -28,7 +29,10 @@ abstract class ExtPagedListAdapter<T, B>(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = getItem(position)
         bind(item, holder)
+        onItemSelected(holder.binding, if (item != null) isChecked(item) else false)
     }
+
+    protected open fun onItemSelected(binding: B, selected: Boolean) {}
 
     @SuppressLint("ClickableViewAccessibility")
     inner class VH(
@@ -39,6 +43,7 @@ abstract class ExtPagedListAdapter<T, B>(
         init {
             if (actionModeData != null || onClickListener != null)
                 viewHolder.setOnClickListener { onClick() }
+
             if (actionModeData != null)
                 viewHolder.setOnLongClickListener {
                     onLongClick()
@@ -55,11 +60,13 @@ abstract class ExtPagedListAdapter<T, B>(
                     if (selectedIds.contains(id)) {
                         selectedIds.remove(id)
                         selectedItems.remove(item)
+                        selectedVH.remove(this)
                     } else {
                         selectedIds.add(id)
                         selectedItems.add(item)
+                        selectedVH.add(this)
                     }
-                    notifyItemChanged(adapterPosition)
+                    onItemSelected(binding, isChecked(item))
                 } else {
                     onClickListener?.onClick(item)
                 }
@@ -111,10 +118,11 @@ abstract class ExtPagedListAdapter<T, B>(
     }
 
     private fun disableCheckMode() {
+        for (vh in selectedVH) onItemSelected(vh.binding, false)
         selectedIds.clear()
         selectedItems.clear()
+        selectedVH.clear()
         selectionMode = false
-        notifyDataSetChanged()
     }
 }
 

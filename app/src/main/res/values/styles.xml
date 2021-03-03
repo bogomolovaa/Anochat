@@ -13,6 +13,8 @@
 
         <item name="android:windowContentTransitions">true</item>
 
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
     </style>
 
     <style name="AppTheme.Toolbar" parent="AppTheme">

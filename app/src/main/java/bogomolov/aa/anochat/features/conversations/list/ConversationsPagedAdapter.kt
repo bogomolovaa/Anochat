@@ -36,13 +36,16 @@ class ConversationsPagedAdapter(
                 } else {
                     conversation.lastMessage?.shortText() ?: ""
                 }
-            val context = binding.root.context
-            val color = if (isChecked(conversation))
-                ContextCompat.getColor(context, R.color.not_my_message_color)
-            else
-                ContextCompat.getColor(context, R.color.my_message_color)
-            binding.cardView.setCardBackgroundColor(color)
-            binding.userPhoto.setForegroundColor(color)
         }
+    }
+
+    override fun onItemSelected(binding: ConversationLayoutBinding, selected: Boolean) {
+        val context = binding.root.context
+        val color = if (selected)
+            ContextCompat.getColor(context, R.color.not_my_message_color)
+        else
+            ContextCompat.getColor(context, R.color.my_message_color)
+        binding.cardView.setCardBackgroundColor(color)
+        binding.userPhoto.setForegroundColor(color)
     }
 }

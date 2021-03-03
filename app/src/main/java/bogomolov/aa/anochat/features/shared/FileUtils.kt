@@ -11,6 +11,7 @@ import android.os.Environment
 import android.os.Environment.DIRECTORY_PICTURES
 import android.provider.MediaStore
 import android.util.Log
+import androidx.core.content.FileProvider
 import java.io.*
 import kotlin.math.max
 import kotlin.math.min
@@ -62,8 +63,8 @@ fun ByteArray.save(toGallery: Boolean, fileName: String, context: Context) {
 }
 
 fun getByteArray(fromGallery: Boolean, fileName: String, context: Context): ByteArray? {
-    val inputStream = if (fromGallery) getGalleryInputStream(fileName, context) else null
-        ?: getFileInputStream(fileName, context)
+    var inputStream = if (fromGallery) getGalleryInputStream(fileName, context) else null
+    if (inputStream == null) inputStream = getFileInputStream(fileName, context)
     return inputStream?.readBytes()?.also { inputStream.close() }
 }
 
@@ -121,37 +122,8 @@ private fun saveImageToGallery(bitmap: Bitmap, fileName: String, context: Contex
 
 private fun getGalleryInputStream(fileName: String, context: Context): InputStream? {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val projection = arrayOf(MediaStore.Images.Media._ID)
-        /*
-        val selection =
-            "${MediaStore.Images.Media.RELATIVE_PATH} = ? and ${MediaStore.Images.Media.DISPLAY_NAME} = ?"
-        val imagesPath = "${DIRECTORY_PICTURES}/$GALLERY_FOLDER"
-        val selectionArgs = arrayOf(imagesPath, fileName)
-         */
-        val selection =
-            "${MediaStore.Images.Media.DISPLAY_NAME} = ?"
-        val selectionArgs = arrayOf(fileName)
-        try {
-            context.contentResolver.query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                selection,
-                selectionArgs,
-                null
-            )?.use {
-                if (it.moveToNext()) {
-                    val uri = ContentUris.withAppendedId(
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                        it.getLong(it.getColumnIndex(MediaStore.Images.Media._ID))
-                    )
-                    return context.contentResolver.openInputStream(uri)
-                } else {
-                    Log.w(TAG, "getGalleryInputStream $fileName not found")
-                }
-            }
-        } catch (e: SecurityException) {
-            Log.w(TAG, "getGalleryInputStream exception: ${e.message}")
-        }
+        val uri = getGalleryUri(fileName, context)
+        return if (uri != null) context.contentResolver.openInputStream(uri) else null
     } else {
         val imagesDir =
             File("${Environment.getExternalStoragePublicDirectory(DIRECTORY_PICTURES)}/$GALLERY_FOLDER")
@@ -161,6 +133,52 @@ private fun getGalleryInputStream(fileName: String, context: Context): InputStre
             Log.w(TAG, "getGalleryInputStream exception: ${e.message}")
             null
         }
+    }
+}
+
+fun getUri(fileName: String, context: Context): Uri? {
+    return getGalleryUri(fileName, context) ?: try {
+        FileProvider.getUriForFile(
+            context,
+            "bogomolov.aa.anochat.fileprovider",
+            File(getFilePath(context, fileName))
+        )
+    } catch (e: java.lang.Exception) {
+        null
+    }
+}
+
+private fun getGalleryUri(fileName: String, context: Context): Uri? {
+    val projection = arrayOf(MediaStore.Images.Media._ID)
+    /*
+    val selection =
+        "${MediaStore.Images.Media.RELATIVE_PATH} = ? and ${MediaStore.Images.Media.DISPLAY_NAME} = ?"
+    val imagesPath = "${DIRECTORY_PICTURES}/$GALLERY_FOLDER"
+    val selectionArgs = arrayOf(imagesPath, fileName)
+     */
+    val selection =
+        "${MediaStore.Images.Media.DISPLAY_NAME} = ?"
+    val selectionArgs = arrayOf(fileName)
+    try {
+        context.contentResolver.query(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            projection,
+            selection,
+            selectionArgs,
+            null
+        )?.use {
+            if (it.moveToNext()) {
+                val uri = ContentUris.withAppendedId(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    it.getLong(it.getColumnIndex(MediaStore.Images.Media._ID))
+                )
+                return uri
+            } else {
+                Log.w(TAG, "getGalleryInputStream $fileName not found")
+            }
+        }
+    } catch (e: SecurityException) {
+        Log.w(TAG, "getGalleryInputStream exception: ${e.message}")
     }
     return null
 }

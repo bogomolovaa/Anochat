@@ -43,7 +43,6 @@ class ConversationListViewModel
     }
 
     private fun DeleteConversationsAction.execute() {
-        Log.i("test","deleteConversations $ids")
         conversationUseCases.deleteConversations(HashSet(ids))
     }
 

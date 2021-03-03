@@ -108,8 +108,6 @@ class ConversationRecyclerViewSetup(
                 if (dy != 0) fragment.hideKeyBoard()
                 val firstId = linearLayoutManager.findFirstCompletelyVisibleItemPosition() - 1
                 val lastId = linearLayoutManager.findLastCompletelyVisibleItemPosition() + 1
-
-
                 loadImagesJob?.cancel()
                 loadImagesJob = fragment.lifecycleScope.launch {
                     if (enterAnimationFinished) delay(300)

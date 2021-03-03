@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
@@ -53,35 +54,38 @@ class MessagesPagedAdapter(
             val context = binding.root.context
             binding.message = item
             binding.imageProgressLayout.visibility = View.GONE
+            val detector = getGestureDetector(binding.messageCardView, item.message, holder)
             val image = item.message.image
             if (!image.isNullOrEmpty()) {
                 item.detailedImageLoaded = false
                 if (!loadImage(image, binding.imageView, 8))
                     showImageNotLoaded(binding, item.message.time)
-                setImageClickListener(item.message, binding.imageView, holder)
+                setImageClickListener(item.message, binding.imageView, detector)
             }
             val replyMessageImage = item.message.replyMessage?.image
             if (replyMessageImage != null) {
                 val bitmap = getBitmapFromGallery(replyMessageImage, context, 16)
                 binding.replyImage.setImageBitmap(bitmap)
             }
-            val detector = getGestureDetector(binding.messageCardView, item.message)
             binding.messageCardView.setOnTouchListener { _, event ->
                 detector.onTouchEvent(event)
-                false
             }
             initPlayAudioView(item.message, binding.playAudioInput, messagesMap)
             initPlayAudioView(item.message.replyMessage, binding.replayAudio, replyMessagesMap)
 
-            val color = if (isChecked(item))
-                ContextCompat.getColor(context, R.color.my_message_color)
-            else
-                ContextCompat.getColor(context, R.color.conversation_background)
-            binding.messageLayout.setBackgroundColor(color)
             binding.executePendingBindings()
         } else {
             binding.message = null
         }
+    }
+
+    override fun onItemSelected(binding: MessageLayoutBinding, selected: Boolean) {
+        val context = binding.root.context
+        val color = if (selected)
+            ContextCompat.getColor(context, R.color.my_message_color)
+        else
+            ContextCompat.getColor(context, R.color.conversation_background)
+        binding.messageLayout.setBackgroundColor(color)
     }
 
     private fun initPlayAudioView(
@@ -128,8 +132,10 @@ class MessagesPagedAdapter(
         val elapsed = System.currentTimeMillis() - receivedTime
         if (elapsed / 1000 < WAITING_IMAGE_TIMEOUT) {
             binding.imageProgressBar.visibility = View.VISIBLE
+            binding.errorLoadingImage.visibility = View.INVISIBLE
         } else {
             binding.errorLoadingImage.visibility = View.VISIBLE
+            binding.imageProgressBar.visibility = View.INVISIBLE
         }
     }
 
@@ -146,11 +152,24 @@ class MessagesPagedAdapter(
         imageView.layoutParams = layoutParams
     }
 
-    private fun getGestureDetector(messageCardView: MaterialCardView, message: Message) =
+    private fun getGestureDetector(
+        messageCardView: MaterialCardView,
+        message: Message,
+        holder: VH
+    ) =
         GestureDetectorCompat(
             messageCardView.context,
             object : GestureDetector.SimpleOnGestureListener() {
                 override fun onDown(event: MotionEvent) = true
+
+                override fun onLongPress(e: MotionEvent?) {
+                    holder.onLongClick()
+                }
+
+                override fun onSingleTapUp(e: MotionEvent?): Boolean {
+                    holder.onClick()
+                    return false
+                }
 
                 override fun onFling(
                     event1: MotionEvent?,
@@ -169,28 +188,30 @@ class MessagesPagedAdapter(
                 }
             })
 
-    private fun setImageClickListener(message: Message, imageView: ImageView, holder: VH) {
-        imageView.setOnClickListener {
-            if (!selectionMode) {
-                if (message.received == 1 || message.isMine) {
-                    val navController = Navigation.findNavController(imageView)
-                    val extras = FragmentNavigator.Extras.Builder()
-                        .addSharedElement(imageView, imageView.transitionName)
-                        .build()
-                    val bundle = Bundle().apply {
-                        putString("image", message.image)
-                        putInt("quality", 2)
-                        putBoolean("gallery", true)
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setImageClickListener(
+        message: Message,
+        imageView: ImageView,
+        detector: GestureDetectorCompat
+    ) {
+        imageView.setOnTouchListener { v, event ->
+            if (!detector.onTouchEvent(event))
+                if (event.action and MotionEvent.ACTION_MASK == MotionEvent.ACTION_UP && !selectionMode) {
+                    if (message.received == 1 || message.isMine) {
+                        val navController = Navigation.findNavController(imageView)
+                        val extras = FragmentNavigator.Extras.Builder()
+                            .addSharedElement(imageView, imageView.transitionName)
+                            .build()
+                        val bundle = Bundle().apply {
+                            putString("image", message.image)
+                            putInt("quality", 2)
+                            putBoolean("gallery", true)
+                        }
+                        navController.navigate(R.id.imageViewFragment, bundle, null, extras)
                     }
-                    navController.navigate(R.id.imageViewFragment, bundle, null, extras)
                 }
-            } else {
-                holder.onClick()
-            }
-        }
-        imageView.setOnLongClickListener {
-            holder.onLongClick()
             true
         }
+
     }
 }

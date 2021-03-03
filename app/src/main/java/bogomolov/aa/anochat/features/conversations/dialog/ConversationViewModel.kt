@@ -231,6 +231,7 @@ class ConversationViewModel @Inject constructor(
             }
             messageUseCases.sendMessage(message, conversation.user.uid)
         }
+        setState { copy(recyclerViewState = null) }
     }
 
     private fun DeleteMessagesAction.execute() {

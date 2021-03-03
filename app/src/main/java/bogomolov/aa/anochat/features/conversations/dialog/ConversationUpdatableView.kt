@@ -71,10 +71,14 @@ class ConversationUpdatableView(
                     binding.replyImage.setImageBitmap(bitmap)
                     binding.replyImage.visibility = View.VISIBLE
                 }
+            }else{
+                binding.replyImage.visibility = View.INVISIBLE
             }
             if (replyMessage.audio != null) {
                 binding.replayAudio.set(replyMessage.audio, replyMessage.messageId)
                 binding.replayAudio.visibility = View.VISIBLE
+            }else{
+                binding.replayAudio.visibility = View.INVISIBLE
             }
         }
     }
