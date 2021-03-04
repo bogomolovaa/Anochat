@@ -61,7 +61,11 @@ class MessagesPagedAdapter(
                 if (!loadImage(image, binding.imageView, 8))
                     showImageNotLoaded(binding, item.message.time)
                 setImageClickListener(item.message, binding.imageView, detector)
+            }else{
+                binding.imageView.setImageDrawable(null)
+                binding.imageView.visibility = View.GONE
             }
+
             val replyMessageImage = item.message.replyMessage?.image
             if (replyMessageImage != null) {
                 val bitmap = getBitmapFromGallery(replyMessageImage, context, 16)
@@ -76,6 +80,9 @@ class MessagesPagedAdapter(
             binding.executePendingBindings()
         } else {
             binding.message = null
+            binding.imageProgressLayout.visibility = View.GONE
+            binding.imageView.visibility = View.GONE
+            binding.executePendingBindings()
         }
     }
 
@@ -122,6 +129,10 @@ class MessagesPagedAdapter(
             imageView.setImageBitmap(bitmap)
             setImageSize(imageView, bitmap)
             return true
+        }else{
+            imageView.setImageDrawable(null)
+            imageView.visibility = View.GONE
+            imageView.requestLayout()
         }
         return false
     }

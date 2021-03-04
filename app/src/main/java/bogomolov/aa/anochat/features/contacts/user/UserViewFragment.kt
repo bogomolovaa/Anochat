@@ -45,7 +45,6 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
         transition = Fade().apply { duration = 375 }
         transition.addTarget(R.id.toolbar)
         transition.addTarget(R.id.user_info)
-        //transition.addTarget(R.id.userPhoto)
 
         exitTransition = transition
     }

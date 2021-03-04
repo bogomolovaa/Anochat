@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.transition.Transition
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -28,6 +29,7 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.transition.Fade
 import androidx.transition.Slide
+import androidx.transition.TransitionListenerAdapter
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.features.main.MainActivity
@@ -63,8 +65,9 @@ class ConversationFragment : Fragment(), RequestPermission {
         conversationInputSetup = ConversationInputSetup(this, viewModel, recyclerViewSetup)
         lifecycle.addObserver(StateLifecycleObserver(updatableView, viewModel))
 
-        enterTransition = Slide(Gravity.END).apply { duration = 375 }
-        exitTransition = Fade().apply { duration = 375 }
+        val animationDuration = resources.getInteger(R.integer.animation_duration).toLong()
+        enterTransition = Slide(Gravity.END).apply { duration = animationDuration }
+        exitTransition = Fade().apply { duration = animationDuration }
         requireActivity().window.decorView.setBackgroundResource(R.color.conversation_background)
     }
 
@@ -101,6 +104,8 @@ class ConversationFragment : Fragment(), RequestPermission {
         recyclerViewSetup.setup(binding) {
             startPostponedEnterTransition()
         }
+
+
 
         return binding.root
     }

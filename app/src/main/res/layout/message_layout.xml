@@ -157,7 +157,6 @@
                         android:scaleType="centerCrop"
                         android:clickable="true"
                         android:transitionName="@{message.message.image}"
-                        android:visibility="@{message.hasImage()? View.VISIBLE : View.GONE}"
                         app:layout_constraintHeight_max="250dp"
                         tools:srcCompat="@tools:sample/avatars"
                         tools:visibility="visible" />

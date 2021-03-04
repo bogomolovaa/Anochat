@@ -19,6 +19,7 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.features.shared.*
+import bogomolov.aa.anochat.repository.Firebase
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
@@ -46,6 +47,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     @Inject
     lateinit var authRepository: AuthRepository
 
+    @Inject
+    lateinit var firebase: Firebase
+
 
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
@@ -68,8 +72,14 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             val messageId = data["messageId"]
             serviceScope.launch(Dispatchers.IO) {
                 when (type) {
-                    TYPE_KEY -> messageUseCases.finallyReceivedPublicKey(publicKey!!, uid!!)
-                    TYPE_INIT_KEY -> messageUseCases.receivedPublicKey(publicKey!!, uid!!)
+                    TYPE_KEY -> {
+                        if (messageId != null) firebase.deleteRemoteMessage(messageId)
+                        messageUseCases.finallyReceivedPublicKey(publicKey!!, uid!!)
+                    }
+                    TYPE_INIT_KEY -> {
+                        if (messageId != null) firebase.deleteRemoteMessage(messageId)
+                        messageUseCases.receivedPublicKey(publicKey!!, uid!!)
+                    }
                     TYPE_MESSAGE -> receiveMessage(data)
                     TYPE_REPORT -> messageUseCases.receiveReport(messageId!!, received, viewed)
                 }
@@ -95,9 +105,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 image = image,
                 audio = audio
             )
-            messageUseCases.receiveMessage(message, uid) {
-                showNotification(it)
-            }
+            messageUseCases.receiveMessage(message, uid) { showNotification(it) }
         }
     }
 

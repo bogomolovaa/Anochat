@@ -31,7 +31,6 @@
         app:layout_constraintTop_toBottomOf="@id/toolbar">
 
 
-
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -52,7 +51,6 @@
                 android:id="@+id/user_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/conversation_background"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/userPhoto">
@@ -63,6 +61,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="24dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/userPhone"
                     tools:text="Status" />
@@ -88,7 +87,6 @@
                     tools:text="+79051234567" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
-
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

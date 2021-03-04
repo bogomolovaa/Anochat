@@ -3,6 +3,7 @@ package bogomolov.aa.anochat.features.conversations.dialog
 import android.os.Parcelable
 import android.util.DisplayMetrics
 import android.util.Log
+import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.LiveData
@@ -42,7 +43,14 @@ class ConversationRecyclerViewSetup(
                 override fun isAutoMeasureEnabled() = false
             }
             addOnScrollListener(createRecyclerViewScrollListener())
-            doOnPreDraw { onPreDraw() }
+            doOnPreDraw {
+                onPreDraw()
+                val animationDuration = resources.getInteger(R.integer.animation_duration).toLong()
+                fragment.lifecycleScope.launch {
+                    delay(animationDuration)
+                    requestLayout()
+                }
+            }
         }
     }
 

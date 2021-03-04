@@ -4,9 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Point
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.ImageView
 import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -19,6 +21,10 @@ import androidx.transition.TransitionListenerAdapter
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentImageViewBinding
 import bogomolov.aa.anochat.features.main.MainActivity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
@@ -32,24 +38,21 @@ class ImageViewFragment : Fragment() {
     private var bitmap: Bitmap? = null
     private lateinit var mainActivity: MainActivity
     private lateinit var scaleDetector: ScaleGestureDetector
-    private var systemUiVisibility = 0
+    private var savedSystemUiVisibility = 0
     private var scale = 1f
     private var expanded = false
     private lateinit var imageName: String
     private var fromGallery = false
     private var quality = 1
 
-    override fun onPause() {
-        super.onPause()
-        requireActivity().window.decorView.systemUiVisibility = systemUiVisibility
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        savedSystemUiVisibility = requireActivity().window.decorView.systemUiVisibility
         sharedElementEnterTransition =
             TransitionInflater.from(context).inflateTransition(R.transition.change_image_transform)
-        requireActivity().window.decorView.setBackgroundResource(R.color.black)
 
+        requireActivity().window.decorView.setBackgroundResource(R.color.black)
         requireActivity().window.statusBarColor =
             ContextCompat.getColor(requireContext(), R.color.black)
     }
@@ -87,12 +90,16 @@ class ImageViewFragment : Fragment() {
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         binding.touchLayout.setOnTouchListener(imageOnTouchListener)
 
-        systemUiVisibility = requireActivity().window.decorView.systemUiVisibility
-        showSystemUI()
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) showSystemUI()
 
         binding.toolbar.setNavigationOnClickListener { onBackPressed(navController) }
         requireActivity().onBackPressedDispatcher.addCallback(owner = viewLifecycleOwner) {
             onBackPressed(navController)
+        }
+
+        binding.imageView.post {
+            windowHeight = requireActivity().window.decorView.height
         }
 
         (sharedElementEnterTransition as Transition).addListener(onTransitionEndListener)
@@ -127,7 +134,7 @@ class ImageViewFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        requireActivity().window.decorView.systemUiVisibility = systemUiVisibility
+        requireActivity().window.decorView.systemUiVisibility = savedSystemUiVisibility
         (sharedElementEnterTransition as Transition).removeListener(onTransitionEndListener)
     }
 
@@ -143,6 +150,7 @@ class ImageViewFragment : Fragment() {
 
     private var scaling = false
     private var canExpand = true
+    private var windowHeight = 0
 
 
     private val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -175,24 +183,27 @@ class ImageViewFragment : Fragment() {
             imageView.translationX += (deltaWidth / 2) * (1 - focusX / (scale * width / 2))
             imageView.translationY += (deltaHeight / 2) * (1 - focusY / (scale * height / 2))
 
-            checkBounds()
+            checkBounds(0, 0)
             return true
         }
     }
 
-    private fun checkBounds() {
+    private fun checkBounds(delta1: Int, delta2: Int) {
         val imageView = binding.imageView
-        if (imageView.translationX > (scale - 1) * imageView.width / 2)
-            imageView.translationX = (scale - 1) * imageView.width / 2
-        if (imageView.translationX < -(scale - 1) * imageView.width / 2)
-            imageView.translationX = -(scale - 1) * imageView.width / 2
+        val maxShiftX = (scale - 1) * imageView.width / 2
+        if (imageView.translationX > maxShiftX)
+            imageView.translationX = maxShiftX
+        if (imageView.translationX < -maxShiftX)
+            imageView.translationX = -maxShiftX
 
-        val height = imageView.width * bitmap!!.height / bitmap!!.width
-        if (imageView.translationY > (scale - 1) * height / 2)
-            imageView.translationY = (scale - 1) * height / 2
-        if (imageView.translationY < -(scale - 1) * height / 2)
-            imageView.translationY = -(scale - 1) * height / 2
+        val maxShiftY =
+            ((scale - 1) * imageView.height - (scale) * delta1) / 2 - delta2
+        if (imageView.translationY > maxShiftY)
+            imageView.translationY = maxShiftY
+        if (imageView.translationY < -maxShiftY)
+            imageView.translationY = -maxShiftY
     }
+
 
     private val imageOnTouchListener = object : View.OnTouchListener {
         private var canMove = true
@@ -215,8 +226,16 @@ class ImageViewFragment : Fragment() {
                         if (canMove) {
                             val offset = Point(point.x - lastPoint.x, point.y - lastPoint.y)
                             imageView.translationX += offset.x
-                            imageView.translationY += offset.y
-                            checkBounds()
+                            val realHeight = imageView.width * bitmap!!.height / bitmap!!.width
+                            if (scale * realHeight > windowHeight) {
+                                imageView.translationY += offset.y
+                                checkBounds(
+                                    imageView.height - realHeight,
+                                    windowHeight - imageView.height
+                                )
+                            } else {
+                                checkBounds(0, 0)
+                            }
                             canExpand = false
                         }
                         lastPoint = point
