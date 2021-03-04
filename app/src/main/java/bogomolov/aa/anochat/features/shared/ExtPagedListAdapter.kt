@@ -1,13 +1,14 @@
 package bogomolov.aa.anochat.features.shared
 
 import android.annotation.SuppressLint
-import android.util.Log
-import android.view.*
+import android.view.ActionMode
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import androidx.appcompat.widget.Toolbar
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.card.MaterialCardView
 
 abstract class ExtPagedListAdapter<T, B>(
     private val actionModeData: ActionModeData<T>? = null,

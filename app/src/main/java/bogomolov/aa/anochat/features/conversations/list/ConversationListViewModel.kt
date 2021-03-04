@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.conversations.list
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList

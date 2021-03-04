@@ -3,7 +3,10 @@ package bogomolov.aa.anochat.repository
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
-import bogomolov.aa.anochat.repository.entity.*
+import bogomolov.aa.anochat.repository.entity.ConversationJoined
+import bogomolov.aa.anochat.repository.entity.MessageEntity
+import bogomolov.aa.anochat.repository.entity.MessageJoined
+import bogomolov.aa.anochat.repository.entity.UserEntity
 
 open class ModelEntityMapper {
 
@@ -53,7 +56,7 @@ open class ModelEntityMapper {
             from.conversationId,
             if (from.isMine) 1 else 0,
             from.messageId,
-            from.replyMessage?.messageId,
+            from.replyMessage?.messageId ?: from.replyMessageId,
             from.image,
             from.audio,
             from.publicKey,

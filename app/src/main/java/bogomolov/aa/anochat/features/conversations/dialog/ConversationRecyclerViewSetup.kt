@@ -2,9 +2,6 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.os.Parcelable
 import android.util.DisplayMetrics
-import android.util.Log
-import android.view.View
-import android.view.ViewGroup
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
@@ -13,10 +10,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
-import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.ActionModeData
-import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

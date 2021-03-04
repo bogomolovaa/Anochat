@@ -12,7 +12,6 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
-import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.resizeImage
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -35,9 +34,8 @@ class SendMediaFragment : Fragment() {
         val mediaUri = arguments?.getParcelable("uri") as Uri?
         conversationId = arguments?.getLong("conversationId")!!
 
-        val saveToGallery = Settings.get(Settings.GALLERY, requireContext()) && mediaUri == null
         val resizedImage =
-            resizeImage(mediaUri, mediaPath, requireContext(), toGallery = saveToGallery)
+            resizeImage(mediaUri, mediaPath, requireContext(), toGallery = (mediaUri == null))
         if (resizedImage != null) {
             binding.imageView.setImageBitmap(resizedImage.bitmap)
             binding.messageInputLayout.setEndIconOnClickListener {

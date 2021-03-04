@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
-import android.widget.ImageView
 import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -21,10 +20,6 @@ import androidx.transition.TransitionListenerAdapter
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentImageViewBinding
 import bogomolov.aa.anochat.features.main.MainActivity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 

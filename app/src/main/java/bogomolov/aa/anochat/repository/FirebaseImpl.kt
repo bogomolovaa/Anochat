@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.repository
 
 import android.util.Log
+import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
@@ -11,7 +12,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.combine
-import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -146,15 +146,16 @@ class FirebaseImpl @Inject constructor() : Firebase {
     override fun sendReport(messageId: String, received: Int, viewed: Int) {
         Log.i(TAG, "sendReport messageId $messageId")
         val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("messages").child(messageId)
-            .updateChildren(mapOf("received" to received.toString(), "viewed" to viewed.toString()))
+        myRef.child("messages").child(messageId).updateChildren(
+            mapOf(
+                "received" to received,
+                "viewed" to viewed
+            )
+        )
     }
 
     override fun sendMessage(
-        text: String?,
-        replyId: String?,
-        image: String?,
-        audio: String?,
+        message: Message?,
         uid: String,
         publicKey: String?,
         initiator: Boolean,
@@ -164,10 +165,10 @@ class FirebaseImpl @Inject constructor() : Firebase {
         val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
         ref.setValue(
             mapOf(
-                "message" to text,
-                "reply" to replyId,
-                "image" to image,
-                "audio" to audio,
+                "message" to message?.text,
+                "reply" to message?.replyMessageId,
+                "image" to message?.image,
+                "audio" to message?.audio,
                 "dest" to uid,
                 "source" to token,
                 "key" to publicKey,
@@ -205,7 +206,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
         suspendCoroutine { continuation ->
             val path = if (isPrivate) "/files/" else "/user/$uid/"
             val fileRef = FirebaseStorage.getInstance().getReference(path).child(fileName)
-            Log.d(TAG, "start uploading $fileName to ${fileRef.path} myUid")
+            Log.d(TAG, "start uploading $fileName to ${fileRef.path}")
 
             fileRef.putBytes(byteArray).addOnSuccessListener {
                 Log.d(TAG, "uploaded $fileName")
@@ -285,8 +286,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    it.resume(user?.uid)
+                    it.resume(auth.currentUser?.uid)
                 } else {
                     it.resumeWithException(task.exception!!)
                 }

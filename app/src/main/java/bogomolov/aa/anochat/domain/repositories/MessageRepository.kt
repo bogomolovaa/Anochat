@@ -3,7 +3,6 @@ package bogomolov.aa.anochat.domain.repositories
 import androidx.paging.DataSource
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
-import java.io.File
 
 interface MessageRepository : MessageUseCasesInRepository {
     fun saveMessage(message: Message): Long

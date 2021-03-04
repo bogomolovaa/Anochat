@@ -52,14 +52,8 @@ class MessageRepositoryImpl @Inject constructor(
         mapper.entityToModel(db.messageDao().getByMessageId(messageId))
 
     override fun sendMessage(message: Message, uid: String) =
-        firebase.sendMessage(
-            message.text,
-            message.replyMessage?.messageId,
-            message.image,
-            message.audio,
-            uid,
-            onSuccess = { db.messageDao().updateAsSent(message.id) }
-        ).also { db.messageDao().updateMessageId(message.id, it) }
+        firebase.sendMessage(message, uid) { db.messageDao().updateAsSent(message.id) }
+            .also { db.messageDao().updateMessageId(message.id, it) }
 
     override suspend fun sendAttachment(
         message: Message,

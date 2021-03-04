@@ -1,7 +1,6 @@
 package bogomolov.aa.anochat.repository.repositories
 
 import bogomolov.aa.anochat.domain.KeyValueStore
-import bogomolov.aa.anochat.domain.getValue
 import bogomolov.aa.anochat.domain.setMyUID
 import bogomolov.aa.anochat.domain.setValue
 import bogomolov.aa.anochat.features.shared.AuthRepository

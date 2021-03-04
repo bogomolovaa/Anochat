@@ -216,7 +216,7 @@ class ConversationViewModel @Inject constructor(
                 time = System.currentTimeMillis(),
                 isMine = true,
                 conversationId = conversation.id,
-                replyMessage = if (replyId != null) Message(messageId = replyId) else null,
+                replyMessageId = replyId,
                 audio = audio,
                 image = image
             )

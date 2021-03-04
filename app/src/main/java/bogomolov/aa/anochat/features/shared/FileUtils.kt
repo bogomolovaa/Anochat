@@ -65,7 +65,7 @@ fun resizeImage(
     val fileName = "${getRandomFileName()}.jpg"
     try {
         val resizedBitmap = Bitmap.createScaledBitmap(fastResizedBitmap!!, width, height, true)
-        if (toGallery) {
+        if (toGallery && Settings.get(Settings.GALLERY, context)) {
             saveImageToGallery(resizedBitmap, fileName, context)
         } else {
             saveImageToPath(resizedBitmap, fileName, context)

@@ -6,7 +6,6 @@ import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
 import kotlinx.coroutines.runBlocking
-import java.io.File
 
 class MockMessageRepository(
     private val myUid: String,
