@@ -176,7 +176,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
         ).addOnFailureListener {
             Log.w(TAG, "sendMessage failure", it)
         }.addOnSuccessListener {
-                onSuccess()
+            GlobalScope.launch(Dispatchers.IO) { onSuccess() }
         }
         return ref.key!!
     }

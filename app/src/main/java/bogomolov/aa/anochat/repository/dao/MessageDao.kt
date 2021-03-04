@@ -47,9 +47,6 @@ interface MessageDao {
     @Query("update MessageEntity set messageId = :messageId where id = :id")
     fun updateMessageId(id: Long, messageId: String)
 
-    @Query("update MessageEntity set sent = 1 where id = :id")
-    fun updateAsSent(id: Long)
-
     @Transaction
     @Query(
         "select * from MessageEntity as message_ " +
@@ -62,10 +59,13 @@ interface MessageDao {
     @Query("select * from MessageEntity where myUid = :myUid and sent = 0 and conversationId in (select id from ConversationEntity where userId = :userId)")
     fun getNotSent(userId: Long, myUid: String): List<MessageEntity>
 
-    @Query("update MessageEntity set viewed = 1 where id in (:ids)")
-    fun updateAsViewed(ids: List<Long>)
+    @Query("update MessageEntity set viewed = 1 where id = :id")
+    fun updateAsViewed(id: Long)
 
     @Query("update MessageEntity set received = 1 where id = :id")
     fun updateAsReceived(id: Long)
+
+    @Query("update MessageEntity set sent = 1 where id = :id")
+    fun updateAsSent(id: Long)
 
 }

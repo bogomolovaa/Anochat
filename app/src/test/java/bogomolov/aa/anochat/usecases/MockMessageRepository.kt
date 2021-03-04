@@ -29,14 +29,16 @@ class MockMessageRepository(
         return if (message != null && message.sent == 0) listOf(message) else listOf()
     }
 
-    override fun saveMessage(message: Message) {
+    override fun saveMessage(message: Message): Long {
         this.message = message
+        return 1
     }
 
-    override fun sendMessage(message: Message, uid: String) {
+    override fun sendMessage(message: Message, uid: String): String {
         runBlocking {
             remoteUseCases.receiveMessage(message, myUid) {}
         }
+        return message.messageId
     }
 
     override fun notifyAsReceived(messageId: String) {
@@ -79,7 +81,6 @@ class MockMessageRepository(
     }
 
 
-
     override fun searchMessagesDataSource(search: String): DataSource.Factory<Int, Conversation> {
         TODO("Not yet implemented")
     }
@@ -92,7 +93,7 @@ class MockMessageRepository(
         TODO("Not yet implemented")
     }
 
-    override fun notifyAsViewed(messages: List<Message>) {
+    override fun notifyAsViewed(message: Message) {
         TODO("Not yet implemented")
     }
 }

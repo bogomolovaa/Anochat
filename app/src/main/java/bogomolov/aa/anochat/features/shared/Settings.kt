@@ -16,8 +16,6 @@ data class Settings(
         const val VIBRATION = "vibration"
         const val GALLERY = "gallery"
 
-        fun get(name: String, context: Context): Boolean{
-            return KeyValueStoreImpl(context).getBooleanValue(name)
-        }
+        fun get(name: String, context: Context) = KeyValueStoreImpl(context).getBooleanValue(name)
     }
 }

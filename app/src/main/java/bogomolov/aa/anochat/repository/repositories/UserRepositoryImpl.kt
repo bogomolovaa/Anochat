@@ -28,9 +28,7 @@ class UserRepositoryImpl @Inject constructor(
     override fun getImagesDataSource(userId: Long) = db.messageDao().getImages(userId)
 
     override fun getUsersByPhonesDataSource(phones: List<String>) =
-        db.userDao().getAll(phones, getMyUID() ?: "").map {
-            mapper.entityToModel(it)!!
-        }
+        db.userDao().getAll(phones, getMyUID()!!).map { mapper.entityToModel(it)!! }
 
     override suspend fun updateUsersByPhones(phones: List<String>) =
         if (phones.isNotEmpty()) {
@@ -40,18 +38,15 @@ class UserRepositoryImpl @Inject constructor(
         } else listOf()
 
     override suspend fun updateUsersInConversations() {
-        val myUid = getMyUID()
-        if (myUid != null) {
-            val users = mapper.entityToModel<User>(db.userDao().getOpenedConversationUsers(myUid))
-            users.forEach { user ->
-                firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it) }
-            }
+        val myUid = getMyUID() ?: return
+        mapper.entityToModel<User>(db.userDao().getOpenedConversationUsers(myUid)).forEach { user ->
+            firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it) }
         }
     }
 
     override suspend fun getMyUser() = getOrAddUser(getMyUID()!!)
 
-    override fun getUser(id: Long): User = mapper.entityToModel(db.userDao().getUser(id))!!
+    override fun getUser(id: Long) = mapper.entityToModel(db.userDao().getUser(id))!!
 
     override suspend fun updateMyUser(user: User) {
         val savedUser = db.userDao().getUser(user.id)
@@ -73,12 +68,10 @@ class UserRepositoryImpl @Inject constructor(
     override fun addUserStatusListener(uid: String, scope: CoroutineScope) =
         firebase.addUserStatusListener(uid, scope)
 
-
     override suspend fun getOrAddUser(uid: String): User {
         val userEntity = db.userDao().findByUid(uid)
         val user = mapper.entityToModel(userEntity) ?: firebase.getUser(uid)!!
-        updateLocalUserFromRemote(user)
-        return user
+        return user.also { updateLocalUserFromRemote(it) }
     }
 
 

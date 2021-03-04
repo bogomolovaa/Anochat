@@ -6,10 +6,10 @@ import bogomolov.aa.anochat.domain.entity.Message
 import java.io.File
 
 interface MessageRepository : MessageUseCasesInRepository {
-    fun saveMessage(message: Message)
+    fun saveMessage(message: Message): Long
     fun getPendingMessages(uid: String): List<Message>
     fun getMessage(messageId: String): Message?
-    fun sendMessage(message: Message, uid: String)
+    fun sendMessage(message: Message, uid: String): String
     suspend fun sendAttachment(
         message: Message,
         uid: String,
@@ -33,5 +33,5 @@ interface MessageUseCasesInRepository {
 
     fun deleteMessages(ids: Set<Long>)
     fun receiveReport(messageId: String, received: Int, viewed: Int)
-    fun notifyAsViewed(messages: List<Message>)
+    fun notifyAsViewed(message: Message)
 }

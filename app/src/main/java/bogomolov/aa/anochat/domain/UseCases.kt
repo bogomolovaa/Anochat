@@ -44,7 +44,7 @@ open class MessageUseCases @Inject constructor(
             message.conversationId = conversationRep.createOrGetConversation(user)
             val replyId = message.replyMessageId
             if (!replyId.isNullOrEmpty()) message.replyMessage = messageRep.getMessage(replyId)
-            messageRep.saveMessage(message)
+            message.id = messageRep.saveMessage(message)
             if (message.hasAttachment())
                 tryReceiveAttachment(message, uid, { crypto.decrypt(secretKey, this) }) {
                     onSuccess(message)
@@ -61,7 +61,7 @@ open class MessageUseCases @Inject constructor(
 
     fun sendMessage(message: Message, uid: String) {
         Log.d(TAG, "sendMessage $message to uid $uid")
-        if (message.isNotSaved()) messageRep.saveMessage(message)
+        if (message.isNotSaved()) message.id = messageRep.saveMessage(message)
         val secretKey = crypto.getSecretKey(uid)
         if (secretKey != null) {
             if (message.hasAttachment())
@@ -69,7 +69,7 @@ open class MessageUseCases @Inject constructor(
                     messageRep.sendAttachment(message, uid) { crypto.encrypt(secretKey, this) }
                 }
             message.text = crypto.encryptString(secretKey, message.text)
-            messageRep.sendMessage(message, uid)
+            message.messageId = messageRep.sendMessage(message, uid)
         } else if (keyIsNotSentTo(uid))
             sendPublicKey(crypto.generatePublicKey(uid), uid, initiator = true)
     }
@@ -83,6 +83,14 @@ open class MessageUseCases @Inject constructor(
     fun finallyReceivedPublicKey(publicKey: String, uid: String) {
         val generated = generateSecretKey(publicKey, uid)
         if (generated) sendPendingMessages(uid)
+    }
+
+    fun notifyAsViewed(messages: List<Message>) {
+        for (message in messages)
+            if (!message.isMine && message.viewed == 0) {
+                message.viewed = 1
+                messageRep.notifyAsViewed(message)
+            }
     }
 
     private fun tryReceiveAttachment(

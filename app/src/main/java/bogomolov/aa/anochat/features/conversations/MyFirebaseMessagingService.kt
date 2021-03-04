@@ -70,20 +70,28 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             val received = data["received"]?.toInt() ?: 0
             val viewed = data["viewed"]?.toInt() ?: 0
             val messageId = data["messageId"]
-            serviceScope.launch(Dispatchers.IO) {
-                when (type) {
-                    TYPE_KEY -> {
-                        if (messageId != null) firebase.deleteRemoteMessage(messageId)
-                        messageUseCases.finallyReceivedPublicKey(publicKey!!, uid!!)
+            if (messageId != null)
+                serviceScope.launch(Dispatchers.IO) {
+                    when (type) {
+                        TYPE_KEY -> {
+                            firebase.deleteRemoteMessage(messageId)
+                            Log.d(TAG, "finallyReceivedPublicKey from $uid")
+                            messageUseCases.finallyReceivedPublicKey(publicKey!!, uid!!)
+                        }
+                        TYPE_INIT_KEY -> {
+                            firebase.deleteRemoteMessage(messageId)
+                            Log.d(TAG, "receivedPublicKey from $uid")
+                            messageUseCases.receivedPublicKey(publicKey!!, uid!!)
+                        }
+                        TYPE_MESSAGE -> receiveMessage(data)
+                        TYPE_REPORT -> {
+                            if (viewed == 1 || received == -1)
+                                firebase.deleteRemoteMessage(messageId)
+                            Log.d(TAG, "receivedReport received $received viewed $viewed")
+                            messageUseCases.receiveReport(messageId, received, viewed)
+                        }
                     }
-                    TYPE_INIT_KEY -> {
-                        if (messageId != null) firebase.deleteRemoteMessage(messageId)
-                        messageUseCases.receivedPublicKey(publicKey!!, uid!!)
-                    }
-                    TYPE_MESSAGE -> receiveMessage(data)
-                    TYPE_REPORT -> messageUseCases.receiveReport(messageId!!, received, viewed)
                 }
-            }
         }
     }
 

@@ -226,12 +226,12 @@ class ConversationViewModel @Inject constructor(
                     text = "",
                     replyMessage = null,
                     photoPath = null,
-                    audioFile = null
+                    audioFile = null,
+                    recyclerViewState = null
                 )
             }
             messageUseCases.sendMessage(message, conversation.user.uid)
         }
-        setState { copy(recyclerViewState = null) }
     }
 
     private fun DeleteMessagesAction.execute() {

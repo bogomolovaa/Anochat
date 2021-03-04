@@ -1,19 +1,17 @@
 package bogomolov.aa.anochat.repository.repositories
 
 import android.content.Context
-import android.util.Log
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.getMyUID
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
-import bogomolov.aa.anochat.features.shared.*
+import bogomolov.aa.anochat.features.shared.Settings
+import bogomolov.aa.anochat.features.shared.getByteArray
+import bogomolov.aa.anochat.features.shared.save
 import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,54 +32,40 @@ class MessageRepositoryImpl @Inject constructor(
         }
 
     override fun loadMessagesDataSource(conversationId: Long) =
-        db.messageDao().loadAll(conversationId).map {
-            mapper.entityToModel(it)!!
-        }
+        db.messageDao().loadAll(conversationId).map { mapper.entityToModel(it)!! }
 
     override fun deleteMessages(ids: Set<Long>) {
         db.messageDao().deleteByIds(ids)
     }
 
     override fun receiveReport(messageId: String, received: Int, viewed: Int) {
-        Log.d(TAG, "receiveReport received $received viewed $viewed")
         db.messageDao().updateReport(messageId, received, viewed)
-        if (viewed == 1 || received == -1) firebase.deleteRemoteMessage(messageId)
     }
 
-    override fun saveMessage(message: Message) {
-        val entity = mapper.modelToEntity(message)
-        entity.myUid = getMyUID()!!
-        message.id = db.messageDao().insert(entity)
-        Log.i(TAG, "save message ${message.id} $entity")
-        db.conversationDao().updateLastMessage(message.id, message.conversationId)
+    override fun saveMessage(message: Message): Long {
+        val entity = mapper.modelToEntity(message).apply { myUid = getMyUID()!! }
+        return db.messageDao().insert(entity).also { id ->
+            db.conversationDao().updateLastMessage(id, message.conversationId)
+        }
     }
 
     override fun getPendingMessages(uid: String): List<Message> {
-        val myUid = getMyUID()!!
-        val userId = db.userDao().findByUid(uid)?.id
-        return if (userId != null)
-            mapper.entityToModel(db.messageDao().getNotSent(userId, myUid))
-        else listOf()
+        val userId = db.userDao().findByUid(uid)?.id ?: return listOf()
+        return mapper.entityToModel(db.messageDao().getNotSent(userId, getMyUID()!!))
     }
 
     override fun getMessage(messageId: String) =
         mapper.entityToModel(db.messageDao().getByMessageId(messageId))
 
-    override fun sendMessage(message: Message, uid: String) {
-        message.messageId = firebase.sendMessage(
+    override fun sendMessage(message: Message, uid: String) =
+        firebase.sendMessage(
             message.text,
             message.replyMessage?.messageId,
             message.image,
             message.audio,
             uid,
-            onSuccess = {
-                GlobalScope.launch(Dispatchers.IO) {
-                    db.messageDao().updateAsSent(message.id)
-                }
-            }
-        )
-        db.messageDao().updateMessageId(message.id, message.messageId)
-    }
+            onSuccess = { db.messageDao().updateAsSent(message.id) }
+        ).also { db.messageDao().updateMessageId(message.id, it) }
 
     override suspend fun sendAttachment(
         message: Message,
@@ -119,15 +103,9 @@ class MessageRepositoryImpl @Inject constructor(
         firebase.sendMessage(uid = uid, publicKey = publicKey, initiator = initiator)
     }
 
-    override fun notifyAsViewed(messages: List<Message>) {
-        val ids = ArrayList<Long>()
-        for (message in messages)
-            if (!message.isMine && message.viewed == 0) {
-                message.viewed = 1
-                firebase.sendReport(message.messageId, 1, 1)
-                ids.add(message.id)
-            }
-        if (ids.size > 0) db.messageDao().updateAsViewed(ids)
+    override fun notifyAsViewed(message: Message) {
+        firebase.sendReport(message.messageId, 1, 1)
+        db.messageDao().updateAsViewed(message.id)
     }
 
     private fun getMyUID() = keyValueStore.getMyUID()
