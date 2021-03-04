@@ -67,5 +67,4 @@ interface MessageDao {
 
     @Query("update MessageEntity set sent = 1 where id = :id")
     fun updateAsSent(id: Long)
-
 }

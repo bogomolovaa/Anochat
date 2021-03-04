@@ -1,17 +1,14 @@
 package bogomolov.aa.anochat.repository.repositories
 
-import android.content.Context
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.getMyUID
 import bogomolov.aa.anochat.domain.repositories.UserRepository
-import bogomolov.aa.anochat.features.shared.fileExists
-import bogomolov.aa.anochat.features.shared.getByteArray
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import bogomolov.aa.anochat.repository.AppDatabase
+import bogomolov.aa.anochat.repository.FileStore
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,7 +18,7 @@ class UserRepositoryImpl @Inject constructor(
     private val db: AppDatabase,
     private val firebase: Firebase,
     private val keyValueStore: KeyValueStore,
-    @ApplicationContext private val context: Context
+    private val fileStore: FileStore
 ) : UserRepository {
     private val mapper = ModelEntityMapper()
 
@@ -39,7 +36,8 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun updateUsersInConversations() {
         val myUid = getMyUID() ?: return
-        mapper.entityToModel<User>(db.userDao().getOpenedConversationUsers(myUid)).forEach { user ->
+        val users = db.userDao().getOpenedConversationUsers(myUid)
+        mapper.entityToModel<User>(users).forEach { user ->
             firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it) }
         }
     }
@@ -91,7 +89,7 @@ class UserRepositoryImpl @Inject constructor(
             val photoChanged = user.photo != savedUser?.photo
             if (photoChanged) downloadFile(getMiniPhotoFileName(user.photo), user.uid)
             if (loadFullPhoto) {
-                val fileExist = fileExists(user.photo, context)
+                val fileExist = fileStore.fileExists(user.photo)
                 if (photoChanged || !fileExist) downloadFile(user.photo, user.uid)
             }
         }
@@ -101,7 +99,7 @@ class UserRepositoryImpl @Inject constructor(
         firebase.downloadFile(fileName, uid)
 
     private suspend fun uploadFile(fileName: String, uid: String) {
-        val byteArray = getByteArray(false, fileName, context) ?: return
+        val byteArray = fileStore.getByteArray(false, fileName) ?: return
         firebase.uploadFile(fileName, uid, byteArray)
     }
 

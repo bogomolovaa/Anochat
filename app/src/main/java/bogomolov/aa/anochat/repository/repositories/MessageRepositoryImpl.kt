@@ -1,28 +1,22 @@
 package bogomolov.aa.anochat.repository.repositories
 
-import android.content.Context
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.getMyUID
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
-import bogomolov.aa.anochat.features.shared.Settings
-import bogomolov.aa.anochat.features.shared.getByteArray
-import bogomolov.aa.anochat.features.shared.save
 import bogomolov.aa.anochat.repository.AppDatabase
+import bogomolov.aa.anochat.repository.FileStore
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
-import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-
-private const val TAG = "MessageRepository"
 
 @Singleton
 class MessageRepositoryImpl @Inject constructor(
     private val db: AppDatabase,
     private val firebase: Firebase,
     private val keyValueStore: KeyValueStore,
-    @ApplicationContext private val context: Context
+    private val fileStore: FileStore
 ) : MessageRepository {
     private val mapper = ModelEntityMapper()
 
@@ -74,7 +68,7 @@ class MessageRepositoryImpl @Inject constructor(
     ): Boolean {
         val fileName = message.getAttachment() ?: return false
         val fromGallery = message.image != null
-        val byteArray = getByteArray(fromGallery, fileName, context) ?: return false
+        val byteArray = fileStore.getByteArray(fromGallery, fileName) ?: return false
         return firebase.uploadFile(fileName, uid, byteArray.convert(), isPrivate = true)
     }
 
@@ -85,8 +79,8 @@ class MessageRepositoryImpl @Inject constructor(
     ): Boolean {
         val fileName = message.getAttachment() ?: return false
         val byteArray = firebase.downloadFile(fileName, uid, true) ?: return false
-        val toGallery = Settings.get(Settings.GALLERY, context) && message.image != null
-        byteArray.convert().save(toGallery, fileName, context)
+        val toGallery = message.image != null
+        fileStore.saveByteArray(byteArray.convert(), fileName, toGallery)
         db.messageDao().updateAsReceived(message.id)
         return true
     }

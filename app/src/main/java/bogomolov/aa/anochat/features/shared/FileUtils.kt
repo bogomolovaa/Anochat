@@ -46,30 +46,6 @@ fun getBitmapFromGallery(fileName: String?, context: Context, quality: Int = 1):
         .also { inputStream?.close() }
 }
 
-fun ByteArray.save(toGallery: Boolean, fileName: String, context: Context) {
-    if (toGallery)
-        try {
-            val outputStream = getGalleryOutputStream(fileName, context)
-            if (outputStream != null) {
-                outputStream.write(this)
-                outputStream.flush()
-                outputStream.close()
-                return
-            }
-        } catch (e: IOException) {
-            Log.w(TAG, "saveByteArray", e)
-        }
-    File(getFilePath(context, fileName)).writeBytes(this)
-}
-
-fun getByteArray(fromGallery: Boolean, fileName: String, context: Context): ByteArray? {
-    var inputStream = if (fromGallery) getGalleryInputStream(fileName, context) else null
-    if (inputStream == null) inputStream = getFileInputStream(fileName, context)
-    return inputStream?.readBytes()?.also { inputStream.close() }
-}
-
-fun fileExists(fileName: String, context: Context) = File(getFilePath(context, fileName)).exists()
-
 fun resizeImage(
     uri: Uri? = null,
     path: String? = null,
@@ -101,26 +77,7 @@ fun resizeImage(
     return null
 }
 
-
-private fun getFileInputStream(fileName: String, context: Context): InputStream? {
-    return try {
-        FileInputStream(File(getFilePath(context, fileName)))
-    } catch (e: FileNotFoundException) {
-        Log.w(TAG, "getFileInputStream ${e.message}")
-        null
-    }
-}
-
-private fun saveImageToGallery(bitmap: Bitmap, fileName: String, context: Context) {
-    val outputStream = getGalleryOutputStream(fileName, context)
-    if (outputStream != null) {
-        saveImageToStream(bitmap, outputStream)
-    } else {
-        saveImageToPath(bitmap, fileName, context)
-    }
-}
-
-private fun getGalleryInputStream(fileName: String, context: Context): InputStream? {
+fun getGalleryInputStream(fileName: String, context: Context): InputStream? {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         val uri = getGalleryUri(fileName, context)
         return if (uri != null) context.contentResolver.openInputStream(uri) else null
@@ -145,6 +102,62 @@ fun getUri(fileName: String, context: Context): Uri? {
         )
     } catch (e: java.lang.Exception) {
         null
+    }
+}
+
+fun getGalleryOutputStream(fileName: String, context: Context): OutputStream? {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val imagesPath = "${DIRECTORY_PICTURES}/$GALLERY_FOLDER"
+        val values = ContentValues()
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
+        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
+        values.put(MediaStore.Images.Media.RELATIVE_PATH, imagesPath)
+        values.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis())
+        return try {
+            val uri =
+                context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            if (uri != null) context.contentResolver.openOutputStream(uri) else null
+        } catch (e: SecurityException) {
+            Log.w(TAG, "getGalleryOutputStream exception: ${e.message}")
+            null
+        }
+    } else {
+        val imagesPath =
+            "${Environment.getExternalStoragePublicDirectory(DIRECTORY_PICTURES)}/$GALLERY_FOLDER"
+        val directory = File(imagesPath)
+        if (!directory.exists()) directory.mkdirs()
+        val file = File(directory, fileName)
+        val values = ContentValues()
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
+        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
+        values.put(MediaStore.Images.Media.DATA, file.absolutePath)
+        return try {
+            context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            FileOutputStream(file)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "getGalleryOutputStream exception: ${e.message}")
+            null
+        }
+    }
+}
+
+fun getFileInputStream(fileName: String, context: Context): InputStream? {
+    return try {
+        FileInputStream(File(getFilePath(context, fileName)))
+    } catch (e: FileNotFoundException) {
+        Log.w(TAG, "getFileInputStream ${e.message}")
+        null
+    }
+}
+
+
+private fun saveImageToGallery(bitmap: Bitmap, fileName: String, context: Context) {
+    val outputStream = getGalleryOutputStream(fileName, context)
+    if (outputStream != null) {
+        saveImageToStream(bitmap, outputStream)
+    } else {
+        saveImageToPath(bitmap, fileName, context)
     }
 }
 
@@ -181,43 +194,6 @@ private fun getGalleryUri(fileName: String, context: Context): Uri? {
         Log.w(TAG, "getGalleryInputStream exception: ${e.message}")
     }
     return null
-}
-
-private fun getGalleryOutputStream(fileName: String, context: Context): OutputStream? {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val imagesPath = "${DIRECTORY_PICTURES}/$GALLERY_FOLDER"
-        val values = ContentValues()
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
-        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
-        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
-        values.put(MediaStore.Images.Media.RELATIVE_PATH, imagesPath)
-        values.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis())
-        return try {
-            val uri =
-                context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-            if (uri != null) context.contentResolver.openOutputStream(uri) else null
-        } catch (e: SecurityException) {
-            Log.w(TAG, "getGalleryOutputStream exception: ${e.message}")
-            null
-        }
-    } else {
-        val imagesPath =
-            "${Environment.getExternalStoragePublicDirectory(DIRECTORY_PICTURES)}/$GALLERY_FOLDER"
-        val directory = File(imagesPath)
-        if (!directory.exists()) directory.mkdirs()
-        val file = File(directory, fileName)
-        val values = ContentValues()
-        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
-        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
-        values.put(MediaStore.Images.Media.DATA, file.absolutePath)
-        return try {
-            context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-            FileOutputStream(file)
-        } catch (e: SecurityException) {
-            Log.w(TAG, "getGalleryOutputStream exception: ${e.message}")
-            null
-        }
-    }
 }
 
 private fun saveImageToPath(bitmap: Bitmap, fileName: String, context: Context) {
