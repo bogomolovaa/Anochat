@@ -55,6 +55,11 @@
             android:name="androidx.work.impl.WorkManagerInitializer"
             android:authorities="${applicationId}.workmanager-init"
             tools:node="remove" />
+
+        <activity
+            android:name=".HiltTestActivity"
+            android:exported="false"  />
+
     </application>
 
 </manifest>

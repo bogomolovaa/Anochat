@@ -21,7 +21,7 @@ class MessageRepositoryImpl @Inject constructor(
     private val mapper = ModelEntityMapper()
 
     override fun searchMessagesDataSource(search: String) =
-        db.messageDao().searchText("%$search%", getMyUID() ?: "").map {
+        db.messageDao().searchText("%$search%", getMyUID()!!).map {
             mapper.entityToModel(it)!!
         }
 

@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.Switch
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
