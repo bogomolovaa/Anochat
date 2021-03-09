@@ -12,16 +12,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.combine
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 private const val TAG = "FirebaseRepository"
 
-@Singleton
-class FirebaseImpl @Inject constructor() : Firebase {
+class FirebaseImpl : Firebase {
     private lateinit var token: String
 
     init {

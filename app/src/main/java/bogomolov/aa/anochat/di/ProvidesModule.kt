@@ -5,6 +5,8 @@ import android.content.Context
 import androidx.room.Room
 import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.DB_NAME
+import bogomolov.aa.anochat.repository.Firebase
+import bogomolov.aa.anochat.repository.FirebaseImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,4 +28,8 @@ object ProvidesModule {
 
     @Provides
     fun providesContext(application: Application): Context = application
+
+    @Singleton
+    @Provides
+    fun providesFirebase(): Firebase = FirebaseImpl()
 }

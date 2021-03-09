@@ -16,6 +16,13 @@ data class Settings(
         const val VIBRATION = "vibration"
         const val GALLERY = "gallery"
 
+        fun create() = Settings(
+            notifications = false,
+            sound = false,
+            vibration = false,
+            gallery = false
+        )
+
         fun get(name: String, context: Context) = KeyValueStoreImpl(context).getBooleanValue(name)
     }
 }

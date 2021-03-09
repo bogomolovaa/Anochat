@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat
 
 
+import bogomolov.aa.anochat.MockitoKotlinTest.Companion.capture
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.settings.SettingsViewModel
@@ -55,13 +56,11 @@ class TestSettingsViewModel {
         val status = "new status"
 
         viewModel.setStateAsync { copy(user = User()) }
-        viewModel.addAction(UpdateUserAction(status))
+        //viewModel.addAction(UpdateUserAction(status))
 
         verify(userUseCases).updateMyUser(capture(userCaptor))
         assertEquals(status, userCaptor.value.status)
         assertEquals(status, viewModel.state.user?.status)
     }
-
-    private fun <T> capture(argumentCaptor: ArgumentCaptor<T>): T = argumentCaptor.capture()
 }
 
