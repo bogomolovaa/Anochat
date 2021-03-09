@@ -18,6 +18,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -39,9 +40,7 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel.addAction(InitConversationsAction())
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
-
         exitTransition = Fade().apply { duration = 375 }
         requireActivity().window.decorView.setBackgroundResource(R.color.conversation_background)
     }
@@ -50,18 +49,19 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentConversationsListBinding.inflate(inflater, container, false)
+    ) = FragmentConversationsListBinding.inflate(inflater, container, false)
+        .also { binding = it }.root
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         setHasOptionsMenu(true)
-        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         binding.fab.setOnClickListener { requestContactsPermission() }
         hideKeyBoard()
         setupRecyclerView()
-
-        return binding.root
     }
 
     override fun updateView(newState: ConversationsUiState, currentState: ConversationsUiState) {

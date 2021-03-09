@@ -1,19 +1,16 @@
 package bogomolov.aa.anochat.features.shared.mvi
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import androidx.test.espresso.idling.CountingIdlingResource
 
 interface UiState
 interface UserAction
@@ -22,7 +19,6 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
     private val mutex = Mutex()
 
     var dispatcher: CoroutineDispatcher = Dispatchers.IO
-    //val idlingResource = CountingIdlingResource("BaseViewModel IdlingResource")
 
     val state: S
         get() = stateFlow.value
@@ -54,10 +50,17 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
     protected abstract suspend fun handleAction(action: UserAction)
 
     override fun addAction(action: UserAction) {
+        Log.d("BaseViewModel","addAction ${action.javaClass.simpleName}")
         actionListener?.onAction(action)
         viewModelScope.launch(dispatcher) {
             mutex.withLock { if (!subscribed) subscribeToActions() }
             _actions.send(action)
+        }
+    }
+
+    fun setStateBlocking(reduce: S.() -> S){
+        runBlocking {
+            setState(reduce)
         }
     }
 
@@ -69,14 +72,11 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
     }
 
     fun setStateAsync(reduce: S.() -> S) {
-        //idlingResource.increment()
         viewModelScope.launch(dispatcher) {
             delay(3000)
             setState(reduce)
-            //idlingResource.decrement()
         }
     }
-
 }
 
 interface ActionExecutor {

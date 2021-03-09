@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.features.conversations.list
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import bogomolov.aa.anochat.R
@@ -30,12 +31,15 @@ class ConversationsPagedAdapter(
         val binding = holder.binding
         if (conversation != null) {
             binding.conversation = conversation
+            val lastMessage = conversation.lastMessage
             binding.messageText.text =
                 if (showFullMessage) {
-                    conversation.lastMessage?.text ?: ""
+                    lastMessage?.text ?: ""
                 } else {
-                    conversation.lastMessage?.shortText() ?: ""
+                    lastMessage?.shortText() ?: ""
                 }
+            binding.newMessageStatus.visibility =
+                if (lastMessage?.isMine == false && lastMessage.viewed == 0) View.VISIBLE else View.GONE
         }
     }
 

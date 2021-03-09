@@ -9,8 +9,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
@@ -19,6 +21,7 @@ import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
@@ -29,26 +32,26 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel.addAction(LoadContactsAction(getContactsPhones()))
         lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
+        viewModel.addAction(LoadContactsAction(getContactsPhones()))
     }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentUsersBinding.inflate(inflater, container, false)
+    ) = FragmentUsersBinding.inflate(inflater, container, false).also { binding = it }.root
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
         setHasOptionsMenu(true)
 
         usersAdapter = UsersAdapter { viewModel.addAction(CreateConversationAction(it)) }
         binding.recyclerView.adapter = usersAdapter
-
-        return binding.root
     }
 
     override fun updateView(newState: ContactsUiState, currentState: ContactsUiState) {
@@ -60,7 +63,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
     private fun navigateToConversation(conversationId: Long) {
         if (conversationId != 0L) {
             val bundle = Bundle().apply { putLong("id", conversationId) }
-            viewModel.setStateAsync { copy(conversationId = 0) }
+            viewModel.setStateBlocking { copy(conversationId = 0) }
             navController.navigate(R.id.dialog_graph, bundle)
         }
     }

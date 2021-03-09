@@ -17,6 +17,7 @@ import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
@@ -72,7 +73,6 @@ class StartRecordingAction() : UserAction
 class StopRecordingAction : UserAction
 class StartPlayingAction(val audioFile: String? = null, val messageId: String? = null) : UserAction
 class PausePlayingAction : UserAction
-class DeleteConversationIfNoMessagesAction : UserAction
 class UserInputTextChanged(val enteredText: String) : UserAction
 
 @HiltViewModel
@@ -90,6 +90,13 @@ class ConversationViewModel @Inject constructor(
     val messagesLiveData: LiveData<PagedList<MessageView>>
         get() = _messagesLiveData
 
+    override fun onCleared() {
+        super.onCleared()
+        GlobalScope.launch(dispatcher) {
+            conversationUseCases.deleteConversationIfNoMessages(state.conversation!!)
+        }
+    }
+
     override fun createInitialState() = DialogUiState()
 
     override suspend fun handleAction(action: UserAction) {
@@ -100,12 +107,7 @@ class ConversationViewModel @Inject constructor(
         if (action is StopRecordingAction) action.execute()
         if (action is StartPlayingAction) action.execute()
         if (action is PausePlayingAction) action.execute()
-        if (action is DeleteConversationIfNoMessagesAction) action.execute()
         if (action is UserInputTextChanged) action.execute()
-    }
-
-    private fun DeleteConversationIfNoMessagesAction.execute() {
-        conversationUseCases.deleteConversationIfNoMessages(state.conversation!!)
     }
 
     private suspend fun UserInputTextChanged.execute() {
@@ -218,7 +220,7 @@ class ConversationViewModel @Inject constructor(
                 .mapByPage(toMessageView),
             10
         ).build()
-        _messagesLiveData.addSource(liveData) { _messagesLiveData.value = it }
+        _messagesLiveData.addSource(liveData) { _messagesLiveData.postValue(it) }
     }
 
     private fun subscribeToOnlineStatus(uid: String) {

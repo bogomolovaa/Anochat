@@ -46,12 +46,13 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
 
+        viewModel.messagesLiveData.observe(viewLifecycleOwner, adapter::submitList)
+
         return binding.root
     }
 
     override fun updateView(newState: MessageSearchUiState, currentState: MessageSearchUiState) {
-        if (newState.pagedListLiveData != currentState.pagedListLiveData)
-            newState.pagedListLiveData?.observe(viewLifecycleOwner, adapter::submitList)
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

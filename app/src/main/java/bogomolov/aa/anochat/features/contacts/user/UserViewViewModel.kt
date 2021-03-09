@@ -11,6 +11,8 @@ import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 data class UserUiState(
@@ -34,11 +36,11 @@ class UserViewViewModel
         if (action is LoadUserAction) action.execute()
     }
 
-    private fun LoadImagesAction.execute() {
+    private suspend fun LoadImagesAction.execute() {
         val liveData =
             LivePagedListBuilder(userUseCases.getImagesDataSource(id), 10).build()
-        _imagesLiveData.addSource(liveData) {
-            _imagesLiveData.value = it
+        withContext(Dispatchers.Main) {
+            _imagesLiveData.addSource(liveData) { _imagesLiveData.value = it }
         }
     }
 

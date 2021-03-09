@@ -64,7 +64,6 @@ class UsersViewModel
     }
 
     private suspend fun ResetSearchAction.execute() {
-        Log.i("test","state.users ${state.users} usersList $usersList")
         setState { copy(users = usersList) }
     }
 

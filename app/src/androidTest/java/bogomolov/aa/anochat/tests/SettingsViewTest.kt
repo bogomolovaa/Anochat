@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat
+package bogomolov.aa.anochat.tests
 
 import android.Manifest
 import android.content.Intent
@@ -12,9 +12,9 @@ import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import androidx.test.espresso.matcher.ViewMatchers.*
-import androidx.test.filters.SdkSuppress
 import androidx.test.rule.GrantPermissionRule
 import bogomolov.aa.anochat.MockitoKotlinAndroidTest.Companion.any
+import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.settings.ChangeSettingsAction
 import bogomolov.aa.anochat.features.settings.SettingsFragment
@@ -22,6 +22,7 @@ import bogomolov.aa.anochat.features.settings.UpdateUserAction
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
+import bogomolov.aa.anochat.navigateTo
 import bogomolov.aa.anochat.repository.Firebase
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest

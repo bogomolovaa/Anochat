@@ -36,6 +36,8 @@ import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import com.google.android.material.card.MaterialCardView
 import com.vanniktech.emoji.EmojiPopup
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -104,10 +106,6 @@ class ConversationFragment : Fragment(), RequestPermission {
             startPostponedEnterTransition()
         }
 
-        binding.toolbar.setNavigationOnClickListener { onBackPressed() }
-        requireActivity().onBackPressedDispatcher.addCallback(owner = viewLifecycleOwner) {
-            onBackPressed()
-        }
         binding.usernameLayout.setOnClickListener {
             val conversationId = viewModel.state.conversation?.user?.id
             if (conversationId != null) navigateToUserFragment(conversationId)
@@ -116,12 +114,6 @@ class ConversationFragment : Fragment(), RequestPermission {
 
         return binding.root
     }
-
-    private fun onBackPressed() {
-        viewModel.addAction(DeleteConversationIfNoMessagesAction())
-        navController.navigateUp()
-    }
-
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         if (resultCode == RESULT_OK)

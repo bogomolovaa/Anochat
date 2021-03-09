@@ -25,7 +25,7 @@ class StateLifecycleObserver<S : UiState>(
         uiState = viewModel.createInitialState()
         updatingJob = viewModel.viewModelScope.launch {
             viewModel.stateFlow.collect {
-                Log.i(TAG, "${updatableView.javaClass.name} newState:\n${it}\ncurrent:\n$uiState")
+                Log.i(TAG, "${updatableView.javaClass.simpleName} newState:\n${it}\ncurrent:\n$uiState")
                 updatableView.updateView(it, uiState)
                 uiState = it
             }

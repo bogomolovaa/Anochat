@@ -11,6 +11,8 @@ import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class ConversationsUiState : UiState
@@ -29,6 +31,10 @@ class ConversationListViewModel
     val conversationsLiveData: LiveData<PagedList<Conversation>>
         get() = _conversationsLiveData
 
+    init {
+        addAction(InitConversationsAction())
+    }
+
     override fun createInitialState() = ConversationsUiState()
 
     override suspend fun handleAction(action: UserAction) {
@@ -37,11 +43,11 @@ class ConversationListViewModel
         if (action is SignOutAction) action.execute()
     }
 
-    private fun InitConversationsAction.execute() {
+    private suspend fun InitConversationsAction.execute() {
         val liveData =
             LivePagedListBuilder(conversationUseCases.loadConversationsDataSource(), 10).build()
-        _conversationsLiveData.addSource(liveData){
-            _conversationsLiveData.value = it
+        withContext(Dispatchers.Main) {
+            _conversationsLiveData.addSource(liveData) { _conversationsLiveData.value = it }
         }
     }
 
