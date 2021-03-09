@@ -9,7 +9,6 @@ import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 
 class ConversationUpdatableView(
-    private val fragment: ConversationFragment,
     private val recyclerViewSetup: ConversationRecyclerViewSetup
 ) : UpdatableView<DialogUiState> {
     lateinit var binding: FragmentConversationBinding
@@ -17,8 +16,6 @@ class ConversationUpdatableView(
     private var lastReplyMessageAudioView: PlayAudioView? = null
 
     override fun updateView(newState: DialogUiState, currentState: DialogUiState) {
-        if (newState.pagedListLiveData != currentState.pagedListLiveData)
-            recyclerViewSetup.setPagedListLiveData(newState.pagedListLiveData!!)
         if (newState.conversation != currentState.conversation) setConversation(newState.conversation!!)
         if (newState.onlineStatus != currentState.onlineStatus)
             binding.statusText.text = newState.onlineStatus
@@ -27,7 +24,6 @@ class ConversationUpdatableView(
         if (newState.replyMessage != currentState.replyMessage) setReplyMessage(newState.replyMessage)
         if (newState.inputState != currentState.inputState) setInputState(newState)
         if (newState.playingState != currentState.playingState) setPlayingState(newState)
-
     }
 
     private fun setPlayingState(state: DialogUiState) {
@@ -128,6 +124,5 @@ class ConversationUpdatableView(
     private fun setConversation(conversation: Conversation) {
         if (conversation.user.photo != null) binding.userPhoto.setImage(conversation.user.photo)
         binding.usernameText.text = conversation.user.name
-        binding.usernameLayout.setOnClickListener { fragment.navigateToUserFragment(conversation.user.id) }
     }
 }

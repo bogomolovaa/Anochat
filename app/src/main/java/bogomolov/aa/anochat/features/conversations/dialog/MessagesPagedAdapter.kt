@@ -54,6 +54,12 @@ class MessagesPagedAdapter(
             binding.message = item
             binding.imageProgressLayout.visibility = View.GONE
             val detector = getGestureDetector(binding.messageCardView, item.message, holder)
+            val text = item.message.text
+            if (text.isNotEmpty()){
+                binding.messageText.visibility = View.VISIBLE
+            }else{
+                binding.messageText.visibility = View.GONE
+            }
             val image = item.message.image
             if (!image.isNullOrEmpty()) {
                 item.detailedImageLoaded = false

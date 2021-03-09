@@ -47,6 +47,7 @@ class ConversationRecyclerViewSetup(
                 }
             }
         }
+        observeMessagesLiveData(viewModel.messagesLiveData)
     }
 
     fun getMessageAudioView(messageId: String) = messagesPagedAdapter.messagesMap[messageId]
@@ -54,17 +55,17 @@ class ConversationRecyclerViewSetup(
     fun getReplyMessageAudioView(messageId: String) =
         messagesPagedAdapter.replyMessagesMap[messageId]
 
-    fun setPagedListLiveData(pagedListLiveData: LiveData<PagedList<MessageView>>) {
-        pagedListLiveData.observe(fragment.viewLifecycleOwner) { pagedList ->
-            (binding.recyclerView.adapter as MessagesPagedAdapter).submitList(pagedList)
-            restoreRecyclerViewPosition()
-        }
-    }
-
     fun scrollToEnd() {
         fragment.lifecycleScope.launch(Dispatchers.Main) {
             delay(100)
             binding.recyclerView.scrollToPosition(0)
+        }
+    }
+
+    private fun observeMessagesLiveData(pagedListLiveData: LiveData<PagedList<MessageView>>) {
+        pagedListLiveData.observe(fragment.viewLifecycleOwner) { pagedList ->
+            (binding.recyclerView.adapter as MessagesPagedAdapter).submitList(pagedList)
+            restoreRecyclerViewPosition()
         }
     }
 

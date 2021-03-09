@@ -11,7 +11,7 @@ interface UserRepository : UserUseCasesInRepository{
 
 interface UserUseCasesInRepository{
     fun getImagesDataSource(userId: Long): DataSource.Factory<Int, String>
-    fun getUsersByPhonesDataSource(phones: List<String>): DataSource.Factory<Int, User>
+    fun getUsersByPhones(phones: List<String>): List<User>
 
     suspend fun updateUsersByPhones(phones: List<String>): List<User>
     suspend fun updateUsersInConversations()

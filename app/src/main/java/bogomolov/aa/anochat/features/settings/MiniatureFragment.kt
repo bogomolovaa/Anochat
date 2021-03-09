@@ -43,7 +43,7 @@ class MiniatureFragment : Fragment() {
         binding.imageView.setImageBitmap(bitmap)
         binding.fab.setOnClickListener {
             createMiniature()
-            viewModel.addAction(UpdatePhotoAction(viewModel.miniature.name))
+            viewModel.addAction(UpdateUserAction { copy(name = viewModel.miniature.name) })
             navController.navigateUp()
         }
         scaleDetector = ScaleGestureDetector(context, scaleListener)

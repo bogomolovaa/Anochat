@@ -4,6 +4,8 @@ import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.repositories.ConversationRepository
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
 import bogomolov.aa.anochat.domain.repositories.UserRepository
+import bogomolov.aa.anochat.features.shared.AudioPlayer
+import bogomolov.aa.anochat.features.shared.AudioPlayerImpl
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.repository.*
 import bogomolov.aa.anochat.repository.repositories.AuthRepositoryImpl
@@ -39,4 +41,7 @@ abstract class BindsModule {
 
     @Binds
     abstract fun bindsFileStore(fileStore: FileStoreImpl): FileStore
+
+    @Binds
+    abstract fun bindsAudioPlayer(audioPlayer: AudioPlayerImpl): AudioPlayer
 }

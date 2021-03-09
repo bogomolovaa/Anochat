@@ -18,11 +18,8 @@ data class SettingsUiState(
     val settings: Settings = Settings()
 ) : UiState
 
-class UpdateStatusAction(val status: String) : UserAction
-class UpdatePhotoAction(val photo: String) : UserAction
-class UpdateNameAction(val name: String) : UserAction
-class LoadSettingsAction : UserAction
-class LoadMyUserAction : UserAction
+class UpdateUserAction(val change: User.() -> User) : UserAction
+class InitSettingsAction : UserAction
 class ChangeSettingsAction(val change: Settings.() -> Settings) : UserAction
 
 @HiltViewModel
@@ -32,45 +29,29 @@ class SettingsViewModel @Inject constructor(
 ) : BaseViewModel<SettingsUiState>() {
     lateinit var miniature: BitmapWithName
 
+    init {
+        addAction(InitSettingsAction())
+    }
+
     override fun createInitialState() = SettingsUiState()
 
     override suspend fun handleAction(action: UserAction) {
-        if (action is UpdateStatusAction) action.execute()
-        if (action is UpdatePhotoAction) action.execute()
-        if (action is UpdateNameAction) action.execute()
-        if (action is LoadSettingsAction) action.execute()
-        if (action is LoadMyUserAction) action.execute()
-        if (action is ChangeSettingsAction) action.execute()
+        if (action is UpdateUserAction) action.execute()
+        if (action is InitSettingsAction) action.execute()
     }
 
-    private fun UpdateStatusAction.execute() {
-        val user = state.user
-        if (user != null) updateMyUser(user.copy(status = status))
+    private fun UpdateUserAction.execute() {
+        val user = state.user?.change()
+        if (user != null)
+            viewModelScope.launch(dispatcher) {
+                setState { copy(user = user) }
+                userUseCases.updateMyUser(user)
+            }
     }
 
-    private fun UpdatePhotoAction.execute() {
-        val user = state.user
-        if (user != null) updateMyUser(user.copy(photo = photo))
-    }
-
-    private fun UpdateNameAction.execute() {
-        val user = state.user
-        if (user != null) updateMyUser(user.copy(name = name))
-    }
-
-    private fun updateMyUser(user: User) {
-        viewModelScope.launch(dispatcher) {
-            setState { copy(user = user) }
-            userUseCases.updateMyUser(user)
-        }
-    }
-
-    private suspend fun LoadSettingsAction.execute() {
+    private suspend fun InitSettingsAction.execute() {
         val settings = authRepository.getSettings()
         setState { copy(settings = settings) }
-    }
-
-    private suspend fun LoadMyUserAction.execute() {
         viewModelScope.launch(dispatcher) {
             val user = userUseCases.getMyUser()
             setState { copy(user = user) }

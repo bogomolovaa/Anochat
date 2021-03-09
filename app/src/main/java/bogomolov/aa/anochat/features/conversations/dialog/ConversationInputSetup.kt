@@ -91,16 +91,7 @@ class ConversationInputSetup(
             if (hasFocus) recyclerViewSetup.scrollToEnd()
         }
         binding.messageInputText.doOnTextChanged { textInput, _, _, _ ->
-            val text = textInput.toString()
-            if (viewModel.state.text != text) {
-                if (text.isNotEmpty()) {
-                    viewModel.setStateAsync {
-                        copy(text = text, inputState = InputStates.TEXT_ENTERED)
-                    }
-                } else {
-                    viewModel.setStateAsync { copy(text = "", inputState = InputStates.INITIAL) }
-                }
-            }
+            viewModel.addAction(UserInputTextChanged(textInput.toString()))
         }
     }
 }

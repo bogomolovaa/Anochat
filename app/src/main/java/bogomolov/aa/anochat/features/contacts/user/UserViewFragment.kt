@@ -62,20 +62,14 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
         postponeEnterTransition()
         setPhotoClickListener(navController)
 
+
         return binding.root
     }
 
     override fun updateView(newState: UserUiState, currentState: UserUiState) {
         if (newState.user != currentState.user) showUser(newState.user!!)
-        if (newState.pagedListLiveData != currentState.pagedListLiveData)
-            setImagesPagedList(newState.pagedListLiveData!!)
     }
 
-    private fun setImagesPagedList(pagedListLiveData: LiveData<PagedList<String>>) {
-        pagedListLiveData.observe(viewLifecycleOwner) {
-            (binding.recyclerView.adapter as ImagesPagedAdapter).submitList(it)
-        }
-    }
 
     private fun showUser(user: User) {
         binding.userStatus.text = user.status
@@ -99,6 +93,9 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
         binding.recyclerView.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         binding.recyclerView.doOnPreDraw { onPreDraw() }
+        viewModel.imagesLiveData.observe(viewLifecycleOwner) {
+            adapter.submitList(it)
+        }
     }
 
     private fun setPhotoClickListener(navController: NavController) {

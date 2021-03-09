@@ -15,10 +15,9 @@ import android.view.ViewGroup
 import android.widget.Switch
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
 import androidx.navigation.NavController
-import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentSettingsBinding
@@ -30,29 +29,22 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
-    private val viewModel: SettingsViewModel by hiltNavGraphViewModels(R.id.settings_graph)
+    val viewModel: SettingsViewModel by hiltNavGraphViewModels(R.id.settings_graph)
     private lateinit var binding: FragmentSettingsBinding
     private lateinit var navController: NavController
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        viewModel.addAction(LoadSettingsAction())
-        viewModel.addAction(LoadMyUserAction())
-        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentSettingsBinding.inflate(inflater, container, false)
+    ) = FragmentSettingsBinding.inflate(inflater, container, false).also { binding = it }.root
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
-
         addListeners()
-
-        return binding.root
     }
 
     override fun updateView(newState: SettingsUiState, currentState: SettingsUiState) {
@@ -62,8 +54,8 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         binding.gallerySwitch.isChecked = newState.settings.gallery
         if (newState.user != null) {
             binding.progressBar.visibility = View.INVISIBLE
-            if (newState.user.photo != currentState.user?.photo)
-                binding.userPhoto.setImage(newState.user.photo!!)
+            if (newState.user.photo != null && newState.user.photo != currentState.user?.photo)
+                binding.userPhoto.setImage(newState.user.photo)
             if (newState.user.name != currentState.user?.name) {
                 binding.usernameText.text = newState.user.name
                 binding.editUsername.setOnClickListener { showEditNameDialog(newState.user.name) }
@@ -86,7 +78,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
             requireContext().resources.getString(R.string.enter_new_name),
             name
         ) {
-            if (it.isNotEmpty()) viewModel.addAction(UpdateNameAction(it))
+            if (it.isNotEmpty()) viewModel.addAction(UpdateUserAction { copy(name = it) })
         }
         bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
     }
@@ -97,7 +89,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
             requireContext().resources.getString(R.string.enter_new_status),
             status
         ) {
-            if (it.isNotEmpty()) viewModel.addAction(UpdateStatusAction(it))
+            if (it.isNotEmpty()) viewModel.addAction(UpdateUserAction { copy(status = it) })
         }
         bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
     }

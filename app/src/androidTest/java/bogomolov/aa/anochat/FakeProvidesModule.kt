@@ -5,11 +5,12 @@ import android.content.Context
 import androidx.room.Room
 import bogomolov.aa.anochat.di.ProvidesModule
 import bogomolov.aa.anochat.repository.AppDatabase
+import bogomolov.aa.anochat.repository.DB_NAME
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.components.SingletonComponent
-import dagger.hilt.testing.TestInstallIn
 import javax.inject.Singleton
+import dagger.hilt.testing.TestInstallIn
 
 @Module
 @TestInstallIn(

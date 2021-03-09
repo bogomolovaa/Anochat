@@ -24,11 +24,12 @@ interface MessageRepository : MessageUseCasesInRepository {
     fun notifyAsReceived(messageId: String)
     fun notifyAsNotReceived(messageId: String)
     fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean)
+    fun loadMessagesDataSource(conversationId: Long): DataSource.Factory<Int, Message>
+
 }
 
 interface MessageUseCasesInRepository {
     fun searchMessagesDataSource(search: String): DataSource.Factory<Int, Conversation>
-    fun loadMessagesDataSource(conversationId: Long): DataSource.Factory<Int, Message>
 
     fun deleteMessages(ids: Set<Long>)
     fun receiveReport(messageId: String, received: Int, viewed: Int)

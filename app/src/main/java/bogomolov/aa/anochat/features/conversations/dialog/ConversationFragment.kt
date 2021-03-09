@@ -18,6 +18,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+import androidx.activity.addCallback
 import androidx.core.content.FileProvider
 import androidx.core.os.ConfigurationCompat
 import androidx.databinding.BindingAdapter
@@ -59,7 +60,7 @@ class ConversationFragment : Fragment(), RequestPermission {
             toMessageViewsWithDateDelimiters(it, locale)
         })
         recyclerViewSetup = ConversationRecyclerViewSetup(this, viewModel)
-        updatableView = ConversationUpdatableView(this, recyclerViewSetup)
+        updatableView = ConversationUpdatableView(recyclerViewSetup)
         conversationInputSetup = ConversationInputSetup(this, viewModel, recyclerViewSetup)
         lifecycle.addObserver(StateLifecycleObserver(updatableView, viewModel))
 
@@ -103,10 +104,24 @@ class ConversationFragment : Fragment(), RequestPermission {
             startPostponedEnterTransition()
         }
 
+        binding.toolbar.setNavigationOnClickListener { onBackPressed() }
+        requireActivity().onBackPressedDispatcher.addCallback(owner = viewLifecycleOwner) {
+            onBackPressed()
+        }
+        binding.usernameLayout.setOnClickListener {
+            val conversationId = viewModel.state.conversation?.user?.id
+            if (conversationId != null) navigateToUserFragment(conversationId)
+        }
 
 
         return binding.root
     }
+
+    private fun onBackPressed() {
+        viewModel.addAction(DeleteConversationIfNoMessagesAction())
+        navController.navigateUp()
+    }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         if (resultCode == RESULT_OK)

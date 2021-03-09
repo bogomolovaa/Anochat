@@ -1,9 +1,7 @@
 package bogomolov.aa.anochat.features.contacts.list
 
-import androidx.lifecycle.LiveData
+import android.util.Log
 import androidx.lifecycle.viewModelScope
-import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
 import bogomolov.aa.anochat.domain.ConversationUseCases
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
@@ -16,16 +14,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ContactsUiState(
-    val searchedUsers: List<User>? = null,
-    val pagedListLiveData: LiveData<PagedList<User>>? = null,
+    val users: List<User>? = null,
     val conversationId: Long = 0,
-    val loading: Boolean = true,
-    val usersUpdated: Boolean = false
+    val loading: Boolean = true
 ) : UiState
 
 class SearchAction(val query: String) : UserAction
 class LoadContactsAction(val phones: List<String>) : UserAction
 class CreateConversationAction(val user: User) : UserAction
+class ResetSearchAction : UserAction
 
 @HiltViewModel
 class UsersViewModel
@@ -41,35 +38,41 @@ class UsersViewModel
         if (action is SearchAction) action.execute()
         if (action is LoadContactsAction) action.execute()
         if (action is CreateConversationAction) action.execute()
+        if (action is ResetSearchAction) action.execute()
+    }
+
+    private suspend fun LoadContactsAction.execute() {
+        usersList = userUseCases.getUsersByPhones(phones)
+        setState { copy(users = usersList) }
+        viewModelScope.launch(dispatcher) {
+            usersList = userUseCases.updateUsersByPhones(phones)
+            setState { copy(loading = false, users = usersList) }
+        }
     }
 
     private suspend fun SearchAction.execute() {
         if (isNotValidPhone(query)) {
             val searchedUsers = usersList?.filter { it.name.startsWith(query) }
-            setState { copy(searchedUsers = searchedUsers, usersUpdated = false) }
+            setState { copy(users = searchedUsers) }
         } else {
+            setState { copy(loading = true) }
             viewModelScope.launch(dispatcher) {
                 val searchedUsers = userUseCases.searchByPhone(query)
-                setState { copy(searchedUsers = searchedUsers, usersUpdated = false) }
+                setState { copy(loading = false, users = searchedUsers) }
             }
         }
     }
 
-    private suspend fun LoadContactsAction.execute() {
-        val pagedListLiveData =
-            LivePagedListBuilder(userUseCases.getUsersByPhonesDataSource(phones), 10).build()
-        setState { copy(pagedListLiveData = pagedListLiveData) }
-        viewModelScope.launch(dispatcher) {
-            usersList = userUseCases.updateUsersByPhones(phones)
-            setState { copy(loading = false, usersUpdated = true) }
-        }
+    private suspend fun ResetSearchAction.execute() {
+        Log.i("test","state.users ${state.users} usersList $usersList")
+        setState { copy(users = usersList) }
     }
 
     private suspend fun CreateConversationAction.execute() {
-        setState { copy(loading = true, usersUpdated = false) }
+        setState { copy(loading = true) }
         viewModelScope.launch(dispatcher) {
             val conversationId = conversationUserCases.startConversation(user.uid)
-            setState { copy(conversationId = conversationId, usersUpdated = false, loading = false) }
+            setState { copy(loading = false, conversationId = conversationId) }
         }
     }
 }

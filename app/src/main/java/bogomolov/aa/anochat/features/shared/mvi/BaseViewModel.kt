@@ -33,7 +33,11 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
     private val _actions = Channel<UserAction>()
     private val actions = _actions.receiveAsFlow()
     private var subscribed = false
+    private var actionListener: ActionListener? = null
 
+    fun addActionListener(actionListener: ActionListener){
+        this.actionListener = actionListener
+    }
 
     private fun subscribeToActions() {
         subscribed = true
@@ -47,6 +51,7 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
     protected abstract suspend fun handleAction(action: UserAction)
 
     override fun addAction(action: UserAction) {
+        actionListener?.onAction(action)
         viewModelScope.launch(dispatcher) {
             mutex.withLock { if (!subscribed) subscribeToActions() }
             _actions.send(action)
@@ -70,4 +75,8 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
 
 interface ActionExecutor {
     fun addAction(action: UserAction)
+}
+
+fun interface ActionListener{
+    fun onAction(userAction: UserAction)
 }

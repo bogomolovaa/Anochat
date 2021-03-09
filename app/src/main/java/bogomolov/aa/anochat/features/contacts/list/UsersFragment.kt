@@ -9,15 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
-import androidx.paging.PagedList
 import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
-import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
@@ -28,8 +25,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
     private val viewModel: UsersViewModel by viewModels()
     private lateinit var navController: NavController
     private lateinit var binding: FragmentUsersBinding
-    private val usersAdapter = UsersAdapter (::createConversation)
-    private val searchAdapter = UsersSearchAdapter(::createConversation)
+    private lateinit var usersAdapter: UsersAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,29 +45,16 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
         setHasOptionsMenu(true)
 
+        usersAdapter = UsersAdapter { viewModel.addAction(CreateConversationAction(it)) }
+        binding.recyclerView.adapter = usersAdapter
+
         return binding.root
     }
 
     override fun updateView(newState: ContactsUiState, currentState: ContactsUiState) {
-        if (newState.pagedListLiveData != currentState.pagedListLiveData)
-            setContactsPagedList(newState.pagedListLiveData!!)
-        if (newState.searchedUsers != currentState.searchedUsers) setSearchedUsers(newState.searchedUsers!!)
+        if (newState.users != currentState.users) usersAdapter.submitList(newState.users!!)
         if (newState.conversationId != currentState.conversationId) navigateToConversation(newState.conversationId)
-        if (newState.usersUpdated) usersAdapter.notifyDataSetChanged()
         binding.progressBar.visibility = if (newState.loading) View.VISIBLE else View.INVISIBLE
-    }
-
-
-    private fun setContactsPagedList(pagedListLiveData: LiveData<PagedList<User>>? = null) {
-        binding.recyclerView.adapter = usersAdapter
-        pagedListLiveData?.observe(viewLifecycleOwner) {
-            usersAdapter.submitList(it)
-        }
-    }
-
-    private fun setSearchedUsers(users: List<User>) {
-        binding.recyclerView.adapter = searchAdapter
-        searchAdapter.submitList(users)
     }
 
     private fun navigateToConversation(conversationId: Long) {
@@ -80,10 +63,6 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
             viewModel.setStateAsync { copy(conversationId = 0) }
             navController.navigate(R.id.dialog_graph, bundle)
         }
-    }
-
-    private fun createConversation(user: User) {
-        viewModel.addAction(CreateConversationAction(user))
     }
 
     private fun getContactsPhones(): List<String> {
@@ -124,6 +103,14 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         menu.findItem(R.id.action_search).apply {
             setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW or MenuItem.SHOW_AS_ACTION_IF_ROOM)
             actionView = searchView
+            setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+                override fun onMenuItemActionExpand(item: MenuItem) = true
+
+                override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
+                    viewModel.addAction(ResetSearchAction())
+                    return true
+                }
+            })
         }
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?) =
@@ -135,6 +122,6 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
             override fun onQueryTextChange(newText: String?) = false
         })
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
-        closeButton.setOnClickListener { setContactsPagedList() }
+        closeButton.setOnClickListener { viewModel.addAction(ResetSearchAction()) }
     }
 }

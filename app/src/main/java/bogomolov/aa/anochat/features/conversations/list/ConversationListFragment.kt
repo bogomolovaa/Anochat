@@ -65,25 +65,23 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
     }
 
     override fun updateView(newState: ConversationsUiState, currentState: ConversationsUiState) {
-        if (newState.pagedListLiveData != currentState.pagedListLiveData) setPagedList(newState.pagedListLiveData!!)
-    }
 
-    private fun setPagedList(pagedListLiveData: LiveData<PagedList<Conversation>>) {
-        pagedListLiveData.observe(viewLifecycleOwner) {
-            (binding.recyclerView.adapter as ConversationsPagedAdapter).submitList(it)
-        }
     }
 
     private fun setupRecyclerView() {
         val data = ActionModeData<Conversation>(R.menu.conversations_menu, binding.toolbar)
         data.actionsMap[R.id.delete_conversations_action] =
             { ids, _ -> viewModel.addAction(DeleteConversationsAction(ids)) }
-        binding.recyclerView.adapter =
+        val adapter =
             ConversationsPagedAdapter(actionModeData = data) { conversation ->
                 val bundle = Bundle().apply { putLong("id", conversation.id) }
                 navController.navigate(R.id.dialog_graph, bundle)
             }
+        binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
+        viewModel.conversationsLiveData.observe(viewLifecycleOwner) {
+            adapter.submitList(it)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

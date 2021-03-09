@@ -24,7 +24,7 @@ class UserRepositoryImpl @Inject constructor(
 
     override fun getImagesDataSource(userId: Long) = db.messageDao().getImages(userId)
 
-    override fun getUsersByPhonesDataSource(phones: List<String>) =
+    override fun getUsersByPhones(phones: List<String>) =
         db.userDao().getAll(phones, getMyUID()!!).map { mapper.entityToModel(it)!! }
 
     override suspend fun updateUsersByPhones(phones: List<String>) =

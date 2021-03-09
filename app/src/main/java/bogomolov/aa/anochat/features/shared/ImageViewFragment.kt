@@ -86,7 +86,7 @@ class ImageViewFragment : Fragment() {
         binding.touchLayout.setOnTouchListener(imageOnTouchListener)
 
 
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) showSystemUI()
+        //if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) showSystemUI()
 
         binding.toolbar.setNavigationOnClickListener { onBackPressed(navController) }
         requireActivity().onBackPressedDispatcher.addCallback(owner = viewLifecycleOwner) {
