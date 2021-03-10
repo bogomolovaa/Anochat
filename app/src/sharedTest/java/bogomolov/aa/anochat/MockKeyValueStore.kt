@@ -1,5 +1,7 @@
 package bogomolov.aa.anochat
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.UID
 
@@ -32,9 +34,11 @@ class MockKeyValueStore(myUid: String) : KeyValueStore {
         booleanMap[key] = value
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun byteArrayToBase64(array: ByteArray): String =
         java.util.Base64.getEncoder().encodeToString(array)
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun base64ToByteArray(string: String): ByteArray =
         java.util.Base64.getDecoder().decode(string)
 }

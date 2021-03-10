@@ -1,10 +1,11 @@
 package bogomolov.aa.anochat
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentFactory
 import androidx.lifecycle.ViewModelStore
 import androidx.navigation.NavHostController
 import androidx.navigation.Navigation
@@ -12,7 +13,6 @@ import androidx.navigation.testing.TestNavHostController
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.core.internal.deps.dagger.internal.Preconditions
-import bogomolov.aa.anochat.features.settings.SettingsFragment
 import kotlinx.coroutines.runBlocking
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -57,18 +57,24 @@ inline fun <reified T> launchFragmentInHiltContainer(
     }
 }
 
-inline fun <reified T> navigateTo(destination: Int): T {
-    val testNavHostController =
-        TestNavHostController(ApplicationProvider.getApplicationContext())
-    testNavHostController.setViewModelStore(ViewModelStore())
-
+inline fun <reified T> navigateTo(
+    destination: Int,
+    navController: TestNavHostController = TestNavHostController(
+        ApplicationProvider.getApplicationContext()
+    ),
+    bundle: Bundle = Bundle()
+): T {
+    navController.setViewModelStore(ViewModelStore())
     return runBlocking {
         return@runBlocking suspendCoroutine<T> {
-            launchFragmentInHiltContainer<T>(navHostController = testNavHostController) {
-                testNavHostController.setGraph(R.navigation.nav_graph)
-                testNavHostController.setCurrentDestination(destination)
+            launchFragmentInHiltContainer<T>(bundle, navController) {
+                navController.setGraph(R.navigation.nav_graph)
+                navController.setCurrentDestination(destination)
                 it.resume(this)
             }
         }
     }
 }
+
+fun getStringRes(id: Int) =
+    ApplicationProvider.getApplicationContext<Context>().resources.getString(id)

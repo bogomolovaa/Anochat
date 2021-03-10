@@ -4,9 +4,11 @@ import android.app.Application
 import android.content.Context
 import androidx.room.Room
 import bogomolov.aa.anochat.di.ProvidesModule
+import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.Firebase
+import bogomolov.aa.anochat.repository.KeyValueStoreImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.components.SingletonComponent
@@ -40,5 +42,9 @@ object FakeProvidesModule {
     @Singleton
     @Provides
     fun providesAuthRepository(): AuthRepository = Mockito.mock(AuthRepository::class.java)
+
+    @Singleton
+    @Provides
+    fun providesKeyValueStore(): KeyValueStore = MockKeyValueStore("myUid")
 
 }

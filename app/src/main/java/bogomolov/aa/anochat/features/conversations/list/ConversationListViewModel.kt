@@ -46,7 +46,7 @@ class ConversationListViewModel
     private suspend fun InitConversationsAction.execute() {
         val liveData =
             LivePagedListBuilder(conversationUseCases.loadConversationsDataSource(), 10).build()
-        withContext(Dispatchers.Main) {
+        withContext(Dispatchers.Main.immediate) {
             _conversationsLiveData.addSource(liveData) { _conversationsLiveData.value = it }
         }
     }

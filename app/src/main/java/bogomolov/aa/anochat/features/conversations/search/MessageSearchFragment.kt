@@ -67,7 +67,7 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
         searchView.setTextColor(R.color.title_color)
         searchView.setQuery(searchString, true)
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
-        closeButton.setOnClickListener { navController.navigateUp() }
+        //closeButton.setOnClickListener { navController.navigateUp() }
 
         val menuItem = menu.findItem(R.id.action_search)
         menuItem.expandActionView()
@@ -83,5 +83,7 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
                 return true
             }
         })
+        menuItem.expandActionView()
+        searchView.setQuery(searchString, true)
     }
 }

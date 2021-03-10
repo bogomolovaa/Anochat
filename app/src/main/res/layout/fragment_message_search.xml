@@ -13,11 +13,12 @@
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
         android:minHeight="?attr/actionBarSize"
+        android:theme="@style/AppTheme.Toolbar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:theme="@style/AppTheme.Toolbar" />
+        app:titleTextColor="#FFFFFF" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

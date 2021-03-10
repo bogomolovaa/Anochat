@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentSignInBinding
@@ -26,23 +27,20 @@ import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
-    private val viewModel: SignInViewModel by viewModels()
+    val viewModel: SignInViewModel by viewModels()
     private lateinit var navController: NavController
     private lateinit var binding: FragmentSignInBinding
-
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentSignInBinding.inflate(inflater, container, false)
+    ) = FragmentSignInBinding.inflate(inflater, container, false).also { binding = it }.root
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         binding.toolbar.navigationIcon = null
         binding.fab.setOnClickListener {
@@ -53,7 +51,6 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
                 }
             }
         }
-        return binding.root
     }
 
     override fun updateView(newState: SignInUiState, currentState: SignInUiState) {
@@ -140,10 +137,7 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
             )
         } else {
             viewModel.setStateAsync {
-                copy(
-                    phoneNumber = phoneNumber,
-                    error = ErrorType.WRONG_PHONE
-                )
+                copy(phoneNumber = phoneNumber, error = ErrorType.WRONG_PHONE)
             }
         }
     }

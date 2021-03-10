@@ -3,6 +3,7 @@ package bogomolov.aa.anochat.features.contacts.list
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -18,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
 import bogomolov.aa.anochat.domain.entity.isValidPhone
+import bogomolov.aa.anochat.features.conversations.list.setTextColor
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
@@ -25,14 +27,13 @@ import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
-    private val viewModel: UsersViewModel by viewModels()
+    val viewModel: UsersViewModel by viewModels()
     private lateinit var navController: NavController
     private lateinit var binding: FragmentUsersBinding
     private lateinit var usersAdapter: UsersAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
         viewModel.addAction(LoadContactsAction(getContactsPhones()))
     }
 
@@ -44,6 +45,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
@@ -115,6 +117,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
                 }
             })
         }
+        searchView.setTextColor(R.color.title_color)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?) =
                 if (query != null) {
@@ -125,6 +128,10 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
             override fun onQueryTextChange(newText: String?) = false
         })
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
-        closeButton.setOnClickListener { viewModel.addAction(ResetSearchAction()) }
+        closeButton.setOnClickListener {
+            Log.i("test", "setOnClickListener ResetSearchAction")
+            menu.findItem(R.id.action_search).collapseActionView()
+            viewModel.addAction(ResetSearchAction())
+        }
     }
 }

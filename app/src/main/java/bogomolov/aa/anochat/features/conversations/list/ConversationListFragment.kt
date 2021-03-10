@@ -33,14 +33,13 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState> {
-    private val viewModel: ConversationListViewModel by viewModels()
+    val viewModel: ConversationListViewModel by viewModels()
     private lateinit var navController: NavController
     private lateinit var binding: FragmentConversationsListBinding
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
         exitTransition = Fade().apply { duration = 375 }
         requireActivity().window.decorView.setBackgroundResource(R.color.conversation_background)
     }
@@ -54,6 +53,7 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
         setHasOptionsMenu(true)
         navController = findNavController()
@@ -145,7 +145,7 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
 
 @BindingAdapter(value = ["android:textStyle"])
 fun setTypeface(v: TextView, style: Int) {
-    v.setTypeface(null, style);
+    v.setTypeface(null, style)
 }
 
 fun SearchView.setTextColor(colorId: Int) {

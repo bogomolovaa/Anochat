@@ -46,6 +46,7 @@ class UsersViewModel
         setState { copy(users = usersList) }
         viewModelScope.launch(dispatcher) {
             usersList = userUseCases.updateUsersByPhones(phones)
+            Log.i("test","usersList $usersList")
             setState { copy(loading = false, users = usersList) }
         }
     }

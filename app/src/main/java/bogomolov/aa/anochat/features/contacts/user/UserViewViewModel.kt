@@ -19,8 +19,7 @@ data class UserUiState(
     val user: User? = null
 ) : UiState
 
-class LoadImagesAction(val id: Long) : UserAction
-class LoadUserAction(val id: Long) : UserAction
+class InitUserAction(val id: Long) : UserAction
 
 @HiltViewModel
 class UserViewViewModel
@@ -32,19 +31,15 @@ class UserViewViewModel
     override fun createInitialState() = UserUiState()
 
     override suspend fun handleAction(action: UserAction) {
-        if (action is LoadImagesAction) action.execute()
-        if (action is LoadUserAction) action.execute()
+        if (action is InitUserAction) action.execute()
     }
 
-    private suspend fun LoadImagesAction.execute() {
+    private suspend fun InitUserAction.execute() {
         val liveData =
             LivePagedListBuilder(userUseCases.getImagesDataSource(id), 10).build()
         withContext(Dispatchers.Main) {
             _imagesLiveData.addSource(liveData) { _imagesLiveData.value = it }
         }
-    }
-
-    private suspend fun LoadUserAction.execute() {
         val user = userUseCases.getUser(id)
         setState { copy(user = user) }
     }

@@ -134,7 +134,7 @@ class ConversationFragment : Fragment(), RequestPermission {
         imm.hideSoftInputFromWindow(requireView().windowToken, 0)
     }
 
-    fun navigateToUserFragment(userId: Long) {
+    private fun navigateToUserFragment(userId: Long) {
         navController.navigate(R.id.userViewFragment, Bundle().apply { putLong("id", userId) })
     }
 

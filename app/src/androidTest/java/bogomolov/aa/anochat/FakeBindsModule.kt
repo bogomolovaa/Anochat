@@ -40,9 +40,6 @@ abstract class FakeBindsModule {
     abstract fun bindsMessageRepository(messageRepository: MessageRepositoryImpl): MessageRepository
 
     @Binds
-    abstract fun bindsKeyValueStore(keyValueStoreImpl: KeyValueStoreImpl): KeyValueStore
-
-    @Binds
     abstract fun bindsFileStore(fileStore: FileStoreImpl): FileStore
 
     @Binds

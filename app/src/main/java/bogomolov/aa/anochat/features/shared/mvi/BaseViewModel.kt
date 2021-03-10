@@ -33,9 +33,11 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
     private val actions = _actions.receiveAsFlow()
     private var subscribed = false
     private var actionListener: ActionListener? = null
+    private var lastAction: UserAction? = null
 
-    fun addActionListener(actionListener: ActionListener){
+    fun addActionListener(actionListener: ActionListener): UserAction? {
         this.actionListener = actionListener
+        return lastAction
     }
 
     private fun subscribeToActions() {
@@ -50,15 +52,16 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
     protected abstract suspend fun handleAction(action: UserAction)
 
     override fun addAction(action: UserAction) {
-        Log.d("BaseViewModel","addAction ${action.javaClass.simpleName}")
+        Log.d("BaseViewModel", "addAction ${action.javaClass.simpleName}")
         actionListener?.onAction(action)
+        lastAction = action
         viewModelScope.launch(dispatcher) {
             mutex.withLock { if (!subscribed) subscribeToActions() }
             _actions.send(action)
         }
     }
 
-    fun setStateBlocking(reduce: S.() -> S){
+    fun setStateBlocking(reduce: S.() -> S) {
         runBlocking {
             setState(reduce)
         }
@@ -83,6 +86,6 @@ interface ActionExecutor {
     fun addAction(action: UserAction)
 }
 
-fun interface ActionListener{
+fun interface ActionListener {
     fun onAction(userAction: UserAction)
 }
