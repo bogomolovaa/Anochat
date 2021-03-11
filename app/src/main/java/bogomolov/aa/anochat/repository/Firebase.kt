@@ -2,16 +2,10 @@ package bogomolov.aa.anochat.repository
 
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
-import com.google.firebase.auth.PhoneAuthCredential
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
 interface Firebase {
-    fun signUp(name: String, email: String, password: String): Boolean
-    suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): String?
-    fun signOut()
-    fun isSignedIn(): Boolean
-
     fun addUserStatusListener(uid: String, scope: CoroutineScope): Flow<Pair<Boolean, Long>>
     suspend fun findByPhone(phone: String): List<User>
     suspend fun getUser(uid: String): User?

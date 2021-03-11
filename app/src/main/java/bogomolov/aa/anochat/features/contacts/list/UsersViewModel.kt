@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.contacts.list
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import bogomolov.aa.anochat.domain.ConversationUseCases
 import bogomolov.aa.anochat.domain.UserUseCases
@@ -46,7 +45,6 @@ class UsersViewModel
         setState { copy(users = usersList) }
         viewModelScope.launch(dispatcher) {
             usersList = userUseCases.updateUsersByPhones(phones)
-            Log.i("test","usersList $usersList")
             setState { copy(loading = false, users = usersList) }
         }
     }

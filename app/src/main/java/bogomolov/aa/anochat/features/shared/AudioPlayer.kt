@@ -11,8 +11,6 @@ import javax.inject.Inject
 private const val TAG = "AudioPlayer"
 
 interface AudioPlayer {
-    var mediaRecorder: MediaRecorder?
-    var mediaPlayer: MediaPlayer?
     fun initPlayer(audioFile: String, onComplete: () -> Unit): Long
     fun startPlay(): Boolean
     fun pausePlay(): Boolean
@@ -23,8 +21,8 @@ interface AudioPlayer {
 class AudioPlayerImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : AudioPlayer {
-    override var mediaRecorder: MediaRecorder? = null
-    override var mediaPlayer: MediaPlayer? = null
+    private var mediaRecorder: MediaRecorder? = null
+    private var mediaPlayer: MediaPlayer? = null
 
     override fun initPlayer(audioFile: String, onComplete: () -> Unit): Long {
         val player = MediaPlayer()

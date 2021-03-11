@@ -3,16 +3,13 @@ package bogomolov.aa.anochat.features.contacts.list
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.ContactsContract
-import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
-import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,7 +20,6 @@ import bogomolov.aa.anochat.features.conversations.list.setTextColor
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
@@ -129,7 +125,6 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         })
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
         closeButton.setOnClickListener {
-            Log.i("test", "setOnClickListener ResetSearchAction")
             menu.findItem(R.id.action_search).collapseActionView()
             viewModel.addAction(ResetSearchAction())
         }

@@ -1,8 +1,6 @@
-package bogomolov.aa.anochat
+package bogomolov.aa.anochat.features.main
 
-import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
-import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

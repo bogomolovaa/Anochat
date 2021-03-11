@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.repository.dao
 
-import androidx.paging.DataSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query

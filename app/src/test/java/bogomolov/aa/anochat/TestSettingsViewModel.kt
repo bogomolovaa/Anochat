@@ -5,7 +5,6 @@ import bogomolov.aa.anochat.MockitoKotlinTest.Companion.capture
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.settings.SettingsViewModel
-import bogomolov.aa.anochat.features.settings.UpdateUserAction
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

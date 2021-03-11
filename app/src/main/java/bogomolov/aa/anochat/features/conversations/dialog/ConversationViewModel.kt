@@ -26,7 +26,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
-private const val ONLINE_STATUS = "online"
+const val ONLINE_STATUS = "online"
 
 enum class InputStates {
     INITIAL,
@@ -69,11 +69,10 @@ class InitConversationAction(
 ) : UserAction
 
 class DeleteMessagesAction(val ids: Set<Long>) : UserAction
-class StartRecordingAction() : UserAction
+class StartRecordingAction : UserAction
 class StopRecordingAction : UserAction
 class StartPlayingAction(val audioFile: String? = null, val messageId: String? = null) : UserAction
 class PausePlayingAction : UserAction
-class UserInputTextChanged(val enteredText: String) : UserAction
 
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
@@ -86,6 +85,7 @@ class ConversationViewModel @Inject constructor(
     private var playJob: Job? = null
     private var startTime = 0L
     private var tempElapsed = 0L
+    private var conversationInitialized = false
     private val _messagesLiveData = MediatorLiveData<PagedList<MessageView>>()
     val messagesLiveData: LiveData<PagedList<MessageView>>
         get() = _messagesLiveData
@@ -107,17 +107,6 @@ class ConversationViewModel @Inject constructor(
         if (action is StopRecordingAction) action.execute()
         if (action is StartPlayingAction) action.execute()
         if (action is PausePlayingAction) action.execute()
-        if (action is UserInputTextChanged) action.execute()
-    }
-
-    private suspend fun UserInputTextChanged.execute() {
-        if (state.text != enteredText) {
-            if (enteredText.isNotEmpty()) {
-                setState { copy(text = enteredText, inputState = InputStates.TEXT_ENTERED) }
-            } else {
-                setState { copy(text = "", inputState = InputStates.INITIAL) }
-            }
-        }
     }
 
     private suspend fun StartPlayingAction.execute() {
@@ -208,10 +197,13 @@ class ConversationViewModel @Inject constructor(
     }
 
     private suspend fun InitConversationAction.execute() {
-        val conversation = conversationUseCases.getConversation(conversationId)
-        setState { copy(conversation = conversation) }
-        loadMessages(conversation)
-        subscribeToOnlineStatus(conversation.user.uid)
+        if (!conversationInitialized) {
+            conversationInitialized = true
+            val conversation = conversationUseCases.getConversation(conversationId)
+            setState { copy(conversation = conversation) }
+            loadMessages(conversation)
+            subscribeToOnlineStatus(conversation.user.uid)
+        }
     }
 
     private fun InitConversationAction.loadMessages(conversation: Conversation) {

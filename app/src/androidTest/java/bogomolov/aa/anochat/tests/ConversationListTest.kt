@@ -34,7 +34,6 @@ import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.assertEquals
@@ -45,7 +44,6 @@ import org.mockito.Mockito
 import javax.inject.Inject
 
 @HiltAndroidTest
-@ExperimentalCoroutinesApi
 class ConversationListTest {
 
     @get:Rule
@@ -121,9 +119,6 @@ class ConversationListTest {
         onView(withId(R.id.search_src_text)).perform(pressKey(KeyEvent.KEYCODE_ENTER))
         assertEquals(R.id.messageSearchFragment, navController.backStack.last().destination.id)
         assertEquals(text, navController.backStack.last().arguments?.get("search") as String)
-        onView(withId(R.id.recyclerView)).perform(
-            RecyclerViewActions.scrollTo<RecyclerView.ViewHolder>(hasDescendant(withText(text)))
-        )
     }
 
     @Test

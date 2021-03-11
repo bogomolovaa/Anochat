@@ -8,12 +8,13 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
-import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
-import bogomolov.aa.anochat.features.shared.resizeImage
+import bogomolov.aa.anochat.repository.FileStore
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class SendMediaFragment : Fragment() {
@@ -21,13 +22,18 @@ class SendMediaFragment : Fragment() {
     private var conversationId = 0L
     private lateinit var binding: FragmentSendMediaBinding
 
+    @Inject
+    lateinit var fileStore: FileStore
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentSendMediaBinding.inflate(inflater, container, false)
+    ) = FragmentSendMediaBinding.inflate(inflater, container, false).also { binding = it }.root
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        val navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         val mediaPath = arguments?.getString("path")
@@ -35,7 +41,7 @@ class SendMediaFragment : Fragment() {
         conversationId = arguments?.getLong("conversationId")!!
 
         val resizedImage =
-            resizeImage(mediaUri, mediaPath, requireContext(), toGallery = (mediaUri == null))
+            fileStore.resizeImage(mediaUri, mediaPath, toGallery = (mediaUri == null))
         if (resizedImage != null) {
             binding.imageView.setImageBitmap(resizedImage.bitmap)
             binding.messageInputLayout.setEndIconOnClickListener {
@@ -44,6 +50,5 @@ class SendMediaFragment : Fragment() {
                 navController.popBackStack()
             }
         }
-        return binding.root
     }
 }

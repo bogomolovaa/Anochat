@@ -3,12 +3,15 @@ package bogomolov.aa.anochat.features.shared.mvi
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -76,7 +79,6 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
 
     fun setStateAsync(reduce: S.() -> S) {
         viewModelScope.launch(dispatcher) {
-            delay(3000)
             setState(reduce)
         }
     }

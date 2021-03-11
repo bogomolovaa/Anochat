@@ -18,26 +18,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
-import androidx.activity.addCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.os.ConfigurationCompat
 import androidx.databinding.BindingAdapter
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
 import androidx.navigation.NavController
-import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.transition.Fade
 import androidx.transition.Slide
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
-import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import com.google.android.material.card.MaterialCardView
 import com.vanniktech.emoji.EmojiPopup
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -46,60 +43,51 @@ private const val TAG = "ConversationFragment"
 
 @AndroidEntryPoint
 class ConversationFragment : Fragment(), RequestPermission {
-    private val viewModel: ConversationViewModel by hiltNavGraphViewModels(R.id.dialog_graph)
+    val viewModel: ConversationViewModel by hiltNavGraphViewModels(R.id.dialog_graph)
     private lateinit var navController: NavController
     private lateinit var emojiPopup: EmojiPopup
-    private lateinit var updatableView: ConversationUpdatableView
-    private lateinit var recyclerViewSetup: ConversationRecyclerViewSetup
-    private lateinit var conversationInputSetup: ConversationInputSetup
-
+    private lateinit var binding: FragmentConversationBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val conversationId = arguments?.get("id") as Long
-        viewModel.addAction(InitConversationAction(conversationId) {
-            val locale = ConfigurationCompat.getLocales(requireContext().resources.configuration)[0]
-            toMessageViewsWithDateDelimiters(it, locale)
-        })
-        recyclerViewSetup = ConversationRecyclerViewSetup(this, viewModel)
-        updatableView = ConversationUpdatableView(recyclerViewSetup)
-        conversationInputSetup = ConversationInputSetup(this, viewModel, recyclerViewSetup)
-        lifecycle.addObserver(StateLifecycleObserver(updatableView, viewModel))
-
         val animationDuration = resources.getInteger(R.integer.animation_duration).toLong()
         enterTransition = Slide(Gravity.END).apply { duration = animationDuration }
         exitTransition = Fade().apply { duration = animationDuration }
         requireActivity().window.decorView.setBackgroundResource(R.color.conversation_background)
     }
 
-    override fun onStart() {
-        super.onStart()
-        postponeEnterTransition()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        if (viewModel.state.inputState == InputStates.FAB_EXPAND)
-            viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) }
-    }
-
     override fun onPause() {
         super.onPause()
         hideKeyBoard()
+        if (viewModel.state.inputState == InputStates.FAB_EXPAND)
+            viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        val binding = FragmentConversationBinding.inflate(inflater, container, false)
-        (activity as MainActivity).setSupportActionBar(binding.toolbar)
-        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+    ) = FragmentConversationBinding.inflate(inflater, container, false).also { binding = it }.root
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val recyclerViewSetup = ConversationRecyclerViewSetup(this, viewModel)
+        val updatableView = ConversationUpdatableView(recyclerViewSetup)
+        val conversationInputSetup = ConversationInputSetup(this, viewModel, recyclerViewSetup)
+        viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(updatableView, viewModel))
+        val conversationId = arguments?.get("id") as Long
+        viewModel.addAction(InitConversationAction(conversationId) {
+            val locale = ConfigurationCompat.getLocales(requireContext().resources.configuration)[0]
+            toMessageViewsWithDateDelimiters(it, locale)
+        })
+
+        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
+        navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         emojiPopup = EmojiPopup.Builder.fromRootView(binding.root).build(binding.messageInputText)
         binding.emojiIcon.setOnClickListener { emojiPopup.toggle() }
 
+        postponeEnterTransition()
         updatableView.binding = binding
         conversationInputSetup.setup(binding)
         recyclerViewSetup.setup(binding) {
@@ -107,12 +95,9 @@ class ConversationFragment : Fragment(), RequestPermission {
         }
 
         binding.usernameLayout.setOnClickListener {
-            val conversationId = viewModel.state.conversation?.user?.id
-            if (conversationId != null) navigateToUserFragment(conversationId)
+            val userId = viewModel.state.conversation?.user?.id
+            if (userId != null) navigateToUserFragment(userId)
         }
-
-
-        return binding.root
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
@@ -183,7 +168,7 @@ class ConversationFragment : Fragment(), RequestPermission {
     }
 
     private fun takePictureFromCamera() {
-        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         if (takePictureIntent.resolveActivity(requireActivity().packageManager) != null) {
             val photoFile = createTempImageFile()
             viewModel.setStateAsync { copy(photoPath = photoFile.path) }
@@ -216,8 +201,8 @@ class ConversationFragment : Fragment(), RequestPermission {
     }
 
     companion object {
-        private const val FILE_CHOOSER_CODE: Int = 0
-        private const val CAMERA_CODE: Int = 1
+        const val FILE_CHOOSER_CODE: Int = 0
+        const val CAMERA_CODE: Int = 1
         private const val READ_PERMISSION = Manifest.permission.READ_EXTERNAL_STORAGE
         private const val CAMERA_PERMISSION = Manifest.permission.CAMERA
         private const val MICROPHONE_PERMISSION = Manifest.permission.RECORD_AUDIO

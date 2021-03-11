@@ -24,14 +24,17 @@ import bogomolov.aa.anochat.databinding.FragmentSettingsBinding
 import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
-import bogomolov.aa.anochat.features.shared.resizeImage
+import bogomolov.aa.anochat.repository.FileStore
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     val viewModel: SettingsViewModel by hiltNavGraphViewModels(R.id.settings_graph)
     private lateinit var binding: FragmentSettingsBinding
     private lateinit var navController: NavController
+    @Inject
+    lateinit var fileStore: FileStore
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -125,7 +128,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     }
 
     private fun updatePhoto(uri: Uri) {
-        val miniature = resizeImage(uri = uri, context = requireContext(), toGallery = false)
+        val miniature = fileStore.resizeImage(uri = uri, toGallery = false)
         if (miniature != null) {
             viewModel.miniature = miniature
             navController.navigate(R.id.miniatureFragment)

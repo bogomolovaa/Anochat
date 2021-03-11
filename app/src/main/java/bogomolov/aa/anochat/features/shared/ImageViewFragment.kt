@@ -4,22 +4,21 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Point
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import androidx.activity.addCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
-import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.transition.Transition
 import androidx.transition.TransitionInflater
 import androidx.transition.TransitionListenerAdapter
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentImageViewBinding
-import bogomolov.aa.anochat.features.main.MainActivity
 import kotlin.math.max
 import kotlin.math.min
 
@@ -31,7 +30,7 @@ private const val TAG = "ImageViewFragment"
 class ImageViewFragment : Fragment() {
     private lateinit var binding: FragmentImageViewBinding
     private var bitmap: Bitmap? = null
-    private lateinit var mainActivity: MainActivity
+    private lateinit var mainActivity: AppCompatActivity
     private lateinit var scaleDetector: ScaleGestureDetector
     private var savedSystemUiVisibility = 0
     private var scale = 1f
@@ -64,15 +63,18 @@ class ImageViewFragment : Fragment() {
         }
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentImageViewBinding.inflate(inflater, container, false)
-        mainActivity = activity as MainActivity
+    ) = FragmentImageViewBinding.inflate(inflater, container, false).also { binding = it }.root
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        mainActivity = activity as AppCompatActivity
         mainActivity.setSupportActionBar(binding.toolbar)
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        val navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         mainActivity.supportActionBar?.title = ""
         setHasOptionsMenu(true)
@@ -98,7 +100,6 @@ class ImageViewFragment : Fragment() {
         }
 
         (sharedElementEnterTransition as Transition).addListener(onTransitionEndListener)
-        return binding.root
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

@@ -1,6 +1,8 @@
 package bogomolov.aa.anochat.tests
 
 import android.Manifest
+import android.app.Activity
+import android.app.Instrumentation
 import android.content.Intent
 import android.net.Uri
 import androidx.test.espresso.Espresso.onView
@@ -28,7 +30,6 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -63,11 +64,13 @@ class SettingsViewTest {
 
     private var action: UserAction? = null
 
+    private val myUser = User(name = "Name1", status = "hey", phone = "1234567")
+
     @Before
     fun setUp() {
         hiltRule.inject()
         runBlocking {
-            Mockito.`when`(firebase.getUser(any(String::class.java))).thenReturn(User(status = ""))
+            Mockito.`when`(firebase.getUser(any(String::class.java))).thenReturn(myUser)
             Mockito.`when`(authRepository.getSettings()).thenReturn(Settings.create())
         }
         fragment = navigateTo(R.id.settingsFragment)
@@ -85,12 +88,22 @@ class SettingsViewTest {
 
     @Test
     fun test_edit_photo_click() {
+        Intents.intending(hasAction(Intent.ACTION_CHOOSER)).respondWith(
+            Instrumentation.ActivityResult(
+                Activity.RESULT_OK, Intent()
+            )
+        )
         onView(withId(R.id.edit_photo)).perform(click())
         intended(hasAction(Intent.ACTION_CHOOSER))
     }
 
     @Test
     fun test_privacy_policy_click() {
+        Intents.intending(hasAction(Intent.ACTION_VIEW)).respondWith(
+            Instrumentation.ActivityResult(
+                Activity.RESULT_OK, Intent()
+            )
+        )
         onView(withId(R.id.privacyPolicy)).perform(click())
         intended(
             allOf(
@@ -102,17 +115,9 @@ class SettingsViewTest {
 
     @Test
     fun test_state_mapping() = runBlockingTest {
-        val testUser = User(
-            name = "Name1",
-            status = "hey",
-            phone = "1234567"
-        )
-        fragment.viewModel.setState { copy(user = testUser) }
-        delay(100)
-
-        onView(withText(testUser.name)).check(matches(isDisplayed()))
-        onView(withText(testUser.status)).check(matches(isDisplayed()))
-        onView(withText(testUser.phone)).check(matches(isDisplayed()))
+        onView(withText(myUser.name)).check(matches(isDisplayed()))
+        onView(withText(myUser.status)).check(matches(isDisplayed()))
+        onView(withText(myUser.phone)).check(matches(isDisplayed()))
     }
 
     @Test

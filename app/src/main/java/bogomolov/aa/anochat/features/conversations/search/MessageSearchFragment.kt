@@ -8,7 +8,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
-import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
@@ -25,20 +25,18 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
     private val viewModel: MessageSearchViewModel by viewModels()
     private lateinit var navController: NavController
     private val adapter = ConversationsPagedAdapter(showFullMessage = true)
-
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
-    }
+    private lateinit var binding: FragmentMessageSearchBinding
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        val binding = FragmentMessageSearchBinding.inflate(inflater, container, false)
+    ) = FragmentMessageSearchBinding.inflate(inflater, container, false).also { binding = it }.root
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         setHasOptionsMenu(true)
@@ -47,8 +45,6 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
         recyclerView.adapter = adapter
 
         viewModel.messagesLiveData.observe(viewLifecycleOwner, adapter::submitList)
-
-        return binding.root
     }
 
     override fun updateView(newState: MessageSearchUiState, currentState: MessageSearchUiState) {

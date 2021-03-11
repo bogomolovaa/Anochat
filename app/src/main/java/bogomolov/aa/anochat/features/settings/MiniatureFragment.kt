@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
-import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentMiniatureBinding
@@ -28,18 +28,19 @@ class MiniatureFragment : Fragment() {
     private lateinit var bitmap: Bitmap
     private lateinit var scaleDetector: ScaleGestureDetector
 
-
-    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentMiniatureBinding.inflate(inflater, container, false)
+    ) = FragmentMiniatureBinding.inflate(inflater, container, false).also { binding = it }.root
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+        val navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
-        bitmap = viewModel.miniature.bitmap
+        bitmap = viewModel.miniature.bitmap!!
         binding.imageView.setImageBitmap(bitmap)
         binding.fab.setOnClickListener {
             createMiniature()
@@ -48,8 +49,6 @@ class MiniatureFragment : Fragment() {
         }
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         binding.imageView.setOnTouchListener(maskImageOnTouchListener)
-
-        return binding.root
     }
 
     private fun createMiniature() {

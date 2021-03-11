@@ -4,7 +4,6 @@ import android.util.Log
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.database.*
 import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.storage.FirebaseStorage
@@ -13,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 private const val TAG = "FirebaseRepository"
@@ -25,31 +23,10 @@ class FirebaseImpl : Firebase {
         GlobalScope.launch(Dispatchers.IO) {
             //FirebaseDatabase.getInstance().setLogLevel(Logger.Level.DEBUG)
             FirebaseDatabase.getInstance().setPersistenceEnabled(true)
-            token = getToken()
+            token = getToken()!!
             updateOnlineStatus()
         }
     }
-
-    override fun signUp(name: String, email: String, password: String): Boolean {
-        return true
-    }
-
-    override suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): String? {
-        val uid = userSignIn(credential) ?: return null
-        val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("user_tokens").child(uid)
-            .setValue(mapOf("token" to token))
-        myRef.child("users").child(uid)
-            .updateChildren(mapOf("phone" to phoneNumber))
-        return uid
-    }
-
-    override fun signOut() {
-        FirebaseAuth.getInstance().signOut()
-    }
-
-    override fun isSignedIn() = getUid() != null
-
 
     override fun addUserStatusListener(
         uid: String,
@@ -257,7 +234,7 @@ class FirebaseImpl : Firebase {
 
 
     private fun updateOnlineStatus() {
-        val uid = getUid()
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
         if (uid != null) {
             val database = FirebaseDatabase.getInstance()
             val userRef = database.getReference("users/${uid}")
@@ -275,31 +252,18 @@ class FirebaseImpl : Firebase {
         val photo = snapshot.child("photo").value?.toString()
         return User(uid = uid, phone = phone, name = name, status = status, photo = photo)
     }
+}
 
-    private fun getUid() = FirebaseAuth.getInstance().currentUser?.uid
-
-    private suspend fun userSignIn(credential: PhoneAuthCredential): String? = suspendCoroutine {
-        val auth = FirebaseAuth.getInstance()
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    it.resume(auth.currentUser?.uid)
-                } else {
-                    it.resumeWithException(task.exception!!)
-                }
+suspend fun getToken(): String? = suspendCoroutine {
+    FirebaseInstanceId.getInstance().instanceId
+        .addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w(TAG, "getToken() failed", task.exception)
+                it.resume(null)
+            } else {
+                val token = task.result!!.token
+                Log.d(TAG, "token $token")
+                it.resume(token)
             }
-    }
-
-    private suspend fun getToken(): String = suspendCoroutine {
-        FirebaseInstanceId.getInstance().instanceId
-            .addOnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    Log.w(TAG, "getToken() failed", task.exception)
-                } else {
-                    val token = task.result!!.token
-                    Log.d(TAG, "token $token")
-                    it.resume(token)
-                }
-            }
-    }
+        }
 }

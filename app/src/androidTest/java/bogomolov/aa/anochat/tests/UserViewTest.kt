@@ -8,6 +8,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.repositories.UserRepository
+import bogomolov.aa.anochat.features.contacts.user.InitUserAction
 import bogomolov.aa.anochat.features.contacts.user.UserViewFragment
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import bogomolov.aa.anochat.navigateTo
@@ -15,6 +16,7 @@ import bogomolov.aa.anochat.repository.Firebase
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -46,12 +48,14 @@ class UserViewTest {
             Mockito.`when`(firebase.getUser(user.uid)).thenReturn(user)
             user.id = userRepository.getOrAddUser("uid").id
         }
-        fragment = navigateTo(R.id.userViewFragment, bundle = Bundle().apply { putLong("id", user.id) })
+        fragment =
+            navigateTo(R.id.userViewFragment, bundle = Bundle().apply { putLong("id", user.id) })
         action = fragment.viewModel.addActionListener { action = it }
     }
 
     @Test
     fun test_user_binding() {
+        Assert.assertEquals(user.id, (action as InitUserAction).id)
         onView(withText(user.name)).check(matches(isDisplayed()))
         onView(withText(user.phone)).check(matches(isDisplayed()))
         onView(withText(user.status)).check(matches(isDisplayed()))

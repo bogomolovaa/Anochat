@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.repository.repositories
 
-import android.util.Log
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.User

@@ -109,7 +109,7 @@ class ContactsTest {
         onView(withId(R.id.recyclerView)).perform(
             RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click())
         )
-        assertThat("action is CreateConversationAction", action is CreateConversationAction)
+        assertEquals(users[0], (action as CreateConversationAction).user)
         assertEquals(R.id.conversationFragment, navController.backStack.last().destination.id)
     }
 }
