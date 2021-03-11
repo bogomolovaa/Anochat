@@ -5,7 +5,9 @@ import androidx.annotation.RequiresApi
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.UID
 
-class MockKeyValueStore(myUid: String) : KeyValueStore {
+const val DEFAULT_MY_UID = "myUid"
+
+class MockKeyValueStore(myUid: String = DEFAULT_MY_UID) : KeyValueStore {
     private val stringMap = HashMap<String, String?>()
     private val bytesMap = HashMap<String, ByteArray>()
     private val booleanMap = HashMap<String, Boolean?>()

@@ -1,11 +1,13 @@
-package bogomolov.aa.anochat
+package bogomolov.aa.anochat.viewmodels
 
 
 import bogomolov.aa.anochat.MockitoKotlinTest.Companion.capture
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.settings.SettingsViewModel
+import bogomolov.aa.anochat.features.settings.UpdateUserAction
 import bogomolov.aa.anochat.features.shared.AuthRepository
+import bogomolov.aa.anochat.features.shared.Settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineDispatcher
@@ -16,11 +18,8 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentCaptor
-import org.mockito.Captor
-import org.mockito.Mock
+import org.mockito.*
 import org.mockito.Mockito.verify
-import org.mockito.MockitoAnnotations
 
 
 @ExperimentalCoroutinesApi
@@ -43,6 +42,7 @@ class TestSettingsViewModel {
         viewModel = SettingsViewModel(userUseCases, authRepository).apply {
             dispatcher = Dispatchers.Main
         }
+        Mockito.`when`(authRepository.getSettings()).thenReturn(Settings())
     }
 
     @After
@@ -55,7 +55,7 @@ class TestSettingsViewModel {
         val status = "new status"
 
         viewModel.setStateAsync { copy(user = User()) }
-        //viewModel.addAction(UpdateUserAction(status))
+        viewModel.addAction(UpdateUserAction { copy(status = status)})
 
         verify(userUseCases).updateMyUser(capture(userCaptor))
         assertEquals(status, userCaptor.value.status)

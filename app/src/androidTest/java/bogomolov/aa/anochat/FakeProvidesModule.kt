@@ -45,7 +45,7 @@ object FakeProvidesModule {
 
     @Singleton
     @Provides
-    fun providesKeyValueStore(): KeyValueStore = MockKeyValueStore("myUid")
+    fun providesKeyValueStore(): KeyValueStore = MockKeyValueStore()
 
     @Singleton
     @Provides

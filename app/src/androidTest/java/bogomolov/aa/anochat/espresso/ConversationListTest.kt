@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.tests
+package bogomolov.aa.anochat.espresso
 
 import android.view.KeyEvent
 import androidx.emoji.bundled.BundledEmojiCompatConfig

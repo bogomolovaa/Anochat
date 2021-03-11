@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.tests
+package bogomolov.aa.anochat.espresso
 
 import android.Manifest
 import android.app.Activity
@@ -15,6 +15,7 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.rule.GrantPermissionRule
+import bogomolov.aa.anochat.DEFAULT_MY_UID
 import bogomolov.aa.anochat.MockitoKotlinAndroidTest.Companion.any
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
@@ -64,13 +65,13 @@ class SettingsViewTest {
 
     private var action: UserAction? = null
 
-    private val myUser = User(name = "Name1", status = "hey", phone = "1234567")
+    private val myUser = User(uid = DEFAULT_MY_UID, name = "Name1", status = "hey", phone = "1234567")
 
     @Before
     fun setUp() {
         hiltRule.inject()
         runBlocking {
-            Mockito.`when`(firebase.getUser(any(String::class.java))).thenReturn(myUser)
+            Mockito.`when`(firebase.getUser(DEFAULT_MY_UID)).thenReturn(myUser)
             Mockito.`when`(authRepository.getSettings()).thenReturn(Settings.create())
         }
         fragment = navigateTo(R.id.settingsFragment)

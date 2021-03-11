@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.tests
+package bogomolov.aa.anochat.espresso
 
 import android.os.Bundle
 import androidx.test.espresso.Espresso.onView

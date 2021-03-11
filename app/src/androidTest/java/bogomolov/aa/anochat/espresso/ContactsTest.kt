@@ -1,4 +1,4 @@
-package bogomolov.aa.anochat.tests
+package bogomolov.aa.anochat.espresso
 
 import android.view.KeyEvent
 import androidx.navigation.testing.TestNavHostController
@@ -49,12 +49,12 @@ class ContactsTest {
     private var action: UserAction? = null
 
     private val users = listOf(
-        User(name = "user1", phone = "1234567", status = "status1"),
-        User(name = "user2", phone = "2345678", status = "status2"),
-        User(name = "user3", phone = "3456789", status = "status3")
+        User(uid = "uid1", name = "user1", phone = "1234567", status = "status1"),
+        User(uid = "uid2", name = "user2", phone = "2345678", status = "status2"),
+        User(uid = "uid3", name = "user3", phone = "3456789", status = "status3")
     )
 
-    private val user4 = User(name = "user4", phone = "+1234567", status = "status4")
+    private val user4 = User(uid = "uid4", name = "user4", phone = "+1234567", status = "status4")
 
     @Before
     fun setUp() {
