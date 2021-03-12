@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.features.settings
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
@@ -38,6 +39,7 @@ class SettingsViewModel @Inject constructor(
     override suspend fun handleAction(action: UserAction) {
         if (action is UpdateUserAction) action.execute()
         if (action is InitSettingsAction) action.execute()
+        if (action is ChangeSettingsAction) action.execute()
     }
 
     private fun UpdateUserAction.execute() {

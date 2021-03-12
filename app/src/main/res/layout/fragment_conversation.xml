@@ -88,7 +88,8 @@
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/inputLayout"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible">
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/dateCardView"
@@ -112,14 +113,14 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    tools:visibility="visible" />
+                    tools:visibility="invisible" />
 
                 <ImageView
                     android:id="@+id/removeReply"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:backgroundTint="#FFFFFF"
-                    android:tint="#E91E63"
+                    app:tint="#E91E63"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:srcCompat="@drawable/clear_icon" />
@@ -130,7 +131,7 @@
                     android:layout_height="40dp"
                     android:layout_margin="6dp"
                     android:duplicateParentState="true"
-                    android:visibility="invisible"
+                    android:visibility="gone"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -142,6 +143,7 @@
                     android:layout_margin="6dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toEndOf="@+id/replyImage"
                     app:layout_constraintTop_toTopOf="parent"
                     tools:text="Reply message" />

@@ -18,8 +18,8 @@ class ConversationRepositoryImpl @Inject constructor(
 ) : ConversationRepository {
     private val mapper = ModelEntityMapper()
 
-    override fun getConversation(id: Long): Conversation =
-        mapper.entityToModel(db.conversationDao().loadConversation(id))!!
+    override fun getConversation(id: Long): Conversation? =
+        mapper.entityToModel(db.conversationDao().loadConversation(id))
 
     override fun loadConversationsDataSource() =
         db.conversationDao().loadConversations(keyValueStore.getMyUID() ?: "").map {
@@ -31,9 +31,9 @@ class ConversationRepositoryImpl @Inject constructor(
         db.conversationDao().deleteByIds(ids)
     }
 
-    override fun deleteConversationIfNoMessages(conversation: Conversation) {
-        val number = db.messageDao().getMessagesNumber(conversation.id)
-        if (number == 0) db.conversationDao().deleteByIds(setOf(conversation.id))
+    override fun deleteConversationIfNoMessages(conversationId: Long) {
+        val number = db.messageDao().getMessagesNumber(conversationId)
+        if (number == 0) db.conversationDao().deleteByIds(setOf(conversationId))
     }
 
     override fun createOrGetConversation(user: User): Long {

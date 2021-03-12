@@ -20,8 +20,8 @@ android {
         applicationId "bogomolov.aa.anochat"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 2
-        versionName "1.1"
+        versionCode 3
+        versionName "1.2"
         multiDexEnabled true
         //testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunner "bogomolov.aa.anochat.CustomTestRunner"
@@ -71,31 +71,31 @@ ext {
 
 dependencies {
 
-    kapt "androidx.room:room-compiler:2.2.4"
+    kapt "androidx.room:room-compiler:2.2.6"
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2"
-    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.core:core-ktx:1.3.2'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
-    implementation "androidx.paging:paging-runtime:2.1.1"
+    implementation "androidx.paging:paging-runtime:2.1.2"
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.2.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.3.0"
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
     implementation "androidx.fragment:fragment-ktx:1.3.0"
-    implementation "androidx.work:work-runtime-ktx:2.3.3"
-    implementation 'androidx.preference:preference-ktx:1.1.0'
-    implementation "androidx.room:room-runtime:2.2.4"
+    implementation "androidx.work:work-runtime-ktx:2.5.0"
+    implementation 'androidx.preference:preference-ktx:1.1.1'
+    implementation "androidx.room:room-runtime:2.2.6"
     implementation 'com.android.support:multidex:1.0.3'
     implementation "androidx.emoji:emoji-appcompat:1.1.0"
     implementation "androidx.emoji:emoji-bundled:1.1.0"
-    implementation 'com.google.android.material:material:1.2.0-alpha05'
+    implementation 'com.google.android.material:material:1.4.0-alpha01'
     implementation 'com.google.firebase:firebase-auth:19.2.0'
     implementation 'com.google.firebase:firebase-database-ktx:19.2.1'
     implementation 'com.google.firebase:firebase-messaging:20.1.0'
@@ -104,13 +104,13 @@ dependencies {
     implementation 'androidx.annotation:annotation:1.1.0'
     implementation 'com.vanniktech:emoji-ios:0.6.0'
 
-    implementation "com.google.dagger:hilt-android:2.32-alpha"
+    implementation "com.google.dagger:hilt-android:2.33-beta"
     implementation 'androidx.hilt:hilt-navigation-fragment:1.0.0-alpha03'
     implementation 'androidx.hilt:hilt-work:1.0.0-alpha03'
     kapt 'androidx.hilt:hilt-compiler:1.0.0-alpha03'
 
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13'
     testImplementation 'org.mockito:mockito-core:3.7.7'
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.4.2'
 

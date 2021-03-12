@@ -11,7 +11,7 @@ interface ConversationRepository : ConversationUseCasesInRepository{
 interface ConversationUseCasesInRepository{
     fun loadConversationsDataSource(): DataSource.Factory<Int, Conversation>
 
-    fun getConversation(id: Long): Conversation
+    fun getConversation(id: Long): Conversation?
     fun deleteConversations(ids: Set<Long>)
-    fun deleteConversationIfNoMessages(conversation: Conversation)
+    fun deleteConversationIfNoMessages(conversationId: Long)
 }

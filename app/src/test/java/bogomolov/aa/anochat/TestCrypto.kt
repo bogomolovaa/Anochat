@@ -1,9 +1,12 @@
 package bogomolov.aa.anochat
 
 import bogomolov.aa.anochat.domain.Crypto
+import bogomolov.aa.anochat.domain.WrongSecretKeyException
+import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Ignore
 import org.junit.Test
+import java.lang.Exception
 
 private const val UID1 = "kjsdhfkasfdkjalshf_user1"
 private const val UID2 = "hsdhfisfihkvneiuis_user2"
@@ -25,11 +28,10 @@ class TestCrypto {
         val encrypted = crypto1.encryptString(secretKey1!!, text)
         val decrypted = crypto2.decryptString(encrypted, secretKey2!!)
 
-        assertEquals(text,decrypted)
+        assertEquals(text, decrypted)
     }
 
     @Test
-    @Ignore("reproduce AEADBadTagException")
     fun test_encryptDecrypt2() {
         val uid1 = "kjsdhfkasfdkjalshf"
         val uid2 = "239849823749823743"
@@ -49,9 +51,12 @@ class TestCrypto {
 
         val text = "hello world"
         val encrypted = crypto1.encryptString(secretKey1!!, text)
-        val decrypted = crypto2.decryptString(encrypted, secretKey22!!)
-        //javax.crypto.AEADBadTagException
-
-        assertEquals(text,decrypted)
+        var exception: Exception? = null
+        try {
+            val decrypted = crypto2.decryptString(encrypted, secretKey22!!)
+        } catch (e: WrongSecretKeyException) {
+            exception = e
+        }
+        assertThat("exception is WrongSecretKeyException",exception is WrongSecretKeyException)
     }
 }

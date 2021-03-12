@@ -56,7 +56,7 @@ class ConversationUpdatableView(
     private fun setReplyMessage(replyMessage: Message?) {
         if (replyMessage == null) {
             binding.replyLayout.visibility = View.GONE
-            binding.replyImage.visibility = View.INVISIBLE
+            binding.replyImage.visibility = View.GONE
             binding.replayAudio.visibility = View.INVISIBLE
         } else {
             binding.replyLayout.visibility = View.VISIBLE
@@ -68,7 +68,7 @@ class ConversationUpdatableView(
                     binding.replyImage.visibility = View.VISIBLE
                 }
             }else{
-                binding.replyImage.visibility = View.INVISIBLE
+                binding.replyImage.visibility = View.GONE
             }
             if (replyMessage.audio != null) {
                 binding.replayAudio.set(replyMessage.audio, replyMessage.messageId)

@@ -123,7 +123,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         if (inBackground && settings.notifications) {
             val conversation =
                 conversationUseCases.getConversation(message.conversationId)
-            sendNotification(message, conversation.user, settings)
+            if (conversation != null) sendNotification(message, conversation.user, settings)
         }
     }
 

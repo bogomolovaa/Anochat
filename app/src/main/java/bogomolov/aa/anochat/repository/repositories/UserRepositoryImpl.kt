@@ -95,8 +95,10 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun downloadFile(fileName: String, uid: String) =
-        firebase.downloadFile(fileName, uid)
+    private suspend fun downloadFile(fileName: String, uid: String) {
+        val byteArray = firebase.downloadFile(fileName, uid)
+        if (byteArray != null) fileStore.saveByteArray(byteArray, fileName, toGallery = false)
+    }
 
     private suspend fun uploadFile(fileName: String, uid: String) {
         val byteArray = fileStore.getByteArray(false, fileName) ?: return

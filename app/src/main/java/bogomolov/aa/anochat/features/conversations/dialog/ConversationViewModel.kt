@@ -93,7 +93,7 @@ class ConversationViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         GlobalScope.launch(dispatcher) {
-            conversationUseCases.deleteConversationIfNoMessages(state.conversation!!)
+            conversationUseCases.deleteConversationIfNoMessages(state.conversation?.id!!)
         }
     }
 
@@ -199,7 +199,7 @@ class ConversationViewModel @Inject constructor(
     private suspend fun InitConversationAction.execute() {
         if (!conversationInitialized) {
             conversationInitialized = true
-            val conversation = conversationUseCases.getConversation(conversationId)
+            val conversation = conversationUseCases.getConversation(conversationId)!!
             setState { copy(conversation = conversation) }
             loadMessages(conversation)
             subscribeToOnlineStatus(conversation.user.uid)

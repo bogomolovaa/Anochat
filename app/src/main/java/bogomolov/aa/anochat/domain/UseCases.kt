@@ -168,5 +168,5 @@ open class MessageUseCases @Inject constructor(
         keyValueStore.setValue(sentSettingName, true)
     }
 
-    private fun getSentSettingName(uid: String) = "${keyValueStore.getMyUID()!!}${uid}_sent"
+    private fun getSentSettingName(uid: String) = "${keyValueStore.getMyUID()!!}_${uid}_sent"
 }

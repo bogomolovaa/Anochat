@@ -122,8 +122,8 @@ class FirebaseImpl : Firebase {
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("messages").child(messageId).updateChildren(
             mapOf(
-                "received" to received,
-                "viewed" to viewed
+                "received" to received.toString(),
+                "viewed" to viewed.toString()
             )
         )
     }
