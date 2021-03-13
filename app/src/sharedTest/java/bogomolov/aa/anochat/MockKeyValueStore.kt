@@ -22,7 +22,7 @@ class MockKeyValueStore(myUid: String = DEFAULT_MY_UID) : KeyValueStore {
 
     override fun getStringValue(key: String) = stringMap[key]
 
-    override fun getBooleanValue(key: String) = booleanMap[key] ?: false
+    override fun getBooleanValue(key: String) = booleanMap[key]
 
     override fun setByteArrayValue(key: String, value: ByteArray) {
         bytesMap[key] = value

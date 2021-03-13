@@ -73,154 +73,163 @@
                 android:id="@+id/messageCardView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:clickable="true"
-                android:layout_marginLeft="@{message.message.isMine? @dimen/margin_64dp : @dimen/margin_4dp}"
                 android:layout_marginTop="4dp"
-                android:layout_marginRight="@{message.message.isMine? @dimen/margin_4dp : @dimen/margin_64dp}"
                 android:layout_marginBottom="4dp"
+                android:layout_marginLeft="@{message.message.isMine? @dimen/margin_64dp : @dimen/margin_4dp}"
+                android:layout_marginRight="@{message.message.isMine? @dimen/margin_4dp : @dimen/margin_64dp}"
+                android:clickable="true"
                 app:cardBackgroundColor="@{message.message.isMine? @color/my_message_color : @color/not_my_message_color}"
                 app:cardElevation="2dp">
 
-                <LinearLayout
+
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minWidth="120dp"
-                    android:orientation="vertical">
+                    tools:background="@color/my_message_color">
 
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:id="@+id/reply_layout"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="#EEEDED"
+                        android:layout_margin="4dp"
                         android:minWidth="120dp"
-                        android:visibility="@{message.hasReplyMessage()? View.VISIBLE : View.GONE}"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
 
-                        <ImageView
-                            android:id="@+id/replyImage"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:layout_margin="6dp"
-                            android:visibility="@{message.hasReplyMessageImage()? View.VISIBLE : View.GONE}"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/reply_layout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="#EEEDED"
+                            android:minWidth="120dp"
+                            android:visibility="@{message.hasReplyMessage()? View.VISIBLE : View.GONE}"
+                            tools:visibility="visible">
+
+                            <ImageView
+                                android:id="@+id/replyImage"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_margin="6dp"
+                                android:visibility="@{message.hasReplyMessageImage()? View.VISIBLE : View.GONE}"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView
+                                android:id="@+id/replayAudio"
+                                android:layout_width="250dp"
+                                android:layout_height="50dp"
+                                android:visibility="@{message.hasReplyAudio()? View.VISIBLE : View.GONE}"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintWidth_min="120dp"
+                                tools:visibility="gone" />
+
+                            <androidx.emoji.widget.EmojiTextView
+                                android:id="@+id/reply_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_marginStart="8dp"
+                                android:text="@{message.getReplyText()}"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintHorizontal_bias="0.0"
+                                app:layout_constraintStart_toEndOf="@+id/replyImage"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintVertical_bias="0.515"
+                                tools:text="Reply message" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
 
                         <bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView
-                            android:id="@+id/replayAudio"
-                            android:layout_width="250dp"
-                            android:layout_height="50dp"
-                            android:visibility="@{message.hasReplyAudio()? View.VISIBLE : View.GONE}"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintWidth_min="120dp"
-                            tools:visibility="gone" />
-
-                        <androidx.emoji.widget.EmojiTextView
-                            android:id="@+id/reply_text"
-                            android:layout_width="wrap_content"
+                            android:id="@+id/playAudioInput"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_margin="6dp"
-                            android:layout_marginStart="8dp"
-                            android:text="@{message.getReplyText()}"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintHorizontal_bias="0.0"
-                            app:layout_constraintStart_toEndOf="@+id/replyImage"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintVertical_bias="0.515"
-                            tools:text="Reply message" />
-
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-                    <bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView
-                        android:id="@+id/playAudioInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minWidth="250dp"
-                        android:visibility="@{message.hasAudio()? View.VISIBLE : View.GONE}" />
-
-                    <ImageView
-                        android:id="@+id/imageView"
-                        android:layout_width="250dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginEnd="8dp"
-                        android:adjustViewBounds="true"
-                        android:scaleType="centerCrop"
-                        android:clickable="true"
-                        android:transitionName="@{message.message.image}"
-                        app:layout_constraintHeight_max="250dp"
-                        tools:srcCompat="@tools:sample/avatars"
-                        tools:visibility="visible" />
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:id="@+id/image_progress_layout"
-                        android:layout_width="250dp"
-                        android:layout_height="250dp"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="#EEEDED"
-                        android:visibility="gone"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        tools:visibility="visible">
+                            android:layout_marginBottom="2dp"
+                            android:minWidth="250dp"
+                            android:visibility="@{message.hasAudio()? View.VISIBLE : View.GONE}"
+                            tools:visibility="visible" />
 
                         <ImageView
-                            android:id="@+id/error_loading_image"
-                            android:layout_width="100dp"
-                            android:layout_height="100dp"
-                            android:tint="#ff0000"
-                            android:visibility="invisible"
-                            app:layout_constraintBottom_toBottomOf="parent"
+                            android:id="@+id/imageView"
+                            android:layout_width="250dp"
+                            android:layout_height="wrap_content"
+                            android:adjustViewBounds="true"
+                            android:clickable="true"
+                            android:scaleType="centerCrop"
+                            android:transitionName="@{message.message.image}"
+                            app:layout_constraintHeight_max="250dp"
+                            tools:srcCompat="@tools:sample/avatars"
+                            tools:visibility="visible" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/image_progress_layout"
+                            android:layout_width="250dp"
+                            android:layout_height="250dp"
+                            android:background="#EEEDED"
+                            android:visibility="gone"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
-                            app:srcCompat="@drawable/ic_error_outline"
-                            tools:visibility="visible" />
+                            tools:visibility="gone">
 
-                        <ProgressBar
-                            android:id="@+id/imageProgressBar"
-                            style="?android:attr/progressBarStyle"
-                            android:layout_width="100dp"
-                            android:layout_height="100dp"
-                            android:indeterminate="true"
-                            android:visibility="invisible"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            tools:visibility="visible" />
+                            <ImageView
+                                android:id="@+id/error_loading_image"
+                                android:layout_width="100dp"
+                                android:layout_height="100dp"
+                                android:visibility="invisible"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:srcCompat="@drawable/ic_error_outline"
+                                app:tint="#ff0000"
+                                tools:visibility="visible" />
 
-                    </androidx.constraintlayout.widget.ConstraintLayout>
+                            <ProgressBar
+                                android:id="@+id/imageProgressBar"
+                                style="?android:attr/progressBarStyle"
+                                android:layout_width="100dp"
+                                android:layout_height="100dp"
+                                android:indeterminate="true"
+                                android:visibility="invisible"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                                tools:visibility="visible" />
 
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingTop="4dp">
+                        </androidx.constraintlayout.widget.ConstraintLayout>
 
                         <androidx.emoji.widget.EmojiTextView
                             android:id="@+id/message_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:paddingTop="4dp"
+                            android:layout_marginBottom="16dp"
                             android:text="@{message.message.text}"
-                            app:layout_constraintBottom_toTopOf="@+id/time_text"
-                            app:layout_constraintEnd_toStartOf="@+id/time_text"
-                            app:layout_constraintHorizontal_bias="0.0"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            tools:text="text" />
+                            android:textSize="16sp"
+                            tools:text="some very very long text"
+                            tools:visibility="visible" />
+
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:orientation="horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent">
+
 
                         <TextView
                             android:id="@+id/time_text"
@@ -228,75 +237,71 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="bottom|end"
                             android:layout_marginRight="@{message.message.isMine? @dimen/margin_0 : @dimen/margin_8dp}"
-                            android:layout_marginBottom="4dp"
+                            android:layout_marginBottom="1dp"
                             android:text="@{message.message.shortTimeString()}"
                             android:textSize="12sp"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toStartOf="@+id/status_layout"
                             tools:text="15:20" />
 
                         <LinearLayout
                             android:id="@+id/status_layout"
                             android:layout_width="wrap_content"
                             android:layout_height="16dp"
-                            android:layout_marginBottom="4dp"
+                            android:layout_marginBottom="2dp"
                             android:orientation="horizontal"
                             android:visibility="@{message.message.isMine? View.VISIBLE : View.GONE}"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent">
+                            tools:visibility="visible">
 
                             <ImageView
                                 android:id="@+id/not_sent_status"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                android:tint="#aaaaaa"
                                 android:visibility="@{!message.sent() ? View.VISIBLE : View.GONE}"
                                 app:srcCompat="@drawable/ic_watch_later"
+                                app:tint="#aaaaaa"
                                 tools:visibility="visible" />
 
                             <ImageView
                                 android:id="@+id/sent_and_not_received_status"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                android:tint="@color/report_message_color0"
                                 android:visibility="@{message.sentAndNotReceived() ? View.VISIBLE : View.GONE}"
                                 app:srcCompat="@drawable/ic_done"
+                                app:tint="@color/report_message_color0"
                                 tools:visibility="visible" />
 
                             <ImageView
                                 android:id="@+id/received_and_not_viewed_status"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                android:tint="@color/report_message_color1"
                                 android:visibility="@{message.receivedAndNotViewed() ? View.VISIBLE : View.GONE}"
                                 app:srcCompat="@drawable/ic_done"
+                                app:tint="@color/report_message_color1"
                                 tools:visibility="visible" />
 
                             <ImageView
                                 android:id="@+id/received_and_viewed_status"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                android:tint="@color/report_message_color1"
                                 android:visibility="@{message.viewed() ? View.VISIBLE : View.GONE}"
                                 app:srcCompat="@drawable/ic_done_all"
+                                app:tint="@color/report_message_color1"
                                 tools:visibility="visible" />
 
                             <ImageView
                                 android:id="@+id/error_status"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                android:tint="#ff0000"
                                 android:visibility="@{message.error() ? View.VISIBLE : View.GONE}"
                                 app:srcCompat="@drawable/ic_error_outline"
+                                app:tint="#ff0000"
                                 tools:visibility="visible" />
 
 
                         </LinearLayout>
+                    </LinearLayout>
 
-                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
-
-                </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 

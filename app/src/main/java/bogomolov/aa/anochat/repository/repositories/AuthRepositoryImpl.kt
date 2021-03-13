@@ -41,7 +41,7 @@ class AuthRepositoryImpl @Inject constructor(
         keyValueStore.setMyUID(null)
     }
 
-    override fun isSignedIn() = FirebaseAuth.getInstance().currentUser?.uid!= null
+    override fun isSignedIn() = FirebaseAuth.getInstance().currentUser?.uid != null
 
     override fun updateSettings(settings: Settings) {
         keyValueStore.setValue(Settings.NOTIFICATIONS, settings.notifications)
@@ -51,13 +51,17 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override fun getSettings() = Settings(
-        notifications = keyValueStore.getBooleanValue(Settings.NOTIFICATIONS),
-        sound = keyValueStore.getBooleanValue(Settings.SOUND),
-        vibration = keyValueStore.getBooleanValue(Settings.VIBRATION),
-        gallery = keyValueStore.getBooleanValue(Settings.GALLERY)
+        notifications = keyValueStore.getBooleanValue(Settings.NOTIFICATIONS) ?: true,
+        sound = keyValueStore.getBooleanValue(Settings.SOUND) ?: true,
+        vibration = keyValueStore.getBooleanValue(Settings.VIBRATION) ?: true,
+        gallery = keyValueStore.getBooleanValue(Settings.GALLERY) ?: true
     )
 
-    override suspend fun verifySmsCode(phoneNumber: String, code: String, phoneVerification: PhoneVerification) {
+    override suspend fun verifySmsCode(
+        phoneNumber: String,
+        code: String,
+        phoneVerification: PhoneVerification
+    ) {
         val credential = PhoneAuthProvider.getCredential(phoneVerificationId!!, code)
         signIn(phoneNumber, credential, phoneVerification)
     }
@@ -124,7 +128,7 @@ class AuthRepositoryImpl @Inject constructor(
     ) {
         try {
             phoneVerification.onCodeVerify(credential.smsCode)
-            val myUid =  signIn(phoneNumber, credential)
+            val myUid = signIn(phoneNumber, credential)
             if (myUid != null) keyValueStore.setMyUID(myUid)
             phoneVerification.onComplete()
         } catch (e: Exception) {

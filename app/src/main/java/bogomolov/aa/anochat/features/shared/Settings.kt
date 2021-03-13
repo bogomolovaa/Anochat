@@ -22,7 +22,5 @@ data class Settings(
             vibration = false,
             gallery = false
         )
-
-        fun get(name: String, context: Context) = KeyValueStoreImpl(context).getBooleanValue(name)
     }
 }

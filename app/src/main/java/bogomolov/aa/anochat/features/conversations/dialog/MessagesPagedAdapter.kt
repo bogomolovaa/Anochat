@@ -4,6 +4,7 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -66,6 +67,7 @@ class MessagesPagedAdapter(
                 item.detailedImageLoaded = false
                 if (!loadImage(image, binding.imageView, 8))
                     showImageNotLoaded(binding, item.message.time)
+                if(text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
                 setImageClickListener(item.message, binding.imageView, detector)
             }else{
                 binding.imageView.setImageDrawable(null)

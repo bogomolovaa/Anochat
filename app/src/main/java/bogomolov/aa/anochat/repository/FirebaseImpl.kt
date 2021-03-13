@@ -24,7 +24,6 @@ class FirebaseImpl : Firebase {
             //FirebaseDatabase.getInstance().setLogLevel(Logger.Level.DEBUG)
             FirebaseDatabase.getInstance().setPersistenceEnabled(true)
             token = getToken()!!
-            updateOnlineStatus()
         }
     }
 
@@ -232,8 +231,7 @@ class FirebaseImpl : Firebase {
         })
     }
 
-
-    private fun updateOnlineStatus() {
+    override fun updateOnlineStatus() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid
         if (uid != null) {
             val database = FirebaseDatabase.getInstance()
@@ -246,7 +244,7 @@ class FirebaseImpl : Firebase {
 
     private fun userFromRef(snapshot: DataSnapshot): User {
         val uid = snapshot.key!!
-        val name = snapshot.child("name").value.toString()
+        val name = snapshot.child("name").value?.toString() ?: ""
         val phone = snapshot.child("phone").value.toString()
         val status = snapshot.child("status").value?.toString()
         val photo = snapshot.child("photo").value?.toString()

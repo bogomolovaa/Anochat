@@ -216,12 +216,10 @@ class ConversationFragment : Fragment(), RequestPermission {
 fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
     val p = view.layoutParams as ViewGroup.MarginLayoutParams
     p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin)
-    //view.requestLayout()
 }
 
 @BindingAdapter(value = ["android:layout_marginRight"])
 fun setLayoutMargin(view: TextView, marginRight: Float) {
     val p = view.layoutParams as ViewGroup.MarginLayoutParams
     p.setMargins(p.leftMargin, p.topMargin, marginRight.toInt(), p.bottomMargin)
-    //view.requestLayout()
 }

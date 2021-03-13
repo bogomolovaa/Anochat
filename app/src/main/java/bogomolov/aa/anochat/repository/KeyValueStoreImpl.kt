@@ -23,8 +23,8 @@ class KeyValueStoreImpl @Inject constructor(context: Context) : KeyValueStore {
 
     override fun getStringValue(key: String) = preferences.getString(key, null)
 
-    override fun getBooleanValue(key: String) = preferences.getBoolean(key, false)
-
+    override fun getBooleanValue(key: String) =
+        if (preferences.contains(key)) preferences.getBoolean(key, false) else null
 
     override fun setByteArrayValue(key: String, value: ByteArray) {
         val string = byteArrayToBase64(value)

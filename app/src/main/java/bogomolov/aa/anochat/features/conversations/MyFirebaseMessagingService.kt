@@ -144,7 +144,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val notificationBuilder: NotificationCompat.Builder =
             NotificationCompat.Builder(this, channelId)
                 .setContentTitle(title)
-                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setLargeIcon(bitmap)
                 .setLights(Color.RED, 3000, 3000)
                 .setContentText(message.shortText())

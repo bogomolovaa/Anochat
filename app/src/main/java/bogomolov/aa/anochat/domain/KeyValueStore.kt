@@ -5,7 +5,7 @@ const val UID = "uid"
 interface KeyValueStore {
     fun getByteArrayValue(key: String): ByteArray?
     fun getStringValue(key: String): String?
-    fun getBooleanValue(key: String): Boolean
+    fun getBooleanValue(key: String): Boolean?
     fun setByteArrayValue(key: String, value: ByteArray)
     fun setStringValue(key: String, value: String?)
     fun setBooleanValue(key: String, value: Boolean)
@@ -30,6 +30,6 @@ inline fun <reified T> KeyValueStore.getValue(key: String) =
     when (T::class) {
         ByteArray::class -> getByteArrayValue(key) as T?
         String::class -> getStringValue(key) as T?
-        Boolean::class -> getBooleanValue(key) as T
+        Boolean::class -> getBooleanValue(key) as T?
         else -> null
     }

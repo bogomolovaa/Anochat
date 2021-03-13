@@ -1,8 +1,11 @@
 package bogomolov.aa.anochat.repository
 
+import android.R.attr.bitmap
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.util.Log
 import bogomolov.aa.anochat.features.shared.*
@@ -15,6 +18,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
 import kotlin.math.min
+
 
 private const val TAG = "FileStoreImpl"
 private const val MAX_IMAGE_DIM = 1024f
@@ -31,11 +35,13 @@ interface FileStore {
 }
 
 @Singleton
-class FileStoreImpl @Inject constructor(@ApplicationContext private val context: Context) :
-    FileStore {
+class FileStoreImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val authRepository: AuthRepository
+) : FileStore {
 
     override fun saveByteArray(byteArray: ByteArray, fileName: String, toGallery: Boolean) {
-        if (toGallery && Settings.get(Settings.GALLERY, context))
+        if (toGallery && authRepository.getSettings().gallery)
             try {
                 val outputStream = getGalleryOutputStream(fileName, context)
                 if (outputStream != null) {
@@ -75,8 +81,9 @@ class FileStoreImpl @Inject constructor(@ApplicationContext private val context:
         val height = (ratio * bitmapHeight).toInt()
         val fileName = "${getRandomFileName()}.jpg"
         try {
-            val resizedBitmap = Bitmap.createScaledBitmap(fastResizedBitmap!!, width, height, true)
-            if (toGallery && Settings.get(Settings.GALLERY, context)) {
+            var resizedBitmap = Bitmap.createScaledBitmap(fastResizedBitmap!!, width, height, true)
+            if (path != null) resizedBitmap = rotateIfNeeded(resizedBitmap, path)
+            if (toGallery && authRepository.getSettings().gallery) {
                 saveImageToGallery(resizedBitmap, fileName)
             } else {
                 saveImageToPath(resizedBitmap, fileName)
@@ -87,6 +94,26 @@ class FileStoreImpl @Inject constructor(@ApplicationContext private val context:
         }
         return null
     }
+
+    private fun rotateIfNeeded(bitmap: Bitmap, photoPath: String): Bitmap? {
+        val orientation = ExifInterface(photoPath).getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+            ExifInterface.ORIENTATION_UNDEFINED
+        )
+        return when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> rotateBitmap(bitmap, 90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> rotateBitmap(bitmap, 180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> rotateBitmap(bitmap, 270f)
+            ExifInterface.ORIENTATION_NORMAL -> bitmap
+            else -> bitmap
+        }
+    }
+
+    private fun rotateBitmap(source: Bitmap, angle: Float) =
+        Bitmap.createBitmap(
+            source, 0, 0, source.width, source.height,
+            Matrix().apply { postRotate(angle) }, true
+        )
 
     private fun getImageDimensions(
         uri: Uri? = null,

@@ -16,6 +16,7 @@ import bogomolov.aa.anochat.databinding.ActivityMainBinding
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.features.contacts.UpdateWorker
 import bogomolov.aa.anochat.features.shared.AuthRepository
+import bogomolov.aa.anochat.repository.Firebase
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,6 +30,9 @@ class MainActivity : AppCompatActivity() {
     internal lateinit var authRepository: AuthRepository
 
     @Inject
+    internal lateinit var firebase: Firebase
+
+    @Inject
     internal lateinit var userUseCases: UserUseCases
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,6 +42,11 @@ class MainActivity : AppCompatActivity() {
         emojiSupport()
         addSignInListener()
         startWorkManager()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        firebase.updateOnlineStatus()
     }
 
     private fun addSignInListener() {
@@ -55,13 +64,6 @@ class MainActivity : AppCompatActivity() {
             NavOptions.Builder().setPopUpTo(destination.id, true).build()
         onPostResume()
         navController.navigate(R.id.signInFragment, null, navOptions)
-    }
-
-    private fun clearPreferences() {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        val editor: SharedPreferences.Editor = sharedPreferences.edit()
-        editor.clear()
-        editor.apply()
     }
 
     private fun startWorkManager() {
