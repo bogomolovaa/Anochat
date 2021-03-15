@@ -7,7 +7,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
@@ -77,8 +76,8 @@ class MessagesPagedAdapter(
                 if (item.message.isMine) resColor(R.color.my_message_color, context)
                 else resColor(R.color.not_my_message_color, context)
             )
-            val dim4dp = resDimension(R.dimen.margin_4dp, context)// * getDpPixels(context)
-            val dim64dp = resDimension(R.dimen.margin_64dp, context)// * getDpPixels(context)
+            val dim4dp = resDimension(R.dimen.margin_4dp, context)
+            val dim64dp = resDimension(R.dimen.margin_64dp, context)
             if (item.message.isMine) {
                 setLayoutMargin(binding.messageCardView, dim64dp, dim4dp)
             } else {

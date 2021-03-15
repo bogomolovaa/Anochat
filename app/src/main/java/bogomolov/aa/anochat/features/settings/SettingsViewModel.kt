@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.settings
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User

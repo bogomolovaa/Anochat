@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.repository
 
-import android.R.attr.bitmap
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

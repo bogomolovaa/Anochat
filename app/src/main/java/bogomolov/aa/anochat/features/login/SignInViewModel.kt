@@ -1,7 +1,6 @@
 package bogomolov.aa.anochat.features.login
 
 import android.app.Activity
-import android.util.Log
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.features.shared.ErrorType

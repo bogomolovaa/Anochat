@@ -13,7 +13,6 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentSignInBinding
 import bogomolov.aa.anochat.features.shared.ErrorType
-import bogomolov.aa.anochat.features.shared.SignInError
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
@@ -48,7 +47,7 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
 
     override fun updateView(newState: SignInUiState, currentState: SignInUiState) {
         binding.phoneInputText.setText(newState.phoneNumber)
-        setError(newState.error)
+        setError(newState)
         when (newState.state) {
             LoginState.INITIAL -> {
                 binding.progressBar.visibility = View.INVISIBLE
@@ -83,25 +82,30 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
         }
     }
 
-    private fun setError(error: SignInError?) {
+    private fun setError(state: SignInUiState) {
+        val error = state.error
         if (error == null) {
             binding.phoneInputText.error = null
             binding.codeInputLayout.error = null
-            return
-        }
-        when (error.message) {
-            ErrorType.WRONG_PHONE.toString() ->
-                binding.phoneInputText.error = resources.getText(R.string.wrong_phone)
-            ErrorType.PHONE_NO_CONNECTION.toString() ->
-                binding.phoneInputText.error = resources.getText(R.string.no_connection)
-            ErrorType.EMPTY_CODE.toString() ->
-                binding.codeInputLayout.error = resources.getString(R.string.empty_code)
-            ErrorType.WRONG_CODE.toString() ->
-                binding.codeInputLayout.error = resources.getString(R.string.wrong_code)
-            ErrorType.CODE_NO_CONNECTION.toString() ->
-                binding.codeInputLayout.error = resources.getText(R.string.no_connection)
-            else -> {
-                binding.codeInputLayout.error = error.message
+        } else {
+            when (error.message) {
+                ErrorType.WRONG_PHONE.toString() ->
+                    binding.phoneInputText.error = resources.getText(R.string.wrong_phone)
+                ErrorType.PHONE_NO_CONNECTION.toString() ->
+                    binding.phoneInputText.error = resources.getText(R.string.no_connection)
+                ErrorType.EMPTY_CODE.toString() ->
+                    binding.codeInputLayout.error = resources.getString(R.string.empty_code)
+                ErrorType.WRONG_CODE.toString() ->
+                    binding.codeInputLayout.error = resources.getString(R.string.wrong_code)
+                ErrorType.CODE_NO_CONNECTION.toString() ->
+                    binding.codeInputLayout.error = resources.getText(R.string.no_connection)
+                else -> {
+                    if (state.state == LoginState.INITIAL || state.state == LoginState.PHONE_SUBMITTED) {
+                        binding.phoneInputText.error = error.message
+                    } else {
+                        binding.codeInputLayout.error = error.message
+                    }
+                }
             }
         }
     }

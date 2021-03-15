@@ -56,7 +56,7 @@ interface MessageDao {
     )
     fun searchText(search: String, myUid: String): DataSource.Factory<Int, ConversationJoined>
 
-    @Query("select * from MessageEntity where myUid = :myUid and sent = 0 and conversationId in (select id from ConversationEntity where userId = :userId)")
+    @Query("select * from MessageEntity where myUid = :myUid and isMine = 1 and sent = 0 and conversationId in (select id from ConversationEntity where userId = :userId)")
     fun getNotSent(userId: Long, myUid: String): List<MessageEntity>
 
     @Query("update MessageEntity set viewed = 1 where id = :id")

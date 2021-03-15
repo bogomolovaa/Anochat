@@ -7,7 +7,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.databinding.BindingAdapter
 import bogomolov.aa.anochat.R
 
 
@@ -49,14 +48,5 @@ class RoundedImageView(context: Context, attrs: AttributeSet) : FrameLayout(cont
             return true
         }
         return false
-    }
-}
-
-@BindingAdapter("app:srcImage")
-fun setImage(view: RoundedImageView, fileName: String?) {
-    if (fileName != null && view.setImage(fileName)) {
-        //view.requestLayout()
-    } else {
-        view.setDefaultDrawable()
     }
 }

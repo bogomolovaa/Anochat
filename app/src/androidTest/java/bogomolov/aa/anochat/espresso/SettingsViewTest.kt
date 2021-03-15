@@ -16,7 +16,6 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.rule.GrantPermissionRule
 import bogomolov.aa.anochat.DEFAULT_MY_UID
-import bogomolov.aa.anochat.MockitoKotlinAndroidTest.Companion.any
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.settings.ChangeSettingsAction

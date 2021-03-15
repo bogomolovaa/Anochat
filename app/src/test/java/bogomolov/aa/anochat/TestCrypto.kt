@@ -4,9 +4,7 @@ import bogomolov.aa.anochat.domain.Crypto
 import bogomolov.aa.anochat.domain.WrongSecretKeyException
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
 import org.junit.Test
-import java.lang.Exception
 
 private const val UID1 = "kjsdhfkasfdkjalshf_user1"
 private const val UID2 = "hsdhfisfihkvneiuis_user2"

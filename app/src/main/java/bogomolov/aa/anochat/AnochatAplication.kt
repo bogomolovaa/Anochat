@@ -2,7 +2,10 @@ package bogomolov.aa.anochat
 
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
-import androidx.lifecycle.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
 import bogomolov.aa.anochat.repository.Firebase
 import dagger.hilt.android.HiltAndroidApp

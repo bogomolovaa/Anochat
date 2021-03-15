@@ -8,11 +8,9 @@ import android.os.Bundle
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
-import androidx.databinding.BindingAdapter
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
@@ -145,11 +143,6 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         private const val CONTACTS_PERMISSIONS = Manifest.permission.READ_CONTACTS
         private const val CONTACTS_PERMISSIONS_CODE = 1001
     }
-}
-
-@BindingAdapter(value = ["android:textStyle"])
-fun setTypeface(v: TextView, style: Int) {
-    v.setTypeface(null, style)
 }
 
 fun SearchView.setTextColor(colorId: Int) {

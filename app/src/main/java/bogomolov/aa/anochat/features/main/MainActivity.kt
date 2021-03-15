@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavOptions
@@ -15,12 +14,9 @@ import bogomolov.aa.anochat.databinding.ActivityMainBinding
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.features.contacts.UpdateWorker
 import bogomolov.aa.anochat.features.shared.AuthRepository
-import bogomolov.aa.anochat.repository.Firebase
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 

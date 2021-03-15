@@ -24,7 +24,13 @@ class UsersAdapter(onClickListener: ItemClickListener<User>) :
 
     @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
     override fun bind(user: User?, holder: VH) {
-        holder.binding.user = user
+        val binding = holder.binding
+        if (user != null) {
+            binding.userName.text = user.name
+            if (user.photo != null) binding.userPhoto.setImage(user.photo)
+            binding.userStatus.text = user.status ?: ""
+            binding.phoneText.text = user.phone ?: ""
+        }
     }
 
     fun submitList(list: List<User>) {

@@ -1,8 +1,5 @@
 package bogomolov.aa.anochat.features.shared
 
-import android.content.Context
-import bogomolov.aa.anochat.repository.KeyValueStoreImpl
-
 
 data class Settings(
     val notifications: Boolean = true,

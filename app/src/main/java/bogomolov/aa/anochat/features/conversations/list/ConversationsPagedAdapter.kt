@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.features.conversations.list
 
+import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,16 +31,24 @@ class ConversationsPagedAdapter(
     override fun bind(conversation: Conversation?, holder: VH) {
         val binding = holder.binding
         if (conversation != null) {
-            binding.conversation = conversation
+            val context = binding.cardView.context
+            binding.userName.text = conversation.user.name
+            if (conversation.user.photo != null) binding.userPhoto.setImage(conversation.user.photo)
             val lastMessage = conversation.lastMessage
-            binding.messageText.text =
-                if (showFullMessage) {
-                    lastMessage?.text ?: ""
+            if (lastMessage != null) {
+                binding.lastTime.text = lastMessage.timeString()
+                binding.messageText.text =
+                    if (showFullMessage) lastMessage.text else lastMessage.shortText()
+                if (!lastMessage.isMine && lastMessage.viewed == 0) {
+                    binding.newMessageStatus.visibility = View.VISIBLE
+                    binding.messageText.setTextColor(ContextCompat.getColor(context, R.color.green))
+                    binding.messageText.setTypeface(binding.messageText.typeface, Typeface.BOLD)
                 } else {
-                    lastMessage?.shortText() ?: ""
+                    binding.newMessageStatus.visibility = View.GONE
+                    binding.messageText.setTextColor(ContextCompat.getColor(context, R.color.black))
+                    binding.messageText.setTypeface(binding.messageText.typeface, Typeface.NORMAL)
                 }
-            binding.newMessageStatus.visibility =
-                if (lastMessage?.isMine == false && lastMessage.viewed == 0) View.VISIBLE else View.GONE
+            }
         }
     }
 
