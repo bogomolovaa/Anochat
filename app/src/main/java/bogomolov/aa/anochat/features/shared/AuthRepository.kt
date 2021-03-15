@@ -2,6 +2,10 @@ package bogomolov.aa.anochat.features.shared
 
 import android.app.Activity
 
+data class SignInError(val message: String) {
+    constructor(errorType: ErrorType) : this(errorType.toString())
+}
+
 enum class ErrorType {
     WRONG_CODE,
     EMPTY_CODE,
@@ -14,8 +18,8 @@ interface PhoneVerification {
     fun onComplete()
     fun onCodeVerify(smsCode: String?)
     fun onCodeSent()
-    fun onPhoneError(error: ErrorType?)
-    fun onCodeError(error: ErrorType?)
+    fun onPhoneError(error: SignInError?)
+    fun onCodeError(error: SignInError?)
 }
 
 interface AuthRepository {

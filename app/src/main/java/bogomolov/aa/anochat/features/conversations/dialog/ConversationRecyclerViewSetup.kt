@@ -137,7 +137,7 @@ class ConversationRecyclerViewSetup(
             binding.recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
             recyclerViewRestored = true
         } else {
-            scrollToEnd()
+            binding.messageInputText.requestFocus()
         }
     }
 }

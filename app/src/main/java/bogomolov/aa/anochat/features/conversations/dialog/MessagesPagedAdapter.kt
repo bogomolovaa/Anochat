@@ -3,6 +3,7 @@ package bogomolov.aa.anochat.features.conversations.dialog
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
@@ -53,31 +54,65 @@ class MessagesPagedAdapter(
         if (item != null) {
             //Char.isSurrogate()
             val context = binding.root.context
-            binding.message = item
+            if (item.hasReplyMessage()) {
+                binding.replyLayout.visibility = View.VISIBLE
+                binding.replyText.text = item.getReplyText()
+            } else {
+                binding.replyLayout.visibility = View.GONE
+            }
+            binding.statusLayout.visibility = if (item.message.isMine) View.VISIBLE else View.GONE
+            binding.notSentStatus.visibility = if (!item.sent()) View.VISIBLE else View.GONE
+            binding.sentAndNotReceivedStatus.visibility =
+                if (item.sentAndNotReceived()) View.VISIBLE else View.GONE
+            binding.receivedAndNotViewedStatus.visibility =
+                if (item.receivedAndNotViewed()) View.VISIBLE else View.GONE
+            binding.receivedAndViewedStatus.visibility =
+                if (item.viewed()) View.VISIBLE else View.GONE
+            binding.errorStatus.visibility = if (item.error()) View.VISIBLE else View.GONE
+            binding.dateText.text = item.dateDelimiter
+            binding.dateCardLayout.visibility =
+                if (item.isTimeMessage()) View.VISIBLE else View.GONE
+            binding.messageLayout.gravity = if (item.message.isMine) Gravity.END else Gravity.START
+            binding.messageCardView.setCardBackgroundColor(
+                if (item.message.isMine) resColor(R.color.my_message_color, context)
+                else resColor(R.color.not_my_message_color, context)
+            )
+            val dim4dp = resDimension(R.dimen.margin_4dp, context)// * getDpPixels(context)
+            val dim64dp = resDimension(R.dimen.margin_64dp, context)// * getDpPixels(context)
+            if (item.message.isMine) {
+                setLayoutMargin(binding.messageCardView, dim64dp, dim4dp)
+            } else {
+                setLayoutMargin(binding.messageCardView, dim4dp, dim64dp)
+            }
+
             binding.imageProgressLayout.visibility = View.GONE
             val detector = getGestureDetector(binding.messageCardView, item.message, holder)
             val text = item.message.text
-            if (text.isNotEmpty()){
-                binding.messageText.visibility = View.VISIBLE
-            }else{
-                binding.messageText.visibility = View.GONE
-            }
+            binding.messageText.text = text
+            binding.messageText.visibility = if (text.isNotEmpty()) View.VISIBLE else View.GONE
+
+            binding.timeText.text = item.message.shortTimeString()
+            binding.timeText.setTextColor(Color.BLACK)
+
             val image = item.message.image
             if (!image.isNullOrEmpty()) {
                 item.detailedImageLoaded = false
                 if (!loadImage(image, binding.imageView, 8))
                     showImageNotLoaded(binding, item.message.time)
-                if(text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
+                if (text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
                 setImageClickListener(item.message, binding.imageView, detector)
-            }else{
+                binding.imageView.transitionName = item.message.image
+            } else {
                 binding.imageView.setImageDrawable(null)
                 binding.imageView.visibility = View.GONE
             }
-
             val replyMessageImage = item.message.replyMessage?.image
             if (replyMessageImage != null) {
                 val bitmap = getBitmapFromGallery(replyMessageImage, context, 16)
                 binding.replyImage.setImageBitmap(bitmap)
+                binding.replyImage.visibility = View.VISIBLE
+            } else {
+                binding.replyImage.visibility = View.GONE
             }
             binding.messageCardView.setOnTouchListener { _, event ->
                 detector.onTouchEvent(event)
@@ -85,14 +120,16 @@ class MessagesPagedAdapter(
             initPlayAudioView(item.message, binding.playAudioInput, messagesMap)
             initPlayAudioView(item.message.replyMessage, binding.replayAudio, replyMessagesMap)
 
-            binding.executePendingBindings()
-        } else {
-            binding.message = null
-            binding.imageProgressLayout.visibility = View.GONE
-            binding.imageView.visibility = View.GONE
-            binding.executePendingBindings()
         }
     }
+
+    private fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
+        val p = view.layoutParams as ViewGroup.MarginLayoutParams
+        p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin)
+    }
+
+    private fun resColor(id: Int, context: Context) = ContextCompat.getColor(context, id)
+    private fun resDimension(id: Int, context: Context) = context.resources.getDimension(id)
 
     override fun onItemSelected(binding: MessageLayoutBinding, selected: Boolean) {
         val context = binding.root.context
@@ -113,6 +150,9 @@ class MessagesPagedAdapter(
             audioView.set(audio, message.messageId)
             audioView.actionExecutor = actionExecutor
             map[message.messageId] = audioView
+            audioView.visibility = View.VISIBLE
+        } else {
+            audioView.visibility = View.GONE
         }
     }
 
@@ -137,7 +177,7 @@ class MessagesPagedAdapter(
             imageView.setImageBitmap(bitmap)
             setImageSize(imageView, bitmap)
             return true
-        }else{
+        } else {
             imageView.setImageDrawable(null)
             imageView.visibility = View.GONE
             imageView.requestLayout()
@@ -158,9 +198,10 @@ class MessagesPagedAdapter(
         }
     }
 
+    private fun getDpPixels(context: Context) = context.resources.displayMetrics.density
+
     private fun setImageSize(imageView: ImageView, bitmap: Bitmap) {
-        val density = imageView.context.resources.displayMetrics.density
-        val width = (250 * density).toInt()
+        val width = (250 * getDpPixels(imageView.context)).toInt()
         val ratio = 1f * bitmap.height / bitmap.width
         val height = (ratio * width).toInt()
         val savedParams = imageView.layoutParams as LinearLayout.LayoutParams

@@ -92,13 +92,14 @@
         tools:visibility="visible">
 
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/dateCardView"
+            android:id="@+id/replyCardView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:checkable="true"
             app:cardBackgroundColor="@color/time_message_color"
-            app:cardElevation="4dp">
+            app:cardCornerRadius="6dp"
+            app:cardElevation="1dp">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -170,6 +171,7 @@
             android:layout_alignParentBottom="false"
             android:layout_centerHorizontal="true"
             android:clickable="true"
+            android:elevation="1dp"
             android:visibility="invisible"
             app:backgroundTint="@color/fab"
             app:fabSize="mini"
@@ -183,6 +185,7 @@
             android:layout_alignParentBottom="false"
             android:layout_centerHorizontal="true"
             android:clickable="true"
+            android:elevation="1dp"
             android:visibility="invisible"
             app:backgroundTint="@color/fab"
             app:fabSize="mini"
@@ -196,6 +199,7 @@
             android:layout_alignParentBottom="false"
             android:layout_centerHorizontal="true"
             android:clickable="true"
+            android:elevation="1dp"
             android:visibility="invisible"
             app:backgroundTint="@color/fab"
             app:fabSize="mini"
@@ -207,6 +211,7 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_margin="4dp"
+            android:elevation="1dp"
             android:clickable="true"
             app:backgroundTint="@color/fab"
             app:srcCompat="@drawable/plus_icon" />
@@ -229,21 +234,28 @@
             android:layout_marginTop="4dp"
             android:layout_marginEnd="16dp"
             android:visibility="gone"
-            tools:visibility="visible" />
+            tools:visibility="gone" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/textLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
-            android:minHeight="56dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="1dp"
+            android:background="@drawable/input_rounded_bg"
+            android:elevation="1dp"
+            android:minHeight="55dp"
             tools:visibility="visible">
 
             <com.vanniktech.emoji.EmojiEditText
                 android:id="@+id/message_input_text"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
+                android:layout_marginEnd="16dp"
+                android:backgroundTint="@color/white"
+                android:hint="@string/enter_message"
                 android:inputType="textShortMessage|textMultiLine"
                 android:maxLength="1000"
                 android:maxLines="5"
@@ -259,7 +271,7 @@
                 android:id="@+id/emojiIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="8dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -310,7 +322,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:tint="#FF0000"
+                app:tint="#FF0000"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"

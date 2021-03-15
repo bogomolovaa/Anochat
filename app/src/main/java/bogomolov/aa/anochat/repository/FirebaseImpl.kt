@@ -231,7 +231,7 @@ class FirebaseImpl : Firebase {
         })
     }
 
-    override fun updateOnlineStatus() {
+    override fun setOnline() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid
         if (uid != null) {
             val database = FirebaseDatabase.getInstance()
@@ -240,6 +240,30 @@ class FirebaseImpl : Firebase {
             userRef.child("online").onDisconnect().setValue(0)
             userRef.child("lastOnline").onDisconnect().setValue(ServerValue.TIMESTAMP)
         }
+    }
+
+    override fun setOffline() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid != null) {
+            val database = FirebaseDatabase.getInstance()
+            val userRef = database.getReference("users/${uid}")
+            userRef.child("online").setValue(0)
+            userRef.child("lastOnline").setValue(System.currentTimeMillis())
+        }
+    }
+
+    override suspend fun getToken(): String? = suspendCoroutine {
+        FirebaseInstanceId.getInstance().instanceId
+            .addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    Log.w(TAG, "getToken() failed", task.exception)
+                    it.resume(null)
+                } else {
+                    val token = task.result!!.token
+                    Log.d(TAG, "token $token")
+                    it.resume(token)
+                }
+            }
     }
 
     private fun userFromRef(snapshot: DataSnapshot): User {
@@ -252,16 +276,3 @@ class FirebaseImpl : Firebase {
     }
 }
 
-suspend fun getToken(): String? = suspendCoroutine {
-    FirebaseInstanceId.getInstance().instanceId
-        .addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                Log.w(TAG, "getToken() failed", task.exception)
-                it.resume(null)
-            } else {
-                val token = task.result!!.token
-                Log.d(TAG, "token $token")
-                it.resume(token)
-            }
-        }
-}

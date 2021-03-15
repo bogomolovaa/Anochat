@@ -18,6 +18,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.transition.Fade
 import bogomolov.aa.anochat.R
@@ -27,6 +28,7 @@ import bogomolov.aa.anochat.features.shared.ActionModeData
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
+
 
 @AndroidEntryPoint
 class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState> {
@@ -79,6 +81,11 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         viewModel.conversationsLiveData.observe(viewLifecycleOwner) {
             adapter.submitList(it)
         }
+        val itemDecorator = DividerItemDecoration(context, DividerItemDecoration.VERTICAL)
+        itemDecorator.setDrawable(
+            ContextCompat.getDrawable(requireContext(), R.drawable.conversation_divider)!!
+        )
+        binding.recyclerView.addItemDecoration(itemDecorator)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

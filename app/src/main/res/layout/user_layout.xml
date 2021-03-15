@@ -16,13 +16,14 @@
         android:layout_height="wrap_content"
         android:layout_margin="4dp"
         android:checkable="true"
-        app:cardElevation="4dp">
+        app:cardCornerRadius="0dp"
+        app:cardElevation="0dp">
 
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/not_my_message_color">
+            android:background="@color/conversation_background">
 
             <TextView
                 android:id="@+id/messageText"
@@ -44,7 +45,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"
-                app:foregroundColor="@color/not_my_message_color"
+                app:foregroundColor="@color/conversation_background"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"

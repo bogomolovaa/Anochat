@@ -48,7 +48,7 @@ class ConversationsPagedAdapter(
         val color = if (selected)
             ContextCompat.getColor(context, R.color.not_my_message_color)
         else
-            ContextCompat.getColor(context, R.color.my_message_color)
+            ContextCompat.getColor(context, R.color.conversation_background)
         binding.cardView.setCardBackgroundColor(color)
         binding.userPhoto.setForegroundColor(color)
     }

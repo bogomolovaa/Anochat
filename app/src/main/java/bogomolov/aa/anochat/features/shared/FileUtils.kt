@@ -11,6 +11,8 @@ import android.os.Environment
 import android.os.Environment.DIRECTORY_PICTURES
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
+import android.widget.Toast.LENGTH_LONG
 import androidx.core.content.FileProvider
 import java.io.*
 
@@ -67,6 +69,7 @@ fun getUri(fileName: String, context: Context): Uri? {
             File(getFilePath(context, fileName))
         )
     } catch (e: java.lang.Exception) {
+        Toast.makeText(context, "${e.message}", LENGTH_LONG).show()
         null
     }
 }

@@ -1,10 +1,12 @@
 package bogomolov.aa.anochat.features.login
 
 import android.app.Activity
+import android.util.Log
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.features.shared.ErrorType
 import bogomolov.aa.anochat.features.shared.PhoneVerification
+import bogomolov.aa.anochat.features.shared.SignInError
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
@@ -24,7 +26,7 @@ data class SignInUiState(
     val state: LoginState = LoginState.INITIAL,
     val phoneNumber: String? = null,
     val code: String? = null,
-    val error: ErrorType? = null
+    val error: SignInError? = null
 ) : UiState
 
 class SubmitPhoneNumberAction(val number: String, val activity: () -> Activity) : UserAction
@@ -50,11 +52,11 @@ class SignInViewModel
             setStateAsync { copy(state = LoginState.VERIFICATION_ID_RECEIVED, error = null) }
         }
 
-        override fun onPhoneError(error: ErrorType?) {
+        override fun onPhoneError(error: SignInError?) {
             setStateAsync { copy(state = LoginState.INITIAL, error = error) }
         }
 
-        override fun onCodeError(error: ErrorType?) {
+        override fun onCodeError(error: SignInError?) {
             setStateAsync { copy(state = LoginState.NOT_LOGGED, error = error) }
         }
     }
@@ -69,7 +71,7 @@ class SignInViewModel
             setState { copy(phoneNumber = number, state = LoginState.PHONE_SUBMITTED) }
             authRepository.sendPhoneNumber(number, activity, phoneVerification)
         } else {
-            setState { copy(phoneNumber = number, error = ErrorType.WRONG_PHONE) }
+            setState { copy(phoneNumber = number, error = SignInError(ErrorType.WRONG_PHONE)) }
         }
     }
 
@@ -77,7 +79,7 @@ class SignInViewModel
         if (code.isNotEmpty()) {
             authRepository.verifySmsCode(state.phoneNumber!!, code, phoneVerification)
         } else {
-            setState { copy(error = ErrorType.EMPTY_CODE) }
+            setState { copy(error = SignInError(ErrorType.EMPTY_CODE)) }
         }
     }
 }

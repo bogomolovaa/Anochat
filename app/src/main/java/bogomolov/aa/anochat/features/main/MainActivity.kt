@@ -1,15 +1,14 @@
 package bogomolov.aa.anochat.features.main
 
-import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
-import androidx.preference.PreferenceManager
 import androidx.work.*
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.ActivityMainBinding
@@ -20,6 +19,8 @@ import bogomolov.aa.anochat.repository.Firebase
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -28,9 +29,6 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     internal lateinit var authRepository: AuthRepository
-
-    @Inject
-    internal lateinit var firebase: Firebase
 
     @Inject
     internal lateinit var userUseCases: UserUseCases
@@ -42,11 +40,6 @@ class MainActivity : AppCompatActivity() {
         emojiSupport()
         addSignInListener()
         startWorkManager()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        firebase.updateOnlineStatus()
     }
 
     private fun addSignInListener() {

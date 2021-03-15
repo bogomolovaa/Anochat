@@ -6,7 +6,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
 interface Firebase {
-    fun updateOnlineStatus()
+    suspend fun getToken(): String?
+    fun setOffline()
+    fun setOnline()
     fun addUserStatusListener(uid: String, scope: CoroutineScope): Flow<Pair<Boolean, Long>>
     suspend fun findByPhone(phone: String): List<User>
     suspend fun getUser(uid: String): User?

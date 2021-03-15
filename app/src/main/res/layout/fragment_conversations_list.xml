@@ -39,7 +39,8 @@
         app:backgroundTint="@color/fab"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/plus_icon"
+        app:maxImageSize="28dp"
+        app:srcCompat="@drawable/ic_contacts"
         tools:ignore="ContentDescription" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

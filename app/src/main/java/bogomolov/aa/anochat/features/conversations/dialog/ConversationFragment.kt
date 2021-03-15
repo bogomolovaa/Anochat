@@ -163,7 +163,7 @@ class ConversationFragment : Fragment(), RequestPermission {
     private fun createTempImageFile(): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date());
         val imageFileName = "JPEG_" + timeStamp + "_";
-        val storageDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val storageDir = requireContext().filesDir
         return File.createTempFile(imageFileName, ".jpg", storageDir).apply { deleteOnExit() }
     }
 
@@ -210,16 +210,4 @@ class ConversationFragment : Fragment(), RequestPermission {
         private const val CAMERA_PERMISSIONS_CODE = 1002
         private const val MICROPHONE_PERMISSIONS_CODE = 1003
     }
-}
-
-@BindingAdapter(value = ["android:layout_marginLeft", "android:layout_marginRight"])
-fun setLayoutMargin(view: MaterialCardView, marginLeft: Float, marginRight: Float) {
-    val p = view.layoutParams as ViewGroup.MarginLayoutParams
-    p.setMargins(marginLeft.toInt(), p.topMargin, marginRight.toInt(), p.bottomMargin)
-}
-
-@BindingAdapter(value = ["android:layout_marginRight"])
-fun setLayoutMargin(view: TextView, marginRight: Float) {
-    val p = view.layoutParams as ViewGroup.MarginLayoutParams
-    p.setMargins(p.leftMargin, p.topMargin, marginRight.toInt(), p.bottomMargin)
 }

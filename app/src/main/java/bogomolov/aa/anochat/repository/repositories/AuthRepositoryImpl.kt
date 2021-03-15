@@ -3,13 +3,11 @@ package bogomolov.aa.anochat.repository.repositories
 import android.app.Activity
 import android.util.Log
 import bogomolov.aa.anochat.domain.KeyValueStore
+import bogomolov.aa.anochat.domain.getMyUID
 import bogomolov.aa.anochat.domain.setMyUID
 import bogomolov.aa.anochat.domain.setValue
-import bogomolov.aa.anochat.features.shared.AuthRepository
-import bogomolov.aa.anochat.features.shared.ErrorType
-import bogomolov.aa.anochat.features.shared.PhoneVerification
-import bogomolov.aa.anochat.features.shared.Settings
-import bogomolov.aa.anochat.repository.getToken
+import bogomolov.aa.anochat.features.shared.*
+import bogomolov.aa.anochat.repository.Firebase
 import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
@@ -17,10 +15,10 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.iid.FirebaseInstanceId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -32,13 +30,14 @@ private const val TAG = "AuthRepositoryImpl"
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val keyValueStore: KeyValueStore
+    private val keyValueStore: KeyValueStore,
+    private val firebase: Firebase
 ) : AuthRepository {
     private var phoneVerificationId: String? = null
 
     override fun signOut() {
+        firebase.setOffline()
         FirebaseAuth.getInstance().signOut()
-        keyValueStore.setMyUID(null)
     }
 
     override fun isSignedIn() = FirebaseAuth.getInstance().currentUser?.uid != null
@@ -93,12 +92,12 @@ class AuthRepositoryImpl @Inject constructor(
             //FirebaseTooManyRequestsException - The SMS quota for the project has been exceeded
             override fun onVerificationFailed(e: FirebaseException) {
                 Log.w(TAG, "onVerificationFailed", e)
-                val error = when (e) {
-                    is FirebaseNetworkException -> ErrorType.PHONE_NO_CONNECTION
-                    is FirebaseAuthInvalidCredentialsException -> ErrorType.WRONG_PHONE
-                    else -> null
-                }
-                phoneVerification.onPhoneError(error)
+                val errorMessage = when (e) {
+                    is FirebaseNetworkException -> ErrorType.PHONE_NO_CONNECTION.toString()
+                    is FirebaseAuthInvalidCredentialsException -> ErrorType.WRONG_PHONE.toString()
+                    else -> e.message
+                } ?: "empty message"
+                phoneVerification.onPhoneError(SignInError(errorMessage))
             }
         }
         PhoneAuthProvider.getInstance().verifyPhoneNumber(
@@ -111,8 +110,9 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     private suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): String? {
-        val token = getToken() ?: return null
         val uid = userSignIn(credential) ?: return null
+        if (uid != keyValueStore.getMyUID()) FirebaseInstanceId.getInstance().deleteInstanceId()
+        val token = firebase.getToken() ?: return null
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("user_tokens").child(uid)
             .setValue(mapOf("token" to token))
@@ -130,14 +130,15 @@ class AuthRepositoryImpl @Inject constructor(
             phoneVerification.onCodeVerify(credential.smsCode)
             val myUid = signIn(phoneNumber, credential)
             if (myUid != null) keyValueStore.setMyUID(myUid)
+            firebase.setOnline()
             phoneVerification.onComplete()
         } catch (e: Exception) {
-            val error = when (e) {
-                is FirebaseAuthInvalidCredentialsException -> ErrorType.WRONG_CODE
-                is FirebaseNetworkException -> ErrorType.CODE_NO_CONNECTION
-                else -> null
-            }
-            phoneVerification.onCodeError(error)
+            val errorMessage = when (e) {
+                is FirebaseAuthInvalidCredentialsException -> ErrorType.WRONG_CODE.toString()
+                is FirebaseNetworkException -> ErrorType.CODE_NO_CONNECTION.toString()
+                else -> e.message
+            } ?: "empty message"
+            phoneVerification.onCodeError(SignInError(errorMessage))
         }
     }
 
