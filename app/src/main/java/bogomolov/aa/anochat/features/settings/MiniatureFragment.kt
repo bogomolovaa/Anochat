@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -49,6 +50,14 @@ class MiniatureFragment : Fragment() {
         }
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         binding.imageView.setOnTouchListener(maskImageOnTouchListener)
+        binding.imageView.post {
+            setImageRealDimensions()
+            val windowSize = getWindowSize()
+            scaleFactor = windowSize.first.toFloat() / binding.maskImage.width.toFloat()
+            binding.maskImage.scaleX = scaleFactor
+            binding.maskImage.scaleY = scaleFactor
+            checkBounds(binding.maskImage.layoutParams as ConstraintLayout.LayoutParams)
+        }
     }
 
     private fun createMiniature() {
@@ -102,6 +111,12 @@ class MiniatureFragment : Fragment() {
         }
     }
 
+    private fun getWindowSize(): Pair<Int, Int> {
+        val displayMetrics = DisplayMetrics()
+        requireActivity().windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        return Pair(displayMetrics.widthPixels, displayMetrics.heightPixels)
+    }
+
     private val maskImageOnTouchListener = object : View.OnTouchListener {
         private var lastPoint: Point = Point()
         private var canMove = true
@@ -130,7 +145,6 @@ class MiniatureFragment : Fragment() {
                             layoutParams.bottomMargin =
                                 imageView.measuredHeight - layoutParams.topMargin + maskImage.scaledHeight()
 
-                            if (imageWidth == 0 && imageHeight == 0) setImageRealDimensions()
                             checkBounds(layoutParams)
                         }
                         lastPoint = point

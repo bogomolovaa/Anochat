@@ -53,7 +53,7 @@
         android:layout_margin="16dp"
         android:clickable="true"
         android:focusable="true"
-        app:backgroundTint="@color/fab"
+        app:backgroundTint="@color/colorAccent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/imageView"
         app:srcCompat="@drawable/ok_icon"

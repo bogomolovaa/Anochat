@@ -173,7 +173,7 @@
             android:clickable="true"
             android:elevation="1dp"
             android:visibility="invisible"
-            app:backgroundTint="@color/fab"
+            app:backgroundTint="@color/colorAccent"
             app:fabSize="mini"
             app:srcCompat="@drawable/mic_icon" />
 
@@ -187,7 +187,7 @@
             android:clickable="true"
             android:elevation="1dp"
             android:visibility="invisible"
-            app:backgroundTint="@color/fab"
+            app:backgroundTint="@color/colorAccent"
             app:fabSize="mini"
             app:srcCompat="@drawable/attach_icon" />
 
@@ -201,7 +201,7 @@
             android:clickable="true"
             android:elevation="1dp"
             android:visibility="invisible"
-            app:backgroundTint="@color/fab"
+            app:backgroundTint="@color/colorAccent"
             app:fabSize="mini"
             app:srcCompat="@drawable/camera_icon" />
 
@@ -213,7 +213,7 @@
             android:layout_margin="4dp"
             android:elevation="1dp"
             android:clickable="true"
-            app:backgroundTint="@color/fab"
+            app:backgroundTint="@color/colorAccent"
             app:srcCompat="@drawable/plus_icon" />
 
     </RelativeLayout>

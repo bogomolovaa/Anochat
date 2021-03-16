@@ -73,12 +73,12 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:padding="4dp"
                 tools:background="@color/my_message_color">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_margin="4dp"
                     android:minWidth="120dp"
                     android:orientation="vertical"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -89,10 +89,9 @@
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/reply_layout"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="#EEEDED"
-                        android:minWidth="120dp"
                         android:visibility="gone"
                         tools:visibility="visible">
 
@@ -100,10 +99,13 @@
                             android:id="@+id/replyImage"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:layout_margin="6dp"
+                            android:layout_margin="4dp"
+                            android:adjustViewBounds="false"
+                            android:scaleType="centerCrop"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            tools:srcCompat="@tools:sample/avatars[0]" />
 
                         <bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView
                             android:id="@+id/replayAudio"
@@ -121,15 +123,26 @@
                             android:id="@+id/reply_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_margin="6dp"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginTop="6dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_marginBottom="6dp"
+                            android:paddingStart="4dp"
+                            android:paddingRight="4dp"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintHorizontal_bias="0.0"
-                            app:layout_constraintStart_toEndOf="@+id/replyImage"
+                            app:layout_constraintEnd_toStartOf="@+id/replyImage"
+                            app:layout_constraintStart_toEndOf="@+id/imageView4"
                             app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintVertical_bias="0.515"
                             tools:text="Reply message" />
+
+                        <ImageView
+                            android:id="@+id/imageView4"
+                            android:layout_width="4dp"
+                            android:layout_height="0dp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:srcCompat="@drawable/reply_mark" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 

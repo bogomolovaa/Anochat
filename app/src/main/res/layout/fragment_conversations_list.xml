@@ -36,7 +36,7 @@
         android:layout_marginBottom="24dp"
         android:clickable="true"
         android:focusable="true"
-        app:backgroundTint="@color/fab"
+        app:backgroundTint="@color/colorAccent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:maxImageSize="28dp"

@@ -57,7 +57,7 @@ class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState>
         NavigationUI.setupWithNavController(binding.toolbar, navController)
 
         binding.fab.setOnClickListener { requestContactsPermission() }
-        hideKeyBoard()
+        //hideKeyBoard()
         setupRecyclerView()
     }
 

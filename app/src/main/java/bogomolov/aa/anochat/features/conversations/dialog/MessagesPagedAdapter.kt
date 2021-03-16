@@ -55,6 +55,8 @@ class MessagesPagedAdapter(
             val context = binding.root.context
             if (item.hasReplyMessage()) {
                 binding.replyLayout.visibility = View.VISIBLE
+                binding.replyText.visibility =
+                    if(item.getReplyText().isNotEmpty()) View.VISIBLE else View.GONE
                 binding.replyText.text = item.getReplyText()
             } else {
                 binding.replyLayout.visibility = View.GONE
