@@ -94,6 +94,8 @@ class MessagesPagedAdapter(
 
             binding.timeText.text = item.message.shortTimeString()
             binding.timeText.setTextColor(Color.BLACK)
+            (binding.timeText.layoutParams as ViewGroup.MarginLayoutParams).rightMargin =
+                if(item.message.isMine) 0 else dim4dp.toInt()
 
             val image = item.message.image
             if (!image.isNullOrEmpty()) {
