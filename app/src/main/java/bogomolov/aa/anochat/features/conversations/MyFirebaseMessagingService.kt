@@ -11,6 +11,8 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
 import android.util.Log
+import android.widget.Toast
+import android.widget.Toast.LENGTH_LONG
 import androidx.core.app.NotificationCompat
 import androidx.navigation.NavDeepLinkBuilder
 import bogomolov.aa.anochat.AnochatAplication
@@ -29,6 +31,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.lang.Long
+import java.util.*
 import javax.inject.Inject
 
 private const val TYPE_MESSAGE = "message"
@@ -115,8 +119,16 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 image = image,
                 audio = audio
             )
+            tempExtractTime(message)
             messageUseCases.receiveMessage(message, uid) { showNotification(it) }
         }
+    }
+
+    private fun tempExtractTime(message: Message){
+        val timePart = message.text.substring(message.text.length - 13)
+        message.time = Long.parseLong(timePart)
+        message.text = message.text.substring(0, message.text.length - 13)
+        Log.i("test","tempExtractTime ${Date(message.time)}")
     }
 
     private fun showNotification(message: Message) {

@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.util.Log
 import android.view.animation.DecelerateInterpolator
 import androidx.core.widget.doOnTextChanged
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
@@ -92,13 +93,7 @@ class ConversationInputSetup(
         }
         binding.messageInputText.doOnTextChanged { textInput, _, _, _ ->
             val enteredText = textInput.toString()
-            if (enteredText.isNotEmpty()) {
-                viewModel.setStateAsync {
-                    copy(text = enteredText, inputState = InputStates.TEXT_ENTERED)
-                }
-            } else {
-                viewModel.setStateAsync { copy(text = "", inputState = InputStates.INITIAL) }
-            }
+            viewModel.addAction(TextChangedAction(enteredText))
         }
     }
 }

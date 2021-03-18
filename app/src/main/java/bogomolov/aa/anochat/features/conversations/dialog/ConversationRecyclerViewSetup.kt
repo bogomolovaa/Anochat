@@ -138,6 +138,7 @@ class ConversationRecyclerViewSetup(
             recyclerViewRestored = true
         } else {
             binding.messageInputText.requestFocus()
+            scrollToEnd()
         }
     }
 }

@@ -28,12 +28,14 @@ class FirebaseImpl : Firebase {
     }
 
     override fun addUserStatusListener(
+        myUid: String,
         uid: String,
         scope: CoroutineScope
-    ): Flow<Pair<Boolean, Long>> {
+    ): Flow<Triple<Boolean, Boolean, Long>> {
         val userRef = FirebaseDatabase.getInstance().getReference("users/${uid}")
         val onlineFlow = MutableSharedFlow<Boolean>()
         val lastTimeFlow = MutableSharedFlow<Long>()
+        val typingFlow = MutableSharedFlow<Boolean>()
         val onlineListener =
             userRef.child("online").addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -56,15 +58,30 @@ class FirebaseImpl : Firebase {
 
                 override fun onCancelled(error: DatabaseError) {}
             })
+        val typingRef =
+            FirebaseDatabase.getInstance().reference.child("typing").child("${uid}_$myUid")
+        val typingListener =
+            typingRef.child("started").addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val typing = snapshot.getValue(Int::class.java) ?: 0
+                    scope.launch(Dispatchers.IO) {
+                        typingFlow.emit(typing == 1)
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
         scope.launch(Dispatchers.IO) {
             try {
                 delay(Long.MAX_VALUE)
             } finally {
                 userRef.removeEventListener(onlineListener)
                 userRef.removeEventListener(lastOnlineListener)
+                userRef.removeEventListener(typingListener)
             }
         }
-        return onlineFlow.combine(lastTimeFlow) { online, time -> Pair(online, time) }
+        return typingFlow.combine(onlineFlow) { typing, online -> Pair(typing, online) }
+            .combine(lastTimeFlow) { p, time -> Triple(p.first, p.second, time) }
     }
 
     override suspend fun findByPhone(phone: String): List<User> = suspendCoroutine {
@@ -127,6 +144,12 @@ class FirebaseImpl : Firebase {
         )
     }
 
+    override fun sendTyping(myUid: String, uid: String, started: Int) {
+        Log.i(TAG, "sendTyping started $started")
+        val myRef = FirebaseDatabase.getInstance().reference
+        myRef.child("typing").child("${myUid}_$uid").setValue(mapOf("started" to started))
+    }
+
     override fun sendMessage(
         message: Message?,
         uid: String,
@@ -138,7 +161,7 @@ class FirebaseImpl : Firebase {
         val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
         ref.setValue(
             mapOf(
-                "message" to message?.text,
+                "message" to message?.text + message?.time.toString(), //text end - temporary storage for timestamp
                 "reply" to message?.replyMessageId,
                 "image" to message?.image,
                 "audio" to message?.audio,

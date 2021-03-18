@@ -5,11 +5,11 @@ import bogomolov.aa.anochat.domain.entity.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
-interface UserRepository : UserUseCasesInRepository{
+interface UserRepository : UserUseCasesInRepository {
     suspend fun getOrAddUser(uid: String): User
 }
 
-interface UserUseCasesInRepository{
+interface UserUseCasesInRepository {
     fun getImagesDataSource(userId: Long): DataSource.Factory<Int, String>
     fun getUsersByPhones(phones: List<String>): List<User>
 
@@ -19,5 +19,8 @@ interface UserUseCasesInRepository{
     fun getUser(id: Long): User
     suspend fun updateMyUser(user: User)
     suspend fun searchByPhone(phone: String): List<User>
-    fun addUserStatusListener(uid: String, scope: CoroutineScope): Flow<Pair<Boolean, Long>>
+    fun addUserStatusListener(
+        uid: String,
+        scope: CoroutineScope
+    ): Flow<Triple<Boolean, Boolean, Long>>
 }

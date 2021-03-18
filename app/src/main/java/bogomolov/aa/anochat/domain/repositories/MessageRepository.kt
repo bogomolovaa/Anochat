@@ -34,4 +34,7 @@ interface MessageUseCasesInRepository {
     fun deleteMessages(ids: Set<Long>)
     fun receiveReport(messageId: String, received: Int, viewed: Int)
     fun notifyAsViewed(message: Message)
+
+    fun startTypingTo(uid: String)
+    fun stopTypingTo(uid: String)
 }

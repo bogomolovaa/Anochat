@@ -109,8 +109,8 @@ class ConversationViewTest {
             val time = System.currentTimeMillis()
             message = Message(text = "text", conversationId = conversationId, time = time)
             message.id = messageRepository.saveMessage(message)
-            Mockito.`when`(firebase.addUserStatusListener(any(), any())).thenReturn(flow {
-                emit(Pair(true, 0L))
+            Mockito.`when`(firebase.addUserStatusListener(any(),any(), any())).thenReturn(flow {
+                emit(Triple(false, true, 0L))
             })
             Mockito.`when`(firebase.sendMessage(uid = user.uid)).thenReturn("messageId")
             Mockito.`when`(audioPlayer.initPlayer(any(), any())).thenReturn(10000)

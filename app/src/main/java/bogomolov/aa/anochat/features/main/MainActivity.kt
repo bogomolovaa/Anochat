@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.features.main
 
+import android.app.NotificationManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.emoji.bundled.BundledEmojiCompatConfig
@@ -36,6 +37,12 @@ class MainActivity : AppCompatActivity() {
         emojiSupport()
         addSignInListener()
         startWorkManager()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancelAll()
     }
 
     private fun addSignInListener() {

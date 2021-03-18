@@ -20,6 +20,14 @@ class MessageRepositoryImpl @Inject constructor(
 ) : MessageRepository {
     private val mapper = ModelEntityMapper()
 
+    override fun startTypingTo(uid: String){
+        firebase.sendTyping(getMyUID()!!,uid,1)
+    }
+
+    override fun stopTypingTo(uid: String){
+        firebase.sendTyping(getMyUID()!!,uid,0)
+    }
+
     override fun searchMessagesDataSource(search: String) =
         db.messageDao().searchText("%$search%", getMyUID()!!).map {
             mapper.entityToModel(it)!!

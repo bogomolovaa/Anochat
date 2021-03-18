@@ -64,7 +64,7 @@ class UserRepositoryImpl @Inject constructor(
         }
 
     override fun addUserStatusListener(uid: String, scope: CoroutineScope) =
-        firebase.addUserStatusListener(uid, scope)
+        firebase.addUserStatusListener(getMyUID()!!, uid, scope)
 
     override suspend fun getOrAddUser(uid: String): User {
         val userEntity = db.userDao().findByUid(uid)

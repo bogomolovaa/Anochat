@@ -27,6 +27,7 @@ import java.util.*
 import javax.inject.Inject
 
 const val ONLINE_STATUS = "online"
+const val TYPING_STATUS = "typing..."
 
 enum class InputStates {
     INITIAL,
@@ -68,6 +69,10 @@ class InitConversationAction(
     val toMessageView: (List<Message>) -> List<MessageView>
 ) : UserAction
 
+class TextChangedAction(
+    val enteredText: String
+) : UserAction
+
 class DeleteMessagesAction(val ids: Set<Long>) : UserAction
 class StartRecordingAction : UserAction
 class StopRecordingAction : UserAction
@@ -87,6 +92,7 @@ class ConversationViewModel @Inject constructor(
     private var tempElapsed = 0L
     private var conversationInitialized = false
     private val _messagesLiveData = MediatorLiveData<PagedList<MessageView>>()
+    private var typingJob: Job? = null
     val messagesLiveData: LiveData<PagedList<MessageView>>
         get() = _messagesLiveData
 
@@ -107,6 +113,27 @@ class ConversationViewModel @Inject constructor(
         if (action is StopRecordingAction) action.execute()
         if (action is StartPlayingAction) action.execute()
         if (action is PausePlayingAction) action.execute()
+        if (action is TextChangedAction) action.execute()
+    }
+
+    private suspend fun TextChangedAction.execute() {
+        val uid = state.conversation?.user?.uid
+        if (uid != null) {
+            if (typingJob == null) messageUseCases.startTypingTo(uid)
+            typingJob?.cancel()
+            typingJob = viewModelScope.launch(dispatcher) {
+                delay(3000)
+                messageUseCases.stopTypingTo(uid)
+                typingJob = null
+            }
+        }
+        if (enteredText.isNotEmpty()) {
+            setState {
+                copy(text = enteredText, inputState = InputStates.TEXT_ENTERED)
+            }
+        } else {
+            setState { copy(text = "", inputState = InputStates.INITIAL) }
+        }
     }
 
     private suspend fun StartPlayingAction.execute() {
@@ -219,9 +246,11 @@ class ConversationViewModel @Inject constructor(
         val flow = userUseCases.addUserStatusListener(uid, viewModelScope)
         viewModelScope.launch(dispatcher) {
             flow.collect {
-                val online = it.first
-                val lastSeenTime = it.second
-                val status = if (online) ONLINE_STATUS else timeToString(lastSeenTime)
+                val typing = it.first
+                val online = it.second
+                val lastSeenTime = it.third
+                val status = if (typing) TYPING_STATUS
+                else if (online) ONLINE_STATUS else timeToString(lastSeenTime)
                 setState { copy(onlineStatus = status) }
             }
         }

@@ -67,13 +67,13 @@ class ConversationUpdatableView(
                     binding.replyImage.setImageBitmap(bitmap)
                     binding.replyImage.visibility = View.VISIBLE
                 }
-            }else{
+            } else {
                 binding.replyImage.visibility = View.GONE
             }
             if (replyMessage.audio != null) {
                 binding.replayAudio.set(replyMessage.audio, replyMessage.messageId)
                 binding.replayAudio.visibility = View.VISIBLE
-            }else{
+            } else {
                 binding.replayAudio.visibility = View.INVISIBLE
             }
         }
@@ -118,7 +118,8 @@ class ConversationUpdatableView(
         binding.playAudioInput.visibility = View.GONE
         binding.audioLayout.visibility = View.GONE
         //text
-        if (state.inputState != InputStates.TEXT_ENTERED) binding.textLayout.visibility = View.GONE
+        if (state.inputState != InputStates.TEXT_ENTERED && state.inputState != InputStates.INITIAL)
+            binding.textLayout.visibility = View.GONE
     }
 
     private fun setConversation(conversation: Conversation) {
