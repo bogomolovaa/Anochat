@@ -56,8 +56,6 @@ class MessagesPagedAdapter(
             val context = binding.root.context
             if (item.hasReplyMessage()) {
                 binding.replyLayout.visibility = View.VISIBLE
-                //binding.replyText.visibility =
-                //    if (item.getReplyText().isNotEmpty()) View.VISIBLE else View.GONE
                 val padding = if (item.getReplyText().isNotEmpty())
                     resDimension(R.dimen.reply_message_text_padding, context).toInt()
                 else 0
@@ -139,7 +137,6 @@ class MessagesPagedAdapter(
             }
             initPlayAudioView(item.message, binding.playAudioInput, messagesMap)
             initPlayAudioView(item.message.replyMessage, binding.replayAudio, replyMessagesMap)
-
         }
     }
 

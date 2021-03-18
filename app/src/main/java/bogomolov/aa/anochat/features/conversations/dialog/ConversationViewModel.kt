@@ -237,7 +237,7 @@ class ConversationViewModel @Inject constructor(
         val liveData = LivePagedListBuilder(
             messageUseCases.loadMessagesDataSource(conversation.id, viewModelScope)
                 .mapByPage(toMessageView),
-            10
+            50
         ).build()
         _messagesLiveData.addSource(liveData) { _messagesLiveData.postValue(it) }
     }

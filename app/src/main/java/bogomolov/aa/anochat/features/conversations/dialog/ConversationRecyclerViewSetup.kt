@@ -32,10 +32,10 @@ class ConversationRecyclerViewSetup(
         enterAnimationFinished = false
         messagesPagedAdapter = createRecyclerViewAdapter()
         with(binding.recyclerView) {
-            setItemViewCacheSize(20)
+            setItemViewCacheSize(0)
             adapter = messagesPagedAdapter
             layoutManager = object : LinearLayoutManager(context, RecyclerView.VERTICAL, true) {
-                override fun isAutoMeasureEnabled() = false
+                override fun isAutoMeasureEnabled() = true
             }
             addOnScrollListener(createRecyclerViewScrollListener())
             doOnPreDraw {
