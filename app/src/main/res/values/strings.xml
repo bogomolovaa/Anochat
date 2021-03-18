@@ -16,6 +16,7 @@
     <string name="wrong_password">Wrong password</string>
     <string name="register_failed">Register failed</string>
     <string name="user_name">user name</string>
+    <string name="send_media">Send image</string>
     <string name="search">Search</string>
     <string name="sign_up">Sign up</string>
     <string name="select_file">Select a File to Upload</string>

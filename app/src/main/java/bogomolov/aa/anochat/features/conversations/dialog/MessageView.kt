@@ -9,9 +9,9 @@ data class MessageView(val message: Message) {
     var dateDelimiter: String? = null
     var detailedImageLoaded = false
 
-    fun isTimeMessage() = dateDelimiter != null
-    fun hasImage() = message.image != null
-    fun hasAudio() = message.audio != null
+    fun hasTimeMessage() = dateDelimiter != null
+    fun hasReplyMessage() = message.replyMessage != null
+    fun getReplyText() = message.replyMessage?.text ?: ""
 
     fun sent() = message.sent == 1
     fun received() = message.received == 1
@@ -19,19 +19,13 @@ data class MessageView(val message: Message) {
     fun viewed() = message.viewed == 1
     fun sentAndNotReceived() = sent() && !received() && !error()
     fun receivedAndNotViewed() = received() && !viewed()
-
-    fun hasReplyMessageImage() = message.replyMessage?.image != null
-    fun hasReplyMessage() = message.replyMessage != null
-    fun getReplyText() = message.replyMessage?.text ?: ""
-    fun getReplyAudio() = message.replyMessage?.audio
-    fun hasReplyAudio() = message.replyMessage?.audio != null
 }
 
 fun toMessageViewsWithDateDelimiters(messages: List<Message>, locale: Locale): List<MessageView> {
     val list = ArrayList<MessageView>()
     var lastDay = -1
     val calendar = GregorianCalendar()
-    for ((i, message) in messages.listIterator().withIndex()) {
+    for ((i, message) in messages.reversed().withIndex()) {
         val messageView = MessageView(message)
         calendar.time = Date(message.time)
         val day = calendar.get(Calendar.DAY_OF_YEAR)
@@ -41,5 +35,5 @@ fun toMessageViewsWithDateDelimiters(messages: List<Message>, locale: Locale): L
         lastDay = day
         list.add(messageView)
     }
-    return list
+    return list.reversed()
 }

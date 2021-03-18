@@ -50,5 +50,6 @@ class SendMediaFragment : Fragment() {
                 navController.popBackStack()
             }
         }
+        binding.messageInputText.requestFocus()
     }
 }

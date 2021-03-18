@@ -121,7 +121,7 @@ class ConversationViewModel @Inject constructor(
         if (uid != null) {
             if (typingJob == null) messageUseCases.startTypingTo(uid)
             typingJob?.cancel()
-            typingJob = viewModelScope.launch(dispatcher) {
+            typingJob = GlobalScope.launch(dispatcher) {
                 delay(3000)
                 messageUseCases.stopTypingTo(uid)
                 typingJob = null

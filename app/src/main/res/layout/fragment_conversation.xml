@@ -83,7 +83,9 @@
     <RelativeLayout
         android:id="@+id/reply_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="@dimen/margin_64dp"
         android:gravity="start"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/inputLayout"
@@ -95,59 +97,68 @@
             android:id="@+id/replyCardView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="4dp"
             android:checkable="true"
             app:cardBackgroundColor="@color/time_message_color"
             app:cardCornerRadius="6dp"
             app:cardElevation="1dp">
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/imageView6"
+                    android:layout_width="4dp"
+                    android:layout_height="0dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/replayAudio"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/reply_mark" />
 
                 <bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView
                     android:id="@+id/replayAudio"
                     android:layout_width="250dp"
                     android:layout_height="50dp"
-                    android:visibility="invisible"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:visibility="invisible" />
-
-                <ImageView
-                    android:id="@+id/removeReply"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:backgroundTint="#FFFFFF"
-                    app:tint="#E91E63"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/clear_icon" />
-
-                <ImageView
-                    android:id="@+id/replyImage"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_margin="6dp"
-                    android:duplicateParentState="true"
                     android:visibility="gone"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent">
+
+                </bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView>
 
                 <com.vanniktech.emoji.EmojiTextView
                     android:id="@+id/reply_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="6dp"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/imageView6"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:text="Reply message Reply message" />
+
+                <ImageView
+                    android:id="@+id/replyImage"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:duplicateParentState="true"
+                    android:scaleType="centerCrop"
+                    android:visibility="visible"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.0"
-                    app:layout_constraintStart_toEndOf="@+id/replyImage"
                     app:layout_constraintTop_toTopOf="parent"
-                    tools:text="Reply message" />
+                    tools:srcCompat="@tools:sample/avatars" />
+
+                <ImageView
+                    android:id="@+id/removeReply"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:backgroundTint="#FFFFFF"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/clear_icon"
+                    app:tint="#E91E63" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.google.android.material.card.MaterialCardView>

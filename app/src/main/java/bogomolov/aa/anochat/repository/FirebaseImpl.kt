@@ -59,11 +59,12 @@ class FirebaseImpl : Firebase {
                 override fun onCancelled(error: DatabaseError) {}
             })
         val typingRef =
-            FirebaseDatabase.getInstance().reference.child("typing").child("${uid}_$myUid")
+            FirebaseDatabase.getInstance().reference.child("typing/$uid/$myUid")
         val typingListener =
             typingRef.child("started").addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val typing = snapshot.getValue(Int::class.java) ?: 0
+                    Log.i("test","snapshot ${snapshot.getValue(Int::class.java)}")
                     scope.launch(Dispatchers.IO) {
                         typingFlow.emit(typing == 1)
                     }
@@ -147,7 +148,7 @@ class FirebaseImpl : Firebase {
     override fun sendTyping(myUid: String, uid: String, started: Int) {
         Log.i(TAG, "sendTyping started $started")
         val myRef = FirebaseDatabase.getInstance().reference
-        myRef.child("typing").child("${myUid}_$uid").setValue(mapOf("started" to started))
+        myRef.child("typing").child("${myUid}/$uid").setValue(mapOf("started" to started))
     }
 
     override fun sendMessage(
@@ -262,6 +263,7 @@ class FirebaseImpl : Firebase {
             userRef.child("online").setValue(1)
             userRef.child("online").onDisconnect().setValue(0)
             userRef.child("lastOnline").onDisconnect().setValue(ServerValue.TIMESTAMP)
+            database.getReference("typing/$uid").onDisconnect().removeValue()
         }
     }
 
@@ -272,6 +274,7 @@ class FirebaseImpl : Firebase {
             val userRef = database.getReference("users/${uid}")
             userRef.child("online").setValue(0)
             userRef.child("lastOnline").setValue(System.currentTimeMillis())
+            database.getReference("typing/$uid").removeValue()
         }
     }
 

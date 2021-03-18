@@ -95,17 +95,6 @@
                         android:visibility="gone"
                         tools:visibility="visible">
 
-                        <ImageView
-                            android:id="@+id/replyImage"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:adjustViewBounds="false"
-                            android:scaleType="centerCrop"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            tools:srcCompat="@tools:sample/avatars[0]" />
-
                         <bogomolov.aa.anochat.features.conversations.dialog.PlayAudioView
                             android:id="@+id/replayAudio"
                             android:layout_width="250dp"
@@ -122,14 +111,13 @@
                             android:id="@+id/reply_text"
                             android:layout_width="wrap_content"
                             android:layout_height="32dp"
-                            android:layout_marginStart="2dp"
                             android:layout_marginTop="6dp"
-                            android:layout_marginEnd="4dp"
                             android:layout_marginBottom="6dp"
-                            android:paddingStart="4dp"
-                            android:paddingRight="4dp"
+                            android:paddingStart="0dp"
+                            android:paddingRight="0dp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toStartOf="@+id/replyImage"
+                            app:layout_constraintHorizontal_bias="0.0"
                             app:layout_constraintStart_toEndOf="@+id/imageView4"
                             app:layout_constraintTop_toTopOf="parent"
                             tools:text="Reply message" />
@@ -142,6 +130,17 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
                             app:srcCompat="@drawable/reply_mark" />
+
+                        <ImageView
+                            android:id="@+id/replyImage"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:adjustViewBounds="false"
+                            android:scaleType="centerCrop"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            tools:srcCompat="@tools:sample/avatars[0]" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 

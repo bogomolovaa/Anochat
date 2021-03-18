@@ -6,21 +6,21 @@
         app:startDestination="@id/conversationsListFragment">
 
     <fragment
-            android:id="@+id/conversationsListFragment"
-            android:name="bogomolov.aa.anochat.features.conversations.list.ConversationListFragment"
-            android:label="Anochat">
+        android:id="@+id/conversationsListFragment"
+        android:name="bogomolov.aa.anochat.features.conversations.list.ConversationListFragment"
+        android:label="@string/app_name">
         <action
-                android:id="@+id/action_conversationsListFragment_to_conversationFragment"
-                app:destination="@id/dialog_graph" />
+            android:id="@+id/action_conversationsListFragment_to_conversationFragment"
+            app:destination="@id/dialog_graph" />
         <action
-                android:id="@+id/action_conversationsListFragment_to_usersFragment"
-                app:destination="@id/usersFragment" />
+            android:id="@+id/action_conversationsListFragment_to_usersFragment"
+            app:destination="@id/usersFragment" />
         <action
-                android:id="@+id/action_conversationsListFragment_to_settingsFragment"
-                app:destination="@id/settings_graph" />
+            android:id="@+id/action_conversationsListFragment_to_settingsFragment"
+            app:destination="@id/settings_graph" />
         <action
-                android:id="@+id/action_conversationsListFragment_to_messageSearchFragment"
-                app:destination="@id/messageSearchFragment" />
+            android:id="@+id/action_conversationsListFragment_to_messageSearchFragment"
+            app:destination="@id/messageSearchFragment" />
     </fragment>
     <fragment
             android:id="@+id/usersFragment"
@@ -74,6 +74,7 @@
         </fragment>
         <fragment
             android:id="@+id/sendMediaFragment"
-            android:name="bogomolov.aa.anochat.features.conversations.dialog.SendMediaFragment" />
+            android:name="bogomolov.aa.anochat.features.conversations.dialog.SendMediaFragment"
+            android:label="@string/send_media" />
     </navigation>
 </navigation>

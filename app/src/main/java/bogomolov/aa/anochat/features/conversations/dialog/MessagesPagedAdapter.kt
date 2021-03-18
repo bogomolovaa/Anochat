@@ -7,6 +7,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
@@ -55,8 +56,12 @@ class MessagesPagedAdapter(
             val context = binding.root.context
             if (item.hasReplyMessage()) {
                 binding.replyLayout.visibility = View.VISIBLE
-                binding.replyText.visibility =
-                    if(item.getReplyText().isNotEmpty()) View.VISIBLE else View.GONE
+                //binding.replyText.visibility =
+                //    if (item.getReplyText().isNotEmpty()) View.VISIBLE else View.GONE
+                val padding = if (item.getReplyText().isNotEmpty())
+                    resDimension(R.dimen.reply_message_text_padding, context).toInt()
+                else 0
+                binding.replyText.setPadding(padding, 0, padding, 0)
                 binding.replyText.text = item.getReplyText()
             } else {
                 binding.replyLayout.visibility = View.GONE
@@ -72,7 +77,7 @@ class MessagesPagedAdapter(
             binding.errorStatus.visibility = if (item.error()) View.VISIBLE else View.GONE
             binding.dateText.text = item.dateDelimiter
             binding.dateCardLayout.visibility =
-                if (item.isTimeMessage()) View.VISIBLE else View.GONE
+                if (item.hasTimeMessage()) View.VISIBLE else View.GONE
             binding.messageLayout.gravity = if (item.message.isMine) Gravity.END else Gravity.START
             binding.messageCardView.setCardBackgroundColor(
                 if (item.message.isMine) resColor(R.color.my_message_color, context)
@@ -95,7 +100,7 @@ class MessagesPagedAdapter(
             binding.timeText.text = item.message.shortTimeString()
             binding.timeText.setTextColor(Color.BLACK)
             (binding.timeText.layoutParams as ViewGroup.MarginLayoutParams).rightMargin =
-                if(item.message.isMine) 0 else dim4dp.toInt()
+                if (item.message.isMine) 0 else dim4dp.toInt()
 
             val image = item.message.image
             if (!image.isNullOrEmpty()) {
@@ -105,7 +110,11 @@ class MessagesPagedAdapter(
                 if (text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
                 setImageClickListener(item.message, binding.imageView, detector)
                 binding.imageView.transitionName = item.message.image
+
+                binding.messageCardView.layoutParams.width =
+                    resDimension(R.dimen.message_image_width, context).toInt()
             } else {
+                binding.messageCardView.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
                 binding.imageView.setImageDrawable(null)
                 binding.imageView.visibility = View.GONE
             }
@@ -114,7 +123,15 @@ class MessagesPagedAdapter(
                 val bitmap = getBitmapFromGallery(replyMessageImage, context, 16)
                 binding.replyImage.setImageBitmap(bitmap)
                 binding.replyImage.visibility = View.VISIBLE
+                if (item.getReplyText().isNotEmpty()) {
+                    val paddingLeft =
+                        resDimension(R.dimen.reply_message_text_padding, context).toInt()
+                    val paddingRight = paddingLeft +
+                            resDimension(R.dimen.reply_message_image_width, context).toInt()
+                    binding.replyText.setPadding(paddingLeft, 0, paddingRight, 0)
+                }
             } else {
+                binding.replyText.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
                 binding.replyImage.visibility = View.GONE
             }
             binding.messageCardView.setOnTouchListener { _, event ->
