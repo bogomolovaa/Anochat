@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface Firebase {
     fun sendTyping(myUid: String, uid: String, started: Int)
-    suspend fun getToken(): String?
+    suspend fun updateToken(): String?
     fun setOffline()
     fun setOnline()
     fun addUserStatusListener(

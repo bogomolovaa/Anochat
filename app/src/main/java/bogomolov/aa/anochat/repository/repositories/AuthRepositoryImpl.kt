@@ -112,7 +112,7 @@ class AuthRepositoryImpl @Inject constructor(
     private suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): String? {
         val uid = userSignIn(credential) ?: return null
         if (uid != keyValueStore.getMyUID()) FirebaseInstanceId.getInstance().deleteInstanceId()
-        val token = firebase.getToken() ?: return null
+        val token = firebase.updateToken() ?: return null
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("user_tokens").child(uid)
             .setValue(mapOf("token" to token))

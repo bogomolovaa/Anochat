@@ -23,7 +23,7 @@ class FirebaseImpl : Firebase {
         GlobalScope.launch(Dispatchers.IO) {
             //FirebaseDatabase.getInstance().setLogLevel(Logger.Level.DEBUG)
             FirebaseDatabase.getInstance().setPersistenceEnabled(true)
-            token = getToken()!!
+            updateToken()
         }
     }
 
@@ -64,7 +64,7 @@ class FirebaseImpl : Firebase {
             typingRef.child("started").addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val typing = snapshot.getValue(Int::class.java) ?: 0
-                    Log.i("test","snapshot ${snapshot.getValue(Int::class.java)}")
+                    Log.i("test", "snapshot ${snapshot.getValue(Int::class.java)}")
                     scope.launch(Dispatchers.IO) {
                         typingFlow.emit(typing == 1)
                     }
@@ -162,7 +162,7 @@ class FirebaseImpl : Firebase {
         val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
         ref.setValue(
             mapOf(
-                "message" to message?.text + message?.time.toString(), //text end - temporary storage for timestamp
+                "message" to if (message != null) message.text + message.time.toString() else null, //text end - temporary storage for timestamp
                 "reply" to message?.replyMessageId,
                 "image" to message?.image,
                 "audio" to message?.audio,
@@ -278,16 +278,17 @@ class FirebaseImpl : Firebase {
         }
     }
 
-    override suspend fun getToken(): String? = suspendCoroutine {
+    override suspend fun updateToken(): String? = suspendCoroutine {
         FirebaseInstanceId.getInstance().instanceId
             .addOnCompleteListener { task ->
                 if (!task.isSuccessful) {
                     Log.w(TAG, "getToken() failed", task.exception)
                     it.resume(null)
                 } else {
-                    val token = task.result!!.token
-                    Log.d(TAG, "token $token")
-                    it.resume(token)
+                    val newToken = task.result!!.token
+                    Log.d(TAG, "token $newToken")
+                    token = newToken
+                    it.resume(newToken)
                 }
             }
     }
@@ -301,4 +302,3 @@ class FirebaseImpl : Firebase {
         return User(uid = uid, phone = phone, name = name, status = status, photo = photo)
     }
 }
-
