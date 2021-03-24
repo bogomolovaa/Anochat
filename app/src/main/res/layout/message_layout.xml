@@ -107,7 +107,7 @@
                             app:layout_constraintWidth_min="120dp"
                             tools:visibility="gone" />
 
-                        <androidx.emoji.widget.EmojiTextView
+                        <com.vanniktech.emoji.EmojiTextView
                             android:id="@+id/reply_text"
                             android:layout_width="wrap_content"
                             android:layout_height="32dp"
