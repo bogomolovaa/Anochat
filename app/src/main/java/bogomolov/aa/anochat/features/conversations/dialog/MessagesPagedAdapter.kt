@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
@@ -52,7 +53,6 @@ class MessagesPagedAdapter(
     override fun bind(item: MessageView?, holder: VH) {
         val binding = holder.binding
         if (item != null) {
-            //Char.isSurrogate()
             val context = binding.root.context
             if (item.hasReplyMessage()) {
                 binding.replyLayout.visibility = View.VISIBLE
@@ -92,6 +92,12 @@ class MessagesPagedAdapter(
             binding.imageProgressLayout.visibility = View.GONE
             val detector = getGestureDetector(binding.messageCardView, item.message, holder)
             val text = item.message.text
+
+            if (text.length in 1..2 && Character.isSurrogate(text[0])) {
+                binding.messageText.setEmojiSizeRes(R.dimen.message_one_emoji_size)
+            } else {
+                binding.messageText.setEmojiSizeRes(R.dimen.message_emoji_size)
+            }
             binding.messageText.text = text
             binding.messageText.visibility = if (text.isNotEmpty()) View.VISIBLE else View.GONE
 

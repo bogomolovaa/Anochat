@@ -9,4 +9,6 @@
     <dimen name="message_image_width">250dp</dimen>
     <dimen name="reply_message_image_width">48dp</dimen>
     <dimen name="reply_message_text_padding">6dp</dimen>
+    <dimen name="message_emoji_size">24sp</dimen>
+    <dimen name="message_one_emoji_size">48sp</dimen>
 </resources>

@@ -205,7 +205,7 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <androidx.emoji.widget.EmojiTextView
+                    <com.vanniktech.emoji.EmojiTextView
                         android:id="@+id/message_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
