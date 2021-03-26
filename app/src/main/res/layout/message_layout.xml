@@ -91,7 +91,7 @@
                         android:id="@+id/reply_layout"
                         android:layout_width="wrap_content"
                         android:layout_height="48dp"
-                        android:background="#EEEDED"
+                        android:background="@color/time_message_color"
                         android:visibility="gone"
                         tools:visibility="visible">
 

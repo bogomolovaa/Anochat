@@ -60,12 +60,6 @@ class ConversationUpdatableView(
             binding.replyImage.visibility = View.GONE
             binding.replayAudio.visibility = View.INVISIBLE
         } else {
-            val context = binding.root.context
-            val backgroundColor = if (replyMessage.isMine)
-                ContextCompat.getColor(context, R.color.my_message_color)
-            else
-                ContextCompat.getColor(context, R.color.not_my_message_color)
-            binding.replyCardView.setCardBackgroundColor(backgroundColor)
             binding.replyLayout.visibility = View.VISIBLE
             binding.replyText.text = replyMessage.text
             if (replyMessage.image != null) {

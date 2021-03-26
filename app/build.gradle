@@ -16,8 +16,8 @@ android {
         applicationId "bogomolov.aa.anochat"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 5
-        versionName "1.4"
+        versionCode 6
+        versionName "1.5"
         multiDexEnabled true
         testInstrumentationRunner "bogomolov.aa.anochat.CustomTestRunner"
         javaCompileOptions {
