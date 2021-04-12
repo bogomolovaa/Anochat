@@ -95,4 +95,12 @@ class MockMessageRepository(
     override fun notifyAsViewed(message: Message) {
         TODO("Not yet implemented")
     }
+
+    override fun startTypingTo(uid: String) {
+        TODO("Not yet implemented")
+    }
+
+    override fun stopTypingTo(uid: String) {
+        TODO("Not yet implemented")
+    }
 }

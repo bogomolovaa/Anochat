@@ -4,15 +4,24 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.text.Html
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
+import android.text.style.URLSpan
 import android.util.Log
-import android.util.TypedValue
 import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.Navigation
@@ -27,6 +36,7 @@ import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
 import com.google.android.material.card.MaterialCardView
 import kotlin.math.min
+
 
 private const val WAITING_IMAGE_TIMEOUT = 180
 
@@ -98,10 +108,16 @@ class MessagesPagedAdapter(
             } else {
                 binding.messageText.setEmojiSizeRes(R.dimen.message_emoji_size)
             }
-            binding.messageText.text = text
+            if (text.contains("(https|http)".toRegex())) {
+                setTextViewHTML(binding.messageText, insertLinks(text))
+            } else {
+                binding.messageText.text = toSpanned(insertLinks(text))
+            }
             binding.messageText.visibility = if (text.isNotEmpty()) View.VISIBLE else View.GONE
 
             binding.timeText.text = item.message.shortTimeString()
+            binding.timeText.linksClickable = true;
+            binding.timeText.movementMethod = LinkMovementMethod.getInstance()
             binding.timeText.setTextColor(Color.BLACK)
             (binding.timeText.layoutParams as ViewGroup.MarginLayoutParams).rightMargin =
                 if (item.message.isMine) 0 else dim4dp.toInt()
@@ -296,5 +312,44 @@ class MessagesPagedAdapter(
             true
         }
 
+    }
+
+    private fun toSpanned(html: String?): Spanned {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY)
+        } else {
+            Html.fromHtml(html)
+        }
+    }
+
+    private fun insertLinks(text: String) =
+        text.replace("(https|http)://[^ ]+".toRegex(), """<a href="$0">$0</a>""")
+
+    private fun setTextViewHTML(textView: TextView, html: String?) {
+        val sequence: CharSequence = toSpanned(html)
+        val strBuilder = SpannableStringBuilder(sequence)
+        val urls = strBuilder.getSpans(0, sequence.length, URLSpan::class.java)
+        for (span in urls) {
+            makeLinkClickable(textView, strBuilder, span)
+        }
+        textView.text = strBuilder
+        textView.movementMethod = LinkMovementMethod.getInstance()
+    }
+
+    private fun makeLinkClickable(
+        textView: TextView,
+        strBuilder: SpannableStringBuilder,
+        span: URLSpan?
+    ) {
+        val start = strBuilder.getSpanStart(span)
+        val end = strBuilder.getSpanEnd(span)
+        val flags = strBuilder.getSpanFlags(span)
+        val clickable = object : ClickableSpan() {
+            override fun onClick(widget: View) {
+                span?.onClick(textView)
+            }
+        }
+        strBuilder.setSpan(clickable, start, end, flags)
+        strBuilder.removeSpan(span)
     }
 }
