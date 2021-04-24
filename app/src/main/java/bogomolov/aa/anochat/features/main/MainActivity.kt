@@ -1,7 +1,11 @@
 package bogomolov.aa.anochat.features.main
 
 import android.app.NotificationManager
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Parcelable
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.emoji.bundled.BundledEmojiCompatConfig
@@ -33,6 +37,8 @@ class MainActivity : AppCompatActivity() {
     @Inject
     internal lateinit var userUseCases: UserUseCases
 
+    private lateinit var navController: NavController
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -40,7 +46,16 @@ class MainActivity : AppCompatActivity() {
         emojiSupport()
         addSignInListener()
         startWorkManager()
+
+        if (intent?.action == Intent.ACTION_SEND) {
+            (intent.getParcelableExtra<Parcelable>(Intent.EXTRA_STREAM) as? Uri)?.let { uri ->
+                navController.navigate(
+                    R.id.usersFragment,
+                    Bundle().apply { putString("uri", uri.toString()) })
+            }
+        }
     }
+
 
     override fun onStart() {
         super.onStart()
@@ -51,7 +66,7 @@ class MainActivity : AppCompatActivity() {
     private fun addSignInListener() {
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
+        navController = navHostFragment.navController
         navController.addOnDestinationChangedListener { controller, destination, _ ->
             if (destination.id != R.id.signInFragment && !authRepository.isSignedIn())
                 navigateToSignIn(controller, destination)

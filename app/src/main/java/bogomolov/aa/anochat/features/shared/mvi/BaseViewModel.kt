@@ -17,6 +17,7 @@ import kotlinx.coroutines.sync.withLock
 
 interface UiState
 interface UserAction
+interface Event
 
 abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
     private val mutex = Mutex()
@@ -37,6 +38,12 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), ActionExecutor {
     private var subscribed = false
     private var actionListener: ActionListener? = null
     private var lastAction: UserAction? = null
+    private val _events = Channel<Event>()
+    val events = _events.receiveAsFlow()
+
+    protected suspend fun addEvent(event: Event){
+        _events.send(event)
+    }
 
     fun addActionListener(actionListener: ActionListener): UserAction? {
         this.actionListener = actionListener

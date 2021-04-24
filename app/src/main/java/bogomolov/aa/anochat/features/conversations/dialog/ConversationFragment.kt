@@ -18,6 +18,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.core.os.ConfigurationCompat
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
@@ -67,11 +68,11 @@ class ConversationFragment : Fragment(), RequestPermission {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val conversationId = arguments?.get("id") as Long
         val recyclerViewSetup = ConversationRecyclerViewSetup(this, viewModel)
         val updatableView = ConversationUpdatableView(recyclerViewSetup)
         val conversationInputSetup = ConversationInputSetup(this, viewModel, recyclerViewSetup)
         viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(updatableView, viewModel))
-        val conversationId = arguments?.get("id") as Long
         viewModel.addAction(InitConversationAction(conversationId) {
             val locale = ConfigurationCompat.getLocales(requireContext().resources.configuration)[0]
             toMessageViewsWithDateDelimiters(it, locale)
@@ -93,6 +94,13 @@ class ConversationFragment : Fragment(), RequestPermission {
         binding.usernameLayout.setOnClickListener {
             val userId = viewModel.state.conversation?.user?.id
             if (userId != null) navigateToUserFragment(userId)
+        }
+
+        val uri = arguments?.getString("uri")?.toUri()
+        if (uri != null) {
+            arguments?.remove("uri")
+            navigateToSendMediaFragment(uri = uri)
+            return
         }
     }
 
@@ -120,10 +128,11 @@ class ConversationFragment : Fragment(), RequestPermission {
     }
 
     private fun navigateToSendMediaFragment(uri: Uri? = null, path: String? = null) {
-        navController.navigate(R.id.sendMediaFragment, Bundle().apply {
+        val conversationId = arguments?.get("id") as Long
+        findNavController().navigate(R.id.sendMediaFragment, Bundle().apply {
             if (path != null) putString("path", path)
             if (uri != null) putParcelable("uri", uri)
-            putLong("conversationId", viewModel.state.conversation!!.id)
+            putLong("conversationId", conversationId)
         })
     }
 

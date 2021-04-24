@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.animation.DecelerateInterpolator
 import androidx.core.widget.doOnTextChanged
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
+import bogomolov.aa.anochat.features.shared.playMessageSound
 
 interface RequestPermission {
     fun requestMicrophonePermission()
@@ -39,10 +40,14 @@ class ConversationInputSetup(
                 InputStates.FAB_EXPAND -> hideFabs {
                     viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) }
                 }
-                InputStates.TEXT_ENTERED ->
+                InputStates.TEXT_ENTERED -> {
                     viewModel.addAction(SendMessageAction(text = viewModel.state.text))
-                InputStates.VOICE_RECORDED ->
+                    playMessageSound(binding.root.context)
+                }
+                InputStates.VOICE_RECORDED -> {
                     viewModel.addAction(SendMessageAction(audio = viewModel.state.audioFile))
+                    playMessageSound(binding.root.context)
+                }
                 InputStates.VOICE_RECORDING -> viewModel.addAction(StopRecordingAction())
             }
         }

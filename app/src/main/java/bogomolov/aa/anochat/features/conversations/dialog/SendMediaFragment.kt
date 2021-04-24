@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
+import bogomolov.aa.anochat.features.shared.playMessageSound
 import bogomolov.aa.anochat.repository.FileStore
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -47,6 +48,7 @@ class SendMediaFragment : Fragment() {
             binding.messageInputLayout.setEndIconOnClickListener {
                 val text = binding.messageInputText.text?.toString() ?: ""
                 viewModel.addAction(SendMessageAction(image = resizedImage.name, text = text))
+                playMessageSound(requireContext())
                 navController.popBackStack()
             }
         }

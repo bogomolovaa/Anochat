@@ -1,7 +1,11 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Parcelable
 import android.util.DisplayMetrics
+import android.widget.Toast
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
@@ -80,8 +84,18 @@ class ConversationRecyclerViewSetup(
                 onReply(message.message)
             }
         }
+        data.actionsMap[R.id.copy_messages_action] = { _, items ->
+            val context = fragment.requireContext()
+            val text = items.first().message.text
+            val clipBoard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clipData = ClipData.newPlainText("text", text)
+            clipBoard.setPrimaryClip(clipData)
+            val messageText = context.resources.getString(R.string.copied)
+            Toast.makeText(context, messageText, Toast.LENGTH_SHORT).show()
+        }
         return MessagesPagedAdapter(
-            windowWidth = getWindowWidth(),
+            lifecycleScope = fragment.lifecycleScope,
+                    windowWidth = getWindowWidth(),
             onReply = ::onReply,
             actionExecutor = viewModel,
             actionModeData = data

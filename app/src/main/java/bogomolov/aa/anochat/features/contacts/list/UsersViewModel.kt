@@ -6,6 +6,7 @@ import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isNotValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
+import bogomolov.aa.anochat.features.shared.mvi.Event
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +15,6 @@ import javax.inject.Inject
 
 data class ContactsUiState(
     val users: List<User>? = null,
-    val conversationId: Long = 0,
     val loading: Boolean = true
 ) : UiState
 
@@ -22,6 +22,8 @@ class SearchAction(val query: String) : UserAction
 class LoadContactsAction(val phones: List<String>) : UserAction
 class CreateConversationAction(val user: User) : UserAction
 class ResetSearchAction : UserAction
+
+class NavigateConversationEvent(val conversationId: Long): Event
 
 @HiltViewModel
 class UsersViewModel
@@ -69,8 +71,9 @@ class UsersViewModel
     private suspend fun CreateConversationAction.execute() {
         setState { copy(loading = true) }
         viewModelScope.launch(dispatcher) {
+            setState { copy(loading = false) }
             val conversationId = conversationUserCases.startConversation(user.uid)
-            setState { copy(loading = false, conversationId = conversationId) }
+            addEvent(NavigateConversationEvent(conversationId))
         }
     }
 }

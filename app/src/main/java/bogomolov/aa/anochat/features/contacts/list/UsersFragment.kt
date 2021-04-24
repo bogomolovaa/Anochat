@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
@@ -20,6 +21,8 @@ import bogomolov.aa.anochat.features.conversations.list.setTextColor
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
@@ -50,18 +53,26 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
 
         usersAdapter = UsersAdapter { viewModel.addAction(CreateConversationAction(it)) }
         binding.recyclerView.adapter = usersAdapter
+
+        lifecycleScope.launch {
+            viewModel.events.collect {
+                if (it is NavigateConversationEvent) navigateToConversation(it.conversationId)
+            }
+        }
     }
 
     override fun updateView(newState: ContactsUiState, currentState: ContactsUiState) {
         if (newState.users != currentState.users) usersAdapter.submitList(newState.users!!)
-        if (newState.conversationId != currentState.conversationId) navigateToConversation(newState.conversationId)
         binding.progressBar.visibility = if (newState.loading) View.VISIBLE else View.INVISIBLE
     }
 
     private fun navigateToConversation(conversationId: Long) {
         if (conversationId != 0L) {
-            val bundle = Bundle().apply { putLong("id", conversationId) }
-            viewModel.setStateBlocking { copy(conversationId = 0) }
+            val uri = arguments?.getString("uri")
+            val bundle = Bundle().apply {
+                putLong("id", conversationId)
+                if (uri != null) putString("uri", uri)
+            }
             navController.navigate(R.id.dialog_graph, bundle)
         }
     }

@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
@@ -120,15 +121,18 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 audio = audio
             )
             tempExtractTime(message)
-            messageUseCases.receiveMessage(message, uid) { showNotification(it) }
+            messageUseCases.receiveMessage(message, uid) {
+                showNotification(it)
+                playSound()
+            }
         }
     }
 
-    private fun tempExtractTime(message: Message){
+    private fun tempExtractTime(message: Message) {
         val timePart = message.text.substring(message.text.length - 13)
         message.time = Long.parseLong(timePart)
         message.text = message.text.substring(0, message.text.length - 13)
-        Log.i("test","tempExtractTime ${Date(message.time)}")
+        Log.i("test", "tempExtractTime ${Date(message.time)}")
     }
 
     private fun showNotification(message: Message) {
@@ -139,6 +143,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 conversationUseCases.getConversation(message.conversationId)
             if (conversation != null) sendNotification(message, conversation.user, settings)
         }
+    }
+
+    private fun playSound() {
+        val inForeground = !(application as AnochatAplication).inBackground
+        if (inForeground) playMessageSound(this)
     }
 
     private fun sendNotification(message: Message, user: User, settings: Settings) {

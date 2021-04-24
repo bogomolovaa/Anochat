@@ -35,12 +35,17 @@ import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.min
 
 
 private const val WAITING_IMAGE_TIMEOUT = 180
 
 class MessagesPagedAdapter(
+    private val lifecycleScope: CoroutineScope,
     private val windowWidth: Int,
     private val onReply: (Message) -> Unit,
     private val actionExecutor: ActionExecutor,
@@ -125,8 +130,9 @@ class MessagesPagedAdapter(
             val image = item.message.image
             if (!image.isNullOrEmpty()) {
                 item.detailedImageLoaded = false
-                if (!loadImage(image, binding.imageView, 8))
+                loadImage(image, binding.imageView, 8) {
                     showImageNotLoaded(binding, item.message.time)
+                }
                 if (text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
                 setImageClickListener(item.message, binding.imageView, detector)
                 binding.imageView.transitionName = item.message.image
@@ -203,25 +209,34 @@ class MessagesPagedAdapter(
             val image = item.message.image
             if (!image.isNullOrEmpty() && !item.detailedImageLoaded) {
                 item.detailedImageLoaded = true
-                if (!loadImage(image, binding.imageView, 2))
+                loadImage(image, binding.imageView, 2) {
                     showImageNotLoaded(binding, item.message.time)
+                }
             }
         }
     }
 
-    private fun loadImage(image: String, imageView: ImageView, quality: Int): Boolean {
-        val bitmap = getBitmapFromGallery(image, imageView.context, quality)
-        if (bitmap != null) {
-            imageView.visibility = View.VISIBLE
-            imageView.setImageBitmap(bitmap)
-            setImageSize(imageView, bitmap)
-            return true
-        } else {
-            imageView.setImageDrawable(null)
-            imageView.visibility = View.GONE
-            imageView.requestLayout()
+    private fun loadImage(
+        image: String,
+        imageView: ImageView,
+        quality: Int,
+        onNotLoaded: () -> Unit
+    ) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val bitmap = getBitmapFromGallery(image, imageView.context, quality)
+            withContext(Dispatchers.Main) {
+                if (bitmap != null) {
+                    imageView.visibility = View.VISIBLE
+                    imageView.setImageBitmap(bitmap)
+                    setImageSize(imageView, bitmap)
+                } else {
+                    imageView.setImageDrawable(null)
+                    imageView.visibility = View.GONE
+                    imageView.requestLayout()
+                    onNotLoaded()
+                }
+            }
         }
-        return false
     }
 
     private fun showImageNotLoaded(binding: MessageLayoutBinding, receivedTime: Long) {
