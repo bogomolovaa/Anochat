@@ -74,7 +74,6 @@
         </fragment>
         <fragment
             android:id="@+id/sendMediaFragment"
-            android:name="bogomolov.aa.anochat.features.conversations.dialog.SendMediaFragment"
-            android:label="@string/send_media" />
+            android:name="bogomolov.aa.anochat.features.conversations.dialog.SendMediaFragment" />
     </navigation>
 </navigation>

@@ -3,10 +3,7 @@ package bogomolov.aa.anochat.di
 import android.app.Application
 import android.content.Context
 import androidx.room.Room
-import bogomolov.aa.anochat.repository.AppDatabase
-import bogomolov.aa.anochat.repository.DB_NAME
-import bogomolov.aa.anochat.repository.Firebase
-import bogomolov.aa.anochat.repository.FirebaseImpl
+import bogomolov.aa.anochat.repository.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,7 +21,7 @@ object ProvidesModule {
             application,
             AppDatabase::class.java,
             DB_NAME
-        ).fallbackToDestructiveMigration().build()
+        ).addMigrations(MIGRATION).build() //.fallbackToDestructiveMigration()
 
     @Provides
     fun providesContext(application: Application): Context = application

@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.addRepeatingJob
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -54,7 +56,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         usersAdapter = UsersAdapter { viewModel.addAction(CreateConversationAction(it)) }
         binding.recyclerView.adapter = usersAdapter
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.addRepeatingJob(Lifecycle.State.RESUMED) {
             viewModel.events.collect {
                 if (it is NavigateConversationEvent) navigateToConversation(it.conversationId)
             }

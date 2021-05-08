@@ -1,18 +1,20 @@
 package bogomolov.aa.anochat.repository
 
 import android.content.Context
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
+import android.media.ThumbnailUtils
 import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
+import android.util.Size
+import android.widget.Toast
 import bogomolov.aa.anochat.features.shared.*
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.OutputStream
+import java.io.*
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
@@ -31,6 +33,9 @@ interface FileStore {
         path: String? = null,
         toGallery: Boolean
     ): BitmapWithName?
+
+    fun resizeVideo(uri: Uri): BitmapWithName?
+    fun createVideoThumbnail(videoName: String)
 }
 
 @Singleton
@@ -63,6 +68,46 @@ class FileStoreImpl @Inject constructor(
 
     override fun fileExists(fileName: String) = File(getFilePath(context, fileName)).exists()
 
+    override fun resizeVideo(uri: Uri): BitmapWithName? {
+        val size = (getRealSizeFromUri(context, uri)?.toFloat() ?: 0f) / 1024 / 1024
+        if (size > 30) {
+            Toast.makeText(context, "video too big", Toast.LENGTH_LONG).show()
+            return null
+        }
+        val videoName = getRandomFileName()
+        val videoFile = File(getFilePath(context, nameToVideo(videoName)))
+        saveUriToFile(uri, videoFile)
+        val thumbnailBitmap = createVideoThumbnail(videoFile)
+        saveImageToPath(thumbnailBitmap, nameToImage(videoName))
+        return BitmapWithName(videoName, thumbnailBitmap)
+    }
+
+    override fun createVideoThumbnail(videoName: String) {
+        getUri(videoName, context)?.let { uri ->
+            val tempVideoFile = File(getFilePath(context, "temp_$videoName"))
+            saveUriToFile(uri, tempVideoFile)
+            val thumbnailBitmap = createVideoThumbnail(tempVideoFile)
+            saveImageToPath(thumbnailBitmap, videoThumbnail(videoName))
+            tempVideoFile.delete()
+        }
+    }
+
+    private fun getRealSizeFromUri(context: Context, uri: Uri): String? {
+        var cursor: Cursor? = null
+        return try {
+
+            val proj = arrayOf(MediaStore.Audio.Media.SIZE)
+            cursor = context.contentResolver.query(uri, proj, null, null, null)
+            cursor?.let {
+                val column_index: Int = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
+                cursor.moveToFirst()
+                cursor.getString(column_index)
+            }
+        } finally {
+            cursor?.close()
+        }
+    }
+
     override fun resizeImage(
         uri: Uri?,
         path: String?,
@@ -78,7 +123,8 @@ class FileStoreImpl @Inject constructor(
 
         val width = (ratio * bitmapWidth).toInt()
         val height = (ratio * bitmapHeight).toInt()
-        val fileName = "${getRandomFileName()}.jpg"
+        val name = getRandomFileName()
+        val fileName = nameToImage(name)
         try {
             var resizedBitmap = Bitmap.createScaledBitmap(fastResizedBitmap!!, width, height, true)
             if (path != null) resizedBitmap = rotateIfNeeded(resizedBitmap, path)
@@ -87,12 +133,26 @@ class FileStoreImpl @Inject constructor(
             } else {
                 saveImageToPath(resizedBitmap, fileName)
             }
-            return BitmapWithName(fileName, resizedBitmap)
+            return BitmapWithName(name, resizedBitmap)
         } catch (e: Exception) {
             Log.w(TAG, "resizeImage", e)
         }
         return null
     }
+
+    private fun saveUriToFile(uri: Uri, file: File) {
+        context.contentResolver.openInputStream(uri)?.copyTo(file.outputStream())
+    }
+
+    private fun createVideoThumbnail(videoFile: File) =
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            ThumbnailUtils.createVideoThumbnail(videoFile, Size(500, 500), null)
+        } else {
+            ThumbnailUtils.createVideoThumbnail(
+                videoFile.path,
+                MediaStore.Video.Thumbnails.MINI_KIND
+            )
+        }
 
     private fun rotateIfNeeded(bitmap: Bitmap, photoPath: String): Bitmap? {
         val orientation = ExifInterface(photoPath).getAttributeInt(

@@ -61,7 +61,8 @@ data class PlayingState(
 class SendMessageAction(
     val text: String? = null,
     val audio: String? = null,
-    val image: String? = null
+    val image: String? = null,
+    val video: String? = null
 ) : UserAction
 
 class InitConversationAction(
@@ -203,7 +204,8 @@ class ConversationViewModel @Inject constructor(
                 conversationId = conversation.id,
                 replyMessageId = replyId,
                 audio = audio,
-                image = image
+                image = image,
+                video = video
             )
             setState {
                 copy(

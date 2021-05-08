@@ -20,12 +20,12 @@ class MessageRepositoryImpl @Inject constructor(
 ) : MessageRepository {
     private val mapper = ModelEntityMapper()
 
-    override fun startTypingTo(uid: String){
-        firebase.sendTyping(getMyUID()!!,uid,1)
+    override fun startTypingTo(uid: String) {
+        firebase.sendTyping(getMyUID()!!, uid, 1)
     }
 
-    override fun stopTypingTo(uid: String){
-        firebase.sendTyping(getMyUID()!!,uid,0)
+    override fun stopTypingTo(uid: String) {
+        firebase.sendTyping(getMyUID()!!, uid, 0)
     }
 
     override fun searchMessagesDataSource(search: String) =
@@ -81,8 +81,9 @@ class MessageRepositoryImpl @Inject constructor(
     ): Boolean {
         val fileName = message.getAttachment() ?: return false
         val byteArray = firebase.downloadFile(fileName, uid, true) ?: return false
-        val toGallery = message.image != null
+        val toGallery = message.image != null || message.video != null
         fileStore.saveByteArray(byteArray.convert(), fileName, toGallery)
+        message.video?.let { fileStore.createVideoThumbnail(it) }
         db.messageDao().updateAsReceived(message.id)
         return true
     }

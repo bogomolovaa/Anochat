@@ -7,13 +7,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
-import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
 import android.util.Log
-import android.widget.Toast
-import android.widget.Toast.LENGTH_LONG
 import androidx.core.app.NotificationCompat
 import androidx.navigation.NavDeepLinkBuilder
 import bogomolov.aa.anochat.AnochatAplication
@@ -107,18 +104,27 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val replyId = data["reply"]
         val messageId = data["messageId"]
         val uid = data["source"]
-        var image = data["image"]
+        var file = data["image"]
         var audio = data["audio"]
-        if (image.isNullOrEmpty()) image = null
+        if (file.isNullOrEmpty()) file = null
         if (audio.isNullOrEmpty()) audio = null
         if (uid != null && messageId != null) {
+            var image: String? = null
+            var video: String? = null
+            if (file != null)
+                if (file.endsWith(".jpg")) {
+                    image = file
+                } else {
+                    video = file
+                }
             val message = Message(
                 text = text,
                 time = System.currentTimeMillis(),
                 messageId = messageId,
                 replyMessageId = replyId,
                 image = image,
-                audio = audio
+                audio = audio,
+                video = video
             )
             tempExtractTime(message)
             messageUseCases.receiveMessage(message, uid) {

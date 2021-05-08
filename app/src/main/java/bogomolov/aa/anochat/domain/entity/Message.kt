@@ -15,6 +15,7 @@ data class Message(
     var replyMessageId: String? = null,
     var image: String? = null,
     var audio: String? = null,
+    var video: String? = null,
     var publicKey: String? = null,
 
     var sent: Int = 0,
@@ -32,13 +33,14 @@ data class Message(
 
     fun shortText(): String {
         if (image != null) return String(Character.toChars(0x1F4F7))
-        if (audio != null) return String(Character.toChars(0x1F3A4))
+        if (audio != null) return String(Character.toChars(0x1F50A))
+        if (video != null) return String(Character.toChars(0x1F4F9))
         return if (text.length > 30) text.take(30) + "..." else text
     }
 
     fun hasAttachment() = getAttachment() != null
 
-    fun getAttachment() = audio ?: image
+    fun getAttachment() = audio ?: image ?: video
 
     fun isNotSaved() = id == 0L
 

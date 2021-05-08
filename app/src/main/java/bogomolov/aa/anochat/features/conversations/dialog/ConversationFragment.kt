@@ -151,9 +151,11 @@ class ConversationFragment : Fragment(), RequestPermission {
     }
 
     private fun startFileChooser() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "image/*"
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "*/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
+            addCategory(Intent.CATEGORY_OPENABLE)
+        }
         if (intent.resolveActivity(requireActivity().packageManager) != null) {
             startActivityForResult(
                 Intent.createChooser(intent, getString(R.string.select_file)),

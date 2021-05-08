@@ -110,11 +110,12 @@ class ImageViewFragment : Fragment() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.menu_share) {
-            val uri = getUri(imageName, requireContext())
-            if (uri != null) {
+            val uriWithSource = getUriWithSource(imageName, requireContext())
+            if (uriWithSource.uri != null) {
                 val intent = Intent(Intent.ACTION_SEND)
                 intent.type = "image/jpeg"
-                intent.putExtra(Intent.EXTRA_STREAM, uri)
+                intent.putExtra(Intent.EXTRA_STREAM, uriWithSource.uri)
+                if (!uriWithSource.fromGallery) intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 val title = resources.getString(R.string.share_image)
                 startActivity(Intent.createChooser(intent, title))
                 return true

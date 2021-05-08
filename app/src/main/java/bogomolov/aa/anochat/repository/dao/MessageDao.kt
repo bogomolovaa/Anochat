@@ -27,9 +27,9 @@ interface MessageDao {
     @Transaction
     @Query(
         "SELECT m.id as id, m.text as text, m.time as time, m.conversationId as conversationId, m.isMine as isMine, " +
-                "m.messageId as messageId, m.image as image, m.audio as audio, m.publicKey as publicKey, m.sent as sent, m.received as received, m.viewed as viewed, " +
+                "m.messageId as messageId, m.image as image, m.audio as audio,m.video as video, m.publicKey as publicKey, m.sent as sent, m.received as received, m.viewed as viewed, " +
                 "r.id as reply_id, r.text as reply_text, r.time as reply_time, r.conversationId as reply_conversationId, r.isMine as reply_isMine, " +
-                "r.messageId as reply_messageId, r.replyMessageId as reply_replyMessageId, r.image as reply_image, r.audio as reply_audio, r.publicKey as reply_publicKey, r.sent as reply_sent, r.received as reply_received, r.viewed as reply_viewed, r.myUid as reply_myUid " +
+                "r.messageId as reply_messageId, r.replyMessageId as reply_replyMessageId, r.image as reply_image, r.audio as reply_audio, r.video as reply_video, r.publicKey as reply_publicKey, r.sent as reply_sent, r.received as reply_received, r.viewed as reply_viewed, r.myUid as reply_myUid " +
                 "FROM MessageEntity as m " +
                 "LEFT JOIN MessageEntity as r ON (m.replyMessageId != '' and m.replyMessageId = r.messageId and m.conversationId = r.conversationId) where m.conversationId = :conversationId order by m.time desc"
     )

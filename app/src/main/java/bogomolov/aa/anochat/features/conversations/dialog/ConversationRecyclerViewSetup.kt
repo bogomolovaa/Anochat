@@ -132,7 +132,7 @@ class ConversationRecyclerViewSetup(
                     val saveState = binding.recyclerView.layoutManager?.onSaveInstanceState()
                     for (id in firstId..lastId) if (id != -1) {
                         val viewHolder = recyclerView.findViewHolderForLayoutPosition(id)
-                        if (viewHolder != null) adapter.loadDetailedImage(id, viewHolder)
+                        if (viewHolder != null) adapter.loadDetailed(id, viewHolder)
                     }
                     enterAnimationFinished = true
                     if (dy != 0) saveRecyclerViewPosition(saveState)

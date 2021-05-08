@@ -16,7 +16,8 @@
     <string name="wrong_password">Wrong password</string>
     <string name="register_failed">Register failed</string>
     <string name="user_name">user name</string>
-    <string name="send_media">Send image</string>
+    <string name="send_media_image">Send image</string>
+    <string name="send_media_video">Send video</string>
     <string name="search">Search</string>
     <string name="sign_up">Sign up</string>
     <string name="select_file">Select a File to Upload</string>
@@ -42,6 +43,7 @@
     <string name="save_to_gallery">Save photos to gallery</string>
     <string name="menu_share">Share</string>
     <string name="share_image">Share image</string>
+    <string name="open_video">Open video</string>
 
 
 

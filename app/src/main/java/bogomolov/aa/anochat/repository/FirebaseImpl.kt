@@ -164,7 +164,7 @@ class FirebaseImpl : Firebase {
             mapOf(
                 "message" to if (message != null) message.text + message.time.toString() else null, //text end - temporary storage for timestamp
                 "reply" to message?.replyMessageId,
-                "image" to message?.image,
+                "image" to (message?.image ?: message?.video), //temporary storage for video
                 "audio" to message?.audio,
                 "dest" to uid,
                 "source" to token,

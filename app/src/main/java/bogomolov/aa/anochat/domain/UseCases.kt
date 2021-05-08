@@ -112,7 +112,7 @@ open class MessageUseCases @Inject constructor(
         convert: ByteArray.() -> ByteArray,
         onSuccess: () -> Unit
     ) {
-        val attempts = 10
+        val attempts = 30
         GlobalScope.launch(dispatcher) {
             var counter = 0
             while (counter < attempts) {

@@ -26,6 +26,12 @@ fun getMiniPhotoFileName(fileName: String) = File(fileName).nameWithoutExtension
 
 fun getFilePath(context: Context, fileName: String) = File(getFilesDir(context), fileName).path
 
+fun nameToImage(name: String) = "${name}.jpg"
+
+fun nameToVideo(name: String) = "${name}.mp4"
+
+fun videoThumbnail(video: String) = nameToImage(video.substringBefore("."))
+
 private fun getFilesDir(context: Context): File = context.filesDir
 
 fun getRandomFileName() = (1..20).map { allowedChars.random() }.joinToString(separator = "")
@@ -62,7 +68,22 @@ fun getGalleryInputStream(fileName: String, context: Context): InputStream? {
 }
 
 fun getUri(fileName: String, context: Context): Uri? {
-    return getGalleryUri(fileName, context) ?: try {
+    return getGalleryUri(fileName, context) ?: getFileProviderUri(fileName, context)
+}
+
+fun getUriWithSource(fileName: String, context: Context): UriWithSource {
+    var fromGallery = true
+    val uri = getGalleryUri(fileName, context) ?: run {
+        fromGallery = false
+        getFileProviderUri(fileName, context)
+    }
+    return UriWithSource(uri, fromGallery)
+}
+
+data class UriWithSource(val uri: Uri?, val fromGallery: Boolean)
+
+fun getFileProviderUri(fileName: String, context: Context): Uri? =
+    try {
         FileProvider.getUriForFile(
             context,
             "bogomolov.aa.anochat.fileprovider",
@@ -72,9 +93,21 @@ fun getUri(fileName: String, context: Context): Uri? {
         Toast.makeText(context, "${e.message}", LENGTH_LONG).show()
         null
     }
+
+private fun addMimeType(fileName: String, values: ContentValues) {
+    if (fileName.endsWith(".jpg"))
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
+    if (fileName.endsWith(".mp4"))
+        values.put(MediaStore.Images.Media.MIME_TYPE, "video/mp4")
 }
 
 fun getGalleryOutputStream(fileName: String, context: Context): OutputStream? {
+    if (fileName.endsWith(".jpg")) return getGalleryOutputStreamImage(fileName, context)
+    if (fileName.endsWith(".mp4")) return getGalleryOutputStreamVideo(fileName, context)
+    return null
+}
+
+private fun getGalleryOutputStreamImage(fileName: String, context: Context): OutputStream? {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         val imagesPath = "${DIRECTORY_PICTURES}/$GALLERY_FOLDER"
         val values = ContentValues()
@@ -111,6 +144,43 @@ fun getGalleryOutputStream(fileName: String, context: Context): OutputStream? {
     }
 }
 
+private fun getGalleryOutputStreamVideo(fileName: String, context: Context): OutputStream? {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val imagesPath = "${DIRECTORY_PICTURES}/$GALLERY_FOLDER"
+        val values = ContentValues()
+        values.put(MediaStore.Video.Media.DISPLAY_NAME, fileName)
+        values.put(MediaStore.Video.Media.MIME_TYPE, "image/jpg")
+        values.put(MediaStore.Video.Media.DATE_ADDED, System.currentTimeMillis())
+        values.put(MediaStore.Video.Media.RELATIVE_PATH, imagesPath)
+        values.put(MediaStore.Video.Media.DATE_TAKEN, System.currentTimeMillis())
+        return try {
+            val uri =
+                context.contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
+            if (uri != null) context.contentResolver.openOutputStream(uri) else null
+        } catch (e: SecurityException) {
+            Log.w(TAG, "getGalleryOutputStream exception: ${e.message}")
+            null
+        }
+    } else {
+        val imagesPath =
+            "${Environment.getExternalStoragePublicDirectory(DIRECTORY_PICTURES)}/$GALLERY_FOLDER"
+        val directory = File(imagesPath)
+        if (!directory.exists()) directory.mkdirs()
+        val file = File(directory, fileName)
+        val values = ContentValues()
+        values.put(MediaStore.Video.Media.MIME_TYPE, "image/jpg")
+        values.put(MediaStore.Video.Media.DATE_ADDED, System.currentTimeMillis())
+        values.put(MediaStore.Video.Media.DATA, file.absolutePath)
+        return try {
+            context.contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
+            FileOutputStream(file)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "getGalleryOutputStream exception: ${e.message}")
+            null
+        }
+    }
+}
+
 fun getFileInputStream(fileName: String, context: Context): InputStream? {
     return try {
         FileInputStream(File(getFilePath(context, fileName)))
@@ -120,14 +190,14 @@ fun getFileInputStream(fileName: String, context: Context): InputStream? {
     }
 }
 
-private fun getGalleryUri(fileName: String, context: Context): Uri? {
+fun getGalleryUri(fileName: String, context: Context): Uri? {
+    if (fileName.endsWith(".jpg")) return getGalleryUriImage(fileName, context)
+    if (fileName.endsWith(".mp4")) return getGalleryUriVideo(fileName, context)
+    return null
+}
+
+private fun getGalleryUriImage(fileName: String, context: Context): Uri? {
     val projection = arrayOf(MediaStore.Images.Media._ID)
-    /*
-    val selection =
-        "${MediaStore.Images.Media.RELATIVE_PATH} = ? and ${MediaStore.Images.Media.DISPLAY_NAME} = ?"
-    val imagesPath = "${DIRECTORY_PICTURES}/$GALLERY_FOLDER"
-    val selectionArgs = arrayOf(imagesPath, fileName)
-     */
     val selection =
         "${MediaStore.Images.Media.DISPLAY_NAME} = ?"
     val selectionArgs = arrayOf(fileName)
@@ -143,6 +213,35 @@ private fun getGalleryUri(fileName: String, context: Context): Uri? {
                 val uri = ContentUris.withAppendedId(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     it.getLong(it.getColumnIndex(MediaStore.Images.Media._ID))
+                )
+                return uri
+            } else {
+                Log.w(TAG, "getGalleryInputStream $fileName not found")
+            }
+        }
+    } catch (e: SecurityException) {
+        Log.w(TAG, "getGalleryInputStream exception: ${e.message}")
+    }
+    return null
+}
+
+private fun getGalleryUriVideo(fileName: String, context: Context): Uri? {
+    val projection = arrayOf(MediaStore.Video.Media._ID)
+    val selection =
+        "${MediaStore.Video.Media.DISPLAY_NAME} = ?"
+    val selectionArgs = arrayOf(fileName)
+    try {
+        context.contentResolver.query(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            projection,
+            selection,
+            selectionArgs,
+            null
+        )?.use {
+            if (it.moveToNext()) {
+                val uri = ContentUris.withAppendedId(
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                    it.getLong(it.getColumnIndex(MediaStore.Video.Media._ID))
                 )
                 return uri
             } else {

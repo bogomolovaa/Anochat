@@ -154,17 +154,44 @@
                         android:visibility="gone"
                         tools:visibility="visible" />
 
-                    <ImageView
-                        android:id="@+id/imageView"
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/imageViewLayout"
                         android:layout_width="250dp"
                         android:layout_height="wrap_content"
-                        android:adjustViewBounds="true"
-                        android:clickable="true"
-                        android:scaleType="centerCrop"
+                        android:background="#EEEDED"
                         android:visibility="gone"
-                        app:layout_constraintHeight_max="250dp"
-                        tools:srcCompat="@tools:sample/avatars"
-                        tools:visibility="visible" />
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:visibility="visible">
+
+                        <ImageView
+                            android:id="@+id/imageView"
+                            android:layout_width="250dp"
+                            android:layout_height="wrap_content"
+                            android:adjustViewBounds="true"
+                            android:clickable="true"
+                            android:scaleType="centerCrop"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintHeight_max="250dp"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            tools:srcCompat="@tools:sample/avatars" />
+
+                        <ImageView
+                            android:id="@+id/videoPlay"
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:visibility="gone"
+                            app:layout_constraintBottom_toBottomOf="@+id/imageView"
+                            app:layout_constraintEnd_toEndOf="@+id/imageView"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="@+id/imageView"
+                            app:srcCompat="@drawable/ic_play_circle"
+                            tools:visibility="visible" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/image_progress_layout"

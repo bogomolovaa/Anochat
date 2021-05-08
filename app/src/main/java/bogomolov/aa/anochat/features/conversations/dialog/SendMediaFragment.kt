@@ -12,6 +12,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
+import bogomolov.aa.anochat.features.shared.nameToImage
+import bogomolov.aa.anochat.features.shared.nameToVideo
 import bogomolov.aa.anochat.features.shared.playMessageSound
 import bogomolov.aa.anochat.repository.FileStore
 import dagger.hilt.android.AndroidEntryPoint
@@ -41,16 +43,36 @@ class SendMediaFragment : Fragment() {
         val mediaUri = arguments?.getParcelable("uri") as Uri?
         conversationId = arguments?.getLong("conversationId")!!
 
-        val resizedImage =
-            fileStore.resizeImage(mediaUri, mediaPath, toGallery = (mediaUri == null))
-        if (resizedImage != null) {
-            binding.imageView.setImageBitmap(resizedImage.bitmap)
+
+        val isVideo = mediaUri?.let {
+            requireContext().contentResolver.getType(mediaUri)?.startsWith("video")
+        } ?: false
+
+        (activity as AppCompatActivity).setTitle(
+            if (isVideo) R.string.send_media_video else R.string.send_media_image
+        )
+
+
+        val resized = if (isVideo) fileStore.resizeVideo(mediaUri!!)
+        else fileStore.resizeImage(mediaUri, mediaPath, toGallery = (mediaUri == null))
+        if (resized != null) {
+            binding.imageView.setImageBitmap(resized.bitmap)
             binding.messageInputLayout.setEndIconOnClickListener {
                 val text = binding.messageInputText.text?.toString() ?: ""
-                viewModel.addAction(SendMessageAction(image = resizedImage.name, text = text))
+                if (isVideo) {
+                    viewModel.addAction(
+                        SendMessageAction(video = nameToVideo(resized.name), text = text)
+                    )
+                } else {
+                    viewModel.addAction(
+                        SendMessageAction(image = nameToImage(resized.name), text = text)
+                    )
+                }
                 playMessageSound(requireContext())
                 navController.popBackStack()
             }
+        }else{
+            navController.popBackStack()
         }
         binding.messageInputText.requestFocus()
     }

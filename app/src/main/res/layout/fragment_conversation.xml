@@ -200,7 +200,7 @@
             android:visibility="invisible"
             app:backgroundTint="@color/colorAccent"
             app:fabSize="mini"
-            app:srcCompat="@drawable/attach_icon" />
+            app:srcCompat="@drawable/ic_media" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabCamera"

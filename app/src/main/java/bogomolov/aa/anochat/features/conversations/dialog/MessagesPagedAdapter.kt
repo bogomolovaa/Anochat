@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.text.Html
@@ -22,6 +21,8 @@ import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.Navigation
@@ -30,15 +31,14 @@ import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import bogomolov.aa.anochat.domain.entity.Message
-import bogomolov.aa.anochat.features.shared.ActionModeData
-import bogomolov.aa.anochat.features.shared.ExtPagedListAdapter
-import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
+import bogomolov.aa.anochat.features.shared.*
 import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.lang.Exception
 import kotlin.math.min
 
 
@@ -128,9 +128,10 @@ class MessagesPagedAdapter(
                 if (item.message.isMine) 0 else dim4dp.toInt()
 
             val image = item.message.image
+            Log.i("test","image $image")
             if (!image.isNullOrEmpty()) {
                 item.detailedImageLoaded = false
-                loadImage(image, binding.imageView, 8) {
+                loadImage(image, binding, 8) {
                     showImageNotLoaded(binding, item.message.time)
                 }
                 if (text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
@@ -139,11 +140,34 @@ class MessagesPagedAdapter(
 
                 binding.messageCardView.layoutParams.width =
                     resDimension(R.dimen.message_image_width, context).toInt()
+                binding.imageViewLayout.visibility = View.VISIBLE
             } else {
                 binding.messageCardView.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
                 binding.imageView.setImageDrawable(null)
-                binding.imageView.visibility = View.GONE
+                binding.imageViewLayout.visibility = View.GONE
             }
+
+            val video = item.message.video
+            if (!video.isNullOrEmpty()) {
+                val thumbnail = videoThumbnail(video)
+                item.detailedImageLoaded = false
+                loadImage(thumbnail, binding, 2) {
+                    showImageNotLoaded(binding, item.message.time)
+                }
+                if (text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
+                setVideoClickListener(item.message, binding.imageView, detector)
+
+                binding.messageCardView.layoutParams.width =
+                    resDimension(R.dimen.message_image_width, context).toInt()
+                binding.videoPlay.visibility = View.VISIBLE
+                binding.imageViewLayout.visibility = View.VISIBLE
+            } else {
+                binding.messageCardView.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
+                binding.imageView.setImageDrawable(null)
+                binding.imageViewLayout.visibility = View.GONE
+                binding.videoPlay.visibility = View.GONE
+            }
+
             val replyMessageImage = item.message.replyMessage?.image
             if (replyMessageImage != null) {
                 val bitmap = getBitmapFromGallery(replyMessageImage, context, 16)
@@ -201,37 +225,46 @@ class MessagesPagedAdapter(
         }
     }
 
-    fun loadDetailedImage(position: Int, viewHolder: RecyclerView.ViewHolder) {
+    fun loadDetailed(position: Int, viewHolder: RecyclerView.ViewHolder) {
         val binding =
             (viewHolder as ExtPagedListAdapter<MessageView, MessageLayoutBinding>.VH).binding
-        val item = getItem(position)
-        if (item != null) {
-            val image = item.message.image
-            if (!image.isNullOrEmpty() && !item.detailedImageLoaded) {
-                item.detailedImageLoaded = true
-                loadImage(image, binding.imageView, 2) {
-                    showImageNotLoaded(binding, item.message.time)
-                }
+        getItem(position)?.let { item ->
+            item.message.image?.let { loadDetailedImage(it, 2, item, binding) }
+            item.message.video?.let { loadDetailedImage(videoThumbnail(it), 1, item, binding) }
+        }
+    }
+
+    private fun loadDetailedImage(
+        image: String?,
+        quality: Int,
+        item: MessageView,
+        binding: MessageLayoutBinding
+    ) {
+        if (!image.isNullOrEmpty() && !item.detailedImageLoaded) {
+            item.detailedImageLoaded = true
+            loadImage(image, binding, quality) {
+                showImageNotLoaded(binding, item.message.time)
             }
         }
     }
 
     private fun loadImage(
         image: String,
-        imageView: ImageView,
+        binding: MessageLayoutBinding,
         quality: Int,
         onNotLoaded: () -> Unit
     ) {
+        val imageView = binding.imageView
         lifecycleScope.launch(Dispatchers.IO) {
             val bitmap = getBitmapFromGallery(image, imageView.context, quality)
             withContext(Dispatchers.Main) {
                 if (bitmap != null) {
-                    imageView.visibility = View.VISIBLE
+                    binding.imageViewLayout.visibility = View.VISIBLE
                     imageView.setImageBitmap(bitmap)
                     setImageSize(imageView, bitmap)
                 } else {
                     imageView.setImageDrawable(null)
-                    imageView.visibility = View.GONE
+                    binding.imageViewLayout.visibility = View.GONE
                     imageView.requestLayout()
                     onNotLoaded()
                 }
@@ -240,7 +273,7 @@ class MessagesPagedAdapter(
     }
 
     private fun showImageNotLoaded(binding: MessageLayoutBinding, receivedTime: Long) {
-        binding.imageView.visibility = View.GONE
+        binding.imageViewLayout.visibility = View.GONE
         binding.imageProgressLayout.visibility = View.VISIBLE
         val elapsed = System.currentTimeMillis() - receivedTime
         if (elapsed / 1000 < WAITING_IMAGE_TIMEOUT) {
@@ -258,8 +291,8 @@ class MessagesPagedAdapter(
         val width = (250 * getDpPixels(imageView.context)).toInt()
         val ratio = 1f * bitmap.height / bitmap.width
         val height = (ratio * width).toInt()
-        val savedParams = imageView.layoutParams as LinearLayout.LayoutParams
-        val layoutParams = LinearLayout.LayoutParams(width, min(height, width))
+        val savedParams = imageView.layoutParams as ConstraintLayout.LayoutParams
+        val layoutParams = ConstraintLayout.LayoutParams(width, min(height, width))
         layoutParams.leftMargin = savedParams.leftMargin
         layoutParams.rightMargin = savedParams.rightMargin
         layoutParams.topMargin = savedParams.topMargin
@@ -322,6 +355,31 @@ class MessagesPagedAdapter(
                             putBoolean("gallery", true)
                         }
                         navController.navigate(R.id.imageViewFragment, bundle, null, extras)
+                    }
+                }
+            true
+        }
+
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setVideoClickListener(
+        message: Message,
+        imageView: ImageView,
+        detector: GestureDetectorCompat
+    ) {
+        imageView.setOnTouchListener { v, event ->
+            if (!detector.onTouchEvent(event))
+                if (event.action and MotionEvent.ACTION_MASK == MotionEvent.ACTION_UP && !selectionMode) {
+                    if (message.received == 1 || message.isMine) {
+                        val context = imageView.context
+                        val uriWithSource = getUriWithSource(message.video!!, context)
+                        if (uriWithSource.uri != null) {
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.setDataAndType(uriWithSource.uri, "video/*")
+                            if (!uriWithSource.fromGallery) intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            context.startActivity(intent)
+                        }
                     }
                 }
             true
