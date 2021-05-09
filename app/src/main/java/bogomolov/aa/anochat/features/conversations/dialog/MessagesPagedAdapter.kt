@@ -26,6 +26,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.Navigation
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigator
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
@@ -128,7 +129,7 @@ class MessagesPagedAdapter(
                 if (item.message.isMine) 0 else dim4dp.toInt()
 
             val image = item.message.image
-            Log.i("test","image $image")
+            Log.i("test", "image $image")
             if (!image.isNullOrEmpty()) {
                 item.detailedImageLoaded = false
                 loadImage(image, binding, 8) {
@@ -375,10 +376,17 @@ class MessagesPagedAdapter(
                         val context = imageView.context
                         val uriWithSource = getUriWithSource(message.video!!, context)
                         if (uriWithSource.uri != null) {
-                            val intent = Intent(Intent.ACTION_VIEW)
-                            intent.setDataAndType(uriWithSource.uri, "video/*")
-                            if (!uriWithSource.fromGallery) intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            context.startActivity(intent)
+
+                            imageView.findNavController().navigate(
+                                R.id.videoViewFragment,
+                                Bundle().apply { putString("uri", uriWithSource.uri.toString()) })
+
+                            //val intent = Intent(Intent.ACTION_VIEW)
+                            //intent.setDataAndType(uriWithSource.uri, "video/*")
+                            //if (!uriWithSource.fromGallery) intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            //context.startActivity(intent)
+
+
                         }
                     }
                 }
