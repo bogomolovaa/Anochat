@@ -376,17 +376,9 @@ class MessagesPagedAdapter(
                         val context = imageView.context
                         val uriWithSource = getUriWithSource(message.video!!, context)
                         if (uriWithSource.uri != null) {
-
                             imageView.findNavController().navigate(
-                                R.id.videoViewFragment,
+                                R.id.exoPlayerViewFragment,
                                 Bundle().apply { putString("uri", uriWithSource.uri.toString()) })
-
-                            //val intent = Intent(Intent.ACTION_VIEW)
-                            //intent.setDataAndType(uriWithSource.uri, "video/*")
-                            //if (!uriWithSource.fromGallery) intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            //context.startActivity(intent)
-
-
                         }
                     }
                 }

@@ -77,6 +77,6 @@
             android:name="bogomolov.aa.anochat.features.conversations.dialog.SendMediaFragment" />
     </navigation>
     <fragment
-        android:id="@+id/videoViewFragment"
-        android:name="bogomolov.aa.anochat.features.shared.VideoViewFragment" />
+        android:id="@+id/exoPlayerViewFragment"
+        android:name="bogomolov.aa.anochat.features.shared.ExoPlayerViewFragment" />
 </navigation>

@@ -108,6 +108,9 @@ dependencies {
     implementation 'androidx.hilt:hilt-work:1.0.0-beta01'
     kapt 'androidx.hilt:hilt-compiler:1.0.0-beta01'
 
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.13.3'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.13.3'
+
 
     testImplementation 'junit:junit:4.13'
     testImplementation 'org.mockito:mockito-core:3.7.7'

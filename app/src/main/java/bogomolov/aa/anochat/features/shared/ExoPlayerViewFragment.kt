@@ -3,33 +3,43 @@ package bogomolov.aa.anochat.features.shared
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.MediaController
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
-import bogomolov.aa.anochat.databinding.FragmentVideoViewBinding
+import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.databinding.FragmentExoVideoViewBinding
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.SimpleExoPlayer
+import kotlin.math.max
 
-private const val PLAYBACK_TIME = "play_time"
+private const val KEY_WINDOW = "window"
+private const val KEY_POSITION = "position"
 
-class VideoViewFragment : Fragment() {
-    private lateinit var binding: FragmentVideoViewBinding
+class ExoPlayerViewFragment : Fragment() {
+    private lateinit var binding: FragmentExoVideoViewBinding
     private var savedSystemUiVisibility = 0
-    private var mCurrentPosition = 0
+    private var startWindow = 0
+    private var startPosition = 0L
+    private var player: SimpleExoPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState != null) mCurrentPosition = savedInstanceState.getInt(PLAYBACK_TIME);
+        if (savedInstanceState != null) {
+            startWindow = savedInstanceState.getInt(KEY_WINDOW)
+            startPosition = savedInstanceState.getLong(KEY_POSITION)
+        }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ) = FragmentVideoViewBinding.inflate(inflater, container, false).also { binding = it }.root
+    ) = FragmentExoVideoViewBinding.inflate(inflater, container, false).also { binding = it }.root
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -40,12 +50,6 @@ class VideoViewFragment : Fragment() {
         val navController = findNavController()
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         mainActivity.supportActionBar?.title = ""
-        setHasOptionsMenu(true)
-
-
-        val controller = MediaController(requireContext())
-        controller.setMediaPlayer(binding.videoView)
-        binding.videoView.setMediaController(controller)
 
         requireActivity().window.decorView.systemUiVisibility = savedSystemUiVisibility
         requireActivity().window.decorView.systemUiVisibility = (
@@ -60,9 +64,15 @@ class VideoViewFragment : Fragment() {
                 )
     }
 
+    private fun savePosition(){
+        startWindow = player?.currentWindowIndex ?: 0
+        startPosition = max(0, player?.contentPosition ?: 0L)
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putInt(PLAYBACK_TIME, binding.videoView.currentPosition)
+        outState.putInt(KEY_WINDOW, startWindow)
+        outState.putLong(KEY_POSITION, startPosition)
     }
 
     override fun onDestroyView() {
@@ -72,37 +82,57 @@ class VideoViewFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        initializePlayer()
+        if (Build.VERSION.SDK_INT > 23) {
+            initializePlayer()
+            binding.playerView.onResume()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (Build.VERSION.SDK_INT <= 23 || player == null) {
+            initializePlayer()
+            binding.playerView.onResume()
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-            binding.videoView.pause()
+        savePosition()
+        if (Build.VERSION.SDK_INT <= 23) {
+            binding.playerView.onPause()
+            releasePlayer()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (Build.VERSION.SDK_INT > 23) {
+            binding.playerView.onPause()
+            releasePlayer()
         }
     }
 
     private fun getUri() = arguments?.getString("uri")?.toUri()
 
     private fun initializePlayer() {
-        binding.videoView.setVideoURI(getUri())
-
-        binding.videoView.setOnPreparedListener {
-            if (mCurrentPosition > 0) {
-                binding.videoView.seekTo(mCurrentPosition);
-            } else {
-                binding.videoView.seekTo(1);
-            }
-            binding.videoView.start()
+        val mediaItem = MediaItem.fromUri(getUri()!!)
+        player = SimpleExoPlayer.Builder(requireContext()).build().apply {
+            binding.playerView.player = this
+            setMediaItem(mediaItem)
+            playWhenReady = true
+            seekTo(startWindow, startPosition)
+            prepare()
+            play()
         }
-
-        binding.videoView.setOnCompletionListener {
-            binding.videoView.seekTo(0)
-        }
+        binding.playerView.hideController()
+        binding.playerView.findViewById<View>(R.id.exo_settings).visibility = View.GONE
     }
-
 
     private fun releasePlayer() {
-        binding.videoView.stopPlayback()
+        player?.release()
+        player = null
     }
+
+
 }
