@@ -10,6 +10,7 @@ import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagedList
+import androidx.paging.PagingData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
@@ -66,9 +67,11 @@ class ConversationRecyclerViewSetup(
         }
     }
 
-    private fun observeMessagesLiveData(pagedListLiveData: LiveData<PagedList<MessageView>>) {
+    private fun observeMessagesLiveData(pagedListLiveData: LiveData<PagingData<MessageView>>) {
         pagedListLiveData.observe(fragment.viewLifecycleOwner) { pagedList ->
-            (binding.recyclerView.adapter as MessagesPagedAdapter).submitList(pagedList)
+            //todo: paging
+            (binding.recyclerView.adapter as MessagesPagedAdapter)
+                .submitData(fragment.lifecycle, pagedList)
             restoreRecyclerViewPosition()
         }
     }
@@ -95,7 +98,7 @@ class ConversationRecyclerViewSetup(
         }
         return MessagesPagedAdapter(
             lifecycleScope = fragment.lifecycleScope,
-                    windowWidth = getWindowWidth(),
+            windowWidth = getWindowWidth(),
             onReply = ::onReply,
             actionExecutor = viewModel,
             actionModeData = data

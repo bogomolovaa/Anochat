@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.domain.repositories
 
 import androidx.paging.DataSource
+import androidx.paging.PagingData
 import bogomolov.aa.anochat.domain.entity.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -10,7 +11,7 @@ interface UserRepository : UserUseCasesInRepository {
 }
 
 interface UserUseCasesInRepository {
-    fun getImagesDataSource(userId: Long): DataSource.Factory<Int, String>
+    fun getImagesDataSource(userId: Long): Flow<PagingData<String>>
     fun getUsersByPhones(phones: List<String>): List<User>
 
     suspend fun updateUsersByPhones(phones: List<String>): List<User>

@@ -18,7 +18,7 @@ class UsersAdapter(onClickListener: ItemClickListener<User>) :
         return VH(cv, binding)
     }
 
-    override fun getItem(position: Int) = users[position]
+    override fun getElement(position: Int) = users[position]
 
     override fun getId(item: User) = item.id
 

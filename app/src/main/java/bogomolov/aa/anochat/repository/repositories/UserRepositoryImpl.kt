@@ -1,5 +1,7 @@
 package bogomolov.aa.anochat.repository.repositories
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.getMyUID
@@ -22,7 +24,10 @@ class UserRepositoryImpl @Inject constructor(
 ) : UserRepository {
     private val mapper = ModelEntityMapper()
 
-    override fun getImagesDataSource(userId: Long) = db.messageDao().getImages(userId)
+    override fun getImagesDataSource(userId: Long) =
+        Pager(PagingConfig(pageSize = 10)){
+            db.messageDao().getImages(userId)
+        }.flow
 
     override fun getUsersByPhones(phones: List<String>) =
         db.userDao().getAll(phones, getMyUID()!!).map { mapper.entityToModel(it)!! }

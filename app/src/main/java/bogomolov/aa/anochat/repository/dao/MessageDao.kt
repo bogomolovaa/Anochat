@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.repository.dao
 
 import androidx.paging.DataSource
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
@@ -33,10 +34,10 @@ interface MessageDao {
                 "FROM MessageEntity as m " +
                 "LEFT JOIN MessageEntity as r ON (m.replyMessageId != '' and m.replyMessageId = r.messageId and m.conversationId = r.conversationId) where m.conversationId = :conversationId order by m.time desc"
     )
-    fun loadAll(conversationId: Long): DataSource.Factory<Int, MessageJoined>
+    fun loadAll(conversationId: Long): PagingSource<Int, MessageJoined>
 
     @Query("select m.image from MessageEntity as m LEFT JOIN ConversationEntity as c on m.conversationId = c.id where m.image is not null and c.userId = :userId")
-    fun getImages(userId: Long): DataSource.Factory<Int, String>
+    fun getImages(userId: Long): PagingSource<Int, String>
 
     @Query("select * from MessageEntity where messageId = :messageId")
     fun getByMessageId(messageId: String): MessageEntity?
@@ -48,13 +49,25 @@ interface MessageDao {
     fun updateMessageId(id: Long, messageId: String)
 
     @Transaction
+    /*
     @Query(
         "select * from MessageEntity as message_ " +
                 "LEFT JOIN ConversationEntity as conversation_ on message_.conversationId = conversation_.id " +
                 "LEFT JOIN UserEntity as user_ on conversation_.userId = user_.id " +
                 "where message_.text like :search and conversation_.myUid = :myUid"
     )
-    fun searchText(search: String, myUid: String): DataSource.Factory<Int, ConversationJoined>
+     */
+    @Query(
+        "SELECT c.id as conversation_id, c.userId as conversation_userId, c.lastMessageId as conversation_lastMessageId, c.myUid as conversation_myUid, " +
+                "u.id as user_id, u.uid as user_uid, u.phone as user_phone, u.name as user_name, u.photo as user_photo, u.status as user_status, " +
+                "m.id as message_id, m.text as message_text, m.time as message_time, m.conversationId as message_conversationId, m.isMine as message_isMine, m.messageId as message_messageId, " +
+                "m.replyMessageId as message_replyMessageId, m.image as message_image, m.audio as message_audio, m.video as message_video, m.publicKey as message_publicKey, " +
+                "m.sent as message_sent, m.received as message_received, m.viewed as message_viewed, m.myUid as message_myUid " +
+                "FROM MessageEntity as m " +
+                "LEFT JOIN ConversationEntity as c ON m.conversationId = c.id " +
+                "LEFT JOIN UserEntity as u ON c.userId = u.id where m.text like :search and c.myUid = :myUid"
+    )
+    fun searchText(search: String, myUid: String): PagingSource<Int, ConversationJoined>
 
     @Query("select * from MessageEntity where myUid = :myUid and isMine = 1 and sent = 0 and conversationId in (select id from ConversationEntity where userId = :userId)")
     fun getNotSent(userId: Long, myUid: String): List<MessageEntity>

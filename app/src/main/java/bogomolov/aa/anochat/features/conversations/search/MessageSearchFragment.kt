@@ -44,7 +44,9 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
 
-        viewModel.messagesLiveData.observe(viewLifecycleOwner, adapter::submitList)
+        viewModel.messagesLiveData.observe(viewLifecycleOwner) {
+            adapter.submitData(lifecycle, it)
+        }
     }
 
     override fun updateView(newState: MessageSearchUiState, currentState: MessageSearchUiState) {

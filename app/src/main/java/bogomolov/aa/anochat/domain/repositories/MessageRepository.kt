@@ -1,8 +1,10 @@
 package bogomolov.aa.anochat.domain.repositories
 
 import androidx.paging.DataSource
+import androidx.paging.PagingData
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
+import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository : MessageUseCasesInRepository {
     fun saveMessage(message: Message): Long
@@ -24,12 +26,12 @@ interface MessageRepository : MessageUseCasesInRepository {
     fun notifyAsReceived(messageId: String)
     fun notifyAsNotReceived(messageId: String)
     fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean)
-    fun loadMessagesDataSource(conversationId: Long): DataSource.Factory<Int, Message>
+    fun loadMessagesDataSource(conversationId: Long): Flow<PagingData<Message>>
 
 }
 
 interface MessageUseCasesInRepository {
-    fun searchMessagesDataSource(search: String): DataSource.Factory<Int, Conversation>
+    fun searchMessagesDataSource(search: String): Flow<PagingData<Conversation>>
 
     fun deleteMessages(ids: Set<Long>)
     fun receiveReport(messageId: String, received: Int, viewed: Int)

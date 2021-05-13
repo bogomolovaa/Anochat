@@ -1,5 +1,8 @@
 package bogomolov.aa.anochat.repository.repositories
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.map
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.User
@@ -8,6 +11,7 @@ import bogomolov.aa.anochat.domain.repositories.ConversationRepository
 import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
 import bogomolov.aa.anochat.repository.entity.ConversationEntity
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,9 +26,9 @@ class ConversationRepositoryImpl @Inject constructor(
         mapper.entityToModel(db.conversationDao().loadConversation(id))
 
     override fun loadConversationsDataSource() =
-        db.conversationDao().loadConversations(keyValueStore.getMyUID() ?: "").map {
-            mapper.entityToModel(it)!!
-        }
+        Pager(PagingConfig(pageSize = 10)) {
+            db.conversationDao().loadConversations(keyValueStore.getMyUID() ?: "")
+        }.flow.map { it.map { mapper.entityToModel(it)!! } }
 
     override fun deleteConversations(ids: Set<Long>) {
         db.messageDao().deleteByConversationIds(ids)

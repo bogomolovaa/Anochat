@@ -89,7 +89,7 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         binding.recyclerView.doOnPreDraw { onPreDraw() }
         viewModel.imagesLiveData.observe(viewLifecycleOwner) {
-            adapter.submitList(it)
+            adapter.submitData(lifecycle, it)
         }
     }
 

@@ -90,12 +90,17 @@ open class MessageUseCases @Inject constructor(
     fun loadMessagesDataSource(
         conversationId: Long,
         coroutineScope: CoroutineScope
-    ) = messageRep.loadMessagesDataSource(conversationId).mapByPage {
+    ) = messageRep.loadMessagesDataSource(conversationId)
+
+        /*
+        todo: paging
+    mapByPage {
         coroutineScope.launch(dispatcher) {
             notifyAsViewed(it)
         }
         it
     }
+         */
 
 
     private fun notifyAsViewed(messages: List<Message>) {

@@ -1,5 +1,8 @@
 package bogomolov.aa.anochat.repository.repositories
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.map
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.getMyUID
@@ -8,6 +11,7 @@ import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.FileStore
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,12 +33,15 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
     override fun searchMessagesDataSource(search: String) =
-        db.messageDao().searchText("%$search%", getMyUID()!!).map {
-            mapper.entityToModel(it)!!
-        }
+        Pager(PagingConfig(pageSize = 10)) {
+            db.messageDao().searchText("%$search%", getMyUID()!!)
+        }.flow.map { it.map { mapper.entityToModel(it)!! } }
+
 
     override fun loadMessagesDataSource(conversationId: Long) =
-        db.messageDao().loadAll(conversationId).map { mapper.entityToModel(it)!! }
+        Pager(PagingConfig(pageSize = 50)) {
+            db.messageDao().loadAll(conversationId)
+        }.flow.map { it.map { mapper.entityToModel(it)!! } }
 
     override fun deleteMessages(ids: Set<Long>) {
         db.messageDao().deleteByIds(ids)

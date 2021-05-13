@@ -1,19 +1,21 @@
 package bogomolov.aa.anochat.features.shared
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.widget.Toolbar
 import androidx.paging.PagedListAdapter
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 
-abstract class ExtPagedListAdapter<T, B>(
+abstract class ExtPagedListAdapter<T: Any, B>(
     private val actionModeData: ActionModeData<T>? = null,
     private val onClickListener: ItemClickListener<T>? = null
-) : PagedListAdapter<T, ExtPagedListAdapter<T, B>.VH>(createDiffCallback()) {
+) : PagingDataAdapter<T, ExtPagedListAdapter<T, B>.VH>(createDiffCallback()) {
     private val selectedIds: MutableSet<Long> = HashSet()
     private val selectedItems: MutableSet<T> = HashSet()
     private val selectedVH: MutableSet<VH> = HashSet()
@@ -27,8 +29,10 @@ abstract class ExtPagedListAdapter<T, B>(
     protected fun isChecked(item: T) =
         if (item != null) selectedIds.contains(getId(item)) else false
 
+    protected open fun getElement(position: Int) = getItem(position)
+
     override fun onBindViewHolder(holder: VH, position: Int) {
-        val item = getItem(position)
+        val item = getElement(position)
         bind(item, holder)
         onItemSelected(holder.binding, if (item != null) isChecked(item) else false)
     }
@@ -54,7 +58,7 @@ abstract class ExtPagedListAdapter<T, B>(
 
         fun onClick() {
             if (adapterPosition == RecyclerView.NO_POSITION) return
-            val item = getItem(adapterPosition)
+            val item = getElement(adapterPosition)
             if (item != null) {
                 if (selectionMode) {
                     val id = getId(item)
