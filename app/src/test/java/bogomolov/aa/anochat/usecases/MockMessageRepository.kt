@@ -1,10 +1,11 @@
 package bogomolov.aa.anochat.usecases
 
-import androidx.paging.DataSource
+import androidx.paging.PagingData
 import bogomolov.aa.anochat.domain.MessageUseCases
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 
 class MockMessageRepository(
@@ -80,11 +81,11 @@ class MockMessageRepository(
     }
 
 
-    override fun searchMessagesDataSource(search: String): DataSource.Factory<Int, Conversation> {
+    override fun loadMessagesDataSource(conversationId: Long): Flow<PagingData<Message>> {
         TODO("Not yet implemented")
     }
 
-    override fun loadMessagesDataSource(conversationId: Long): DataSource.Factory<Int, Message> {
+    override fun searchMessagesDataSource(search: String): Flow<PagingData<Conversation>> {
         TODO("Not yet implemented")
     }
 

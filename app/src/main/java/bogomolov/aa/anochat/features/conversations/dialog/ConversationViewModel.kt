@@ -2,11 +2,11 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.annotation.SuppressLint
 import android.os.Parcelable
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.paging.*
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.insertSeparators
+import androidx.paging.map
 import bogomolov.aa.anochat.domain.ConversationUseCases
 import bogomolov.aa.anochat.domain.MessageUseCases
 import bogomolov.aa.anochat.domain.UserUseCases
@@ -47,7 +47,8 @@ data class DialogUiState(
     val photoPath: String? = null,
     val text: String = "",
     val audioLengthText: String = "",
-    val playingState: PlayingState? = null
+    val playingState: PlayingState? = null,
+    val pagingData: PagingData<MessageView>? = null
 ) : UiState
 
 data class PlayingState(
@@ -67,7 +68,7 @@ class SendMessageAction(
 
 class InitConversationAction(
     val conversationId: Long,
-    val toMessageView: (List<Message>) -> List<MessageView>
+    val insertDateDelimiters: (MessageView?, MessageView?) -> Unit
 ) : UserAction
 
 class TextChangedAction(
@@ -92,10 +93,7 @@ class ConversationViewModel @Inject constructor(
     private var startTime = 0L
     private var tempElapsed = 0L
     private var conversationInitialized = false
-    private val _messagesLiveData = MutableLiveData<PagingData<MessageView>>()
     private var typingJob: Job? = null
-    val messagesLiveData: LiveData<PagingData<MessageView>>
-        get() = _messagesLiveData
 
     override fun onCleared() {
         super.onCleared()
@@ -230,22 +228,25 @@ class ConversationViewModel @Inject constructor(
             conversationInitialized = true
             val conversation = conversationUseCases.getConversation(conversationId)!!
             setState { copy(conversation = conversation) }
-            loadMessages(conversation)
+            subscribeToMessages(conversation)
             subscribeToOnlineStatus(conversation.user.uid)
         }
     }
 
-    private fun InitConversationAction.loadMessages(conversation: Conversation) {
-        viewModelScope.launch {
-            messageUseCases.loadMessagesDataSource(conversation.id, viewModelScope).cachedIn(viewModelScope).collect {
-                _messagesLiveData.postValue(it.map { MessageView(it) })
-            }
+    private suspend fun InitConversationAction.subscribeToMessages(conversation: Conversation) {
+        viewModelScope.launch(dispatcher) {
+            messageUseCases.loadMessagesDataSource(conversation.id).cachedIn(viewModelScope)
+                .collect {
+                    setState {
+                        copy(
+                            pagingData = it.map { MessageView(it) }.insertSeparators { m1, m2 ->
+                                insertDateDelimiters(m1, m2)
+                                null
+                            }
+                        )
+                    }
+                }
         }
-        /*
-        todo: paging
-        mapByPage(toMessageView)
-        50 per page
-         */
     }
 
     private fun subscribeToOnlineStatus(uid: String) {

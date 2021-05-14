@@ -3,7 +3,6 @@ package bogomolov.aa.anochat.features.conversations.dialog
 import bogomolov.aa.anochat.domain.entity.Message
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 data class MessageView(val message: Message) {
     var dateDelimiter: String? = null
@@ -21,19 +20,14 @@ data class MessageView(val message: Message) {
     fun receivedAndNotViewed() = received() && !viewed()
 }
 
-fun toMessageViewsWithDateDelimiters(messages: List<Message>, locale: Locale): List<MessageView> {
-    val list = ArrayList<MessageView>()
-    var lastDay = -1
-    val calendar = GregorianCalendar()
-    for ((i, message) in messages.reversed().withIndex()) {
-        val messageView = MessageView(message)
-        calendar.time = Date(message.time)
-        val day = calendar.get(Calendar.DAY_OF_YEAR)
-        if (i > 0 && lastDay != day)
-            messageView.dateDelimiter =
-                SimpleDateFormat("dd MMMM yyyy", locale).format(Date(message.time))
-        lastDay = day
-        list.add(messageView)
+fun insertDateSeparators(message1: MessageView?, message2: MessageView?, locale: Locale) {
+    if (message1 != null && message2 != null) {
+        val day1 = GregorianCalendar().apply { time = Date(message1.message.time) }
+            .get(Calendar.DAY_OF_YEAR)
+        val day2 = GregorianCalendar().apply { time = Date(message2.message.time) }
+            .get(Calendar.DAY_OF_YEAR)
+        if (day1 != day2)
+            message1.dateDelimiter =
+                SimpleDateFormat("dd MMMM yyyy", locale).format(Date(message1.message.time))
     }
-    return list.reversed()
 }

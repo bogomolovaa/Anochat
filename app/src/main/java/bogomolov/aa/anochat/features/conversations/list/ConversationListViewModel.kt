@@ -1,10 +1,6 @@
 package bogomolov.aa.anochat.features.conversations.list
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import bogomolov.aa.anochat.domain.ConversationUseCases
@@ -14,12 +10,11 @@ import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class ConversationsUiState : UiState
+data class ConversationsUiState(val pagingData: PagingData<Conversation>? = null) : UiState
 
 class InitConversationsAction : UserAction
 class DeleteConversationsAction(val ids: Set<Long>) : UserAction
@@ -31,9 +26,6 @@ class ConversationListViewModel
     private val conversationUseCases: ConversationUseCases,
     private val authRepository: AuthRepository
 ) : BaseViewModel<ConversationsUiState>() {
-    private val _conversationsLiveData = MediatorLiveData<PagingData<Conversation>>()
-    val conversationsLiveData: LiveData<PagingData<Conversation>>
-        get() = _conversationsLiveData
 
     init {
         addAction(InitConversationsAction())
@@ -48,9 +40,10 @@ class ConversationListViewModel
     }
 
     private suspend fun InitConversationsAction.execute() {
-        //todo: paging
-        conversationUseCases.loadConversationsDataSource().cachedIn(viewModelScope).collect {
-            _conversationsLiveData.postValue(it)
+        viewModelScope.launch {
+            conversationUseCases.loadConversationsDataSource().cachedIn(viewModelScope).collect {
+                setState { copy(pagingData = it) }
+            }
         }
     }
 

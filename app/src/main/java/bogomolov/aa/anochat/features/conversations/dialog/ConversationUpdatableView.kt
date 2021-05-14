@@ -1,7 +1,6 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.view.View
-import androidx.core.content.ContextCompat
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
@@ -25,6 +24,7 @@ class ConversationUpdatableView(
         if (newState.replyMessage != currentState.replyMessage) setReplyMessage(newState.replyMessage)
         if (newState.inputState != currentState.inputState) setInputState(newState)
         if (newState.playingState != currentState.playingState) setPlayingState(newState)
+        if (newState.pagingData != currentState.pagingData) recyclerViewSetup.updateMessages(newState.pagingData!!)
     }
 
     private fun setPlayingState(state: DialogUiState) {

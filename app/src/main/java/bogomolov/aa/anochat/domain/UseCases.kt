@@ -1,11 +1,11 @@
 package bogomolov.aa.anochat.domain
 
 import android.util.Log
+import androidx.paging.map
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.repositories.*
 import kotlinx.coroutines.*
-import java.lang.Long.parseLong
-import java.util.*
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -87,29 +87,15 @@ open class MessageUseCases @Inject constructor(
         if (generated) sendPendingMessages(uid)
     }
 
-    fun loadMessagesDataSource(
-        conversationId: Long,
-        coroutineScope: CoroutineScope
-    ) = messageRep.loadMessagesDataSource(conversationId)
-
-        /*
-        todo: paging
-    mapByPage {
-        coroutineScope.launch(dispatcher) {
-            notifyAsViewed(it)
-        }
-        it
-    }
-         */
-
-
-    private fun notifyAsViewed(messages: List<Message>) {
-        for (message in messages)
-            if (!message.isMine && message.viewed == 0) {
-                message.viewed = 1
-                messageRep.notifyAsViewed(message)
+    fun loadMessagesDataSource(conversationId: Long) =
+        messageRep.loadMessagesDataSource(conversationId).onEach {
+            it.map { message->
+                if (!message.isMine && message.viewed == 0) {
+                    message.viewed = 1
+                    messageRep.notifyAsViewed(message)
+                }
             }
-    }
+        }
 
     private fun tryReceiveAttachment(
         message: Message,

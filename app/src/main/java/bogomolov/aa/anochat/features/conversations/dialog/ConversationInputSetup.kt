@@ -2,7 +2,6 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
-import android.util.Log
 import android.view.animation.DecelerateInterpolator
 import androidx.core.widget.doOnTextChanged
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding

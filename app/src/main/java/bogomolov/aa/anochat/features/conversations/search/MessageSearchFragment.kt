@@ -43,14 +43,11 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
         val recyclerView = binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
-
-        viewModel.messagesLiveData.observe(viewLifecycleOwner) {
-            adapter.submitData(lifecycle, it)
-        }
     }
 
     override fun updateView(newState: MessageSearchUiState, currentState: MessageSearchUiState) {
-
+        if (newState.pagingData != currentState.pagingData)
+            adapter.submitData(lifecycle, newState.pagingData!!)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

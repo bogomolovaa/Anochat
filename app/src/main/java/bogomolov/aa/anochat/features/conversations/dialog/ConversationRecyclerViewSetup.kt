@@ -7,9 +7,7 @@ import android.os.Parcelable
 import android.util.DisplayMetrics
 import android.widget.Toast
 import androidx.core.view.doOnPreDraw
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
-import androidx.paging.PagedList
 import androidx.paging.PagingData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -52,7 +50,6 @@ class ConversationRecyclerViewSetup(
                 }
             }
         }
-        observeMessagesLiveData(viewModel.messagesLiveData)
     }
 
     fun getMessageAudioView(messageId: String) = messagesPagedAdapter.messagesMap[messageId]
@@ -67,13 +64,10 @@ class ConversationRecyclerViewSetup(
         }
     }
 
-    private fun observeMessagesLiveData(pagedListLiveData: LiveData<PagingData<MessageView>>) {
-        pagedListLiveData.observe(fragment.viewLifecycleOwner) { pagedList ->
-            //todo: paging
-            (binding.recyclerView.adapter as MessagesPagedAdapter)
-                .submitData(fragment.lifecycle, pagedList)
-            restoreRecyclerViewPosition()
-        }
+    fun updateMessages(pagingData: PagingData<MessageView>) {
+        (binding.recyclerView.adapter as MessagesPagedAdapter)
+            .submitData(fragment.lifecycle, pagingData)
+        restoreRecyclerViewPosition()
     }
 
     private fun createRecyclerViewAdapter(): MessagesPagedAdapter {

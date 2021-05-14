@@ -1,13 +1,11 @@
 package bogomolov.aa.anochat.features.shared
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.widget.Toolbar
-import androidx.paging.PagedListAdapter
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -28,6 +26,8 @@ abstract class ExtPagedListAdapter<T: Any, B>(
 
     protected fun isChecked(item: T) =
         if (item != null) selectedIds.contains(getId(item)) else false
+
+
 
     protected open fun getElement(position: Int) = getItem(position)
 

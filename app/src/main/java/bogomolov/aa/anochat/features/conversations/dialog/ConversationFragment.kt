@@ -73,9 +73,9 @@ class ConversationFragment : Fragment(), RequestPermission {
         val updatableView = ConversationUpdatableView(recyclerViewSetup)
         val conversationInputSetup = ConversationInputSetup(this, viewModel, recyclerViewSetup)
         viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(updatableView, viewModel))
-        viewModel.addAction(InitConversationAction(conversationId) {
+        viewModel.addAction(InitConversationAction(conversationId) { m1, m2 ->
             val locale = ConfigurationCompat.getLocales(requireContext().resources.configuration)[0]
-            toMessageViewsWithDateDelimiters(it, locale)
+            insertDateSeparators(m1, m2, locale)
         })
 
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
