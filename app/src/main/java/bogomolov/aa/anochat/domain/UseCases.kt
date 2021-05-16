@@ -5,7 +5,7 @@ import androidx.paging.map
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.repositories.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -87,12 +87,15 @@ open class MessageUseCases @Inject constructor(
         if (generated) sendPendingMessages(uid)
     }
 
-    fun loadMessagesDataSource(conversationId: Long) =
-        messageRep.loadMessagesDataSource(conversationId).onEach {
+    fun loadMessagesDataSource(conversationId: Long,dispatcher: CoroutineDispatcher) =
+        messageRep.loadMessagesDataSource(conversationId).map {
             it.map { message->
-                if (!message.isMine && message.viewed == 0) {
-                    message.viewed = 1
-                    messageRep.notifyAsViewed(message)
+                withContext(dispatcher) {
+                    if (!message.isMine && message.viewed == 0) {
+                        message.viewed = 1
+                        messageRep.notifyAsViewed(message)
+                    }
+                    message
                 }
             }
         }

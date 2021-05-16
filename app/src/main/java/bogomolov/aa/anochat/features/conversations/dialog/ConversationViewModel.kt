@@ -21,6 +21,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -235,7 +236,8 @@ class ConversationViewModel @Inject constructor(
 
     private suspend fun InitConversationAction.subscribeToMessages(conversation: Conversation) {
         viewModelScope.launch(dispatcher) {
-            messageUseCases.loadMessagesDataSource(conversation.id).cachedIn(viewModelScope)
+            messageUseCases.loadMessagesDataSource(conversation.id, dispatcher)
+                .cachedIn(viewModelScope)
                 .collect {
                     setState {
                         copy(
