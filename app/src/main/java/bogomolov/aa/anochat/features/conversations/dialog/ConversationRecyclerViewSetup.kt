@@ -50,6 +50,13 @@ class ConversationRecyclerViewSetup(
                 }
             }
         }
+        messagesPagedAdapter.registerAdapterDataObserver(object :
+            RecyclerView.AdapterDataObserver() {
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                super.onItemRangeInserted(positionStart, itemCount)
+                viewModel.addAction(NotifyAsViewed(messagesPagedAdapter.snapshot().items))
+            }
+        })
     }
 
     fun getMessageAudioView(messageId: String) = messagesPagedAdapter.messagesMap[messageId]

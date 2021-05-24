@@ -57,8 +57,8 @@ abstract class ExtPagedListAdapter<T: Any, B>(
         }
 
         fun onClick() {
-            if (adapterPosition == RecyclerView.NO_POSITION) return
-            val item = getElement(adapterPosition)
+            if (absoluteAdapterPosition == RecyclerView.NO_POSITION) return
+            val item = getElement(absoluteAdapterPosition)
             if (item != null) {
                 if (selectionMode) {
                     val id = getId(item)

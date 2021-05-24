@@ -87,18 +87,17 @@ open class MessageUseCases @Inject constructor(
         if (generated) sendPendingMessages(uid)
     }
 
-    fun loadMessagesDataSource(conversationId: Long,dispatcher: CoroutineDispatcher) =
-        messageRep.loadMessagesDataSource(conversationId).map {
-            it.map { message->
-                withContext(dispatcher) {
-                    if (!message.isMine && message.viewed == 0) {
-                        message.viewed = 1
-                        messageRep.notifyAsViewed(message)
-                    }
-                    message
-                }
+    fun loadMessagesDataSource(conversationId: Long) =
+        messageRep.loadMessagesDataSource(conversationId)
+
+    fun notifyAsViewed(messages: List<Message>){
+        for(message in messages) {
+            if (!message.isMine && message.viewed == 0) {
+                message.viewed = 1
+                messageRep.notifyAsViewed(message)
             }
         }
+    }
 
     private fun tryReceiveAttachment(
         message: Message,

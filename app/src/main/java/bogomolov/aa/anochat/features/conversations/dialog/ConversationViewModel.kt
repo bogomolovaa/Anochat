@@ -82,6 +82,8 @@ class StopRecordingAction : UserAction
 class StartPlayingAction(val audioFile: String? = null, val messageId: String? = null) : UserAction
 class PausePlayingAction : UserAction
 
+data class NotifyAsViewed(val messages: List<MessageView>) : UserAction
+
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
     private val userUseCases: UserUseCases,
@@ -114,6 +116,12 @@ class ConversationViewModel @Inject constructor(
         if (action is StartPlayingAction) action.execute()
         if (action is PausePlayingAction) action.execute()
         if (action is TextChangedAction) action.execute()
+        if (action is NotifyAsViewed) action.execute()
+
+    }
+
+    private fun NotifyAsViewed.execute() {
+        messageUseCases.notifyAsViewed(messages.map { it.message })
     }
 
     private suspend fun TextChangedAction.execute() {
@@ -236,7 +244,7 @@ class ConversationViewModel @Inject constructor(
 
     private suspend fun InitConversationAction.subscribeToMessages(conversation: Conversation) {
         viewModelScope.launch(dispatcher) {
-            messageUseCases.loadMessagesDataSource(conversation.id, dispatcher)
+            messageUseCases.loadMessagesDataSource(conversation.id)
                 .cachedIn(viewModelScope)
                 .collect {
                     setState {

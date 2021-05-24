@@ -59,8 +59,6 @@ class MessagesPagedAdapter(
 
     override fun getId(item: MessageView) = item.message.id
 
-    //override fun getItemId(position: Int) = getItem(position)?.message?.id ?: 0
-
     @SuppressLint("ClickableViewAccessibility")
     override fun bind(item: MessageView?, holder: VH) {
         val binding = holder.binding
@@ -125,7 +123,6 @@ class MessagesPagedAdapter(
                 if (item.message.isMine) 0 else dim4dp.toInt()
 
             val image = item.message.image
-            Log.i("test", "image $image")
             if (!image.isNullOrEmpty()) {
                 item.detailedImageLoaded = false
                 loadImage(image, binding, 8) {
