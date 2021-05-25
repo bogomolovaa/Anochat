@@ -8,19 +8,24 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.os.Environment.DIRECTORY_MOVIES
 import android.os.Environment.DIRECTORY_PICTURES
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
 import androidx.core.content.FileProvider
+import kotlinx.coroutines.flow.MutableSharedFlow
 import java.io.*
 
 private const val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz1234567890"
 private const val GALLERY_FOLDER = "Anochat"
 private const val TAG = "FileUtils"
 
-data class BitmapWithName(val name: String, val bitmap: Bitmap?)
+data class BitmapWithName(val name: String, val bitmap: Bitmap?){
+    var processed: Boolean = true
+    var progress = MutableSharedFlow<Int>(0)
+}
 
 fun getMiniPhotoFileName(fileName: String) = File(fileName).nameWithoutExtension + "_mini.jpg"
 
@@ -51,21 +56,25 @@ fun getBitmapFromGallery(fileName: String?, context: Context, quality: Int = 1):
         .also { inputStream?.close() }
 }
 
-fun getGalleryInputStream(fileName: String, context: Context): InputStream? {
+fun getGalleryInputStream(fileName: String, context: Context): InputStream? =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val uri = getGalleryUri(fileName, context)
-        return if (uri != null) context.contentResolver.openInputStream(uri) else null
+        getGalleryUri(fileName, context)?.let { context.contentResolver.openInputStream(it) }
     } else {
-        val imagesDir =
-            File("${Environment.getExternalStoragePublicDirectory(DIRECTORY_PICTURES)}/$GALLERY_FOLDER")
-        return try {
-            FileInputStream(File(imagesDir, fileName).path)
-        } catch (e: FileNotFoundException) {
-            Log.w(TAG, "getGalleryInputStream exception: ${e.message}")
-            null
+        when {
+            fileName.endsWith(".jpg") -> DIRECTORY_PICTURES
+            fileName.endsWith(".mp4") -> DIRECTORY_MOVIES
+            else -> null
+        }?.let {
+            val imagesDir =
+                File("${Environment.getExternalStoragePublicDirectory(it)}/$GALLERY_FOLDER")
+            return try {
+                FileInputStream(File(imagesDir, fileName).path)
+            } catch (e: FileNotFoundException) {
+                Log.w(TAG, "getGalleryInputStream exception: ${e.message}")
+                null
+            }
         }
     }
-}
 
 fun getUri(fileName: String, context: Context): Uri? {
     return getGalleryUri(fileName, context) ?: getFileProviderUri(fileName, context)
@@ -93,13 +102,6 @@ fun getFileProviderUri(fileName: String, context: Context): Uri? =
         Toast.makeText(context, "${e.message}", LENGTH_LONG).show()
         null
     }
-
-private fun addMimeType(fileName: String, values: ContentValues) {
-    if (fileName.endsWith(".jpg"))
-        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
-    if (fileName.endsWith(".mp4"))
-        values.put(MediaStore.Images.Media.MIME_TYPE, "video/mp4")
-}
 
 fun getGalleryOutputStream(fileName: String, context: Context): OutputStream? {
     if (fileName.endsWith(".jpg")) return getGalleryOutputStreamImage(fileName, context)
@@ -146,10 +148,10 @@ private fun getGalleryOutputStreamImage(fileName: String, context: Context): Out
 
 private fun getGalleryOutputStreamVideo(fileName: String, context: Context): OutputStream? {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val imagesPath = "${DIRECTORY_PICTURES}/$GALLERY_FOLDER"
+        val imagesPath = "${DIRECTORY_MOVIES}/$GALLERY_FOLDER"
         val values = ContentValues()
         values.put(MediaStore.Video.Media.DISPLAY_NAME, fileName)
-        values.put(MediaStore.Video.Media.MIME_TYPE, "image/jpg")
+        values.put(MediaStore.Video.Media.MIME_TYPE, "video/*")
         values.put(MediaStore.Video.Media.DATE_ADDED, System.currentTimeMillis())
         values.put(MediaStore.Video.Media.RELATIVE_PATH, imagesPath)
         values.put(MediaStore.Video.Media.DATE_TAKEN, System.currentTimeMillis())
@@ -163,12 +165,12 @@ private fun getGalleryOutputStreamVideo(fileName: String, context: Context): Out
         }
     } else {
         val imagesPath =
-            "${Environment.getExternalStoragePublicDirectory(DIRECTORY_PICTURES)}/$GALLERY_FOLDER"
+            "${Environment.getExternalStoragePublicDirectory(DIRECTORY_MOVIES)}/$GALLERY_FOLDER"
         val directory = File(imagesPath)
         if (!directory.exists()) directory.mkdirs()
         val file = File(directory, fileName)
         val values = ContentValues()
-        values.put(MediaStore.Video.Media.MIME_TYPE, "image/jpg")
+        values.put(MediaStore.Video.Media.MIME_TYPE, "video/*")
         values.put(MediaStore.Video.Media.DATE_ADDED, System.currentTimeMillis())
         values.put(MediaStore.Video.Media.DATA, file.absolutePath)
         return try {

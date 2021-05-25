@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
+import android.media.MediaPlayer
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.provider.MediaStore
@@ -13,7 +14,14 @@ import android.util.Log
 import android.util.Size
 import android.widget.Toast
 import bogomolov.aa.anochat.features.shared.*
+import com.arthenica.mobileffmpeg.Config
+import com.arthenica.mobileffmpeg.Config.RETURN_CODE_CANCEL
+import com.arthenica.mobileffmpeg.Config.RETURN_CODE_SUCCESS
+import com.arthenica.mobileffmpeg.FFmpeg
+import com.arthenica.mobileffmpeg.Statistics
+import com.arthenica.mobileffmpeg.StatisticsCallback
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -37,7 +45,7 @@ interface FileStore {
         toGallery: Boolean
     ): BitmapWithName?
 
-    fun resizeVideo(uri: Uri): BitmapWithName?
+    fun resizeVideo(uri: Uri, coroutineScope: CoroutineScope): BitmapWithName?
     fun createVideoThumbnail(videoName: String)
 }
 
@@ -71,18 +79,60 @@ class FileStoreImpl @Inject constructor(
 
     override fun fileExists(fileName: String) = File(getFilePath(context, fileName)).exists()
 
-    override fun resizeVideo(uri: Uri): BitmapWithName? {
+    override fun resizeVideo(uri: Uri, coroutineScope: CoroutineScope): BitmapWithName? {
         val size = (getRealSizeFromUri(context, uri)?.toFloat() ?: 0f) / 1024 / 1024
-        if (size > 30) {
-            Toast.makeText(context, "video too big", Toast.LENGTH_LONG).show()
+        if (size > 200) {
+            Toast.makeText(context, "Too large file", Toast.LENGTH_LONG).show()
             return null
         }
         val videoName = getRandomFileName()
+        val originalVideoFile = File(getFilePath(context, nameToVideo(videoName + "_")))
         val videoFile = File(getFilePath(context, nameToVideo(videoName)))
-        saveUriToFile(uri, videoFile)
-        val thumbnailBitmap = createVideoThumbnail(videoFile)
+
+        saveUriToFile(uri, originalVideoFile)
+        val thumbnailBitmap = createVideoThumbnail(originalVideoFile)
         saveImageToPath(thumbnailBitmap, nameToImage(videoName))
-        return BitmapWithName(videoName, thumbnailBitmap)
+
+        val result = BitmapWithName(videoName, thumbnailBitmap).apply { processed = false }
+        coroutineScope.launch(Dispatchers.Default) {
+            val mediaPlayer = MediaPlayer.create(context, uri)
+            val videoLength = mediaPlayer.duration
+            mediaPlayer.release()
+            if (videoLength > 0) {
+                Config.resetStatistics()
+                Config.enableStatisticsCallback { statistics ->
+                    if (!isActive)
+                        GlobalScope.launch(Dispatchers.Default) {
+                            FFmpeg.cancel()
+                        }
+                    coroutineScope.launch(Dispatchers.Default) {
+                        val progress = statistics.time.toFloat() / videoLength
+                        result.progress.emit((100 * progress).toInt())
+                    }
+                }
+            }
+            compressVideo(originalVideoFile.absolutePath, videoFile.absolutePath)
+            originalVideoFile.delete()
+            result.processed = true
+        }
+        return result
+    }
+
+    private fun compressVideo(inputPath: String, outputPath: String) {
+        //val rc = FFmpeg.execute("-i $inputPath -b 800k $outputPath")
+        val rc = FFmpeg.execute("-i $inputPath -vcodec libx264 -crf 24 $outputPath")
+
+        if (rc == RETURN_CODE_SUCCESS) {
+            Log.i(Config.TAG, "Command execution completed successfully.")
+        } else if (rc == RETURN_CODE_CANCEL) {
+            Log.i(Config.TAG, "Command execution cancelled by user.")
+        } else {
+            Log.i(
+                Config.TAG,
+                String.format("Command execution failed with rc=%d and the output below.", rc)
+            )
+            Config.printLastCommandOutput(Log.INFO)
+        }
     }
 
     override fun createVideoThumbnail(videoName: String) {

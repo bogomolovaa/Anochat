@@ -16,8 +16,8 @@ android {
         applicationId "bogomolov.aa.anochat"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 11
-        versionName "2.0"
+        versionCode 12
+        versionName "2.1"
         multiDexEnabled true
         testInstrumentationRunner "bogomolov.aa.anochat.CustomTestRunner"
         javaCompileOptions {
@@ -39,6 +39,7 @@ android {
     }
     buildTypes {
         release {
+            debuggable false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
@@ -102,6 +103,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage-ktx:19.1.1'
     implementation 'androidx.annotation:annotation:1.1.0'
     implementation 'com.vanniktech:emoji-ios:0.6.0'
+    implementation 'com.arthenica:mobile-ffmpeg-min-gpl:4.4.LTS'
 
     implementation "com.google.dagger:hilt-android:2.33-beta"
     implementation 'androidx.hilt:hilt-navigation-fragment:1.0.0-beta01'
