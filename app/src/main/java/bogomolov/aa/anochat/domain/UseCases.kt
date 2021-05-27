@@ -37,7 +37,11 @@ open class MessageUseCases @Inject constructor(
 ) : MessageUseCasesInRepository by messageRep {
     var dispatcher: CoroutineDispatcher = Dispatchers.IO
 
-    suspend fun receiveMessage(message: Message, uid: String, onSuccess: (Message) -> Unit) {
+    suspend fun receiveMessage(
+        message: Message,
+        uid: String,
+        onSuccess: (Message) -> Unit
+    ) {
         Log.d(TAG, "receiveMessage $message")
         try {
             val secretKey = crypto.getSecretKey(uid) ?: throw WrongSecretKeyException("null")
@@ -47,10 +51,6 @@ open class MessageUseCases @Inject constructor(
             val replyId = message.replyMessageId
             if (!replyId.isNullOrEmpty()) message.replyMessage = messageRep.getMessage(replyId)
             message.id = messageRep.saveMessage(message)
-            if (message.hasAttachment())
-                tryReceiveAttachment(message, uid, { crypto.decrypt(secretKey, this) }) {
-                    onSuccess(message)
-                }
             messageRep.notifyAsReceived(message.messageId)
             onSuccess(message)
         } catch (e: WrongSecretKeyException) {
@@ -90,37 +90,22 @@ open class MessageUseCases @Inject constructor(
     fun loadMessagesDataSource(conversationId: Long) =
         messageRep.loadMessagesDataSource(conversationId)
 
-    fun notifyAsViewed(messages: List<Message>){
-        for(message in messages) {
+    suspend fun notifyAsViewed(messages: List<Message>, uid: String) {
+        for (message in messages) {
             if (!message.isMine && message.viewed == 0) {
                 message.viewed = 1
                 messageRep.notifyAsViewed(message)
             }
-        }
-    }
-
-    private fun tryReceiveAttachment(
-        message: Message,
-        uid: String,
-        convert: ByteArray.() -> ByteArray,
-        onSuccess: () -> Unit
-    ) {
-        val attempts = 30
-        GlobalScope.launch(dispatcher) {
-            var counter = 0
-            while (counter < attempts) {
-                if (messageRep.receiveAttachment(message, uid, convert)) {
-                    onSuccess()
-                    break
-                } else {
-                    val wait = 5 * counter.toLong()
-                    Log.w(TAG, "attachment not received, wait $wait s")
-                    counter++
-                    delay(wait * 1000)
+            if (!message.isMine && message.hasAttachment() && message.received == 0) {
+                crypto.getSecretKey(uid)?.let { secretKey ->
+                    messageRep.receiveAttachment(message, uid) {
+                        crypto.decrypt(secretKey, this)
+                    }
                 }
             }
         }
     }
+
 
     private fun sendPublicKey(publicKey: String?, uid: String, initiator: Boolean) {
         if (publicKey != null) {

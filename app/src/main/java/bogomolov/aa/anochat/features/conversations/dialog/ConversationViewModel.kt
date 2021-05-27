@@ -120,8 +120,12 @@ class ConversationViewModel @Inject constructor(
 
     }
 
-    private fun NotifyAsViewed.execute() {
-        messageUseCases.notifyAsViewed(messages.map { it.message })
+    private suspend fun NotifyAsViewed.execute() {
+        viewModelScope.launch(dispatcher) {
+            state.conversation?.user?.uid?.let { uid ->
+                messageUseCases.notifyAsViewed(messages.map { it.message }, uid)
+            }
+        }
     }
 
     private suspend fun TextChangedAction.execute() {
