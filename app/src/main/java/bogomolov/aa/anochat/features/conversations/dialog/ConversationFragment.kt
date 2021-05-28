@@ -1,13 +1,11 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
-import android.Manifest
+import android.Manifest.permission.*
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.Activity.RESULT_OK
+import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -16,6 +14,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
@@ -104,18 +104,6 @@ class ConversationFragment : Fragment(), RequestPermission {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        if (resultCode == RESULT_OK)
-            when (requestCode) {
-                FILE_CHOOSER_CODE -> {
-                    val uri = intent?.data
-                    if (uri != null) navigateToSendMediaFragment(uri = uri)
-                }
-                CAMERA_CODE -> navigateToSendMediaFragment(path = viewModel.state.photoPath)
-            }
-        super.onActivityResult(requestCode, resultCode, intent)
-    }
-
     fun hideKeyBoard() {
         emojiPopup.dismiss()
         val imm =
@@ -136,34 +124,12 @@ class ConversationFragment : Fragment(), RequestPermission {
         })
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        if (grantResults[0] == PERMISSION_GRANTED)
-            when (requestCode) {
-                READ_PERMISSIONS_CODE -> startFileChooser()
-                CAMERA_PERMISSIONS_CODE -> takePictureFromCamera()
-                MICROPHONE_PERMISSIONS_CODE ->
-                    viewModel.addAction(StartRecordingAction())
-            }
+    private val fileChooser = registerForActivityResult(StartFileChooser()) { uri ->
+        if (uri != null) navigateToSendMediaFragment(uri = uri)
     }
 
-    private fun startFileChooser() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-            type = "*/*"
-            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
-            addCategory(Intent.CATEGORY_OPENABLE)
-        }
-        if (intent.resolveActivity(requireActivity().packageManager) != null) {
-            startActivityForResult(
-                Intent.createChooser(intent, getString(R.string.select_file)),
-                FILE_CHOOSER_CODE
-            )
-        } else {
-            Log.w(TAG, "File manager not installed")
-        }
+    private val takePicture = registerForActivityResult(TakePictureFromCamera()) {
+        navigateToSendMediaFragment(path = viewModel.state.photoPath)
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -174,47 +140,60 @@ class ConversationFragment : Fragment(), RequestPermission {
         return File.createTempFile(imageFileName, ".jpg", storageDir).apply { deleteOnExit() }
     }
 
-    private fun takePictureFromCamera() {
-        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        if (takePictureIntent.resolveActivity(requireActivity().packageManager) != null) {
-            val photoFile = createTempImageFile()
-            viewModel.setStateAsync { copy(photoPath = photoFile.path) }
-            val photoUri = FileProvider.getUriForFile(
-                requireContext(),
-                "bogomolov.aa.anochat.fileprovider",
-                photoFile
-            )
-            Log.d(TAG, "photoUri $photoUri")
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-            startActivityForResult(takePictureIntent, CAMERA_CODE)
-        } else {
-            Log.w(TAG, "Camera not available")
-        }
+    private val readPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        fileChooser.launch(Unit)
     }
 
     override fun requestReadPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            requestPermissions(arrayOf(READ_PERMISSION), READ_PERMISSIONS_CODE)
+        readPermission.launch(READ_EXTERNAL_STORAGE)
+    }
+
+    private val cameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        val photoFile = createTempImageFile()
+        viewModel.setStateAsync { copy(photoPath = photoFile.path) }
+        takePicture.launch(photoFile)
     }
 
     override fun requestCameraPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            requestPermissions(arrayOf(CAMERA_PERMISSION), CAMERA_PERMISSIONS_CODE)
+        cameraPermission.launch(CAMERA)
+    }
+
+    private val microphonePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        viewModel.addAction(StartRecordingAction())
     }
 
     override fun requestMicrophonePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            requestPermissions(arrayOf(MICROPHONE_PERMISSION), MICROPHONE_PERMISSIONS_CODE)
+        microphonePermission.launch(RECORD_AUDIO)
+    }
+}
+
+private class StartFileChooser : ActivityResultContract<Unit, Uri>() {
+    override fun createIntent(context: Context, input: Unit?): Intent {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "*/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
+            addCategory(Intent.CATEGORY_OPENABLE)
+        }
+        return Intent.createChooser(intent, context.getString(R.string.select_file))
     }
 
-    companion object {
-        const val FILE_CHOOSER_CODE: Int = 0
-        const val CAMERA_CODE: Int = 1
-        private const val READ_PERMISSION = Manifest.permission.READ_EXTERNAL_STORAGE
-        private const val CAMERA_PERMISSION = Manifest.permission.CAMERA
-        private const val MICROPHONE_PERMISSION = Manifest.permission.RECORD_AUDIO
-        private const val READ_PERMISSIONS_CODE = 1001
-        private const val CAMERA_PERMISSIONS_CODE = 1002
-        private const val MICROPHONE_PERMISSIONS_CODE = 1003
+    override fun parseResult(resultCode: Int, intent: Intent?) = intent?.data
+}
+
+private class TakePictureFromCamera : ActivityResultContract<File, Unit>() {
+    override fun createIntent(context: Context, photoFile: File): Intent {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        val photoUri = FileProvider.getUriForFile(
+            context,
+            "bogomolov.aa.anochat.fileprovider",
+            photoFile
+        )
+        Log.d(TAG, "photoUri $photoUri")
+        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+        return takePictureIntent
+    }
+
+    override fun parseResult(resultCode: Int, intent: Intent?) {
+
     }
 }

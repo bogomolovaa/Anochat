@@ -1,18 +1,17 @@
 package bogomolov.aa.anochat.features.settings
 
-import android.Manifest
-import android.app.Activity
-import android.content.ActivityNotFoundException
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Switch
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
@@ -33,6 +32,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     val viewModel: SettingsViewModel by hiltNavGraphViewModels(R.id.settings_graph)
     private lateinit var binding: FragmentSettingsBinding
     private lateinit var navController: NavController
+
     @Inject
     lateinit var fileStore: FileStore
 
@@ -99,8 +99,10 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
 
     private fun addListeners() {
         binding.privacyPolicy.setOnClickListener { openPrivacyPolicy() }
-        binding.editPhoto.setOnClickListener { if (viewModel.state.user != null) requestReadPermission() }
-        binding.gallerySwitch.setOnClickListener { requestWritePermission() }
+        binding.editPhoto.setOnClickListener {
+            if (viewModel.state.user != null) readPermission.launch(READ_EXTERNAL_STORAGE)
+        }
+        binding.gallerySwitch.setOnClickListener { writePermission.launch(WRITE_EXTERNAL_STORAGE) }
         observeChangesFor(binding.notificationsSwitch) { checked -> copy(notifications = checked) }
         observeChangesFor(binding.soundSwitch) { checked -> copy(sound = checked) }
         observeChangesFor(binding.vibrationSwitch) { checked -> copy(vibration = checked) }
@@ -119,14 +121,6 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         startActivity(i)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        if (resultCode == Activity.RESULT_OK && requestCode == FILE_CHOOSER_CODE) {
-            val uri = intent?.data
-            if (uri != null) updatePhoto(uri)
-        }
-        super.onActivityResult(requestCode, resultCode, intent)
-    }
-
     private fun updatePhoto(uri: Uri) {
         val miniature = fileStore.resizeImage(uri = uri, toGallery = false)
         if (miniature != null) {
@@ -135,44 +129,27 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            if (requestCode == READ_PERMISSIONS_CODE) startFileChooser()
+    private val fileChooser = registerForActivityResult(StartFileChooser()) { uri ->
+        if (uri != null) updatePhoto(uri)
     }
 
-    private fun startFileChooser() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "image/*"
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
-        try {
-            startActivityForResult(
-                Intent.createChooser(intent, getString(R.string.select_file)),
-                FILE_CHOOSER_CODE
-            )
-        } catch (ex: ActivityNotFoundException) {
-            Log.w("SettingFragment", "File manager not installed")
+    private val readPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            fileChooser.launch(Unit)
         }
+
+    private val writePermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+}
+
+private class StartFileChooser : ActivityResultContract<Unit, Uri>() {
+    override fun createIntent(context: Context, input: Unit?): Intent {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "image/*"
+            addCategory(Intent.CATEGORY_OPENABLE)
+        }
+        return Intent.createChooser(intent, context.getString(R.string.select_file))
     }
 
-    private fun requestReadPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            requestPermissions(arrayOf(READ_PERMISSION), READ_PERMISSIONS_CODE)
-    }
-
-    private fun requestWritePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
-            requestPermissions(arrayOf(WRITE_PERMISSION), WRITE_PERMISSIONS_CODE)
-    }
-
-    companion object {
-        private const val FILE_CHOOSER_CODE: Int = 0
-        private const val READ_PERMISSION = Manifest.permission.READ_EXTERNAL_STORAGE
-        private const val WRITE_PERMISSION = Manifest.permission.WRITE_EXTERNAL_STORAGE
-        private const val READ_PERMISSIONS_CODE = 1001
-        private const val WRITE_PERMISSIONS_CODE = 1002
-    }
+    override fun parseResult(resultCode: Int, intent: Intent?) = intent?.data
 }
