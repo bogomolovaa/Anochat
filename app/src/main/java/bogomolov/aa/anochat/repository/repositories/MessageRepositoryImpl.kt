@@ -39,7 +39,7 @@ class MessageRepositoryImpl @Inject constructor(
 
 
     override fun loadMessagesDataSource(conversationId: Long) =
-        Pager(PagingConfig(pageSize = 50)) {
+        Pager(PagingConfig(pageSize = 10)) {
             db.messageDao().loadAll(conversationId)
         }.flow.map { it.map { mapper.entityToModel(it)!! } }
 
@@ -85,14 +85,16 @@ class MessageRepositoryImpl @Inject constructor(
         message: Message,
         uid: String,
         convert: ByteArray.() -> ByteArray
-    ): Boolean {
-        val fileName = message.getAttachment() ?: return false
-        val byteArray = firebase.downloadFile(fileName, uid, true) ?: return false
+    ) {
+        val fileName = message.getAttachment() ?: return
+        val byteArray = firebase.downloadFile(fileName, uid, true) ?: run {
+            db.messageDao().updateAsNotReceived(message.id)
+            return
+        }
         val toGallery = message.image != null || message.video != null
         fileStore.saveByteArray(byteArray.convert(), fileName, toGallery)
         message.video?.let { fileStore.createVideoThumbnail(it) }
         db.messageDao().updateAsReceived(message.id)
-        return true
     }
 
     override fun notifyAsReceived(messageId: String) {

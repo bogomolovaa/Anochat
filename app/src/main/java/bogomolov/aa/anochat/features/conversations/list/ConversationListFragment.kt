@@ -5,7 +5,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.view.*
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -23,30 +26,23 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.shared.ActionModeData
+import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
-class ConversationListFragment : Fragment(), UpdatableView<ConversationsUiState> {
+class ConversationListFragment : Fragment(R.layout.fragment_conversations_list), UpdatableView<ConversationsUiState> {
     val viewModel: ConversationListViewModel by viewModels()
     private lateinit var navController: NavController
-    private lateinit var binding: FragmentConversationsListBinding
-
+    private val binding by bindingDelegate(FragmentConversationsListBinding::bind)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         exitTransition = Fade().apply { duration = 375 }
         requireActivity().window.decorView.setBackgroundResource(R.color.conversation_background)
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentConversationsListBinding.inflate(inflater, container, false)
-        .also { binding = it }.root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

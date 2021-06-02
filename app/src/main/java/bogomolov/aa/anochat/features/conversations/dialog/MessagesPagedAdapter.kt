@@ -14,7 +14,6 @@ import android.text.Spanned
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.URLSpan
-import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageView
@@ -28,6 +27,7 @@ import androidx.navigation.fragment.FragmentNavigator
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.MessageLayoutBinding
+import bogomolov.aa.anochat.domain.entity.AttachmentStatus
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.*
 import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
@@ -91,6 +91,7 @@ class MessagesPagedAdapter(
                 if (item.message.isMine) resColor(R.color.my_message_color, context)
                 else resColor(R.color.not_my_message_color, context)
             )
+
             val dim4dp = resDimension(R.dimen.margin_4dp, context)
             val dim64dp = resDimension(R.dimen.margin_64dp, context)
             if (item.message.isMine) {
@@ -125,9 +126,7 @@ class MessagesPagedAdapter(
             val image = item.message.image
             if (!image.isNullOrEmpty()) {
                 item.detailedImageLoaded = false
-                loadImage(image, binding, 8) {
-                    showImageNotLoaded(binding, item.message.time)
-                }
+                loadImage(image, binding, 8, item.message.attachmentStatus)
                 if (text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
                 setImageClickListener(item.message, binding.imageView, detector)
                 binding.imageView.transitionName = item.message.image
@@ -145,9 +144,7 @@ class MessagesPagedAdapter(
             if (!video.isNullOrEmpty()) {
                 val thumbnail = videoThumbnail(video)
                 item.detailedImageLoaded = false
-                loadImage(thumbnail, binding, 2) {
-                    showImageNotLoaded(binding, item.message.time)
-                }
+                loadImage(thumbnail, binding, 2, item.message.attachmentStatus)
                 if (text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
                 setVideoClickListener(item.message, binding.imageView, detector)
 
@@ -236,9 +233,7 @@ class MessagesPagedAdapter(
     ) {
         if (!image.isNullOrEmpty() && !item.detailedImageLoaded) {
             item.detailedImageLoaded = true
-            loadImage(image, binding, quality) {
-                showImageNotLoaded(binding, item.message.time)
-            }
+            loadImage(image, binding, quality, item.message.attachmentStatus)
         }
     }
 
@@ -246,37 +241,46 @@ class MessagesPagedAdapter(
         image: String,
         binding: MessageLayoutBinding,
         quality: Int,
-        onNotLoaded: () -> Unit
+        attachmentStatus: AttachmentStatus
     ) {
+        if (attachmentStatus == AttachmentStatus.NOT_LOADED) showImageNotLoaded(binding)
+        if (attachmentStatus == AttachmentStatus.LOADING) showImageLoading(binding)
+        if (attachmentStatus != AttachmentStatus.LOADED) return
         val imageView = binding.imageView
         lifecycleScope.launch(Dispatchers.IO) {
             val bitmap = getBitmapFromGallery(image, imageView.context, quality)
             withContext(Dispatchers.Main) {
                 if (bitmap != null) {
-                    binding.imageViewLayout.visibility = View.VISIBLE
+                    showImageLoaded(binding)
                     imageView.setImageBitmap(bitmap)
                     setImageSize(imageView, bitmap)
                 } else {
                     imageView.setImageDrawable(null)
-                    binding.imageViewLayout.visibility = View.GONE
                     imageView.requestLayout()
-                    onNotLoaded()
+                    showImageNotLoaded(binding)
                 }
             }
         }
     }
 
-    private fun showImageNotLoaded(binding: MessageLayoutBinding, receivedTime: Long) {
+    private fun showImageLoaded(binding: MessageLayoutBinding) {
+        binding.imageViewLayout.visibility = View.VISIBLE
+        binding.imageProgressBar.visibility = View.INVISIBLE
+        binding.errorLoadingImage.visibility = View.INVISIBLE
+    }
+
+    private fun showImageLoading(binding: MessageLayoutBinding) {
         binding.imageViewLayout.visibility = View.GONE
         binding.imageProgressLayout.visibility = View.VISIBLE
-        val elapsed = System.currentTimeMillis() - receivedTime
-        if (elapsed / 1000 < WAITING_IMAGE_TIMEOUT) {
-            binding.imageProgressBar.visibility = View.VISIBLE
-            binding.errorLoadingImage.visibility = View.INVISIBLE
-        } else {
-            binding.errorLoadingImage.visibility = View.VISIBLE
-            binding.imageProgressBar.visibility = View.INVISIBLE
-        }
+        binding.imageProgressBar.visibility = View.VISIBLE
+        binding.errorLoadingImage.visibility = View.INVISIBLE
+    }
+
+    private fun showImageNotLoaded(binding: MessageLayoutBinding) {
+        binding.imageViewLayout.visibility = View.GONE
+        binding.imageProgressLayout.visibility = View.VISIBLE
+        binding.errorLoadingImage.visibility = View.VISIBLE
+        binding.imageProgressBar.visibility = View.INVISIBLE
     }
 
     private fun getDpPixels(context: Context) = context.resources.displayMetrics.density

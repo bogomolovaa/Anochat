@@ -4,6 +4,10 @@ import android.annotation.SuppressLint
 import java.text.SimpleDateFormat
 import java.util.*
 
+enum class AttachmentStatus {
+    LOADING, LOADED, NOT_LOADED
+}
+
 data class Message(
     var id: Long = 0L,
     var text: String = "",
@@ -44,4 +48,10 @@ data class Message(
 
     fun isNotSaved() = id == 0L
 
+    val attachmentStatus
+        get() = when {
+            (!isMine && hasAttachment() && received == 0) -> AttachmentStatus.LOADING
+            (!isMine && hasAttachment() && received == -1) -> AttachmentStatus.NOT_LOADED
+            else -> AttachmentStatus.LOADED
+        }
 }

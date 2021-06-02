@@ -77,6 +77,9 @@ interface MessageDao {
     @Query("update MessageEntity set received = 1 where id = :id")
     fun updateAsReceived(id: Long)
 
+    @Query("update MessageEntity set received = -1 where id = :id")
+    fun updateAsNotReceived(id: Long)
+
     @Query("update MessageEntity set sent = 1 where id = :id")
     fun updateAsSent(id: Long)
 }

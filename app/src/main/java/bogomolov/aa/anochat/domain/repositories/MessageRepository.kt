@@ -20,7 +20,7 @@ interface MessageRepository : MessageUseCasesInRepository {
         message: Message,
         uid: String,
         convert: ByteArray.() -> ByteArray
-    ): Boolean
+    )
 
     fun notifyAsReceived(messageId: String)
     fun notifyAsNotReceived(messageId: String)

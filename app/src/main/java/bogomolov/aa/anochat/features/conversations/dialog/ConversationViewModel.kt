@@ -17,12 +17,10 @@ import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -101,7 +99,7 @@ class ConversationViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         GlobalScope.launch(dispatcher) {
-            conversationUseCases.deleteConversationIfNoMessages(state.conversation?.id!!)
+            state.conversation?.id?.let { conversationUseCases.deleteConversationIfNoMessages(it) }
         }
     }
 
@@ -248,9 +246,9 @@ class ConversationViewModel @Inject constructor(
 
     private suspend fun InitConversationAction.subscribeToMessages(conversation: Conversation) {
         viewModelScope.launch(dispatcher) {
-            messageUseCases.loadMessagesDataSource(conversation.id)
-                .cachedIn(viewModelScope)
-                .collect {
+            messageUseCases.loadMessagesDataSource(conversation.id).flowOn(dispatcher)
+                .cachedIn(viewModelScope.plus(dispatcher))
+                .collectLatest {
                     setState {
                         copy(
                             pagingData = it.map { MessageView(it) }.insertSeparators { m1, m2 ->

@@ -29,6 +29,7 @@ import androidx.transition.Fade
 import androidx.transition.Slide
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
+import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import com.vanniktech.emoji.EmojiPopup
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,11 +40,11 @@ import java.util.*
 private const val TAG = "ConversationFragment"
 
 @AndroidEntryPoint
-class ConversationFragment : Fragment(), RequestPermission {
+class ConversationFragment : Fragment(R.layout.fragment_conversation), RequestPermission {
     val viewModel: ConversationViewModel by hiltNavGraphViewModels(R.id.dialog_graph)
     private lateinit var navController: NavController
     private lateinit var emojiPopup: EmojiPopup
-    private lateinit var binding: FragmentConversationBinding
+    private val binding by bindingDelegate(FragmentConversationBinding::bind)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,12 +60,6 @@ class ConversationFragment : Fragment(), RequestPermission {
         if (viewModel.state.inputState == InputStates.FAB_EXPAND)
             viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) }
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentConversationBinding.inflate(inflater, container, false).also { binding = it }.root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
