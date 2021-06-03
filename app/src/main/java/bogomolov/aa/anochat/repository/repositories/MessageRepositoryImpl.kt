@@ -39,7 +39,7 @@ class MessageRepositoryImpl @Inject constructor(
 
 
     override fun loadMessagesDataSource(conversationId: Long) =
-        Pager(PagingConfig(pageSize = 10)) {
+        Pager(PagingConfig(pageSize = 30)) {
             db.messageDao().loadAll(conversationId)
         }.flow.map { it.map { mapper.entityToModel(it)!! } }
 

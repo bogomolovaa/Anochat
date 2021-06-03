@@ -16,8 +16,8 @@ android {
         applicationId "bogomolov.aa.anochat"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 13
-        versionName "2.2"
+        versionCode 14
+        versionName "2.3"
         multiDexEnabled true
         testInstrumentationRunner "bogomolov.aa.anochat.CustomTestRunner"
         javaCompileOptions {
@@ -75,47 +75,47 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3"
-    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.appcompat:appcompat:1.2.0' //1.3.0 bug
     implementation 'androidx.core:core-ktx:1.5.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.0'
     implementation "androidx.paging:paging-runtime-ktx:3.0.0"
-    implementation "androidx.navigation:navigation-fragment-ktx:2.3.4"
-    implementation "androidx.navigation:navigation-ui-ktx:2.3.4"
+    implementation "androidx.navigation:navigation-fragment-ktx:2.3.5"
+    implementation "androidx.navigation:navigation-ui-ktx:2.3.5"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.3.1"
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-alpha01"
-    implementation "androidx.fragment:fragment-ktx:1.3.3"
+    implementation "androidx.fragment:fragment-ktx:1.3.3" //1.3.4 bug
     implementation "androidx.work:work-runtime-ktx:2.5.0"
     implementation 'androidx.preference:preference-ktx:1.1.1'
     implementation "androidx.room:room-runtime:2.3.0"
     implementation 'com.android.support:multidex:1.0.3'
     implementation "androidx.emoji:emoji-appcompat:1.1.0"
     implementation "androidx.emoji:emoji-bundled:1.1.0"
-    implementation 'com.google.android.material:material:1.4.0-alpha01'
+    implementation 'com.google.android.material:material:1.4.0-beta01'
     implementation 'com.google.firebase:firebase-auth:19.2.0'
     implementation 'com.google.firebase:firebase-database-ktx:19.2.1'
     implementation 'com.google.firebase:firebase-messaging:20.1.0'
     implementation 'com.google.firebase:firebase-analytics:17.2.2'
     implementation 'com.google.firebase:firebase-storage-ktx:19.1.1'
-    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'androidx.annotation:annotation:1.2.0'
     implementation 'com.vanniktech:emoji-ios:0.6.0'
     implementation 'com.arthenica:mobile-ffmpeg-min-gpl:4.4.LTS'
 
-    implementation 'androidx.hilt:hilt-navigation-fragment:1.0.0-beta01'
-    implementation 'androidx.hilt:hilt-work:1.0.0-beta01'
-    kapt 'androidx.hilt:hilt-compiler:1.0.0-beta01'
-    implementation "com.google.dagger:hilt-android:2.33-beta"
-    implementation 'com.google.dagger:hilt-android:2.33-beta'
-    kapt 'com.google.dagger:hilt-compiler:2.33-beta'
+    implementation 'androidx.hilt:hilt-navigation-fragment:1.0.0'
+    implementation 'androidx.hilt:hilt-work:1.0.0'
+    kapt 'androidx.hilt:hilt-compiler:1.0.0'
+    implementation "com.google.dagger:hilt-android:2.35"
+    implementation 'com.google.dagger:hilt-android:2.35'
+    kapt 'com.google.dagger:hilt-compiler:2.35'
 
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.13.3'
-    implementation 'com.google.android.exoplayer:exoplayer-ui:2.13.3'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.14.0'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.14.0'
 
-    //debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
 
 
 

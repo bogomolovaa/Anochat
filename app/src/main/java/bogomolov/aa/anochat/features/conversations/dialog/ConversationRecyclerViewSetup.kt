@@ -12,7 +12,6 @@ import androidx.paging.PagingData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.ActionModeData
 import kotlinx.coroutines.Dispatchers
@@ -26,14 +25,12 @@ class ConversationRecyclerViewSetup(
 ) {
     private var recyclerViewRestored = false
     private var enterAnimationFinished = false
-    private lateinit var binding: FragmentConversationBinding
-    private lateinit var messagesPagedAdapter: MessagesPagedAdapter
+    private val binding get() = fragment.binding
 
-    fun setup(binding: FragmentConversationBinding, onPreDraw: () -> Unit) {
-        this.binding = binding
+    fun setup(onPreDraw: () -> Unit) {
         recyclerViewRestored = false
         enterAnimationFinished = false
-        messagesPagedAdapter = createRecyclerViewAdapter()
+        val messagesPagedAdapter = createRecyclerViewAdapter()
         with(binding.recyclerView) {
             setItemViewCacheSize(0)
             adapter = messagesPagedAdapter
@@ -59,10 +56,11 @@ class ConversationRecyclerViewSetup(
         })
     }
 
-    fun getMessageAudioView(messageId: String) = messagesPagedAdapter.messagesMap[messageId]
+    fun getMessageAudioView(messageId: String) =
+        (binding.recyclerView.adapter as MessagesPagedAdapter).messagesMap[messageId]
 
     fun getReplyMessageAudioView(messageId: String) =
-        messagesPagedAdapter.replyMessagesMap[messageId]
+        (binding.recyclerView.adapter as MessagesPagedAdapter).replyMessagesMap[messageId]
 
     fun scrollToEnd() {
         fragment.lifecycleScope.launch(Dispatchers.Main) {

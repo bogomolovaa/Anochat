@@ -2,6 +2,7 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.annotation.SuppressLint
 import android.os.Parcelable
+import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
@@ -13,6 +14,7 @@ import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.AudioPlayer
+import bogomolov.aa.anochat.features.shared.LocaleProvider
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.UiState
 import bogomolov.aa.anochat.features.shared.mvi.UserAction
@@ -66,8 +68,7 @@ class SendMessageAction(
 ) : UserAction
 
 class InitConversationAction(
-    val conversationId: Long,
-    val insertDateDelimiters: (MessageView?, MessageView?) -> Unit
+    val conversationId: Long
 ) : UserAction
 
 class TextChangedAction(
@@ -87,7 +88,8 @@ class ConversationViewModel @Inject constructor(
     private val userUseCases: UserUseCases,
     private val conversationUseCases: ConversationUseCases,
     private val messageUseCases: MessageUseCases,
-    private val audioPlayer: AudioPlayer
+    private val audioPlayer: AudioPlayer,
+    private val localeProvider: LocaleProvider
 ) : BaseViewModel<DialogUiState>() {
     private var recordingJob: Job? = null
     private var playJob: Job? = null
@@ -252,7 +254,7 @@ class ConversationViewModel @Inject constructor(
                     setState {
                         copy(
                             pagingData = it.map { MessageView(it) }.insertSeparators { m1, m2 ->
-                                insertDateDelimiters(m1, m2)
+                                insertDateSeparators(m1, m2, localeProvider.locale)
                                 null
                             }
                         )
@@ -278,5 +280,17 @@ class ConversationViewModel @Inject constructor(
     @SuppressLint("SimpleDateFormat")
     private fun timeToString(lastTimeOnline: Long): String {
         return SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(lastTimeOnline))
+    }
+}
+
+private fun insertDateSeparators(message1: MessageView?, message2: MessageView?, locale: Locale) {
+    if (message1 != null && message2 != null) {
+        val day1 = GregorianCalendar().apply { time = Date(message1.message.time) }
+            .get(Calendar.DAY_OF_YEAR)
+        val day2 = GregorianCalendar().apply { time = Date(message2.message.time) }
+            .get(Calendar.DAY_OF_YEAR)
+        if (day1 != day2)
+            message1.dateDelimiter =
+                SimpleDateFormat("dd MMMM yyyy", locale).format(Date(message1.message.time))
     }
 }

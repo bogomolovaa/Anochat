@@ -22,9 +22,11 @@ import androidx.core.net.toUri
 import androidx.core.os.ConfigurationCompat
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
+import androidx.navigation.ui.setupWithNavController
 import androidx.transition.Fade
 import androidx.transition.Slide
 import bogomolov.aa.anochat.R
@@ -33,6 +35,7 @@ import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import com.vanniktech.emoji.EmojiPopup
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.isActive
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,11 +43,12 @@ import java.util.*
 private const val TAG = "ConversationFragment"
 
 @AndroidEntryPoint
-class ConversationFragment : Fragment(R.layout.fragment_conversation), RequestPermission {
+class ConversationFragment : Fragment(R.layout.fragment_conversation) {
     val viewModel: ConversationViewModel by hiltNavGraphViewModels(R.id.dialog_graph)
-    private lateinit var navController: NavController
-    private lateinit var emojiPopup: EmojiPopup
-    private val binding by bindingDelegate(FragmentConversationBinding::bind)
+    private var emojiPopup: EmojiPopup? = null
+    val binding by bindingDelegate(FragmentConversationBinding::bind)
+    private var stateLifecycleObserver: StateLifecycleObserver<DialogUiState>? = null
+    var recyclerViewSetup: ConversationRecyclerViewSetup? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,25 +68,20 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation), RequestPe
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val conversationId = arguments?.get("id") as Long
-        val recyclerViewSetup = ConversationRecyclerViewSetup(this, viewModel)
-        val updatableView = ConversationUpdatableView(recyclerViewSetup)
-        val conversationInputSetup = ConversationInputSetup(this, viewModel, recyclerViewSetup)
-        viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(updatableView, viewModel))
-        viewModel.addAction(InitConversationAction(conversationId) { m1, m2 ->
-            val locale = ConfigurationCompat.getLocales(requireContext().resources.configuration)[0]
-            insertDateSeparators(m1, m2, locale)
-        })
+        recyclerViewSetup = ConversationRecyclerViewSetup(this, viewModel)
+        val updatableView = ConversationUpdatableView(this)
+        val conversationInputSetup = ConversationInputSetup(this, viewModel)
+        stateLifecycleObserver = StateLifecycleObserver(updatableView, viewModel)
+        viewLifecycleOwner.lifecycle.addObserver(stateLifecycleObserver!!)
+        viewModel.addAction(InitConversationAction(conversationId))
 
-        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        navController = findNavController()
-        NavigationUI.setupWithNavController(binding.toolbar, navController)
+        binding.toolbar.setupWithNavController(findNavController())
         emojiPopup = EmojiPopup.Builder.fromRootView(binding.root).build(binding.messageInputText)
-        binding.emojiIcon.setOnClickListener { emojiPopup.toggle() }
+        binding.emojiIcon.setOnClickListener { emojiPopup?.toggle() }
 
         postponeEnterTransition()
-        updatableView.binding = binding
-        conversationInputSetup.setup(binding)
-        recyclerViewSetup.setup(binding) {
+        conversationInputSetup.setup()
+        recyclerViewSetup?.setup {
             startPostponedEnterTransition()
         }
 
@@ -99,15 +98,25 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation), RequestPe
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        emojiPopup = null
+        viewLifecycleOwner.lifecycle.removeObserver(stateLifecycleObserver!!)
+        stateLifecycleObserver = null
+        recyclerViewSetup = null
+    }
+
     fun hideKeyBoard() {
-        emojiPopup.dismiss()
+        emojiPopup?.dismiss()
         val imm =
             requireContext().getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(requireView().windowToken, 0)
     }
 
     private fun navigateToUserFragment(userId: Long) {
-        navController.navigate(R.id.userViewFragment, Bundle().apply { putLong("id", userId) })
+        findNavController().navigate(
+            R.id.userViewFragment,
+            Bundle().apply { putLong("id", userId) })
     }
 
     private fun navigateToSendMediaFragment(uri: Uri? = null, path: String? = null) {
@@ -135,29 +144,32 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation), RequestPe
         return File.createTempFile(imageFileName, ".jpg", storageDir).apply { deleteOnExit() }
     }
 
-    private val readPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        fileChooser.launch(Unit)
-    }
+    private val readPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            fileChooser.launch(Unit)
+        }
 
-    override fun requestReadPermission() {
+    fun requestReadPermission() {
         readPermission.launch(READ_EXTERNAL_STORAGE)
     }
 
-    private val cameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        val photoFile = createTempImageFile()
-        viewModel.setStateAsync { copy(photoPath = photoFile.path) }
-        takePicture.launch(photoFile)
-    }
+    private val cameraPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            val photoFile = createTempImageFile()
+            viewModel.setStateAsync { copy(photoPath = photoFile.path) }
+            takePicture.launch(photoFile)
+        }
 
-    override fun requestCameraPermission() {
+    fun requestCameraPermission() {
         cameraPermission.launch(CAMERA)
     }
 
-    private val microphonePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        viewModel.addAction(StartRecordingAction())
-    }
+    private val microphonePermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            viewModel.addAction(StartRecordingAction())
+        }
 
-    override fun requestMicrophonePermission() {
+    fun requestMicrophonePermission() {
         microphonePermission.launch(RECORD_AUDIO)
     }
 }

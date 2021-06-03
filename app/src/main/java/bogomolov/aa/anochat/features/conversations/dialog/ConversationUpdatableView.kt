@@ -9,9 +9,10 @@ import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 
 class ConversationUpdatableView(
-    private val recyclerViewSetup: ConversationRecyclerViewSetup
+    private val fragment: ConversationFragment
 ) : UpdatableView<DialogUiState> {
-    lateinit var binding: FragmentConversationBinding
+    private val binding get() = fragment.binding
+    private val recyclerViewSetup get() = fragment.recyclerViewSetup!!
     private var lastMessageAudioView: PlayAudioView? = null
     private var lastReplyMessageAudioView: PlayAudioView? = null
 

@@ -219,6 +219,20 @@ class FirebaseImpl : Firebase {
         fileName: String,
         uid: String,
         isPrivate: Boolean
+    ): ByteArray? {
+        repeat(5) {
+            val result = tryDownloadFile(fileName, uid, isPrivate)
+            if (result != null) return result
+            else delay(it * 10 * 1000L)
+        }
+        return null
+    }
+
+
+    private suspend fun tryDownloadFile(
+        fileName: String,
+        uid: String,
+        isPrivate: Boolean
     ): ByteArray? =
         suspendCoroutine { continuation ->
             val path = if (isPrivate) "/files/" else "/user/$uid/"

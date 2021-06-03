@@ -39,8 +39,6 @@ import kotlinx.coroutines.withContext
 import kotlin.math.min
 
 
-private const val WAITING_IMAGE_TIMEOUT = 180
-
 class MessagesPagedAdapter(
     private val lifecycleScope: CoroutineScope,
     private val windowWidth: Int,

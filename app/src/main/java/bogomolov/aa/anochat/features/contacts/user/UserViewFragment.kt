@@ -18,17 +18,17 @@ import androidx.transition.Transition
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentUserViewBinding
 import bogomolov.aa.anochat.domain.entity.User
+import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
+class UserViewFragment : Fragment(R.layout.fragment_user_view), UpdatableView<UserUiState> {
     val viewModel: UserViewViewModel by viewModels()
-    private lateinit var binding: FragmentUserViewBinding
-    private lateinit var navController: NavController
-    private lateinit var transition: Transition
+    private val binding by bindingDelegate(FragmentUserViewBinding::bind)
+    private var transition: Transition? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,28 +37,27 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
 
         val animationDuration = resources.getInteger(R.integer.animation_duration).toLong()
         transition = Fade().apply { duration = animationDuration }
-        transition.addTarget(R.id.toolbar)
-        transition.addTarget(R.id.user_info)
+        transition?.addTarget(R.id.toolbar)
+        transition?.addTarget(R.id.user_info)
         exitTransition = transition
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentUserViewBinding.inflate(inflater, container, false).also { binding = it }.root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
         (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        navController = findNavController()
-        NavigationUI.setupWithNavController(binding.toolbar, navController)
+        NavigationUI.setupWithNavController(binding.toolbar, findNavController())
 
         setupImagesRecyclerView {
             startPostponedEnterTransition()
         }
         postponeEnterTransition()
-        setPhotoClickListener(navController)
+        setPhotoClickListener(findNavController())
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        transition = null
     }
 
     override fun updateView(newState: UserUiState, currentState: UserUiState) {
@@ -84,8 +83,8 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
 
     private fun setupImagesRecyclerView(onPreDraw: () -> Unit) {
         val adapter = ImagesPagedAdapter {
-            transition.removeTarget(R.id.userPhoto)
-            transition.addTarget(R.id.userPhoto)
+            transition?.removeTarget(R.id.userPhoto)
+            transition?.addTarget(R.id.userPhoto)
         }
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager =
@@ -96,7 +95,7 @@ class UserViewFragment : Fragment(), UpdatableView<UserUiState> {
     private fun setPhotoClickListener(navController: NavController) {
         binding.userPhoto.setOnClickListener {
             val photo = viewModel.state.user?.photo
-            transition.removeTarget(R.id.userPhoto)
+            transition?.removeTarget(R.id.userPhoto)
             if (photo != null) {
                 val extras = FragmentNavigator.Extras.Builder()
                     .addSharedElement(binding.userPhoto, photo)

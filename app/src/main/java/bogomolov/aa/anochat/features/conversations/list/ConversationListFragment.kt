@@ -5,20 +5,18 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuInflater
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
+import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.transition.Fade
@@ -33,9 +31,9 @@ import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
-class ConversationListFragment : Fragment(R.layout.fragment_conversations_list), UpdatableView<ConversationsUiState> {
+class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
+    UpdatableView<ConversationsUiState> {
     val viewModel: ConversationListViewModel by viewModels()
-    private lateinit var navController: NavController
     private val binding by bindingDelegate(FragmentConversationsListBinding::bind)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,10 +45,7 @@ class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
-        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        setHasOptionsMenu(true)
-        navController = findNavController()
-        NavigationUI.setupWithNavController(binding.toolbar, navController)
+        setupToolbar()
 
         binding.fab.setOnClickListener { requestContactsPermission() }
         //hideKeyBoard()
@@ -70,7 +65,7 @@ class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
         val adapter =
             ConversationsPagedAdapter(actionModeData = data) { conversation ->
                 val bundle = Bundle().apply { putLong("id", conversation.id) }
-                navController.navigate(R.id.dialog_graph, bundle)
+                findNavController().navigate(R.id.dialog_graph, bundle)
             }
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
@@ -81,34 +76,41 @@ class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
         binding.recyclerView.addItemDecoration(itemDecorator)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-        menu.clear()
-        inflater.inflate(R.menu.main_menu, menu)
-        val context = requireContext()
-
-        val searchView = SearchView(context)
-        searchView.setOnSubmitListener { query ->
-            val bundle = Bundle().apply { putString("search", query) }
-            navController.navigate(R.id.messageSearchFragment, bundle)
+    private fun setupToolbar(){
+        val navController = findNavController()
+        with(binding.toolbar) {
+            setupWithNavController(findNavController())
+            inflateMenu(R.menu.main_menu)
+            setOnMenuItemClickListener {
+                if (it.itemId == R.id.menu_sign_out) {
+                    viewModel.addAction(SignOutAction())
+                    navController.navigate(R.id.signInFragment)
+                    true
+                } else {
+                    NavigationUI.onNavDestinationSelected(it, navController)
+                }
+            }
+            menu.findItem(R.id.search_messages_action).apply {
+                val context = requireContext()
+                val searchView = SearchView(context)
+                searchView.setOnSubmitListener { query ->
+                    Log.i("test", "setOnSubmitListener query $query")
+                    val bundle = Bundle().apply { putString("search", query) }
+                    findNavController().navigate(R.id.messageSearchFragment, bundle)
+                }
+                searchView.setTextColor(R.color.title_color)
+                val searchIcon =
+                    searchView.findViewById(androidx.appcompat.R.id.search_button) as ImageView
+                searchIcon.setImageDrawable(
+                    ContextCompat.getDrawable(
+                        context,
+                        R.drawable.search_icon
+                    )
+                )
+                setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW or MenuItem.SHOW_AS_ACTION_IF_ROOM)
+                actionView = searchView
+            }
         }
-        searchView.setTextColor(R.color.title_color)
-        val searchIcon = searchView.findViewById(androidx.appcompat.R.id.search_button) as ImageView
-        searchIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.search_icon))
-
-        menu.findItem(R.id.search_messages_action).apply {
-            setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW or MenuItem.SHOW_AS_ACTION_IF_ROOM)
-            actionView = searchView
-        }
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.menu_sign_out) {
-            viewModel.addAction(SignOutAction())
-            navController.navigate(R.id.signInFragment)
-            return true
-        }
-        return NavigationUI.onNavDestinationSelected(item, navController)
     }
 
     override fun onRequestPermissionsResult(
@@ -117,7 +119,7 @@ class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
         grantResults: IntArray
     ) {
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            if (requestCode == CONTACTS_PERMISSIONS_CODE) navController.navigate(R.id.usersFragment)
+            if (requestCode == CONTACTS_PERMISSIONS_CODE) findNavController().navigate(R.id.usersFragment)
     }
 
     private fun hideKeyBoard() {

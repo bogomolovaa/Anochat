@@ -7,21 +7,14 @@ import androidx.core.widget.doOnTextChanged
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.features.shared.playMessageSound
 
-interface RequestPermission {
-    fun requestMicrophonePermission()
-    fun requestReadPermission()
-    fun requestCameraPermission()
-}
-
 class ConversationInputSetup(
-    private val requestPermission: RequestPermission,
-    private val viewModel: ConversationViewModel,
-    private val recyclerViewSetup: ConversationRecyclerViewSetup
+    private val fragment: ConversationFragment,
+    private val viewModel: ConversationViewModel
 ) {
-    private lateinit var binding: FragmentConversationBinding
+    private val binding get() = fragment.binding
+    private val recyclerViewSetup get() = fragment.recyclerViewSetup!!
 
-    fun setup(binding: FragmentConversationBinding) {
-        this.binding = binding
+    fun setup() {
         setFabClickListener()
         setMiniFabsClickListeners()
         setMessageInputTextListeners()
@@ -55,15 +48,15 @@ class ConversationInputSetup(
     private fun setMiniFabsClickListeners() {
         binding.fabMic.setOnClickListener {
             hideFabs()
-            requestPermission.requestMicrophonePermission()
+            fragment.requestMicrophonePermission()
         }
         binding.fabFile.setOnClickListener {
             hideFabs { viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) } }
-            requestPermission.requestReadPermission()
+            fragment.requestReadPermission()
         }
         binding.fabCamera.setOnClickListener {
             hideFabs { viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) } }
-            requestPermission.requestCameraPermission()
+            fragment.requestCameraPermission()
         }
     }
 
