@@ -4,7 +4,6 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.view.animation.DecelerateInterpolator
 import androidx.core.widget.doOnTextChanged
-import bogomolov.aa.anochat.databinding.FragmentConversationBinding
 import bogomolov.aa.anochat.features.shared.playMessageSound
 
 class ConversationInputSetup(
@@ -19,7 +18,7 @@ class ConversationInputSetup(
         setMiniFabsClickListeners()
         setMessageInputTextListeners()
         binding.playAudioInput.setOnCloseListener {
-            viewModel.setStateAsync { copy(inputState = InputStates.INITIAL, audioFile = null) }
+            viewModel.updateState { copy(inputState = InputStates.INITIAL, audioFile = null) }
         }
         binding.playAudioInput.actionExecutor = viewModel
         binding.replayAudio.actionExecutor = viewModel
@@ -27,20 +26,20 @@ class ConversationInputSetup(
 
     private fun setFabClickListener() {
         binding.fab.setOnClickListener {
-            when (viewModel.state.inputState) {
+            when (viewModel.currentState.inputState) {
                 InputStates.INITIAL -> expandFabs()
                 InputStates.FAB_EXPAND -> hideFabs {
-                    viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) }
+                    viewModel.updateState { copy(inputState = InputStates.INITIAL) }
                 }
                 InputStates.TEXT_ENTERED -> {
-                    viewModel.addAction(SendMessageAction(text = viewModel.state.text))
+                    viewModel.sendMessage(SendMessageData(text = viewModel.currentState.text))
                     playMessageSound(binding.root.context)
                 }
                 InputStates.VOICE_RECORDED -> {
-                    viewModel.addAction(SendMessageAction(audio = viewModel.state.audioFile))
+                    viewModel.sendMessage(SendMessageData(audio = viewModel.currentState.audioFile))
                     playMessageSound(binding.root.context)
                 }
-                InputStates.VOICE_RECORDING -> viewModel.addAction(StopRecordingAction())
+                InputStates.VOICE_RECORDING -> viewModel.stopRecording()
             }
         }
     }
@@ -51,11 +50,11 @@ class ConversationInputSetup(
             fragment.requestMicrophonePermission()
         }
         binding.fabFile.setOnClickListener {
-            hideFabs { viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) } }
+            hideFabs { viewModel.updateState { copy(inputState = InputStates.INITIAL) } }
             fragment.requestReadPermission()
         }
         binding.fabCamera.setOnClickListener {
-            hideFabs { viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) } }
+            hideFabs { viewModel.updateState { copy(inputState = InputStates.INITIAL) } }
             fragment.requestCameraPermission()
         }
     }
@@ -75,7 +74,7 @@ class ConversationInputSetup(
     }
 
     private fun expandFabs() {
-        viewModel.setStateAsync { copy(inputState = InputStates.FAB_EXPAND) }
+        viewModel.updateState { copy(inputState = InputStates.FAB_EXPAND) }
         binding.fabMic.animate()
             .translationY(-600f).setDuration(200).setInterpolator(DecelerateInterpolator()).start()
         binding.fabFile.animate()
@@ -90,7 +89,7 @@ class ConversationInputSetup(
         }
         binding.messageInputText.doOnTextChanged { textInput, _, _, _ ->
             val enteredText = textInput.toString()
-            viewModel.addAction(TextChangedAction(enteredText))
+            viewModel.textChanged(enteredText)
         }
     }
 }

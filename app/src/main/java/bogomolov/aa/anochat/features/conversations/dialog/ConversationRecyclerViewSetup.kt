@@ -23,12 +23,10 @@ class ConversationRecyclerViewSetup(
     private val fragment: ConversationFragment,
     private val viewModel: ConversationViewModel,
 ) {
-    private var recyclerViewRestored = false
     private var enterAnimationFinished = false
     private val binding get() = fragment.binding
 
     fun setup(onPreDraw: () -> Unit) {
-        recyclerViewRestored = false
         enterAnimationFinished = false
         val messagesPagedAdapter = createRecyclerViewAdapter()
         with(binding.recyclerView) {
@@ -51,7 +49,7 @@ class ConversationRecyclerViewSetup(
             RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
                 super.onItemRangeInserted(positionStart, itemCount)
-                viewModel.addAction(NotifyAsViewed(messagesPagedAdapter.snapshot().items))
+                viewModel.notifyAsViewed(messagesPagedAdapter.snapshot().items)
             }
         })
     }
@@ -72,13 +70,12 @@ class ConversationRecyclerViewSetup(
     fun updateMessages(pagingData: PagingData<MessageView>) {
         (binding.recyclerView.adapter as MessagesPagedAdapter)
             .submitData(fragment.lifecycle, pagingData)
-        restoreRecyclerViewPosition()
     }
 
     private fun createRecyclerViewAdapter(): MessagesPagedAdapter {
         val data = ActionModeData<MessageView>(R.menu.messages_menu, binding.toolbar)
         data.actionsMap[R.id.delete_messages_action] = { _, items ->
-            viewModel.addAction(DeleteMessagesAction(items.map { it.message.id }.toSet()))
+            viewModel.deleteMessages(items.map { it.message.id }.toSet())
         }
         data.actionsMap[R.id.reply_message_action] = { _, items ->
             if (items.isNotEmpty()) {
@@ -105,9 +102,9 @@ class ConversationRecyclerViewSetup(
     }
 
     private fun onReply(message: Message) {
-        viewModel.setStateAsync { copy(replyMessage = message) }
+        viewModel.updateState { copy(replyMessage = message) }
         binding.removeReply.setOnClickListener {
-            viewModel.setStateAsync { copy(replyMessage = null) }
+            viewModel.updateState { copy(replyMessage = null) }
         }
     }
 
@@ -137,24 +134,8 @@ class ConversationRecyclerViewSetup(
                         if (viewHolder != null) adapter.loadDetailed(id, viewHolder)
                     }
                     enterAnimationFinished = true
-                    if (dy != 0) saveRecyclerViewPosition(saveState)
                 }
             }
-        }
-    }
-
-    private fun saveRecyclerViewPosition(state: Parcelable?) {
-        viewModel.setStateAsync { copy(recyclerViewState = state) }
-    }
-
-    private fun restoreRecyclerViewPosition() {
-        val recyclerViewState = viewModel.state.recyclerViewState
-        if (recyclerViewState != null && !recyclerViewRestored) {
-            binding.recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
-            recyclerViewRestored = true
-        } else {
-            binding.messageInputText.requestFocus()
-            scrollToEnd()
         }
     }
 }

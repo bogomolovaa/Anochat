@@ -58,7 +58,7 @@ class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
         val searchString = arguments?.getString("search")!!
 
         val searchView = SearchView(context)
-        searchView.setOnSubmitListener { query -> viewModel.addAction(MessageSearchAction(query)) }
+        searchView.setOnSubmitListener { query -> viewModel.messageSearch(query) }
         searchView.setTextColor(R.color.title_color)
         searchView.setQuery(searchString, true)
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView

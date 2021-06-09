@@ -25,7 +25,7 @@ interface PhoneVerification {
 interface AuthRepository {
     fun sendPhoneNumber(
         phoneNumber: String,
-        activity: () -> Activity,
+        getActivity: () -> Activity,
         phoneVerification: PhoneVerification,
     )
 

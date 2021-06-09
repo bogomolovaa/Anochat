@@ -83,13 +83,13 @@ class SendMediaFragment : Fragment() {
                 if (resized.processed) {
                     val text = binding.messageInputText.text?.toString() ?: ""
                     if (isVideo) {
-                        viewModel.addAction(
-                            SendMessageAction(video = nameToVideo(resized.name), text = text)
+                        viewModel.sendMessage(
+                            SendMessageData(video = nameToVideo(resized.name), text = text)
                         )
 
                     } else {
-                        viewModel.addAction(
-                            SendMessageAction(image = nameToImage(resized.name), text = text)
+                        viewModel.sendMessage(
+                            SendMessageData(image = nameToImage(resized.name), text = text)
                         )
                     }
                     playMessageSound(requireContext())

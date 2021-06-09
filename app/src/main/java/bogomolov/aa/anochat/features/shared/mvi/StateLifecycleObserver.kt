@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "StateLifecycleObserver"
 
-class StateLifecycleObserver<S : UiState>(
+class StateLifecycleObserver<S: Any>(
     private val updatableView: UpdatableView<S>,
     private val viewModel: BaseViewModel<S>
 ) : LifecycleObserver {
@@ -20,9 +20,9 @@ class StateLifecycleObserver<S : UiState>(
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     fun onStart() {
-        uiState = viewModel.createInitialState()
+        uiState = viewModel.initialState
         updatingJob = viewModel.viewModelScope.launch {
-            viewModel.stateFlow.collect {
+            viewModel.state.collect {
                 Log.i(TAG, "${updatableView.javaClass.simpleName} newState:\n${it}\ncurrent:\n$uiState")
                 updatableView.updateView(it, uiState)
                 uiState = it
@@ -36,6 +36,6 @@ class StateLifecycleObserver<S : UiState>(
     }
 }
 
-interface UpdatableView<S : UiState> {
+interface UpdatableView<S> {
     fun updateView(newState: S, currentState: S)
 }

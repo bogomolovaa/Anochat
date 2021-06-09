@@ -61,7 +61,7 @@ class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
     private fun setupRecyclerView() {
         val data = ActionModeData<Conversation>(R.menu.conversations_menu, binding.toolbar)
         data.actionsMap[R.id.delete_conversations_action] =
-            { ids, _ -> viewModel.addAction(DeleteConversationsAction(ids)) }
+            { ids, _ -> viewModel.deleteConversations(ids) }
         val adapter =
             ConversationsPagedAdapter(actionModeData = data) { conversation ->
                 val bundle = Bundle().apply { putLong("id", conversation.id) }
@@ -83,7 +83,7 @@ class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
             inflateMenu(R.menu.main_menu)
             setOnMenuItemClickListener {
                 if (it.itemId == R.id.menu_sign_out) {
-                    viewModel.addAction(SignOutAction())
+                    viewModel.signOut()
                     navController.navigate(R.id.signInFragment)
                     true
                 } else {

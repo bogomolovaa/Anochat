@@ -10,22 +10,15 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import androidx.core.os.ConfigurationCompat
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import androidx.transition.Fade
 import androidx.transition.Slide
@@ -35,7 +28,6 @@ import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import com.vanniktech.emoji.EmojiPopup
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.isActive
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -61,8 +53,8 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
     override fun onPause() {
         super.onPause()
         hideKeyBoard()
-        if (viewModel.state.inputState == InputStates.FAB_EXPAND)
-            viewModel.setStateAsync { copy(inputState = InputStates.INITIAL) }
+        if (viewModel.currentState.inputState == InputStates.FAB_EXPAND)
+            viewModel.updateState { copy(inputState = InputStates.INITIAL) }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -73,7 +65,7 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
         val conversationInputSetup = ConversationInputSetup(this, viewModel)
         stateLifecycleObserver = StateLifecycleObserver(updatableView, viewModel)
         viewLifecycleOwner.lifecycle.addObserver(stateLifecycleObserver!!)
-        viewModel.addAction(InitConversationAction(conversationId))
+        viewModel.initConversation(conversationId)
 
         binding.toolbar.setupWithNavController(findNavController())
         emojiPopup = EmojiPopup.Builder.fromRootView(binding.root).build(binding.messageInputText)
@@ -86,7 +78,7 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
         }
 
         binding.usernameLayout.setOnClickListener {
-            val userId = viewModel.state.conversation?.user?.id
+            val userId = viewModel.currentState.conversation?.user?.id
             if (userId != null) navigateToUserFragment(userId)
         }
 
@@ -111,6 +103,7 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
         val imm =
             requireContext().getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(requireView().windowToken, 0)
+        binding.messageInputText.clearFocus()
     }
 
     private fun navigateToUserFragment(userId: Long) {
@@ -133,7 +126,7 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
     }
 
     private val takePicture = registerForActivityResult(TakePictureFromCamera()) {
-        navigateToSendMediaFragment(path = viewModel.state.photoPath)
+        navigateToSendMediaFragment(path = viewModel.currentState.photoPath)
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -156,7 +149,7 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
     private val cameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
             val photoFile = createTempImageFile()
-            viewModel.setStateAsync { copy(photoPath = photoFile.path) }
+            viewModel.updateState { copy(photoPath = photoFile.path) }
             takePicture.launch(photoFile)
         }
 
@@ -166,7 +159,7 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
 
     private val microphonePermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-            viewModel.addAction(StartRecordingAction())
+            viewModel.startRecording()
         }
 
     fun requestMicrophonePermission() {

@@ -2,7 +2,6 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.annotation.SuppressLint
 import android.os.Parcelable
-import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
@@ -16,8 +15,6 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.AudioPlayer
 import bogomolov.aa.anochat.features.shared.LocaleProvider
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
-import bogomolov.aa.anochat.features.shared.mvi.UiState
-import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -41,7 +38,6 @@ enum class InputStates {
 data class DialogUiState(
     val conversation: Conversation? = null,
     val onlineStatus: String = "",
-    var recyclerViewState: Parcelable? = null,
     val inputState: InputStates = InputStates.INITIAL,
     val replyMessage: Message? = null,
     val audioFile: String? = null,
@@ -50,7 +46,7 @@ data class DialogUiState(
     val audioLengthText: String = "",
     val playingState: PlayingState? = null,
     val pagingData: PagingData<MessageView>? = null
-) : UiState
+)
 
 data class PlayingState(
     val audioFile: String,
@@ -60,28 +56,12 @@ data class PlayingState(
     val paused: Boolean = false
 )
 
-class SendMessageAction(
+data class SendMessageData(
     val text: String? = null,
     val audio: String? = null,
     val image: String? = null,
     val video: String? = null
-) : UserAction
-
-class InitConversationAction(
-    val conversationId: Long
-) : UserAction
-
-class TextChangedAction(
-    val enteredText: String
-) : UserAction
-
-class DeleteMessagesAction(val ids: Set<Long>) : UserAction
-class StartRecordingAction : UserAction
-class StopRecordingAction : UserAction
-class StartPlayingAction(val audioFile: String? = null, val messageId: String? = null) : UserAction
-class PausePlayingAction : UserAction
-
-data class NotifyAsViewed(val messages: List<MessageView>) : UserAction
+)
 
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
@@ -90,7 +70,7 @@ class ConversationViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases,
     private val audioPlayer: AudioPlayer,
     private val localeProvider: LocaleProvider
-) : BaseViewModel<DialogUiState>() {
+) : BaseViewModel<DialogUiState>(DialogUiState()) {
     private var recordingJob: Job? = null
     private var playJob: Job? = null
     private var startTime = 0L
@@ -101,35 +81,22 @@ class ConversationViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         GlobalScope.launch(dispatcher) {
-            state.conversation?.id?.let { conversationUseCases.deleteConversationIfNoMessages(it) }
-        }
-    }
-
-    override fun createInitialState() = DialogUiState()
-
-    override suspend fun handleAction(action: UserAction) {
-        if (action is SendMessageAction) action.execute()
-        if (action is InitConversationAction) action.execute()
-        if (action is DeleteMessagesAction) action.execute()
-        if (action is StartRecordingAction) action.execute()
-        if (action is StopRecordingAction) action.execute()
-        if (action is StartPlayingAction) action.execute()
-        if (action is PausePlayingAction) action.execute()
-        if (action is TextChangedAction) action.execute()
-        if (action is NotifyAsViewed) action.execute()
-
-    }
-
-    private suspend fun NotifyAsViewed.execute() {
-        viewModelScope.launch(dispatcher) {
-            state.conversation?.user?.uid?.let { uid ->
-                messageUseCases.notifyAsViewed(messages.map { it.message }, uid)
+            currentState.conversation?.id?.let {
+                conversationUseCases.deleteConversationIfNoMessages(
+                    it
+                )
             }
         }
     }
 
-    private suspend fun TextChangedAction.execute() {
-        val uid = state.conversation?.user?.uid
+    fun notifyAsViewed(messages: List<MessageView>) = execute {
+        currentState.conversation?.user?.uid?.let { uid ->
+            messageUseCases.notifyAsViewed(messages.map { it.message }, uid)
+        }
+    }
+
+    fun textChanged(enteredText: String) = execute {
+        val uid = currentState.conversation?.user?.uid
         if (uid != null) {
             if (typingJob == null) messageUseCases.startTypingTo(uid)
             typingJob?.cancel()
@@ -148,8 +115,8 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    private suspend fun StartPlayingAction.execute() {
-        if (state.playingState == null) init()
+    fun startPlaying(audioFile: String? = null, messageId: String? = null) = execute {
+        if (currentState.playingState == null) initStartPlaying(audioFile, messageId)
         if (audioPlayer.startPlay()) {
             startTime = System.currentTimeMillis()
             playJob = viewModelScope.launch(dispatcher) {
@@ -163,11 +130,11 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    private suspend fun StartPlayingAction.init() {
+    private suspend fun initStartPlaying(audioFile: String? = null, messageId: String? = null) {
         if (audioFile != null) {
             val duration = audioPlayer.initPlayer(audioFile) {
                 playJob?.cancel()
-                setStateAsync { copy(playingState = null) }
+                updateState { copy(playingState = null) }
             }
             val newPlayingState =
                 PlayingState(audioFile = audioFile, duration = duration, messageId = messageId)
@@ -175,16 +142,16 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    private suspend fun PausePlayingAction.execute() {
+    fun pausePlaying() = execute {
         if (audioPlayer.pausePlay()) {
             tempElapsed += System.currentTimeMillis() - startTime
             playJob?.cancel()
-            val playingState = state.playingState?.copy(paused = true)
+            val playingState = currentState.playingState?.copy(paused = true)
             setState { copy(playingState = playingState) }
         }
     }
 
-    private suspend fun StartRecordingAction.execute() {
+    fun startRecording() = execute {
         val audioFile = audioPlayer.startRecording()
         setState { copy(audioFile = audioFile, inputState = InputStates.VOICE_RECORDING) }
         recordingJob = viewModelScope.launch(dispatcher) {
@@ -198,25 +165,25 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    private suspend fun StopRecordingAction.execute() {
+    fun stopRecording() = execute {
         audioPlayer.stopRecording()
         recordingJob?.cancel()
         setState { copy(inputState = InputStates.VOICE_RECORDED) }
     }
 
-    private suspend fun SendMessageAction.execute() {
-        val conversation = state.conversation
+    fun sendMessage(data: SendMessageData) = execute {
+        val conversation = currentState.conversation
         if (conversation != null) {
-            val replyId = state.replyMessage?.messageId
+            val replyId = currentState.replyMessage?.messageId
             val message = Message(
-                text = text ?: "",
+                text = data.text ?: "",
                 time = System.currentTimeMillis(),
                 isMine = true,
                 conversationId = conversation.id,
                 replyMessageId = replyId,
-                audio = audio,
-                image = image,
-                video = video
+                audio = data.audio,
+                image = data.image,
+                video = data.video
             )
             setState {
                 copy(
@@ -225,18 +192,17 @@ class ConversationViewModel @Inject constructor(
                     replyMessage = null,
                     photoPath = null,
                     audioFile = null,
-                    recyclerViewState = null
                 )
             }
             messageUseCases.sendMessage(message, conversation.user.uid)
         }
     }
 
-    private fun DeleteMessagesAction.execute() {
+    fun deleteMessages(ids: Set<Long>) = execute {
         messageUseCases.deleteMessages(ids)
     }
 
-    private suspend fun InitConversationAction.execute() {
+    fun initConversation(conversationId: Long) = execute {
         if (!conversationInitialized) {
             conversationInitialized = true
             val conversation = conversationUseCases.getConversation(conversationId)!!
@@ -246,21 +212,19 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    private suspend fun InitConversationAction.subscribeToMessages(conversation: Conversation) {
-        viewModelScope.launch(dispatcher) {
-            messageUseCases.loadMessagesDataSource(conversation.id).flowOn(dispatcher)
-                .cachedIn(viewModelScope.plus(dispatcher))
-                .collectLatest {
-                    setState {
-                        copy(
-                            pagingData = it.map { MessageView(it) }.insertSeparators { m1, m2 ->
-                                insertDateSeparators(m1, m2, localeProvider.locale)
-                                null
-                            }
-                        )
-                    }
+    private fun subscribeToMessages(conversation: Conversation) = execute {
+        messageUseCases.loadMessagesDataSource(conversation.id).flowOn(dispatcher)
+            .cachedIn(viewModelScope.plus(dispatcher))
+            .collectLatest {
+                setState {
+                    copy(
+                        pagingData = it.map { MessageView(it) }.insertSeparators { m1, m2 ->
+                            insertDateSeparators(m1, m2, localeProvider.locale)
+                            null
+                        }
+                    )
                 }
-        }
+            }
     }
 
     private fun subscribeToOnlineStatus(uid: String) {

@@ -36,7 +36,7 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
         NavigationUI.setupWithNavController(binding.toolbar, navController)
         binding.toolbar.navigationIcon = null
         binding.fab.setOnClickListener {
-            when (viewModel.state.state) {
+            when (viewModel.currentState.state) {
                 LoginState.INITIAL -> submitPhoneNumber()
                 LoginState.VERIFICATION_ID_RECEIVED, LoginState.NOT_LOGGED -> submitCode()
                 else -> {
@@ -112,11 +112,11 @@ class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
 
     private fun submitCode() {
         val code = binding.codeInputText.text.toString()
-        viewModel.addAction(SubmitSmsCodeAction(code))
+        viewModel.submitSmsCode(code)
     }
 
     private fun submitPhoneNumber() {
         val phoneNumber = binding.phoneInputText.text.toString()
-        viewModel.addAction(SubmitPhoneNumberAction(phoneNumber) { requireActivity() })
+        viewModel.submitPhoneNumber(phoneNumber) { requireActivity() }
     }
 }

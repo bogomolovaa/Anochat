@@ -21,6 +21,7 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentSettingsBinding
 import bogomolov.aa.anochat.features.shared.Settings
+import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import bogomolov.aa.anochat.repository.FileStore
@@ -28,18 +29,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
+class SettingsFragment : Fragment(R.layout.fragment_settings), UpdatableView<SettingsUiState> {
     val viewModel: SettingsViewModel by hiltNavGraphViewModels(R.id.settings_graph)
-    private lateinit var binding: FragmentSettingsBinding
+    private val binding by bindingDelegate(FragmentSettingsBinding::bind)
     private lateinit var navController: NavController
 
     @Inject
     lateinit var fileStore: FileStore
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentSettingsBinding.inflate(inflater, container, false).also { binding = it }.root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -81,7 +77,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
             requireContext().resources.getString(R.string.enter_new_name),
             name
         ) {
-            if (it.isNotEmpty()) viewModel.addAction(UpdateUserAction { copy(name = it) })
+            if (it.isNotEmpty()) viewModel.updateUser { copy(name = it) }
         }
         bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
     }
@@ -92,7 +88,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
             requireContext().resources.getString(R.string.enter_new_status),
             status
         ) {
-            if (it.isNotEmpty()) viewModel.addAction(UpdateUserAction { copy(status = it) })
+            if (it.isNotEmpty()) viewModel.updateUser { copy(status = it) }
         }
         bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
     }
@@ -100,7 +96,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
     private fun addListeners() {
         binding.privacyPolicy.setOnClickListener { openPrivacyPolicy() }
         binding.editPhoto.setOnClickListener {
-            if (viewModel.state.user != null) readPermission.launch(READ_EXTERNAL_STORAGE)
+            if (viewModel.currentState.user != null) readPermission.launch(READ_EXTERNAL_STORAGE)
         }
         binding.gallerySwitch.setOnClickListener { writePermission.launch(WRITE_EXTERNAL_STORAGE) }
         observeChangesFor(binding.notificationsSwitch) { checked -> copy(notifications = checked) }
@@ -111,7 +107,7 @@ class SettingsFragment : Fragment(), UpdatableView<SettingsUiState> {
 
     private fun observeChangesFor(switch: Switch, change: Settings.(Boolean) -> Settings) {
         switch.setOnCheckedChangeListener { _, checked ->
-            viewModel.addAction(ChangeSettingsAction { change(checked) })
+            viewModel.changeSettings { change(checked) }
         }
     }
 

@@ -1,9 +1,7 @@
 package bogomolov.aa.anochat.features.contacts.user
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
@@ -33,7 +31,7 @@ class UserViewFragment : Fragment(R.layout.fragment_user_view), UpdatableView<Us
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val userId = arguments?.getLong("id")!!
-        viewModel.addAction(InitUserAction(userId))
+        viewModel.initUser(userId)
 
         val animationDuration = resources.getInteger(R.integer.animation_duration).toLong()
         transition = Fade().apply { duration = animationDuration }
@@ -94,7 +92,7 @@ class UserViewFragment : Fragment(R.layout.fragment_user_view), UpdatableView<Us
 
     private fun setPhotoClickListener(navController: NavController) {
         binding.userPhoto.setOnClickListener {
-            val photo = viewModel.state.user?.photo
+            val photo = viewModel.currentState.user?.photo
             transition?.removeTarget(R.id.userPhoto)
             if (photo != null) {
                 val extras = FragmentNavigator.Extras.Builder()

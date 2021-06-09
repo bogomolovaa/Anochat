@@ -9,14 +9,13 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
 import java.text.SimpleDateFormat
 import java.util.*
 
 class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(context, attrs) {
     private var audioFile: String? = null
     private var messageId: String? = null
-    lateinit var actionExecutor: ActionExecutor
+    lateinit var actionExecutor: ConversationViewModel
 
     init {
         inflate(context, R.layout.play_audio_layout, this)
@@ -40,7 +39,7 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
             playPauseButton.setImageResource(R.drawable.send_icon)
             playPauseButton.setOnClickListener {
                 playPauseButton.setImageResource(R.drawable.pause_icon)
-                actionExecutor.addAction(StartPlayingAction(audioFile, messageId))
+                actionExecutor.startPlaying(audioFile, messageId)
             }
         }else{
             playPauseButton.setImageResource(R.drawable.ic_error_outline)
@@ -59,12 +58,12 @@ class PlayAudioView(context: Context, attrs: AttributeSet) : ConstraintLayout(co
         if (state.paused) {
             playPauseButton.setImageResource(R.drawable.send_icon)
             playPauseButton.setOnClickListener {
-                actionExecutor.addAction(StartPlayingAction(audioFile, messageId))
+                actionExecutor.startPlaying(audioFile, messageId)
             }
         } else {
             playPauseButton.setImageResource(R.drawable.pause_icon)
             playPauseButton.setOnClickListener {
-                actionExecutor.addAction(PausePlayingAction())
+                actionExecutor.pausePlaying()
             }
         }
     }

@@ -33,7 +33,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel.addAction(LoadContactsAction(getContactsPhones()))
+        viewModel.loadContacts(getContactsPhones())
     }
 
     override fun onCreateView(
@@ -51,7 +51,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
         setHasOptionsMenu(true)
 
-        usersAdapter = UsersAdapter { viewModel.addAction(CreateConversationAction(it)) }
+        usersAdapter = UsersAdapter { viewModel.createConversation(it) }
         binding.recyclerView.adapter = usersAdapter
 
         viewLifecycleOwner.addRepeatingJob(Lifecycle.State.RESUMED) {
@@ -119,7 +119,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
                 override fun onMenuItemActionExpand(item: MenuItem) = true
 
                 override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
-                    viewModel.addAction(ResetSearchAction())
+                    viewModel.resetSearch()
                     return true
                 }
             })
@@ -128,7 +128,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?) =
                 if (query != null) {
-                    viewModel.addAction(SearchAction(query))
+                    viewModel.search(query)
                     true
                 } else false
 
@@ -137,7 +137,7 @@ class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
         val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
         closeButton.setOnClickListener {
             menu.findItem(R.id.action_search).collapseActionView()
-            viewModel.addAction(ResetSearchAction())
+            viewModel.resetSearch()
         }
     }
 }

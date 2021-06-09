@@ -30,7 +30,6 @@ import bogomolov.aa.anochat.databinding.MessageLayoutBinding
 import bogomolov.aa.anochat.domain.entity.AttachmentStatus
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.*
-import bogomolov.aa.anochat.features.shared.mvi.ActionExecutor
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +42,7 @@ class MessagesPagedAdapter(
     private val lifecycleScope: CoroutineScope,
     private val windowWidth: Int,
     private val onReply: (Message) -> Unit,
-    private val actionExecutor: ActionExecutor,
+    private val actionExecutor: ConversationViewModel,
     actionModeData: ActionModeData<MessageView>? = null,
 ) : ExtPagedListAdapter<MessageView, MessageLayoutBinding>(actionModeData) {
     val messagesMap = HashMap<String, PlayAudioView>()

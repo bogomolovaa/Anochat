@@ -21,11 +21,7 @@ import bogomolov.aa.anochat.domain.repositories.ConversationRepository
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
 import bogomolov.aa.anochat.domain.repositories.UserRepository
 import bogomolov.aa.anochat.features.conversations.list.ConversationListFragment
-import bogomolov.aa.anochat.features.conversations.list.DeleteConversationsAction
-import bogomolov.aa.anochat.features.conversations.list.InitConversationsAction
-import bogomolov.aa.anochat.features.conversations.list.SignOutAction
 import bogomolov.aa.anochat.features.shared.AuthRepository
-import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import bogomolov.aa.anochat.getStringRes
 import bogomolov.aa.anochat.navigateTo
 import bogomolov.aa.anochat.repository.Firebase
@@ -43,6 +39,7 @@ import org.junit.Test
 import org.mockito.Mockito
 import javax.inject.Inject
 
+/*
 @HiltAndroidTest
 class ConversationListTest {
 
@@ -159,3 +156,4 @@ class ConversationListTest {
     }
 }
 
+ */

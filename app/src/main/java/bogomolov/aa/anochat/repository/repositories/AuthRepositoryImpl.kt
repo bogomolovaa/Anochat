@@ -67,7 +67,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun sendPhoneNumber(
         phoneNumber: String,
-        activity: () -> Activity,
+        getActivity: () -> Activity,
         phoneVerification: PhoneVerification,
     ) {
         val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
@@ -104,7 +104,7 @@ class AuthRepositoryImpl @Inject constructor(
             phoneNumber,
             60,
             TimeUnit.SECONDS,
-            activity(),
+            getActivity(),
             callbacks
         )
     }

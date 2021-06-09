@@ -7,8 +7,6 @@ import bogomolov.aa.anochat.features.shared.ErrorType
 import bogomolov.aa.anochat.features.shared.PhoneVerification
 import bogomolov.aa.anochat.features.shared.SignInError
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
-import bogomolov.aa.anochat.features.shared.mvi.UiState
-import bogomolov.aa.anochat.features.shared.mvi.UserAction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -26,57 +24,48 @@ data class SignInUiState(
     val phoneNumber: String? = null,
     val code: String? = null,
     val error: SignInError? = null
-) : UiState
-
-class SubmitPhoneNumberAction(val number: String, val activity: () -> Activity) : UserAction
-class SubmitSmsCodeAction(val code: String) : UserAction
+)
 
 @HiltViewModel
-class SignInViewModel
-@Inject constructor(private val authRepository: AuthRepository) : BaseViewModel<SignInUiState>() {
+class SignInViewModel @Inject constructor(
+    private val authRepository: AuthRepository
+) : BaseViewModel<SignInUiState>(SignInUiState()) {
 
-    override fun createInitialState() = SignInUiState()
-
-    private val phoneVerification = object : PhoneVerification {
+    val phoneVerification = object : PhoneVerification {
 
         override fun onComplete() {
-            setStateAsync { copy(state = LoginState.LOGGED) }
+            updateState { copy(state = LoginState.LOGGED) }
         }
 
         override fun onCodeVerify(smsCode: String?) {
-            setStateAsync { copy(state = LoginState.CODE_SUBMITTED, code = smsCode) }
+            updateState { copy(state = LoginState.CODE_SUBMITTED, code = smsCode) }
         }
 
         override fun onCodeSent() {
-            setStateAsync { copy(state = LoginState.VERIFICATION_ID_RECEIVED, error = null) }
+            updateState { copy(state = LoginState.VERIFICATION_ID_RECEIVED, error = null) }
         }
 
         override fun onPhoneError(error: SignInError?) {
-            setStateAsync { copy(state = LoginState.INITIAL, error = error) }
+            updateState { copy(state = LoginState.INITIAL, error = error) }
         }
 
         override fun onCodeError(error: SignInError?) {
-            setStateAsync { copy(state = LoginState.NOT_LOGGED, error = error) }
+            updateState { copy(state = LoginState.NOT_LOGGED, error = error) }
         }
     }
 
-    override suspend fun handleAction(action: UserAction) {
-        if (action is SubmitPhoneNumberAction) action.execute()
-        if (action is SubmitSmsCodeAction) action.execute()
-    }
-
-    private suspend fun SubmitPhoneNumberAction.execute() {
+    fun submitPhoneNumber(number: String, getActivity: () -> Activity) = execute {
         if (number.isNotEmpty() && isValidPhone(number)) {
             setState { copy(phoneNumber = number, state = LoginState.PHONE_SUBMITTED) }
-            authRepository.sendPhoneNumber(number, activity, phoneVerification)
+            authRepository.sendPhoneNumber(number, getActivity, phoneVerification)
         } else {
             setState { copy(phoneNumber = number, error = SignInError(ErrorType.WRONG_PHONE)) }
         }
     }
 
-    private suspend fun SubmitSmsCodeAction.execute() {
+    fun submitSmsCode(code: String) = execute {
         if (code.isNotEmpty()) {
-            authRepository.verifySmsCode(state.phoneNumber!!, code, phoneVerification)
+            authRepository.verifySmsCode(currentState.phoneNumber!!, code, phoneVerification)
         } else {
             setState { copy(error = SignInError(ErrorType.EMPTY_CODE)) }
         }
