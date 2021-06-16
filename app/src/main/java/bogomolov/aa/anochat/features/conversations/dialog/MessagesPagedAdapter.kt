@@ -382,10 +382,11 @@ class MessagesPagedAdapter(
     }
 
     private fun toSpanned(html: String?): Spanned {
+        val content = html?.replace("\n","<br>")
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY)
+            Html.fromHtml(content, Html.FROM_HTML_MODE_LEGACY)
         } else {
-            Html.fromHtml(html)
+            Html.fromHtml(content)
         }
     }
 

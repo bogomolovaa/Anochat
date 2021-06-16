@@ -1,7 +1,10 @@
 package bogomolov.aa.anochat.features.conversations.search
 
 import android.os.Bundle
-import android.view.*
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -16,21 +19,17 @@ import bogomolov.aa.anochat.databinding.FragmentMessageSearchBinding
 import bogomolov.aa.anochat.features.conversations.list.ConversationsPagedAdapter
 import bogomolov.aa.anochat.features.conversations.list.setOnSubmitListener
 import bogomolov.aa.anochat.features.conversations.list.setTextColor
+import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class MessageSearchFragment : Fragment(), UpdatableView<MessageSearchUiState> {
+class MessageSearchFragment : Fragment(R.layout.fragment_message_search), UpdatableView<MessageSearchUiState> {
     private val viewModel: MessageSearchViewModel by viewModels()
     private lateinit var navController: NavController
     private val adapter = ConversationsPagedAdapter(showFullMessage = true)
-    private lateinit var binding: FragmentMessageSearchBinding
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentMessageSearchBinding.inflate(inflater, container, false).also { binding = it }.root
+    private val binding by bindingDelegate(FragmentMessageSearchBinding::bind)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

@@ -13,6 +13,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentExoVideoViewBinding
+import bogomolov.aa.anochat.databinding.FragmentImageViewBinding
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
 import kotlin.math.max
@@ -20,8 +21,8 @@ import kotlin.math.max
 private const val KEY_WINDOW = "window"
 private const val KEY_POSITION = "position"
 
-class ExoPlayerViewFragment : Fragment() {
-    private lateinit var binding: FragmentExoVideoViewBinding
+class ExoPlayerViewFragment : Fragment(R.layout.fragment_exo_video_view) {
+    private val binding by bindingDelegate(FragmentExoVideoViewBinding::bind)
     private var savedSystemUiVisibility = 0
     private var startWindow = 0
     private var startPosition = 0L
@@ -34,11 +35,6 @@ class ExoPlayerViewFragment : Fragment() {
             startPosition = savedInstanceState.getLong(KEY_POSITION)
         }
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentExoVideoViewBinding.inflate(inflater, container, false).also { binding = it }.root
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

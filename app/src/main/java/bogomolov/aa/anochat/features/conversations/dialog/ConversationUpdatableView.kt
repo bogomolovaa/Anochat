@@ -25,7 +25,8 @@ class ConversationUpdatableView(
         if (newState.replyMessage != currentState.replyMessage) setReplyMessage(newState.replyMessage)
         if (newState.inputState != currentState.inputState) setInputState(newState)
         if (newState.playingState != currentState.playingState) setPlayingState(newState)
-        if (newState.pagingData != currentState.pagingData) recyclerViewSetup.updateMessages(newState.pagingData!!)
+        if (newState.pagingData != currentState.pagingData)
+            recyclerViewSetup.updateMessages(newState.pagingData!!, currentState.pagingData == null)
     }
 
     private fun setPlayingState(state: DialogUiState) {

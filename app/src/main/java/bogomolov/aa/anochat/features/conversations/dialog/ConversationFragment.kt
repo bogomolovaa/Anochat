@@ -18,6 +18,8 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.addRepeatingJob
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.transition.Fade
@@ -28,6 +30,7 @@ import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import com.vanniktech.emoji.EmojiPopup
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -87,6 +90,17 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
             arguments?.remove("uri")
             navigateToSendMediaFragment(uri = uri)
             return
+        }
+
+        viewLifecycleOwner.addRepeatingJob(Lifecycle.State.RESUMED) {
+            viewModel.events.collect {
+                when (it) {
+                    is OnMessageSent -> {
+                        hideKeyBoard()
+                        recyclerViewSetup?.scrollToEnd()
+                    }
+                }
+            }
         }
     }
 

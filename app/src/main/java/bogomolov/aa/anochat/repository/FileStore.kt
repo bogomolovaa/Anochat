@@ -91,31 +91,33 @@ class FileStoreImpl @Inject constructor(
 
         saveUriToFile(uri, originalVideoFile)
         val thumbnailBitmap = createVideoThumbnail(originalVideoFile)
-        saveImageToPath(thumbnailBitmap, nameToImage(videoName))
-
-        val result = BitmapWithName(videoName, thumbnailBitmap).apply { processed = false }
-        coroutineScope.launch(Dispatchers.Default) {
-            val mediaPlayer = MediaPlayer.create(context, uri)
-            val videoLength = mediaPlayer.duration
-            mediaPlayer.release()
-            if (videoLength > 0) {
-                Config.resetStatistics()
-                Config.enableStatisticsCallback { statistics ->
-                    if (!isActive)
-                        GlobalScope.launch(Dispatchers.Default) {
-                            FFmpeg.cancel()
+        if (thumbnailBitmap != null) {
+            saveImageToPath(thumbnailBitmap, nameToImage(videoName))
+            val result = BitmapWithName(videoName, thumbnailBitmap).apply { processed = false }
+            coroutineScope.launch(Dispatchers.Default) {
+                val mediaPlayer = MediaPlayer.create(context, uri)
+                val videoLength = mediaPlayer.duration
+                mediaPlayer.release()
+                if (videoLength > 0) {
+                    Config.resetStatistics()
+                    Config.enableStatisticsCallback { statistics ->
+                        if (!isActive)
+                            GlobalScope.launch(Dispatchers.Default) {
+                                FFmpeg.cancel()
+                            }
+                        coroutineScope.launch(Dispatchers.Default) {
+                            val progress = statistics.time.toFloat() / videoLength
+                            result.progress.emit((100 * progress).toInt())
                         }
-                    coroutineScope.launch(Dispatchers.Default) {
-                        val progress = statistics.time.toFloat() / videoLength
-                        result.progress.emit((100 * progress).toInt())
                     }
                 }
+                compressVideo(originalVideoFile.absolutePath, videoFile.absolutePath)
+                originalVideoFile.delete()
+                result.processed = true
             }
-            compressVideo(originalVideoFile.absolutePath, videoFile.absolutePath)
-            originalVideoFile.delete()
-            result.processed = true
+            return result
         }
-        return result
+        return null
     }
 
     private fun compressVideo(inputPath: String, outputPath: String) {
@@ -139,8 +141,7 @@ class FileStoreImpl @Inject constructor(
         getUri(videoName, context)?.let { uri ->
             val tempVideoFile = File(getFilePath(context, "temp_$videoName"))
             saveUriToFile(uri, tempVideoFile)
-            val thumbnailBitmap = createVideoThumbnail(tempVideoFile)
-            saveImageToPath(thumbnailBitmap, videoThumbnail(videoName))
+            createVideoThumbnail(tempVideoFile)?.let { saveImageToPath(it, videoThumbnail(videoName)) }
             tempVideoFile.delete()
         }
     }
@@ -197,7 +198,7 @@ class FileStoreImpl @Inject constructor(
         context.contentResolver.openInputStream(uri)?.copyTo(file.outputStream())
     }
 
-    private fun createVideoThumbnail(videoFile: File) =
+    private fun createVideoThumbnail(videoFile: File): Bitmap? =
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             ThumbnailUtils.createVideoThumbnail(videoFile, Size(500, 500), null)
         } else {

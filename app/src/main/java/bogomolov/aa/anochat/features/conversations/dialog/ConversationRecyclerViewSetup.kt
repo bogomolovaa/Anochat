@@ -67,9 +67,10 @@ class ConversationRecyclerViewSetup(
         }
     }
 
-    fun updateMessages(pagingData: PagingData<MessageView>) {
+    fun updateMessages(pagingData: PagingData<MessageView>, firstUpdate: Boolean) {
         (binding.recyclerView.adapter as MessagesPagedAdapter)
             .submitData(fragment.lifecycle, pagingData)
+        if(!firstUpdate) scrollToEnd()
     }
 
     private fun createRecyclerViewAdapter(): MessagesPagedAdapter {

@@ -13,20 +13,16 @@ import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentSignInBinding
 import bogomolov.aa.anochat.features.shared.ErrorType
+import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class SignInFragment : Fragment(), UpdatableView<SignInUiState> {
+class SignInFragment : Fragment(R.layout.fragment_sign_in), UpdatableView<SignInUiState> {
     val viewModel: SignInViewModel by viewModels()
     private lateinit var navController: NavController
-    private lateinit var binding: FragmentSignInBinding
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentSignInBinding.inflate(inflater, container, false).also { binding = it }.root
+    private val binding by bindingDelegate(FragmentSignInBinding::bind)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

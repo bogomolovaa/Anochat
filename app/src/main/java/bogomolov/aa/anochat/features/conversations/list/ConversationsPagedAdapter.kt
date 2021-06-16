@@ -37,8 +37,8 @@ class ConversationsPagedAdapter(
             val lastMessage = conversation.lastMessage
             if (lastMessage != null) {
                 binding.lastTime.text = lastMessage.timeString()
-                binding.messageText.text =
-                    if (showFullMessage) lastMessage.text else lastMessage.shortText()
+                binding.messageText.maxLines = if (showFullMessage) 10 else 2
+                binding.messageText.text = lastMessage.text
                 if (!lastMessage.isMine && lastMessage.viewed == 0) {
                     binding.newMessageStatus.visibility = View.VISIBLE
                     binding.messageText.setTextColor(ContextCompat.getColor(context, R.color.green))

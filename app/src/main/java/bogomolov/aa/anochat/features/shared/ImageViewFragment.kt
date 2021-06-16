@@ -27,8 +27,8 @@ private const val MAX_SCALE = 10f
 private const val MIN_SCALE = 1f
 private const val TAG = "ImageViewFragment"
 
-class ImageViewFragment : Fragment() {
-    private lateinit var binding: FragmentImageViewBinding
+class ImageViewFragment : Fragment(R.layout.fragment_image_view) {
+    private val binding by bindingDelegate(FragmentImageViewBinding::bind)
     private var bitmap: Bitmap? = null
     private lateinit var mainActivity: AppCompatActivity
     private lateinit var scaleDetector: ScaleGestureDetector
@@ -63,10 +63,6 @@ class ImageViewFragment : Fragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentImageViewBinding.inflate(inflater, container, false).also { binding = it }.root
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

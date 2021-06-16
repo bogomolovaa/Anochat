@@ -15,6 +15,7 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.AudioPlayer
 import bogomolov.aa.anochat.features.shared.LocaleProvider
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
+import bogomolov.aa.anochat.features.shared.mvi.Event
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -62,6 +63,8 @@ data class SendMessageData(
     val image: String? = null,
     val video: String? = null
 )
+
+object OnMessageSent : Event
 
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
@@ -195,6 +198,7 @@ class ConversationViewModel @Inject constructor(
                 )
             }
             messageUseCases.sendMessage(message, conversation.user.uid)
+            addEvent(OnMessageSent)
         }
     }
 

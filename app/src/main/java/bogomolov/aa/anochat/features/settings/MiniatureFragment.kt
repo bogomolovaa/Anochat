@@ -5,7 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
 import android.util.DisplayMetrics
-import android.view.*
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
@@ -14,6 +16,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentMiniatureBinding
+import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.getFilePath
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import dagger.hilt.android.AndroidEntryPoint
@@ -23,16 +26,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 @AndroidEntryPoint
-class MiniatureFragment : Fragment() {
+class MiniatureFragment : Fragment(R.layout.fragment_miniature) {
     private val viewModel: SettingsViewModel by hiltNavGraphViewModels(R.id.settings_graph)
-    private lateinit var binding: FragmentMiniatureBinding
+    private val binding by bindingDelegate(FragmentMiniatureBinding::bind)
     private lateinit var bitmap: Bitmap
     private lateinit var scaleDetector: ScaleGestureDetector
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentMiniatureBinding.inflate(inflater, container, false).also { binding = it }.root
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

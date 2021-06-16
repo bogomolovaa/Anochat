@@ -3,7 +3,10 @@ package bogomolov.aa.anochat.features.contacts.list
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.ContactsContract
-import android.view.*
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -19,28 +22,23 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentUsersBinding
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.conversations.list.setTextColor
+import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 
 @AndroidEntryPoint
-class UsersFragment : Fragment(), UpdatableView<ContactsUiState> {
+class UsersFragment : Fragment(R.layout.fragment_users), UpdatableView<ContactsUiState> {
     val viewModel: UsersViewModel by viewModels()
     private lateinit var navController: NavController
-    private lateinit var binding: FragmentUsersBinding
+    private val binding by bindingDelegate(FragmentUsersBinding::bind)
     private lateinit var usersAdapter: UsersAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel.loadContacts(getContactsPhones())
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentUsersBinding.inflate(inflater, container, false).also { binding = it }.root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
