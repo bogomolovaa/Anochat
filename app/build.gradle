@@ -11,7 +11,7 @@ keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
     compileSdkVersion 30
-    buildToolsVersion "29.0.3"
+    buildToolsVersion '30.0.3'
     defaultConfig {
         applicationId "bogomolov.aa.anochat"
         minSdkVersion 21
@@ -39,7 +39,7 @@ android {
     }
     buildTypes {
         release {
-            debuggable false
+            debuggable true
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
@@ -50,6 +50,11 @@ android {
     }
     buildFeatures {
         viewBinding true
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerVersion "1.5.10"
+        kotlinCompilerExtensionVersion "1.0.0-beta09"
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -74,8 +79,8 @@ dependencies {
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3"
-    implementation 'androidx.appcompat:appcompat:1.2.0' //1.3.0 bug
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0"
+    implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation 'androidx.core:core-ktx:1.5.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
@@ -87,8 +92,8 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.3.1"
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-alpha01"
-    implementation "androidx.fragment:fragment-ktx:1.3.3" //1.3.4 bug
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-alpha01" //no addRepeatingJob in alpha02
+    implementation "androidx.fragment:fragment-ktx:1.3.5"
     implementation "androidx.work:work-runtime-ktx:2.5.0"
     implementation 'androidx.preference:preference-ktx:1.1.1'
     implementation "androidx.room:room-runtime:2.3.0"
@@ -116,6 +121,21 @@ dependencies {
     implementation 'com.google.android.exoplayer:exoplayer-ui:2.14.1'
 
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
+
+    implementation 'androidx.compose.ui:ui:1.0.0-beta09'
+    // Tooling support (Previews, etc.)
+    implementation 'androidx.compose.ui:ui-tooling:1.0.0-beta09'
+    // Foundation (Border, Background, Box, Image, Scroll, shapes, animations, etc.)
+    implementation 'androidx.compose.foundation:foundation:1.0.0-beta09'
+    // Material Design
+    implementation 'androidx.compose.material:material:1.0.0-beta09'
+    // Material design icons
+    implementation 'androidx.compose.material:material-icons-core:1.0.0-beta09'
+    implementation 'androidx.compose.material:material-icons-extended:1.0.0-beta09'
+    // Integration with activities
+    implementation 'androidx.activity:activity-compose:1.3.0-beta02'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07'
+    implementation "androidx.paging:paging-compose:1.0.0-alpha10"
 
 
 

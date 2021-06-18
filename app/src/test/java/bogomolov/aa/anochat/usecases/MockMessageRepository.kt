@@ -75,9 +75,8 @@ class MockMessageRepository(
         message: Message,
         uid: String,
         convert: (ByteArray) -> ByteArray
-    ): Boolean {
+    ){
         attachment = convert(getAttachment())
-        return true
     }
 
 
