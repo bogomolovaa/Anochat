@@ -3,54 +3,65 @@ package bogomolov.aa.anochat.features.contacts.list
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.ContactsContract
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
+import android.view.LayoutInflater
 import android.view.View
-import android.widget.ImageView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SearchView
+import android.view.ViewGroup
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.addRepeatingJob
-import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.NavigationUI
-import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.databinding.FragmentUsersBinding
+import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
-import bogomolov.aa.anochat.features.conversations.list.setTextColor
-import bogomolov.aa.anochat.features.shared.bindingDelegate
-import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
-import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
+import bogomolov.aa.anochat.features.shared.LightColorPalette
+import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
+import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 
 @AndroidEntryPoint
-class UsersFragment : Fragment(R.layout.fragment_users), UpdatableView<ContactsUiState> {
+class UsersFragment : Fragment() {
     val viewModel: UsersViewModel by viewModels()
-    private lateinit var navController: NavController
-    private val binding by bindingDelegate(FragmentUsersBinding::bind)
-    private lateinit var usersAdapter: UsersAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel.loadContacts(getContactsPhones())
     }
 
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
+        ComposeView(requireContext()).apply {
+            setContent {
+                val state = viewModel.state.collectAsState()
+                Content(state.value)
+            }
+        }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
-        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        navController = findNavController()
-        NavigationUI.setupWithNavController(binding.toolbar, navController)
-        binding.recyclerView.layoutManager = LinearLayoutManager(context)
-        setHasOptionsMenu(true)
-
-        usersAdapter = UsersAdapter { viewModel.createConversation(it) }
-        binding.recyclerView.adapter = usersAdapter
 
         viewLifecycleOwner.addRepeatingJob(Lifecycle.State.RESUMED) {
             viewModel.events.collect {
@@ -59,9 +70,86 @@ class UsersFragment : Fragment(R.layout.fragment_users), UpdatableView<ContactsU
         }
     }
 
-    override fun updateView(newState: ContactsUiState, currentState: ContactsUiState) {
-        if (newState.users != currentState.users) usersAdapter.submitList(newState.users!!)
-        binding.progressBar.visibility = if (newState.loading) View.VISIBLE else View.INVISIBLE
+
+    @Preview
+    @Composable
+    private fun Content(state: ContactsUiState = testContactsUiState) {
+        MaterialTheme(
+            colors = LightColorPalette
+        ) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(id = R.string.contacts)) },
+                        navigationIcon = {
+                            IconButton(onClick = {
+                                findNavController().popBackStack()
+                            }) {
+                                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                            }
+                        },
+                    )
+                },
+                content = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (state.loading) LinearProgressIndicator(modifier = Modifier.padding(top = 4.dp))
+                        Column(
+                            modifier = Modifier.padding(top = if (!state.loading) 8.dp else 0.dp)
+                        ) {
+                            state.users?.forEach { UserRow(it) }
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+
+    @Composable
+    private fun UserRow(user: User = testContactsUiState.users!!.first()) {
+        Card(
+            backgroundColor = Color.Black.copy(alpha = 0.0f),
+            elevation = 0.dp,
+            modifier = Modifier.clickable(onClick = {
+                viewModel.createConversation(user)
+            })
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+
+            ) {
+                val imageBitmap =
+                    user.photo?.let{getBitmapFromGallery(getMiniPhotoFileName(it), LocalContext.current, 1)?.asImageBitmap()}
+                val imageModifier = Modifier
+                    .clip(CircleShape)
+                    .width(60.dp)
+                    .height(60.dp)
+                if (imageBitmap != null) {
+                    Image(
+                        modifier = imageModifier,
+                        bitmap = imageBitmap,
+                        contentScale = ContentScale.FillWidth,
+                        contentDescription = ""
+                    )
+                } else {
+                    Icon(
+                        painterResource(id = R.drawable.user_icon),
+                        modifier = imageModifier,
+                        contentDescription = ""
+                    )
+                }
+                Column(modifier = Modifier.padding(start = 12.dp)) {
+                    Text(user.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(user.phone ?: "")
+                    Text(user.status ?: "")
+                }
+            }
+        }
+
     }
 
     private fun navigateToConversation(conversationId: Long) {
@@ -71,7 +159,7 @@ class UsersFragment : Fragment(R.layout.fragment_users), UpdatableView<ContactsU
                 putLong("id", conversationId)
                 if (uri != null) putString("uri", uri)
             }
-            navController.navigate(R.id.dialog_graph, bundle)
+            findNavController().navigate(R.id.dialog_graph, bundle)
         }
     }
 
@@ -105,6 +193,7 @@ class UsersFragment : Fragment(R.layout.fragment_users), UpdatableView<ContactsU
         )
     }
 
+    /*
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         menu.clear()
@@ -138,4 +227,5 @@ class UsersFragment : Fragment(R.layout.fragment_users), UpdatableView<ContactsU
             viewModel.resetSearch()
         }
     }
+     */
 }

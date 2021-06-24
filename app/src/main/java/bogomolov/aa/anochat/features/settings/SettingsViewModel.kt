@@ -48,3 +48,8 @@ class SettingsViewModel @Inject constructor(
         }
     }
 }
+
+val testSettingsUiState = SettingsUiState(
+    user = User(phone = "+12345671", name = "name1", status = "status1"),
+    settings = Settings()
+)

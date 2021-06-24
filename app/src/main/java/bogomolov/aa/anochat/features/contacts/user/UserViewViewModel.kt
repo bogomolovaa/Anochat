@@ -31,7 +31,7 @@ class UserViewViewModel @Inject constructor(
 
 val testUserUiState = UserUiState(
     user = User(
-        name = "Alexander",
+        name = "Alexander1",
         phone = "12334567",
         status = "Status"
     )
