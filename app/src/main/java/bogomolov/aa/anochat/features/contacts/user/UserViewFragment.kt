@@ -40,7 +40,7 @@ import kotlinx.coroutines.flow.Flow
 
 @AndroidEntryPoint
 class UserViewFragment : Fragment() {
-    val viewModel: UserViewViewModel by viewModels()
+    private val viewModel: UserViewViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

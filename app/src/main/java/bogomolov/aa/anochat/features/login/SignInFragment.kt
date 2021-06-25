@@ -4,115 +4,181 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.navigation.NavController
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.addRepeatingJob
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.databinding.FragmentSignInBinding
 import bogomolov.aa.anochat.features.shared.ErrorType
-import bogomolov.aa.anochat.features.shared.bindingDelegate
-import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
-import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
+import bogomolov.aa.anochat.features.shared.LightColorPalette
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 
 @AndroidEntryPoint
-class SignInFragment : Fragment(R.layout.fragment_sign_in), UpdatableView<SignInUiState> {
-    val viewModel: SignInViewModel by viewModels()
-    private lateinit var navController: NavController
-    private val binding by bindingDelegate(FragmentSignInBinding::bind)
+class SignInFragment : Fragment() {
+    private val viewModel: SignInViewModel by viewModels()
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
+        ComposeView(requireContext()).apply {
+            setContent {
+                val state = viewModel.state.collectAsState()
+                Content(state.value)
+            }
+        }
+
+    @Preview
+    @Composable
+    private fun Content(state: SignInUiState = testSignInUiState) {
+        MaterialTheme(
+            colors = LightColorPalette
+        ) {
+            val focusRequester = remember { FocusRequester() }
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(id = R.string.sign_in)) }
+                    )
+                },
+                floatingActionButton = {
+                    FloatingActionButton(onClick = { fabOnClick() }) {
+                        if (state.state == LoginState.INITIAL || state.state == LoginState.VERIFICATION_ID_RECEIVED || state.state == LoginState.NOT_LOGGED)
+                            Icon(
+                                painterResource(id = R.drawable.ok_icon),
+                                contentDescription = "",
+                                modifier = Modifier.scale(1.5f)
+                            )
+                    }
+                },
+                content = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (state.state == LoginState.PHONE_SUBMITTED || state.state == LoginState.CODE_SUBMITTED)
+                            LinearProgressIndicator(
+                                modifier = Modifier
+                                    .padding(top = 4.dp)
+                                    .fillMaxWidth()
+                            )
+                        Column(
+                            modifier = Modifier.padding(top = 32.dp)
+                        ) {
+                            val phoneErrorMessage = phoneInputErrorMessage(state)
+                            TextField(
+                                value = state.phoneNumber ?: "",
+                                onValueChange = { viewModel.updateState { copy(phoneNumber = it) } },
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                label = {
+                                    if (phoneErrorMessage != null) {
+                                        Text(phoneErrorMessage)
+                                    } else {
+                                        Text(
+                                            stringResource(id = R.string.phone_number),
+                                            color = LightColorPalette.secondary
+                                        )
+                                    }
+                                },
+                                isError = phoneErrorMessage != null,
+                                colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent)
+                            )
+                            if (state.state.ordinal >= LoginState.VERIFICATION_ID_RECEIVED.ordinal) {
+                                val codeErrorMessage = codeInputErrorMessage(state)
+                                TextField(
+                                    value = state.code ?: "",
+                                    onValueChange = { viewModel.updateState { copy(code = it) } },
+                                    modifier = Modifier
+                                        .padding(16.dp)
+                                        .fillMaxWidth()
+                                        .focusRequester(focusRequester),
+                                    label = {
+                                        if (codeErrorMessage != null) {
+                                            Text(codeErrorMessage)
+                                        } else {
+                                            Text(
+                                                stringResource(id = R.string.verification_code),
+                                                color = LightColorPalette.secondary
+                                            )
+                                        }
+                                    },
+                                    isError = codeErrorMessage != null,
+                                    colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent)
+                                )
+                                SideEffect {
+                                    focusRequester.requestFocus()
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    private fun fabOnClick() {
+        when (viewModel.currentState.state) {
+            LoginState.INITIAL -> {
+                viewModel.submitPhoneNumber { requireActivity() }
+            }
+            LoginState.VERIFICATION_ID_RECEIVED, LoginState.NOT_LOGGED ->
+                viewModel.submitSmsCode()
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
-        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        navController = findNavController()
-        NavigationUI.setupWithNavController(binding.toolbar, navController)
-        binding.toolbar.navigationIcon = null
-        binding.fab.setOnClickListener {
-            when (viewModel.currentState.state) {
-                LoginState.INITIAL -> submitPhoneNumber()
-                LoginState.VERIFICATION_ID_RECEIVED, LoginState.NOT_LOGGED -> submitCode()
-                else -> {
+        viewLifecycleOwner.addRepeatingJob(Lifecycle.State.RESUMED) {
+            viewModel.events.collect {
+                when (it) {
+                    is NavigateToConversationList -> findNavController().navigate(R.id.conversationsListFragment)
                 }
             }
         }
     }
 
-    override fun updateView(newState: SignInUiState, currentState: SignInUiState) {
-        binding.phoneInputText.setText(newState.phoneNumber)
-        setError(newState)
-        when (newState.state) {
-            LoginState.INITIAL -> {
-                binding.progressBar.visibility = View.INVISIBLE
-                binding.codeInputLayout.visibility = View.INVISIBLE
-                binding.fab.isEnabled = true
-            }
-            LoginState.PHONE_SUBMITTED -> {
-                binding.codeInputLayout.visibility = View.INVISIBLE
-                binding.fab.isEnabled = false
-                binding.progressBar.visibility = View.VISIBLE
-            }
-            LoginState.VERIFICATION_ID_RECEIVED -> {
-                binding.progressBar.visibility = View.INVISIBLE
-                binding.codeInputLayout.visibility = View.VISIBLE
-                binding.codeInputText.setText(newState.code)
-                binding.fab.isEnabled = true
-            }
-            LoginState.CODE_SUBMITTED -> {
-                binding.codeInputLayout.visibility = View.VISIBLE
-                binding.codeInputText.setText(newState.code)
-                binding.fab.isEnabled = false
-                binding.progressBar.visibility = View.VISIBLE
-            }
-            LoginState.LOGGED ->
-                navController.navigate(R.id.conversationsListFragment)
-            LoginState.NOT_LOGGED -> {
-                binding.progressBar.visibility = View.INVISIBLE
-                binding.codeInputLayout.visibility = View.VISIBLE
-                binding.codeInputText.setText(newState.code)
-                binding.fab.isEnabled = true
+    @Composable
+    private fun phoneInputErrorMessage(state: SignInUiState) =
+        state.error?.let {
+            when (it.message) {
+                ErrorType.WRONG_PHONE.toString() -> stringResource(R.string.wrong_phone)
+                ErrorType.PHONE_NO_CONNECTION.toString() -> stringResource(R.string.no_connection)
+                else -> if (state.state == LoginState.INITIAL || state.state == LoginState.PHONE_SUBMITTED) {
+                    it.message
+                } else null
             }
         }
-    }
 
-    private fun setError(state: SignInUiState) {
-        val error = state.error
-        if (error == null) {
-            binding.phoneInputText.error = null
-            binding.codeInputLayout.error = null
-        } else {
-            when (error.message) {
-                ErrorType.WRONG_PHONE.toString() ->
-                    binding.phoneInputText.error = resources.getText(R.string.wrong_phone)
-                ErrorType.PHONE_NO_CONNECTION.toString() ->
-                    binding.phoneInputText.error = resources.getText(R.string.no_connection)
-                ErrorType.EMPTY_CODE.toString() ->
-                    binding.codeInputLayout.error = resources.getString(R.string.empty_code)
-                ErrorType.WRONG_CODE.toString() ->
-                    binding.codeInputLayout.error = resources.getString(R.string.wrong_code)
-                ErrorType.CODE_NO_CONNECTION.toString() ->
-                    binding.codeInputLayout.error = resources.getText(R.string.no_connection)
-                else -> {
-                    if (state.state == LoginState.INITIAL || state.state == LoginState.PHONE_SUBMITTED) {
-                        binding.phoneInputText.error = error.message
-                    } else {
-                        binding.codeInputLayout.error = error.message
-                    }
-                }
+
+    @Composable
+    private fun codeInputErrorMessage(state: SignInUiState) =
+        state.error?.let {
+            when (it.message) {
+                ErrorType.EMPTY_CODE.toString() -> stringResource(R.string.empty_code)
+                ErrorType.WRONG_CODE.toString() -> stringResource(R.string.wrong_code)
+                ErrorType.CODE_NO_CONNECTION.toString() -> stringResource(R.string.no_connection)
+                else -> if (state.state == LoginState.INITIAL || state.state == LoginState.PHONE_SUBMITTED) {
+                    null
+                } else it.message
             }
         }
-    }
-
-    private fun submitCode() {
-        val code = binding.codeInputText.text.toString()
-        viewModel.submitSmsCode(code)
-    }
-
-    private fun submitPhoneNumber() {
-        val phoneNumber = binding.phoneInputText.text.toString()
-        viewModel.submitPhoneNumber(phoneNumber) { requireActivity() }
-    }
 }

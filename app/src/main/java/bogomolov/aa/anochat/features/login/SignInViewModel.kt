@@ -1,13 +1,16 @@
 package bogomolov.aa.anochat.features.login
 
 import android.app.Activity
+import androidx.lifecycle.viewModelScope
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.features.shared.ErrorType
 import bogomolov.aa.anochat.features.shared.PhoneVerification
 import bogomolov.aa.anochat.features.shared.SignInError
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
+import bogomolov.aa.anochat.features.shared.mvi.Event
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 enum class LoginState {
@@ -26,6 +29,8 @@ data class SignInUiState(
     val error: SignInError? = null
 )
 
+object NavigateToConversationList : Event
+
 @HiltViewModel
 class SignInViewModel @Inject constructor(
     private val authRepository: AuthRepository
@@ -35,6 +40,7 @@ class SignInViewModel @Inject constructor(
 
         override fun onComplete() {
             updateState { copy(state = LoginState.LOGGED) }
+            viewModelScope.launch { addEvent(NavigateToConversationList) }
         }
 
         override fun onCodeVerify(smsCode: String?) {
@@ -54,7 +60,8 @@ class SignInViewModel @Inject constructor(
         }
     }
 
-    fun submitPhoneNumber(number: String, getActivity: () -> Activity) = execute {
+    fun submitPhoneNumber(getActivity: () -> Activity) = execute {
+        val number = currentState.phoneNumber ?: ""
         if (number.isNotEmpty() && isValidPhone(number)) {
             setState { copy(phoneNumber = number, state = LoginState.PHONE_SUBMITTED) }
             authRepository.sendPhoneNumber(number, getActivity, phoneVerification)
@@ -63,7 +70,8 @@ class SignInViewModel @Inject constructor(
         }
     }
 
-    fun submitSmsCode(code: String) = execute {
+    fun submitSmsCode() = execute {
+        val code = currentState.code ?: ""
         if (code.isNotEmpty()) {
             authRepository.verifySmsCode(currentState.phoneNumber!!, code, phoneVerification)
         } else {
@@ -71,3 +79,10 @@ class SignInViewModel @Inject constructor(
         }
     }
 }
+
+val testSignInUiState = SignInUiState(
+    state = LoginState.CODE_SUBMITTED,
+    phoneNumber = "+71234567",
+    code = "123456",
+    error = SignInError(ErrorType.WRONG_CODE)
+)

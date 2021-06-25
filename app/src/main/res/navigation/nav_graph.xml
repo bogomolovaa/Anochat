@@ -29,8 +29,7 @@
     <fragment
             android:id="@+id/signInFragment"
             android:name="bogomolov.aa.anochat.features.login.SignInFragment"
-            android:label="@string/sign_in"
-            tools:layout="@layout/fragment_sign_in">
+            android:label="@string/sign_in">
         <action
                 android:id="@+id/action_signInFragment_to_conversationsListFragment"
                 app:destination="@id/conversationsListFragment"

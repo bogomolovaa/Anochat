@@ -45,7 +45,7 @@ import kotlinx.coroutines.flow.collect
 
 @AndroidEntryPoint
 class UsersFragment : Fragment() {
-    val viewModel: UsersViewModel by viewModels()
+    private val viewModel: UsersViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,7 +94,11 @@ class UsersFragment : Fragment() {
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        if (state.loading) LinearProgressIndicator(modifier = Modifier.padding(top = 4.dp))
+                        if (state.loading) LinearProgressIndicator(
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .fillMaxWidth()
+                        )
                         Column(
                             modifier = Modifier.padding(top = if (!state.loading) 8.dp else 0.dp)
                         ) {
@@ -123,7 +127,13 @@ class UsersFragment : Fragment() {
 
             ) {
                 val imageBitmap =
-                    user.photo?.let{getBitmapFromGallery(getMiniPhotoFileName(it), LocalContext.current, 1)?.asImageBitmap()}
+                    user.photo?.let {
+                        getBitmapFromGallery(
+                            getMiniPhotoFileName(it),
+                            LocalContext.current,
+                            1
+                        )?.asImageBitmap()
+                    }
                 val imageModifier = Modifier
                     .clip(CircleShape)
                     .width(60.dp)
