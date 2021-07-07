@@ -1,71 +1,147 @@
 package bogomolov.aa.anochat.features.settings
 
-import android.annotation.SuppressLint
 import android.graphics.Bitmap
-import android.graphics.Point
 import android.os.Bundle
 import android.util.DisplayMetrics
-import android.view.MotionEvent
-import android.view.ScaleGestureDetector
-import android.view.View
-import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
+import android.view.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.databinding.FragmentMiniatureBinding
-import bogomolov.aa.anochat.features.shared.bindingDelegate
+import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getFilePath
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.fragment_miniature.*
 import java.io.FileOutputStream
 import kotlin.math.max
 import kotlin.math.min
 
 @AndroidEntryPoint
-class MiniatureFragment : Fragment(R.layout.fragment_miniature) {
+class MiniatureFragment : Fragment() {
     private val viewModel: SettingsViewModel by hiltNavGraphViewModels(R.id.settings_graph)
-    private val binding by bindingDelegate(FragmentMiniatureBinding::bind)
-    private lateinit var bitmap: Bitmap
-    private lateinit var scaleDetector: ScaleGestureDetector
 
-    @SuppressLint("ClickableViewAccessibility")
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        val navController = findNavController()
-        NavigationUI.setupWithNavController(binding.toolbar, navController)
-
-        bitmap = viewModel.miniature.bitmap!!
-        binding.imageView.setImageBitmap(bitmap)
-        binding.fab.setOnClickListener {
-            createMiniature()
-            viewModel.updateUser { copy(photo = viewModel.miniature.name) }
-            navController.navigateUp()
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
+        ComposeView(requireContext()).apply {
+            setContent {
+                val state = viewModel.state.collectAsState()
+                Content(state.value)
+            }
         }
-        scaleDetector = ScaleGestureDetector(context, scaleListener)
-        binding.imageView.setOnTouchListener(maskImageOnTouchListener)
-        binding.imageView.post {
-            setImageRealDimensions()
-            val windowSize = getWindowSize()
-            scaleFactor = windowSize.first.toFloat() / binding.maskImage.width.toFloat()
-            binding.maskImage.scaleX = scaleFactor
-            binding.maskImage.scaleY = scaleFactor
-            checkBounds(binding.maskImage.layoutParams as ConstraintLayout.LayoutParams)
+
+    @Preview
+    @Composable
+    private fun Content(settingsState: SettingsUiState = testSettingsUiState) {
+        val state = settingsState.miniatureState!!
+        val density = LocalDensity.current.density
+        MaterialTheme(
+            colors = LightColorPalette
+        ) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(id = R.string.set_avatar)) }
+                    )
+                },
+                floatingActionButton = {
+                    FloatingActionButton(onClick = { createMiniature() }) {
+                        Icon(
+                            painterResource(id = R.drawable.ok_icon),
+                            contentDescription = "",
+                            modifier = Modifier.scale(1.5f)
+                        )
+                    }
+                },
+                content = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val imageBitmap = state.miniature.bitmap?.asImageBitmap()
+                        if (imageBitmap != null) {
+                            Image(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onGloballyPositioned {
+                                        if (state.imageWidth == 0) initDimensions(it.size.width, it.size.height)
+                                    }
+                                    .pointerInput(Unit) { detectMaskTransformGestures(false) },
+                                bitmap = imageBitmap,
+                                contentScale = ContentScale.FillWidth,
+                                contentDescription = ""
+                            )
+                        }
+                        SelectorShape(state = state, density)
+                        //R.drawable.rounded_fg
+                    }
+                }
+            )
         }
     }
 
-    private fun createMiniature() {
-        val maskWidth = binding.maskImage.scaledWidth()
-        val maskHeight = binding.maskImage.scaledHeight()
-        val x = (maskX / initialImageScale).toInt()
-        val y = (maskY / initialImageScale).toInt()
-        val width = (maskWidth / initialImageScale).toInt()
-        val height = (maskHeight / initialImageScale).toInt()
+    @Composable
+    private fun SelectorShape(state: MiniatureState, density: Float) {
+        Box(contentAlignment = Alignment.TopStart, modifier = Modifier.fillMaxSize()) {
+            Surface(
+                shape = CircleShape,
+                border = BorderStroke(3.dp, LightColorPalette.primary),
+                color = Color(0x00FFFFFF),
+                modifier = Modifier
+                    .size(
+                        width = (state.maskImage.width * state.maskImage.scaleFactor / density).dp,
+                        height = (state.maskImage.height * state.maskImage.scaleFactor / density).dp
+                    )
+                    .offset { IntOffset(state.maskImage.left, state.maskImage.top).also { println("IntOffset $it") } }
+                    .pointerInput(Unit) { detectMaskTransformGestures(true) }
+            ) {}
+        }
+    }
 
+    private suspend fun PointerInputScope.detectMaskTransformGestures(offset: Boolean) {
+        detectTransformGestures(
+            panZoomLock = false,
+            onGesture = { _, pan, gestureZoom, gestureRotate ->
+                checkBounds(
+                    if (offset) Pair(pan.x.toInt(), pan.y.toInt()) else null,
+                    viewModel.currentState.miniatureState!!.maskImage.scaleFactor * gestureZoom
+                )
+            }
+        )
+    }
+
+    private fun createMiniature() {
+        val state = viewModel.currentState.miniatureState!!
+        val maskWidth = state.maskImage.width * state.maskImage.scaleFactor
+        val maskHeight = state.maskImage.height * state.maskImage.scaleFactor
+        val x = (state.maskX / state.initialImageScale).toInt()
+        val y = (state.maskY / state.initialImageScale).toInt()
+        val width = (maskWidth / state.initialImageScale).toInt()
+        val height = (maskHeight / state.initialImageScale).toInt()
+
+        val miniature = state.miniature
+        val bitmap = miniature.bitmap!!
         val miniBitmap = Bitmap.createBitmap(
             bitmap,
             max(x, 0),
@@ -74,118 +150,93 @@ class MiniatureFragment : Fragment(R.layout.fragment_miniature) {
             min(bitmap.height - Math.max(y, 0), height)
         )
         val miniPhotoPath =
-            getFilePath(requireContext(), getMiniPhotoFileName(viewModel.miniature.name))
+            getFilePath(requireContext(), getMiniPhotoFileName(miniature.name))
         miniBitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(miniPhotoPath))
+
+        viewModel.updateUser { copy(photo = viewModel.currentState.miniatureState?.miniature?.name) }
+        findNavController().navigateUp()
     }
 
-    private var initialImageScale = 1f
-    private var maskX = 0
-    private var maskY = 0
-    private var scaleFactor = 1f
-    private var scaling = false
+    private fun initDimensions(measuredWidth: Int, measuredHeight: Int) {
+        val state = viewModel.currentState.miniatureState!!
+        val maskImageWidth = state.maskImage.width
+        val maskImageHeight = state.maskImage.height
 
-    private var imageWidth = 0
-    private var imageHeight = 0
-    private var maxScale = 1f
-
-    private val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-
-        override fun onScaleBegin(scaleGestureDetector: ScaleGestureDetector): Boolean {
-            scaling = true
-            return true
-        }
-
-        override fun onScaleEnd(detector: ScaleGestureDetector) {
-            scaling = false
-        }
-
-        override fun onScale(detector: ScaleGestureDetector): Boolean {
-            scaleFactor *= detector.scaleFactor
-            scaleFactor = max(0.5f, min(scaleFactor, maxScale))
-            binding.maskImage.scaleX = scaleFactor
-            binding.maskImage.scaleY = scaleFactor
-            checkBounds(binding.maskImage.layoutParams as ConstraintLayout.LayoutParams)
-            return true
-        }
-    }
-
-    private fun getWindowSize(): Pair<Int, Int> {
-        val displayMetrics = DisplayMetrics()
-        requireActivity().windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-        return Pair(displayMetrics.widthPixels, displayMetrics.heightPixels)
-    }
-
-    private val maskImageOnTouchListener = object : View.OnTouchListener {
-        private var lastPoint: Point = Point()
-        private var canMove = true
-
-        @SuppressLint("ClickableViewAccessibility")
-        override fun onTouch(view: View, event: MotionEvent): Boolean {
-            scaleDetector.onTouchEvent(event)
-            if (!scaling) {
-                val maskImage = binding.maskImage
-                val point = Point(event.rawX.toInt(), event.rawY.toInt())
-                when (event.action and MotionEvent.ACTION_MASK) {
-                    MotionEvent.ACTION_DOWN -> {
-                        lastPoint = point
-                        canMove = true
-                    }
-                    MotionEvent.ACTION_POINTER_DOWN -> canMove = false
-                    MotionEvent.ACTION_MOVE -> {
-                        if (canMove) {
-                            val offset = Point(point.x - lastPoint.x, point.y - lastPoint.y)
-                            val layoutParams =
-                                maskImage.layoutParams as ConstraintLayout.LayoutParams
-                            layoutParams.leftMargin += offset.x
-                            layoutParams.topMargin += offset.y
-                            layoutParams.rightMargin =
-                                imageView.measuredWidth - layoutParams.leftMargin + maskImage.scaledWidth()
-                            layoutParams.bottomMargin =
-                                imageView.measuredHeight - layoutParams.topMargin + maskImage.scaledHeight()
-
-                            checkBounds(layoutParams)
-                        }
-                        lastPoint = point
-                    }
-                    MotionEvent.ACTION_UP -> canMove = false
-                }
-            }
-            return false
-        }
-    }
-
-    private fun checkBounds(layoutParams: ConstraintLayout.LayoutParams) {
-        val dx = (maskImage.scaledWidth() - maskImage.width) / 2
-        val dy = (maskImage.scaledHeight() - maskImage.height) / 2
-        if (layoutParams.topMargin < dy) layoutParams.topMargin = dy
-        if (layoutParams.leftMargin < dx) layoutParams.leftMargin = dx
-        if (layoutParams.leftMargin + maskImage.width + dx > imageWidth)
-            layoutParams.leftMargin = imageWidth - maskImage.width - dx
-        if (layoutParams.topMargin + maskImage.height + dy > imageHeight)
-            layoutParams.topMargin = imageHeight - maskImage.height - dy
-        maskX = layoutParams.leftMargin - dx
-        maskY = layoutParams.topMargin - dy
-        maskImage.layoutParams = layoutParams
-    }
-
-    private fun setImageRealDimensions() {
+        val bitmap = state.miniature.bitmap!!
         val koef1 = bitmap.width.toFloat() / bitmap.height.toFloat()
         val koef2 =
-            binding.imageView.measuredWidth.toFloat() / binding.imageView.measuredHeight.toFloat()
+            measuredWidth.toFloat() / measuredHeight.toFloat()
+        val imageWidth: Int
+        val imageHeight: Int
+        val initialImageScale: Float
         if (koef1 >= koef2) {
-            imageWidth = binding.imageView.measuredWidth
-            imageHeight = (binding.imageView.measuredWidth / koef1).toInt()
-            initialImageScale = imageWidth.toFloat() / bitmap.width.toFloat()
+            imageWidth = measuredWidth
+            imageHeight = (measuredWidth / koef1).toInt()
+            initialImageScale = measuredWidth.toFloat() / bitmap.width.toFloat()
         } else {
-            imageWidth = (koef1 * binding.imageView.measuredHeight).toInt()
-            imageHeight = binding.imageView.measuredHeight
-            initialImageScale = imageHeight.toFloat() / bitmap.height.toFloat()
+            imageWidth = (koef1 * measuredHeight).toInt()
+            imageHeight = measuredHeight
+            initialImageScale = measuredHeight.toFloat() / bitmap.height.toFloat()
         }
-        val maxScaleX = imageWidth.toFloat() / binding.maskImage.measuredWidth.toFloat()
-        val maxScaleY = imageHeight.toFloat() / binding.maskImage.measuredHeight.toFloat()
-        maxScale = min(maxScaleX, maxScaleY)
+
+        val maxScaleX = imageWidth.toFloat() / maskImageWidth
+        val maxScaleY = imageHeight.toFloat() / maskImageHeight
+        val maxScale = min(maxScaleX, maxScaleY)
+        val scaleFactor = getWindowWidth().toFloat() / maskImageWidth
+        viewModel.updateStateBlocking {
+            copy(
+                miniatureState = miniatureState?.copy(
+                    imageWidth = imageWidth,
+                    imageHeight = imageHeight,
+                    initialImageScale = initialImageScale,
+                    maxScale = maxScale,
+                )
+            )
+        }
+        checkBounds(scaleFactor = scaleFactor)
     }
 
-    private fun View.scaledWidth(): Int = (scaleFactor * this.width).toInt()
-    private fun View.scaledHeight(): Int = (scaleFactor * this.height).toInt()
+    private fun checkBounds(
+        offset: Pair<Int, Int>? = null,
+        scaleFactor: Float = viewModel.currentState.miniatureState!!.maskImage.scaleFactor
+    ) {
+        val state = viewModel.currentState.miniatureState!!
+
+        var left = state.maskImage.left
+        var top = state.maskImage.top
+        if (offset != null) {
+            left += offset.first
+            top += offset.second
+        }
+        val maskImageWidth = state.maskImage.width * scaleFactor
+        val maskImageHeight = state.maskImage.height * scaleFactor
+        if (top < 0) top = 0
+        if (left < 0) left = 0
+        if (left + maskImageWidth > state.imageWidth)
+            left = (state.imageWidth - maskImageWidth).toInt()
+        if (top + maskImageHeight > state.imageHeight)
+            top = (state.imageHeight - maskImageHeight).toInt()
+        val maskX = left
+        val maskY = top
+        viewModel.updateState {
+            copy(
+                miniatureState = miniatureState?.copy(
+                    maskX = maskX,
+                    maskY = maskY,
+                    maskImage = miniatureState.maskImage.copy(
+                        scaleFactor = max(0.5f, min(scaleFactor, state.maxScale)),
+                        left = left,
+                        top = top
+                    )
+                )
+            )
+        }
+    }
+
+    private fun getWindowWidth(): Int {
+        val displayMetrics = DisplayMetrics()
+        requireActivity().windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        return displayMetrics.widthPixels
+    }
+
 }

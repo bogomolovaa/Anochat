@@ -6,7 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
 interface UserRepository : UserUseCasesInRepository {
-    suspend fun getOrAddUser(uid: String): User
+    suspend fun getOrAddUser(uid: String,loadFullPhoto: Boolean = true): User
 }
 
 interface UserUseCasesInRepository {

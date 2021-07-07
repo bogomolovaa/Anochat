@@ -25,7 +25,7 @@ class UserRepositoryImpl @Inject constructor(
     private val mapper = ModelEntityMapper()
 
     override fun getImagesDataSource(userId: Long) =
-        Pager(PagingConfig(pageSize = 10)){
+        Pager(PagingConfig(pageSize = 10)) {
             db.messageDao().getImages(userId)
         }.flow
 
@@ -47,7 +47,7 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getMyUser() = getOrAddUser(getMyUID()!!)
+    override suspend fun getMyUser() = getOrAddUser(getMyUID()!!, false)
 
     override fun getUser(id: Long) = mapper.entityToModel(db.userDao().getUser(id))!!
 
@@ -71,10 +71,10 @@ class UserRepositoryImpl @Inject constructor(
     override fun addUserStatusListener(uid: String, scope: CoroutineScope) =
         firebase.addUserStatusListener(getMyUID()!!, uid, scope)
 
-    override suspend fun getOrAddUser(uid: String): User {
+    override suspend fun getOrAddUser(uid: String, loadFullPhoto: Boolean): User {
         val userEntity = db.userDao().findByUid(uid)
         val user = mapper.entityToModel(userEntity) ?: firebase.getUser(uid)!!
-        return user.also { updateLocalUserFromRemote(it) }
+        return user.also { updateLocalUserFromRemote(user = it, loadFullPhoto = loadFullPhoto) }
     }
 
 

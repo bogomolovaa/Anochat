@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -38,11 +39,15 @@ abstract class BaseViewModel<S : Any>(
         }
     }
 
+    fun updateStateBlocking(reduce: S.() -> S) = runBlocking {
+        setState(reduce)
+    }
+
     protected suspend fun addEvent(event: Event) {
         _events.send(event)
     }
 
     protected suspend fun setState(reduce: S.() -> S) {
-        mutex.withLock { _state.value = _state.value.reduce() }
+        mutex.withLock { _state.value = _state.value.reduce().also { println("setState $it") } }
     }
 }

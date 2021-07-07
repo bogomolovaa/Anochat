@@ -1,5 +1,7 @@
 package bogomolov.aa.anochat.features.settings
 
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
@@ -13,7 +15,30 @@ import javax.inject.Inject
 
 data class SettingsUiState(
     val user: User? = null,
-    val settings: Settings = Settings()
+    val settings: Settings = Settings(),
+    val miniatureState: MiniatureState? = null
+)
+
+data class MiniatureState(
+    val miniature: BitmapWithName,
+    val initialImageScale: Float = 1f,
+    val maskX: Int = 0,
+    val maskY: Int = 0,
+    val scaling: Boolean = false,
+    val imageWidth: Int = 0,
+    val imageHeight: Int = 0,
+    val maxScale: Float = 1f,
+    val lastPoint: Pair<Int, Int> = Pair(0, 0),
+    val canMove: Boolean = true,
+    val maskImage: MaskImage = MaskImage()
+)
+
+data class MaskImage(
+    val scaleFactor: Float = 1f,
+    val left: Int = 0,
+    val top: Int = 0,
+    val width: Int  = 100,
+    val height: Int = 100
 )
 
 @HiltViewModel
@@ -21,10 +46,13 @@ class SettingsViewModel @Inject constructor(
     private val userUseCases: UserUseCases,
     private val authRepository: AuthRepository
 ) : BaseViewModel<SettingsUiState>(SettingsUiState()) {
-    lateinit var miniature: BitmapWithName
 
     init {
         initSettings()
+    }
+
+    fun setMiniature(miniature: BitmapWithName) = execute {
+        setState { copy(miniatureState = MiniatureState(miniature)) }
     }
 
     private fun initSettings() = execute {

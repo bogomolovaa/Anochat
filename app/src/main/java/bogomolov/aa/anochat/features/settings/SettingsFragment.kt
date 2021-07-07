@@ -82,7 +82,7 @@ class SettingsFragment : Fragment() {
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        if (state.user == null) LinearProgressIndicator(modifier = Modifier.padding(top = 4.dp))
+                        if (state.user == null) LinearProgressIndicator(modifier = Modifier.padding(top = 4.dp).fillMaxWidth())
                         Row(
                             modifier = Modifier.padding(16.dp)
                         ) {
@@ -250,7 +250,7 @@ class SettingsFragment : Fragment() {
     private fun updatePhoto(uri: Uri) {
         val miniature = fileStore.resizeImage(uri = uri, toGallery = false)
         if (miniature != null) {
-            viewModel.miniature = miniature
+            viewModel.setMiniature(miniature)
             findNavController().navigate(R.id.miniatureFragment)
         }
     }
