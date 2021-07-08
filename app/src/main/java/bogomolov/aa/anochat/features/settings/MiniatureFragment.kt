@@ -94,7 +94,6 @@ class MiniatureFragment : Fragment() {
                             )
                         }
                         SelectorShape(state = state, density)
-                        //R.drawable.rounded_fg
                     }
                 }
             )
@@ -121,7 +120,6 @@ class MiniatureFragment : Fragment() {
 
     private suspend fun PointerInputScope.detectMaskTransformGestures(offset: Boolean) {
         detectTransformGestures(
-            panZoomLock = false,
             onGesture = { _, pan, gestureZoom, gestureRotate ->
                 checkBounds(
                     if (offset) Pair(pan.x.toInt(), pan.y.toInt()) else null,
