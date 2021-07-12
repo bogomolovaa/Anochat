@@ -1,130 +1,101 @@
 package bogomolov.aa.anochat.features.shared
 
-import android.annotation.SuppressLint
-import android.os.Build
+import android.net.Uri
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
+import android.view.ViewGroup
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.NavigationUI
-import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.databinding.FragmentExoVideoViewBinding
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
-import kotlin.math.max
+import com.google.android.exoplayer2.ui.StyledPlayerView
 
-private const val KEY_WINDOW = "window"
-private const val KEY_POSITION = "position"
+class ExoPlayerViewFragment : Fragment() {
 
-class ExoPlayerViewFragment : Fragment(R.layout.fragment_exo_video_view) {
-    private val binding by bindingDelegate(FragmentExoVideoViewBinding::bind)
-    private var savedSystemUiVisibility = 0
-    private var startWindow = 0
-    private var startPosition = 0L
-    private var player: SimpleExoPlayer? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        if (savedInstanceState != null) {
-            startWindow = savedInstanceState.getInt(KEY_WINDOW)
-            startPosition = savedInstanceState.getLong(KEY_POSITION)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
+        ComposeView(requireContext()).apply {
+            setContent {
+                val uri = arguments?.getString("uri")?.toUri()
+                Content(uri!!)
+            }
         }
-    }
 
-    @SuppressLint("ClickableViewAccessibility")
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    @Composable
+    private fun Content(uri: Uri) {
+        val context = LocalContext.current
+        val window = remember { mutableStateOf(0) }
+        val position = remember { mutableStateOf(0L) }
+        val autoPlay = remember { mutableStateOf(true) }
+        val player = remember {
+            val mediaItem = MediaItem.fromUri(uri)
 
-        val mainActivity = activity as AppCompatActivity
-        mainActivity.setSupportActionBar(binding.toolbar)
-        val navController = findNavController()
-        NavigationUI.setupWithNavController(binding.toolbar, navController)
-        mainActivity.supportActionBar?.title = ""
-
-        requireActivity().window.decorView.systemUiVisibility = savedSystemUiVisibility
-        requireActivity().window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_IMMERSIVE
-                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                )
-    }
-
-    private fun savePosition(){
-        startWindow = player?.currentWindowIndex ?: 0
-        startPosition = max(0, player?.contentPosition ?: 0L)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putInt(KEY_WINDOW, startWindow)
-        outState.putLong(KEY_POSITION, startPosition)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        requireActivity().window.decorView.systemUiVisibility = savedSystemUiVisibility
-    }
-
-    override fun onStart() {
-        super.onStart()
-        if (Build.VERSION.SDK_INT > 23) {
-            initializePlayer()
-            binding.playerView.onResume()
+            SimpleExoPlayer.Builder(requireContext()).build().apply {
+                setMediaItem(mediaItem)
+                playWhenReady = true
+                seekTo(window.value, position.value)
+                prepare()
+            }
         }
-    }
 
-    override fun onResume() {
-        super.onResume()
-        if (Build.VERSION.SDK_INT <= 23 || player == null) {
-            initializePlayer()
-            binding.playerView.onResume()
+        fun updateState() {
+            autoPlay.value = player.playWhenReady
+            window.value = player.currentWindowIndex
+            position.value = 0L.coerceAtLeast(player.contentPosition)
         }
-    }
 
-    override fun onPause() {
-        super.onPause()
-        savePosition()
-        if (Build.VERSION.SDK_INT <= 23) {
-            binding.playerView.onPause()
-            releasePlayer()
+        val playerView = remember {
+            val playerView = StyledPlayerView(requireContext()).apply {
+                setShowFastForwardButton(false)
+                setShowNextButton(false)
+                setShowPreviousButton(false)
+                setShowRewindButton(false)
+                setShowSubtitleButton(false)
+                setShowShuffleButton(false)
+                findViewById<View>(com.google.android.exoplayer2.ui.R.id.exo_settings).visibility = View.GONE
+            }
+            lifecycle.addObserver(object : LifecycleObserver {
+                @OnLifecycleEvent(Lifecycle.Event.ON_START)
+                fun onStart() {
+                    playerView.onResume()
+                    player.playWhenReady = autoPlay.value
+                }
+
+                @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+                fun onStop() {
+                    updateState()
+                    playerView.onPause()
+                    player.playWhenReady = false
+                }
+            })
+            playerView
         }
-    }
 
-    override fun onStop() {
-        super.onStop()
-        if (Build.VERSION.SDK_INT > 23) {
-            binding.playerView.onPause()
-            releasePlayer()
+        DisposableEffect(Unit) {
+            onDispose {
+                updateState()
+                player.release()
+            }
         }
-    }
 
-    private fun getUri() = arguments?.getString("uri")?.toUri()
-
-    private fun initializePlayer() {
-        val mediaItem = MediaItem.fromUri(getUri()!!)
-        player = SimpleExoPlayer.Builder(requireContext()).build().apply {
-            binding.playerView.player = this
-            setMediaItem(mediaItem)
-            playWhenReady = true
-            seekTo(startWindow, startPosition)
-            prepare()
-            play()
+        AndroidView(
+            factory = { playerView },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            playerView.player = player
         }
-        binding.playerView.hideController()
-        binding.playerView.findViewById<View>(R.id.exo_settings).visibility = View.GONE
+
     }
-
-    private fun releasePlayer() {
-        player?.release()
-        player = null
-    }
-
-
 }

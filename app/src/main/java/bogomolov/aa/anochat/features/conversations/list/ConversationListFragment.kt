@@ -1,87 +1,184 @@
 package bogomolov.aa.anochat.features.conversations.list
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import android.view.MenuItem
-import android.view.View
-import android.view.inputmethod.InputMethodManager
-import android.widget.ImageView
-import androidx.appcompat.widget.SearchView
-import androidx.core.content.ContextCompat
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.NavigationUI
-import androidx.navigation.ui.setupWithNavController
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.transition.Fade
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.databinding.FragmentConversationsListBinding
 import bogomolov.aa.anochat.domain.entity.Conversation
-import bogomolov.aa.anochat.features.shared.ActionModeData
-import bogomolov.aa.anochat.features.shared.bindingDelegate
-import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
-import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
+import bogomolov.aa.anochat.features.shared.LightColorPalette
+import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
+import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
-class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
-    UpdatableView<ConversationsUiState> {
+class ConversationListFragment : Fragment() {
     val viewModel: ConversationListViewModel by viewModels()
-    private val binding by bindingDelegate(FragmentConversationsListBinding::bind)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        exitTransition = Fade().apply { duration = 375 }
-        requireActivity().window.decorView.setBackgroundResource(R.color.conversation_background)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
+        ComposeView(requireContext()).apply {
+            setContent {
+                val state = viewModel.state.collectAsState()
+                Content(state.value)
+            }
+        }
+
+    @Composable
+    private fun Content(state: ConversationsUiState = testConversationsUiState) {
+        MaterialTheme(
+            colors = LightColorPalette
+        ) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(id = R.string.app_name)) },
+                    )
+                },
+                floatingActionButton = {
+                    FloatingActionButton(onClick = {
+                        requestContactsPermission()
+                    }) {
+                        Icon(
+                            painterResource(id = R.drawable.ic_contacts),
+                            contentDescription = ""
+                        )
+                    }
+                },
+                content = {
+                    Column(
+                    ) {
+                        if (state.pagingDataFlow != null) {
+                            val lazyPagingItems = state.pagingDataFlow.collectAsLazyPagingItems()
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                items(lazyPagingItems) { ConversationCard(it!!) }
+                            }
+                        }
+                    }
+                }
+
+            )
+        }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        viewLifecycleOwner.lifecycle.addObserver(StateLifecycleObserver(this, viewModel))
-        setupToolbar()
+    @Preview
+    @Composable
+    private fun ConversationCard(conversation: Conversation = testConversation) {
+        Card(
+            backgroundColor = Color.Black.copy(alpha = 0.0f),
+            elevation = 0.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = {
+                    val bundle = Bundle().apply { putLong("id", conversation.id) }
+                    findNavController().navigate(R.id.dialog_graph, bundle)
+                })
+                .padding(start = 12.dp, end = 12.dp)
 
-        binding.fab.setOnClickListener { requestContactsPermission() }
-        //hideKeyBoard()
-        setupRecyclerView()
+        ) {
+            val isNew = conversation.lastMessage?.isMine == false && conversation.lastMessage?.viewed == 0
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Box(contentAlignment = Alignment.TopEnd) {
+                    val imageBitmap =
+                        conversation.user.photo?.let {
+                            getBitmapFromGallery(
+                                getMiniPhotoFileName(it),
+                                LocalContext.current,
+                                1
+                            )?.asImageBitmap()
+                        }
+                    val imageModifier = Modifier
+                        .clip(CircleShape)
+                        .width(60.dp)
+                        .height(60.dp)
+                    if (imageBitmap != null) {
+                        Image(
+                            modifier = imageModifier,
+                            bitmap = imageBitmap,
+                            contentScale = ContentScale.FillWidth,
+                            contentDescription = ""
+                        )
+                    } else {
+                        Icon(
+                            painterResource(id = R.drawable.user_icon),
+                            modifier = imageModifier,
+                            contentDescription = ""
+                        )
+                    }
+                    if (isNew) {
+                        val color = colorResource(R.color.green)
+                        Canvas(modifier = Modifier.size(12.dp), onDraw = {
+                            drawCircle(color = color)
+                        })
+                    }
+                }
+                Column(
+                    modifier = Modifier
+                        .padding(start = 24.dp)
+                        .fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(conversation.user.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        conversation.lastMessage?.let { Text(text = it.timeString(), fontSize = 12.sp) }
+                    }
+                    conversation.lastMessage?.let {
+                        Text(
+                            text = it.text,
+                            maxLines = 2,
+                            modifier = Modifier.padding(top = 12.dp),
+                            fontWeight = if (isNew) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isNew) colorResource(R.color.green) else Color.Black
+                        )
+                    }
+                }
+            }
+        }
     }
 
-    override fun updateView(newState: ConversationsUiState, currentState: ConversationsUiState) {
-        if (newState.pagingData != currentState.pagingData)
-            (binding.recyclerView.adapter as ConversationsPagedAdapter)
-                .submitData(lifecycle, newState.pagingData!!)
-    }
 
-    private fun setupRecyclerView() {
-        val data = ActionModeData<Conversation>(R.menu.conversations_menu, binding.toolbar)
+    /*
         data.actionsMap[R.id.delete_conversations_action] =
             { ids, _ -> viewModel.deleteConversations(ids) }
-        val adapter =
-            ConversationsPagedAdapter(actionModeData = data) { conversation ->
-                val bundle = Bundle().apply { putLong("id", conversation.id) }
-                findNavController().navigate(R.id.dialog_graph, bundle)
-            }
-        binding.recyclerView.adapter = adapter
-        binding.recyclerView.layoutManager = LinearLayoutManager(context)
-        val itemDecorator = DividerItemDecoration(context, DividerItemDecoration.VERTICAL)
-        itemDecorator.setDrawable(
-            ContextCompat.getDrawable(requireContext(), R.drawable.conversation_divider)!!
-        )
-        binding.recyclerView.addItemDecoration(itemDecorator)
-    }
 
-    private fun setupToolbar(){
-        val navController = findNavController()
-        with(binding.toolbar) {
-            setupWithNavController(findNavController())
-            inflateMenu(R.menu.main_menu)
-            setOnMenuItemClickListener {
                 if (it.itemId == R.id.menu_sign_out) {
                     viewModel.signOut()
                     navController.navigate(R.id.signInFragment)
@@ -89,29 +186,19 @@ class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
                 } else {
                     NavigationUI.onNavDestinationSelected(it, navController)
                 }
-            }
-            menu.findItem(R.id.search_messages_action).apply {
-                val context = requireContext()
-                val searchView = SearchView(context)
+
                 searchView.setOnSubmitListener { query ->
-                    Log.i("test", "setOnSubmitListener query $query")
                     val bundle = Bundle().apply { putString("search", query) }
                     findNavController().navigate(R.id.messageSearchFragment, bundle)
                 }
-                searchView.setTextColor(R.color.title_color)
-                val searchIcon =
-                    searchView.findViewById(androidx.appcompat.R.id.search_button) as ImageView
-                searchIcon.setImageDrawable(
-                    ContextCompat.getDrawable(
-                        context,
-                        R.drawable.search_icon
-                    )
-                )
-                setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW or MenuItem.SHOW_AS_ACTION_IF_ROOM)
-                actionView = searchView
-            }
-        }
+
+    override fun onItemSelected(binding: ConversationLayoutBinding, selected: Boolean) {
+        val color = if (selected)
+            ContextCompat.getColor(context, R.color.not_my_message_color)
+        else
+            ContextCompat.getColor(context, R.color.conversation_background)
     }
+     */
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -120,15 +207,6 @@ class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
     ) {
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
             if (requestCode == CONTACTS_PERMISSIONS_CODE) findNavController().navigate(R.id.usersFragment)
-    }
-
-    private fun hideKeyBoard() {
-        val focus = requireActivity().currentFocus
-        if (focus != null) {
-            val imm =
-                requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager?
-            imm?.hideSoftInputFromWindow(focus.windowToken, 0)
-        }
     }
 
     private fun requestContactsPermission() {
@@ -140,23 +218,4 @@ class ConversationListFragment : Fragment(R.layout.fragment_conversations_list),
         private const val CONTACTS_PERMISSIONS = Manifest.permission.READ_CONTACTS
         private const val CONTACTS_PERMISSIONS_CODE = 1001
     }
-}
-
-fun SearchView.setTextColor(colorId: Int) {
-    val searchAutoComplete =
-        findViewById<SearchView.SearchAutoComplete>(androidx.appcompat.R.id.search_src_text)
-    searchAutoComplete.setHintTextColor(ContextCompat.getColor(context, colorId))
-    searchAutoComplete.setTextColor(ContextCompat.getColor(context, colorId))
-}
-
-fun SearchView.setOnSubmitListener(onSubmit: (String) -> Unit) {
-    setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-        override fun onQueryTextSubmit(query: String?) =
-            if (query != null && query.length >= 3) {
-                onSubmit(query)
-                true
-            } else false
-
-        override fun onQueryTextChange(newText: String?) = false
-    })
 }

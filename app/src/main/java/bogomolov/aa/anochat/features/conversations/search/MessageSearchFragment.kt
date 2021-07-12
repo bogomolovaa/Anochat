@@ -5,9 +5,9 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
@@ -17,8 +17,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentMessageSearchBinding
 import bogomolov.aa.anochat.features.conversations.list.ConversationsPagedAdapter
-import bogomolov.aa.anochat.features.conversations.list.setOnSubmitListener
-import bogomolov.aa.anochat.features.conversations.list.setTextColor
 import bogomolov.aa.anochat.features.shared.bindingDelegate
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import bogomolov.aa.anochat.features.shared.mvi.UpdatableView
@@ -60,7 +58,7 @@ class MessageSearchFragment : Fragment(R.layout.fragment_message_search), Updata
         searchView.setOnSubmitListener { query -> viewModel.messageSearch(query) }
         searchView.setTextColor(R.color.title_color)
         searchView.setQuery(searchString, true)
-        val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
+        //val closeButton = searchView.findViewById(R.id.search_close_btn) as ImageView
         //closeButton.setOnClickListener { navController.navigateUp() }
 
         val menuItem = menu.findItem(R.id.action_search)
@@ -80,4 +78,23 @@ class MessageSearchFragment : Fragment(R.layout.fragment_message_search), Updata
         menuItem.expandActionView()
         searchView.setQuery(searchString, true)
     }
+}
+
+fun SearchView.setTextColor(colorId: Int) {
+    val searchAutoComplete =
+        findViewById<SearchView.SearchAutoComplete>(androidx.appcompat.R.id.search_src_text)
+    searchAutoComplete.setHintTextColor(ContextCompat.getColor(context, colorId))
+    searchAutoComplete.setTextColor(ContextCompat.getColor(context, colorId))
+}
+
+fun SearchView.setOnSubmitListener(onSubmit: (String) -> Unit) {
+    setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        override fun onQueryTextSubmit(query: String?) =
+            if (query != null && query.length >= 3) {
+                onSubmit(query)
+                true
+            } else false
+
+        override fun onQueryTextChange(newText: String?) = false
+    })
 }

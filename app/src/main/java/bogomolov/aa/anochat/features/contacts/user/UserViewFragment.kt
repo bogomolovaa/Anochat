@@ -94,9 +94,6 @@ class UserViewFragment : Fragment() {
                                     .clickable(onClick = {
                                         val photo = state.user?.photo
                                         if (photo != null) {
-                                            //val extras = FragmentNavigator.Extras.Builder()
-                                            //    .addSharedElement(binding.userPhoto, photo)
-                                            //    .build()
                                             val bundle = Bundle().apply {
                                                 putString("image", photo)
                                                 putInt("quality", 1)
