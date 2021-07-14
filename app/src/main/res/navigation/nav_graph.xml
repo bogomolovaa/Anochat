@@ -18,9 +18,6 @@
         <action
             android:id="@+id/action_conversationsListFragment_to_settingsFragment"
             app:destination="@id/settings_graph" />
-        <action
-            android:id="@+id/action_conversationsListFragment_to_messageSearchFragment"
-            app:destination="@id/messageSearchFragment" />
     </fragment>
     <fragment
             android:id="@+id/usersFragment"
@@ -42,10 +39,6 @@
     <fragment
             android:id="@+id/userViewFragment"
             android:name="bogomolov.aa.anochat.features.contacts.user.UserViewFragment" />
-    <fragment
-            android:id="@+id/messageSearchFragment"
-            android:name="bogomolov.aa.anochat.features.conversations.search.MessageSearchFragment"
-            android:label="@string/search" />
 
     <navigation android:id="@+id/settings_graph"
         app:startDestination="@id/settingsFragment">

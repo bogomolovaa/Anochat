@@ -3,105 +3,138 @@ package bogomolov.aa.anochat.features.conversations.dialog
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.NavigationUI
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.databinding.FragmentSendMediaBinding
-import bogomolov.aa.anochat.features.shared.nameToImage
-import bogomolov.aa.anochat.features.shared.nameToVideo
-import bogomolov.aa.anochat.features.shared.playMessageSound
-import bogomolov.aa.anochat.repository.FileStore
+import bogomolov.aa.anochat.features.shared.*
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class SendMediaFragment : Fragment() {
     private val viewModel: ConversationViewModel by hiltNavGraphViewModels(R.id.dialog_graph)
-    private var conversationId = 0L
-    private lateinit var binding: FragmentSendMediaBinding
 
-    @Inject
-    lateinit var fileStore: FileStore
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = FragmentSendMediaBinding.inflate(inflater, container, false).also { binding = it }.root
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        (activity as AppCompatActivity).setSupportActionBar(binding.toolbar)
-        val navController = findNavController()
-        NavigationUI.setupWithNavController(binding.toolbar, navController)
-
-        val mediaPath = arguments?.getString("path")
-        val mediaUri = arguments?.getParcelable("uri") as Uri?
-        conversationId = arguments?.getLong("conversationId")!!
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
+        ComposeView(requireContext()).apply {
+            val mediaPath = arguments?.getString("path")
+            val mediaUri = arguments?.getParcelable("uri") as Uri?
+            val isVideo = isVideo(mediaUri)
+            viewModel.resizeMedia(mediaUri, mediaPath, isVideo)
+            setContent {
+                val state = viewModel.state.collectAsState()
+                Content(state.value)
+            }
+        }
 
 
-        val isVideo = mediaUri?.let {
+    @Composable
+    private fun Content(state: DialogUiState) {
+        // binding.messageInputText.requestFocus()
+        MaterialTheme(
+            colors = LightColorPalette
+        ) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(id = if (state.isVideo) R.string.send_media_video else R.string.send_media_image)) },
+                        navigationIcon = {
+                            IconButton(onClick = {
+                                findNavController().popBackStack()
+                            }) {
+                                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                            }
+                        },
+                    )
+                },
+                content = {
+                    val showLoading = state.isVideo && state.progress < 0.98
+                    if (showLoading)
+                        LinearProgressIndicator(
+                            progress = state.progress,
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .fillMaxWidth()
+                        )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight()
+                            .padding(top = if (showLoading) 16.dp else 0.dp),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        if (state.resized != null) {
+                            if (state.resized.bitmap != null) {
+                                Image(
+                                    bitmap = state.resized.bitmap.asImageBitmap(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 60.dp),
+                                    contentScale = ContentScale.FillWidth,
+                                    contentDescription = ""
+                                )
+                            }
+                            var text by remember { mutableStateOf("") }
+                            TextField(
+                                value = text,
+                                onValueChange = { text = it },
+                                placeholder = { Text(text = stringResource(id = R.string.enter_message)) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(60.dp),
+                                colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.White),
+                                trailingIcon = {
+                                    IconButton(onClick = { submit(state.resized, state.isVideo, text) }) {
+                                        Icon(Icons.Filled.PlayArrow, contentDescription = "")
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    private fun submit(resized: BitmapWithName, isVideo: Boolean, text: String) {
+        if (resized.processed) {
+            if (isVideo) {
+                viewModel.sendMessage(
+                    SendMessageData(video = nameToVideo(resized.name), text = text)
+                )
+            } else {
+                viewModel.sendMessage(
+                    SendMessageData(image = nameToImage(resized.name), text = text)
+                )
+            }
+            playMessageSound(requireContext())
+            findNavController().popBackStack()
+        } else {
+            Toast.makeText(requireContext(), "Video is processing", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun isVideo(mediaUri: Uri?) =
+        mediaUri?.let {
             it.toString().contains("document/video") ||
                     (requireContext().contentResolver.getType(mediaUri)?.startsWith("video")
                         ?: false) ||
                     mediaUri.toString().endsWith(".mp4")
         } ?: false
-
-        (activity as AppCompatActivity).setTitle(
-            if (isVideo) R.string.send_media_video else R.string.send_media_image
-        )
-
-        val resized = if (isVideo) fileStore.resizeVideo(mediaUri!!, lifecycleScope)
-        else fileStore.resizeImage(mediaUri, mediaPath, toGallery = (mediaUri == null))
-        if (resized != null) {
-            if (isVideo) {
-                binding.progressBar.visibility = View.VISIBLE
-                binding.progressBar.max = 100
-                lifecycleScope.launch {
-                    resized.progress.collect {
-                        binding.progressBar.progress = it
-                        if (it > 98) {
-                            binding.progressBar.visibility = View.INVISIBLE
-                            cancel()
-                        }
-                    }
-                }
-            } else {
-                binding.progressBar.visibility = View.GONE
-            }
-            binding.imageView.setImageBitmap(resized.bitmap)
-            binding.messageInputLayout.setEndIconOnClickListener {
-                if (resized.processed) {
-                    val text = binding.messageInputText.text?.toString() ?: ""
-                    if (isVideo) {
-                        viewModel.sendMessage(
-                            SendMessageData(video = nameToVideo(resized.name), text = text)
-                        )
-
-                    } else {
-                        viewModel.sendMessage(
-                            SendMessageData(image = nameToImage(resized.name), text = text)
-                        )
-                    }
-                    playMessageSound(requireContext())
-                    navController.popBackStack()
-                } else {
-                    Toast.makeText(requireContext(), "Video is processing", Toast.LENGTH_LONG)
-                        .show()
-                }
-            }
-        } else {
-            navController.popBackStack()
-        }
-        binding.messageInputText.requestFocus()
-    }
 }

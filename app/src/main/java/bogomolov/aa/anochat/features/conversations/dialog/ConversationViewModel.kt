@@ -1,7 +1,9 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import android.os.Parcelable
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
@@ -13,9 +15,11 @@ import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.AudioPlayer
+import bogomolov.aa.anochat.features.shared.BitmapWithName
 import bogomolov.aa.anochat.features.shared.LocaleProvider
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.Event
+import bogomolov.aa.anochat.repository.FileStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -46,7 +50,11 @@ data class DialogUiState(
     val text: String = "",
     val audioLengthText: String = "",
     val playingState: PlayingState? = null,
-    val pagingData: PagingData<MessageView>? = null
+    val pagingData: PagingData<MessageView>? = null,
+
+    val resized: BitmapWithName? = null,
+    val isVideo: Boolean = false,
+    val progress: Float = 0f
 )
 
 data class PlayingState(
@@ -81,6 +89,9 @@ class ConversationViewModel @Inject constructor(
     private var conversationInitialized = false
     private var typingJob: Job? = null
 
+    @Inject
+    lateinit var fileStore: FileStore
+
     override fun onCleared() {
         super.onCleared()
         GlobalScope.launch(dispatcher) {
@@ -89,6 +100,17 @@ class ConversationViewModel @Inject constructor(
                     it
                 )
             }
+        }
+    }
+
+
+    fun resizeMedia(mediaUri: Uri?, mediaPath: String?, isVideo: Boolean) = execute {
+        updateState { copy(resized = null, isVideo = isVideo) }
+        val resized = if (isVideo) fileStore.resizeVideo(mediaUri!!, viewModelScope)
+        else fileStore.resizeImage(mediaUri, mediaPath, toGallery = (mediaUri == null))
+        updateState { copy(resized = resized, isVideo = isVideo) }
+        resized?.progress?.collect {
+            updateState { copy(progress = it.toFloat() / 100) }
         }
     }
 
