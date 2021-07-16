@@ -163,7 +163,7 @@
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        tools:visibility="visible">
+                        tools:visibility="gone">
 
                         <ImageView
                             android:id="@+id/imageView"
@@ -202,7 +202,7 @@
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        tools:visibility="gone">
+                        tools:visibility="visible">
 
                         <ImageView
                             android:id="@+id/error_loading_image"

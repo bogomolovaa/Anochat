@@ -3,7 +3,6 @@ package bogomolov.aa.anochat.features.conversations.dialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.os.Parcelable
 import android.util.DisplayMetrics
 import android.widget.Toast
 import androidx.core.view.doOnPreDraw
@@ -67,14 +66,14 @@ class ConversationRecyclerViewSetup(
         }
     }
 
-    fun updateMessages(pagingData: PagingData<MessageView>, firstUpdate: Boolean) {
+    fun updateMessages(pagingData: PagingData<MessageViewData>, firstUpdate: Boolean) {
         (binding.recyclerView.adapter as MessagesPagedAdapter)
             .submitData(fragment.lifecycle, pagingData)
         if(!firstUpdate) scrollToEnd()
     }
 
     private fun createRecyclerViewAdapter(): MessagesPagedAdapter {
-        val data = ActionModeData<MessageView>(R.menu.messages_menu, binding.toolbar)
+        val data = ActionModeData<MessageViewData>(R.menu.messages_menu, binding.toolbar)
         data.actionsMap[R.id.delete_messages_action] = { _, items ->
             viewModel.deleteMessages(items.map { it.message.id }.toSet())
         }

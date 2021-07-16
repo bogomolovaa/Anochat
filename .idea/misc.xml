@@ -3,12 +3,21 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/android/Anochat/app/src/main/res/drawable/camera_icon.xml" value="0.3902564102564103" />
         <entry key="..\:/android/Anochat/app/src/main/res/drawable/circle_icon.xml" value="0.3902564102564103" />
         <entry key="..\:/android/Anochat/app/src/main/res/drawable/edit_icon.xml" value="0.1" />
+        <entry key="..\:/android/Anochat/app/src/main/res/drawable/emoji_icon.xml" value="0.3902564102564103" />
         <entry key="..\:/android/Anochat/app/src/main/res/drawable/ic_done.xml" value="0.3902564102564103" />
+        <entry key="..\:/android/Anochat/app/src/main/res/drawable/ic_launcher_background.xml" value="0.3902564102564103" />
+        <entry key="..\:/android/Anochat/app/src/main/res/drawable/ic_media.xml" value="0.3902564102564103" />
+        <entry key="..\:/android/Anochat/app/src/main/res/drawable/ic_play_circle.xml" value="0.3902564102564103" />
+        <entry key="..\:/android/Anochat/app/src/main/res/drawable/input_rect_bg.xml" value="0.3902564102564103" />
+        <entry key="..\:/android/Anochat/app/src/main/res/drawable/reply_mark.xml" value="0.3963541666666667" />
         <entry key="..\:/android/Anochat/app/src/main/res/drawable/rounded_fg.xml" value="0.1" />
+        <entry key="..\:/android/Anochat/app/src/main/res/drawable/user_icon.xml" value="0.3902564102564103" />
         <entry key="..\:/android/Anochat/app/src/main/res/layout/activity_main.xml" value="0.36186594202898553" />
         <entry key="..\:/android/Anochat/app/src/main/res/layout/conversation_layout.xml" value="0.35688405797101447" />
+        <entry key="..\:/android/Anochat/app/src/main/res/layout/fragment_conversation.xml" value="0.35190217391304346" />
         <entry key="..\:/android/Anochat/app/src/main/res/layout/fragment_conversations_list.xml" value="0.35688405797101447" />
         <entry key="..\:/android/Anochat/app/src/main/res/layout/fragment_exo_video_view.xml" value="0.3663949275362319" />
         <entry key="..\:/android/Anochat/app/src/main/res/layout/fragment_image_view.xml" value="0.36186594202898553" />
@@ -20,6 +29,8 @@
         <entry key="..\:/android/Anochat/app/src/main/res/layout/fragment_user_view.xml" value="0.3663949275362319" />
         <entry key="..\:/android/Anochat/app/src/main/res/layout/fragment_users.xml" value="0.34692028985507245" />
         <entry key="..\:/android/Anochat/app/src/main/res/layout/image_layout.xml" value="0.35688405797101447" />
+        <entry key="..\:/android/Anochat/app/src/main/res/layout/message_layout.xml" value="0.5" />
+        <entry key="..\:/android/Anochat/app/src/main/res/layout/play_audio_layout.xml" value="0.34692028985507245" />
         <entry key="..\:/android/Anochat/app/src/main/res/layout/rounded_image_layout.xml" value="0.21458333333333332" />
         <entry key="..\:/android/Anochat/app/src/main/res/layout/user_edit_layout.xml" value="0.37092391304347827" />
         <entry key="..\:/android/Anochat/app/src/main/res/layout/user_layout.xml" value="0.34692028985507245" />

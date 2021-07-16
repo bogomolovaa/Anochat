@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -14,26 +15,53 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.addRepeatingJob
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.Navigation
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.FragmentNavigator
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import androidx.transition.Fade
 import androidx.transition.Slide
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.databinding.FragmentConversationBinding
-import bogomolov.aa.anochat.features.shared.bindingDelegate
+import bogomolov.aa.anochat.databinding.MessageLayoutBinding
+import bogomolov.aa.anochat.domain.entity.AttachmentStatus
+import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.mvi.StateLifecycleObserver
 import com.vanniktech.emoji.EmojiPopup
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import bogomolov.aa.anochat.features.shared.*
+import bogomolov.aa.anochat.features.shared.bindingDelegate
 
 private const val TAG = "ConversationFragment"
 
@@ -60,6 +88,7 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
             viewModel.updateState { copy(inputState = InputStates.INITIAL) }
     }
 
+    @ExperimentalMaterialApi
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val conversationId = arguments?.get("id") as Long
@@ -101,6 +130,78 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
                     }
                 }
             }
+        }
+
+        binding.lazyList.setContent {
+            val state = viewModel.state.collectAsState()
+            MaterialTheme(colors = LightColorPalette) {
+                val pagingDataFlow = state.value.pagingDataFlow
+                if (pagingDataFlow != null) {
+                    val lazyPagingItems = pagingDataFlow.collectAsLazyPagingItems()
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight()
+                            .padding(start = 8.dp, end = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        reverseLayout = true
+                    ) {
+                        items(lazyPagingItems) {
+                            if (it?.message?.image != null || it?.message?.video != null) {
+                                var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+                                LaunchedEffect(it.message.id) {
+                                    withContext(Dispatchers.IO) {
+                                        val image = if(it.message.image != null) it.message.image else videoThumbnail(it.message.video!!)
+                                        bitmap = getBitmapFromGallery(image, requireContext(), 1)
+                                    }
+                                }
+                                DisposableEffect(it.message.id) {
+                                    onDispose {
+                                        bitmap = null
+                                        it.bitmap = null
+                                    }
+                                }
+                                it.bitmap = bitmap
+                            }
+                            if (it != null) {
+                                MessageCompose(it) {
+                                    when {
+                                        it.message.video != null -> videoOnClick(it.message)
+                                        it.message.image != null -> imageOnClick(it.message)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+
+    private fun videoOnClick(message: Message) {
+        if (message.received == 1 || message.isMine) {
+            val uriWithSource = getUriWithSource(message.video!!, requireContext())
+            if (uriWithSource.uri != null) {
+                findNavController().navigate(
+                    R.id.exoPlayerViewFragment,
+                    Bundle().apply { putString("uri", uriWithSource.uri.toString()) })
+            }
+        }
+    }
+
+    private fun imageOnClick(message: Message) {
+        if (message.received == 1 || message.isMine) {
+            //val extras = FragmentNavigator.Extras.Builder()
+            //    .addSharedElement(imageView, imageView.transitionName)
+            //    .build()
+            val bundle = Bundle().apply {
+                putString("image", message.image)
+                putInt("quality", 2)
+                putBoolean("gallery", true)
+            }
+            findNavController().navigate(R.id.imageViewFragment, bundle, null)
         }
     }
 

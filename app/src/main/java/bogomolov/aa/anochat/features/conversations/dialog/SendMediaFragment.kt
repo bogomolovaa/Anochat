@@ -46,7 +46,6 @@ class SendMediaFragment : Fragment() {
 
     @Composable
     private fun Content(state: DialogUiState) {
-        // binding.messageInputText.requestFocus()
         MaterialTheme(
             colors = LightColorPalette
         ) {

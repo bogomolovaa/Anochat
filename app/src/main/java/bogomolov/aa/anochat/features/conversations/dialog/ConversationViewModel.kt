@@ -2,8 +2,6 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.os.Parcelable
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
@@ -22,9 +20,7 @@ import bogomolov.aa.anochat.features.shared.mvi.Event
 import bogomolov.aa.anochat.repository.FileStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -50,7 +46,8 @@ data class DialogUiState(
     val text: String = "",
     val audioLengthText: String = "",
     val playingState: PlayingState? = null,
-    val pagingData: PagingData<MessageView>? = null,
+    val pagingData: PagingData<MessageViewData>? = null,
+    val pagingDataFlow: Flow<PagingData<MessageViewData>>? = null,
 
     val resized: BitmapWithName? = null,
     val isVideo: Boolean = false,
@@ -114,7 +111,7 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun notifyAsViewed(messages: List<MessageView>) = execute {
+    fun notifyAsViewed(messages: List<MessageViewData>) = execute {
         currentState.conversation?.user?.uid?.let { uid ->
             messageUseCases.notifyAsViewed(messages.map { it.message }, uid)
         }
@@ -239,18 +236,15 @@ class ConversationViewModel @Inject constructor(
     }
 
     private fun subscribeToMessages(conversation: Conversation) = execute {
-        messageUseCases.loadMessagesDataSource(conversation.id).flowOn(dispatcher)
-            .cachedIn(viewModelScope.plus(dispatcher))
-            .collectLatest {
-                setState {
-                    copy(
-                        pagingData = it.map { MessageView(it) }.insertSeparators { m1, m2 ->
-                            insertDateSeparators(m1, m2, localeProvider.locale)
-                            null
-                        }
-                    )
+        val pagingDataFlow = messageUseCases.loadMessagesDataSource(conversation.id).flowOn(dispatcher)
+            .cachedIn(viewModelScope.plus(dispatcher)).map {
+                it.map { MessageViewData(it) }.insertSeparators { m1, m2 ->
+                    insertDateSeparators(m1, m2, localeProvider.locale)
+                    null
                 }
             }
+        setState { copy(pagingDataFlow = pagingDataFlow) }
+        //pagingDataFlow.collectLatest { setState { copy(pagingData = it) } }
     }
 
     private fun subscribeToOnlineStatus(uid: String) {
@@ -273,7 +267,7 @@ class ConversationViewModel @Inject constructor(
     }
 }
 
-private fun insertDateSeparators(message1: MessageView?, message2: MessageView?, locale: Locale) {
+private fun insertDateSeparators(message1: MessageViewData?, message2: MessageViewData?, locale: Locale) {
     if (message1 != null && message2 != null) {
         val day1 = GregorianCalendar().apply { time = Date(message1.message.time) }
             .get(Calendar.DAY_OF_YEAR)

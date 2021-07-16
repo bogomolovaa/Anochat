@@ -213,7 +213,7 @@ class ConversationListFragment : Fragment() {
                     }
                     conversation.lastMessage?.let {
                         Text(
-                            text = it.text,
+                            text = it.shortText(),
                             maxLines = 2,
                             modifier = Modifier.padding(top = 12.dp),
                             fontWeight = if (isNew) FontWeight.Bold else FontWeight.Normal,

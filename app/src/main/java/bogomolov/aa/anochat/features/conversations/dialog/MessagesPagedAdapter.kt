@@ -43,8 +43,8 @@ class MessagesPagedAdapter(
     private val windowWidth: Int,
     private val onReply: (Message) -> Unit,
     private val actionExecutor: ConversationViewModel,
-    actionModeData: ActionModeData<MessageView>? = null,
-) : ExtPagedListAdapter<MessageView, MessageLayoutBinding>(actionModeData) {
+    actionModeData: ActionModeData<MessageViewData>? = null,
+) : ExtPagedListAdapter<MessageViewData, MessageLayoutBinding>(actionModeData) {
     val messagesMap = HashMap<String, PlayAudioView>()
     val replyMessagesMap = HashMap<String, PlayAudioView>()
 
@@ -54,10 +54,10 @@ class MessagesPagedAdapter(
         return VH(binding.root, binding)
     }
 
-    override fun getId(item: MessageView) = item.message.id
+    override fun getId(item: MessageViewData) = item.message.id
 
     @SuppressLint("ClickableViewAccessibility")
-    override fun bind(item: MessageView?, holder: VH) {
+    override fun bind(item: MessageViewData?, holder: VH) {
         val binding = holder.binding
         if (item != null) {
             val context = binding.root.context
@@ -98,15 +98,15 @@ class MessagesPagedAdapter(
             }
 
             binding.imageProgressLayout.visibility = View.GONE
-            val detector = getGestureDetector(binding.messageCardView, item.message, holder)
+            val detector = getGestureDetector(binding.messageCardView, item.message, holder) //todo: GestureDetector
             val text = item.message.text
 
-            if (text.length in 1..2 && Character.isSurrogate(text[0])) {
+            if (text.length in 1..2 && Character.isSurrogate(text[0])) {            //todo: setEmojiSizeRes
                 binding.messageText.setEmojiSizeRes(R.dimen.message_one_emoji_size)
             } else {
                 binding.messageText.setEmojiSizeRes(R.dimen.message_emoji_size)
             }
-            if (text.contains("(https|http)".toRegex())) {
+            if (text.contains("(https|http)".toRegex())) {                      //todo: setTextViewHTML
                 setTextViewHTML(binding.messageText, insertLinks(text))
             } else {
                 binding.messageText.text = toSpanned(insertLinks(text))
@@ -114,7 +114,7 @@ class MessagesPagedAdapter(
             binding.messageText.visibility = if (text.isNotEmpty()) View.VISIBLE else View.GONE
 
             binding.timeText.text = item.message.shortTimeString()
-            binding.timeText.linksClickable = true;
+            binding.timeText.linksClickable = true
             binding.timeText.movementMethod = LinkMovementMethod.getInstance()
             binding.timeText.setTextColor(Color.BLACK)
             (binding.timeText.layoutParams as ViewGroup.MarginLayoutParams).rightMargin =
@@ -125,7 +125,7 @@ class MessagesPagedAdapter(
                 item.detailedImageLoaded = false
                 loadImage(image, binding, 8, item.message.attachmentStatus)
                 if (text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
-                setImageClickListener(item.message, binding.imageView, detector)
+                setImageClickListener(item.message, binding.imageView, detector)    //todo: setImageClickListener
                 binding.imageView.transitionName = item.message.image
 
                 binding.messageCardView.layoutParams.width =
@@ -139,11 +139,11 @@ class MessagesPagedAdapter(
 
             val video = item.message.video
             if (!video.isNullOrEmpty()) {
-                val thumbnail = videoThumbnail(video)
+                val thumbnail = videoThumbnail(video)           //todo: videoThumbnail
                 item.detailedImageLoaded = false
                 loadImage(thumbnail, binding, 2, item.message.attachmentStatus)
                 if (text.isEmpty()) binding.timeText.setTextColor(Color.WHITE)
-                setVideoClickListener(item.message, binding.imageView, detector)
+                setVideoClickListener(item.message, binding.imageView, detector)          //todo: setVideoClickListener
 
                 binding.messageCardView.layoutParams.width =
                     resDimension(R.dimen.message_image_width, context).toInt()
@@ -215,7 +215,7 @@ class MessagesPagedAdapter(
 
     fun loadDetailed(position: Int, viewHolder: RecyclerView.ViewHolder) {
         val binding =
-            (viewHolder as ExtPagedListAdapter<MessageView, MessageLayoutBinding>.VH).binding
+            (viewHolder as ExtPagedListAdapter<MessageViewData, MessageLayoutBinding>.VH).binding
         getItem(position)?.let { item ->
             item.message.image?.let { loadDetailedImage(it, 2, item, binding) }
             item.message.video?.let { loadDetailedImage(videoThumbnail(it), 1, item, binding) }
@@ -225,7 +225,7 @@ class MessagesPagedAdapter(
     private fun loadDetailedImage(
         image: String?,
         quality: Int,
-        item: MessageView,
+        item: MessageViewData,
         binding: MessageLayoutBinding
     ) {
         if (!image.isNullOrEmpty() && !item.detailedImageLoaded) {
@@ -382,7 +382,7 @@ class MessagesPagedAdapter(
     }
 
     private fun toSpanned(html: String?): Spanned {
-        val content = html?.replace("\n","<br>")
+        val content = html?.replace("\n", "<br>")
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             Html.fromHtml(content, Html.FROM_HTML_MODE_LEGACY)
         } else {
