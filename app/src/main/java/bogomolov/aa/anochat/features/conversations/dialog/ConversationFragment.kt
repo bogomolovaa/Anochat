@@ -9,10 +9,12 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -144,39 +146,73 @@ class ConversationFragment : Fragment(R.layout.fragment_conversation) {
                             .fillMaxHeight()
                             .padding(start = 8.dp, end = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
-                        reverseLayout = true
+                        reverseLayout = true,
                     ) {
-                        items(lazyPagingItems) {
-                            if (it?.message?.image != null || it?.message?.video != null) {
-                                var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-                                LaunchedEffect(it.message.id) {
-                                    withContext(Dispatchers.IO) {
-                                        val image = if(it.message.image != null) it.message.image else videoThumbnail(it.message.video!!)
-                                        bitmap = getBitmapFromGallery(image, requireContext(), 1)
-                                    }
-                                }
-                                DisposableEffect(it.message.id) {
-                                    onDispose {
-                                        bitmap = null
-                                        it.bitmap = null
-                                    }
-                                }
-                                it.bitmap = bitmap
-                            }
-                            if (it != null) {
-                                MessageCompose(it) {
-                                    when {
-                                        it.message.video != null -> videoOnClick(it.message)
-                                        it.message.image != null -> imageOnClick(it.message)
-                                    }
-                                }
-                            }
-                        }
+                        items(lazyPagingItems) { ShowMessage(it, state.value.playingState) }
                     }
                 }
             }
         }
 
+    }
+
+    @ExperimentalMaterialApi
+    @Composable
+    private fun ShowMessage(messageData: MessageViewData?, playingState: PlayingState?) {
+        if (messageData != null)
+            LaunchedEffect(messageData.message.id) {
+                viewModel.notifyAsViewed(messageData)
+            }
+
+        if (messageData?.message?.image != null || messageData?.message?.video != null) {
+            var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+            LaunchedEffect(messageData.message.id) {
+                withContext(Dispatchers.IO) {
+                    val image = if (messageData.message.image != null) messageData.message.image
+                    else videoThumbnail(messageData.message.video!!)
+                    bitmap = getBitmapFromGallery(image, requireContext(), 1)
+                }
+            }
+            DisposableEffect(messageData.message.id) {
+                onDispose {
+                    bitmap = null
+                    messageData.bitmap = null
+                }
+            }
+            messageData.bitmap = bitmap
+        }
+        if (messageData != null) {
+            messageData.playingState =
+                if (playingState?.messageId == messageData.message.messageId) playingState else null
+            messageData.replyPlayingState =
+                if (playingState?.messageId == messageData.message.replyMessage?.messageId) playingState else null
+        }
+        MessageCompose(
+            data = messageData,
+            onClick = {
+                when {
+                    messageData?.message?.video != null -> videoOnClick(messageData.message)
+                    messageData?.message?.image != null -> imageOnClick(messageData.message)
+                }
+            },
+            onSwipe = {
+                messageData?.message?.let { onReply(it) }
+            },
+            playOnClick = { audioFile: String?, messageId: String? ->
+                if (playingState?.paused != false) {
+                    viewModel.startPlaying(audioFile, messageId)
+                } else {
+                    viewModel.pausePlaying()
+                }
+            }
+        )
+    }
+
+    private fun onReply(message: Message) {
+        viewModel.updateState { copy(replyMessage = message) }
+        binding.removeReply.setOnClickListener {
+            viewModel.updateState { copy(replyMessage = null) }
+        }
     }
 
 

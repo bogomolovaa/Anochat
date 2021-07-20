@@ -90,17 +90,15 @@ open class MessageUseCases @Inject constructor(
     fun loadMessagesDataSource(conversationId: Long) =
         messageRep.loadMessagesDataSource(conversationId)
 
-    suspend fun notifyAsViewed(messages: List<Message>, uid: String) {
-        for (message in messages) {
-            if (!message.isMine && message.viewed == 0) {
-                message.viewed = 1
-                messageRep.notifyAsViewed(message)
-            }
-            if (!message.isMine && message.hasAttachment() && message.received == 0) {
-                crypto.getSecretKey(uid)?.let { secretKey ->
-                    messageRep.receiveAttachment(message, uid) {
-                        crypto.decrypt(secretKey, this)
-                    }
+    suspend fun notifyAsViewed(message: Message, uid: String) {
+        if (!message.isMine && message.viewed == 0) {
+            message.viewed = 1
+            messageRep.notifyAsViewed(message)
+        }
+        if (!message.isMine && message.hasAttachment() && message.received == 0) {
+            crypto.getSecretKey(uid)?.let { secretKey ->
+                messageRep.receiveAttachment(message, uid) {
+                    crypto.decrypt(secretKey, this)
                 }
             }
         }

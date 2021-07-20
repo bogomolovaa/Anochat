@@ -111,9 +111,9 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun notifyAsViewed(messages: List<MessageViewData>) = execute {
+    fun notifyAsViewed(messageData: MessageViewData) = execute {
         currentState.conversation?.user?.uid?.let { uid ->
-            messageUseCases.notifyAsViewed(messages.map { it.message }, uid)
+            messageUseCases.notifyAsViewed(messageData.message, uid)
         }
     }
 
@@ -138,6 +138,7 @@ class ConversationViewModel @Inject constructor(
     }
 
     fun startPlaying(audioFile: String? = null, messageId: String? = null) = execute {
+        println("startPlaying audioFile $audioFile messageId $messageId")
         if (currentState.playingState == null) initStartPlaying(audioFile, messageId)
         if (audioPlayer.startPlay()) {
             startTime = System.currentTimeMillis()
@@ -146,6 +147,7 @@ class ConversationViewModel @Inject constructor(
                     delay(1000)
                     val time = System.currentTimeMillis() - startTime + tempElapsed
                     setState { copy(playingState = playingState?.copy(elapsed = time)) }
+                    if(!isActive) break
                 }
             }
             setState { copy(playingState = playingState?.copy(paused = false)) }
