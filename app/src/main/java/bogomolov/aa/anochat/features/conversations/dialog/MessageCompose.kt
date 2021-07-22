@@ -47,27 +47,35 @@ import java.util.*
 import kotlin.math.roundToInt
 
 @Composable
-private fun ReplyMessage(
+fun ReplyMessage(
     message: Message,
     bitmap: Bitmap?,
     replyPlayingState: PlayingState?,
-    playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> }
+    playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> },
+    onClear: (() -> Unit)? = null
 ) {
-    Row(modifier = Modifier.background(color = colorResource(id = R.color.time_message_color))) {
-        Row(
+    Row(
+        modifier = Modifier
+            .background(color = colorResource(id = R.color.time_message_color))
+            .height(48.dp)
+    ) {
+        Surface(
             modifier = Modifier
-                .size(4.dp, 48.dp)
-                .background(colorResource(R.color.colorAccent))
+                .width(4.dp)
+                .fillMaxHeight(),
+            color = colorResource(R.color.colorAccent)
         ) { }
         if (message.audio != null) {
-            PlayAudio(replyPlayingState, message, playOnClick)
+            PlayAudio(replyPlayingState, message.audio, message.messageId, playOnClick)
         } else {
-            Text(
-                text = message.text,
-                modifier = Modifier
-                    .padding(start = 4.dp, top = 6.dp, bottom = 6.dp, end = 4.dp)
-                    .height(32.dp)
-            )
+            if (message.text.isNotEmpty())
+                Text(
+                    text = message.text,
+                    modifier = Modifier
+                        .padding(start = 4.dp, top = 6.dp, bottom = 6.dp, end = 4.dp)
+                        .widthIn(max = 300.dp),
+                    maxLines = 2
+                )
             if (bitmap != null)
                 Image(
                     modifier = Modifier.heightIn(max = 48.dp),
@@ -75,29 +83,42 @@ private fun ReplyMessage(
                     contentDescription = null
                 )
         }
+        if (onClear != null)
+            Icon(
+                imageVector = Icons.Filled.Clear,
+                contentDescription = null,
+                tint = Color.Red,
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable { onClear() }
+            )
     }
 
 }
 
+@Preview(widthDp = 320)
 @Composable
 fun PlayAudio(
     state: PlayingState? = testPlayingState,
-    message: Message? = null,
+    audio: String? = null,
+    messageId: String? = null,
     playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> },
     onClear: (() -> Unit)? = null
 ) {
     Row(
         Modifier
-            .height(60.dp)
+            .height(56.dp)
     ) {
         Icon(
-            imageVector = if (state?.paused != false) Icons.Filled.PlayArrow else Icons.Filled.Pause,
+            imageVector = if (audio == null) Icons.Filled.ErrorOutline else
+                if (state?.paused != false) Icons.Filled.PlayArrow else Icons.Filled.Pause,
             contentDescription = null,
+            tint = if (audio == null) Color.Red else Color.Black,
             modifier = Modifier
-                .padding(start = 12.dp, top = 12.dp, bottom = 12.dp)
+                .padding(start = 12.dp, top = 10.dp, bottom = 10.dp)
                 .size(36.dp)
                 .clickable {
-                    playOnClick(message?.audio, message?.messageId)
+                    playOnClick(audio, messageId)
                 }
         )
         Box(
@@ -143,7 +164,6 @@ fun PlayAudio(
 }
 
 @ExperimentalMaterialApi
-@Preview(widthDp = 320)
 @Composable
 fun MessageCompose(
     data: MessageViewData? = testMessageViewData,
@@ -160,6 +180,7 @@ fun MessageCompose(
             .onGloballyPositioned {
                 windowWidth = it.size.width
             }
+            .padding(bottom = 4.dp)
     ) {
         if (data.hasTimeMessage()) {
             Card(
@@ -207,16 +228,16 @@ fun MessageCompose(
         ) {
             Column(modifier = Modifier.padding(4.dp)) {
                 message.replyMessage?.let {
-                    Row(modifier = Modifier.height(48.dp)) {
-                        ReplyMessage(it, data.replyBitmap, data.replyPlayingState, playOnClick)
-                    }
+                    ReplyMessage(it, data.replyBitmap, data.replyPlayingState, playOnClick)
                 }
                 if (message.audio != null) {
-                    PlayAudio(data.playingState, message, playOnClick)
+                    PlayAudio(data.playingState, message.audio, message.messageId, playOnClick)
                 } else if (message.image != null || message.video != null) {
                     Row {
                         val bitmap = data.bitmap
-                        Box(modifier = Modifier.clickable { onClick() }.padding(bottom = 4.dp)) {
+                        Box(modifier = Modifier
+                            .clickable { onClick() }
+                            .padding(bottom = 4.dp)) {
                             when {
                                 message.attachmentStatus == AttachmentStatus.LOADING -> {
                                     Box(
@@ -361,7 +382,7 @@ private fun textToAnnotatedString(text: String) = with(AnnotatedString.Builder()
     toAnnotatedString()
 }
 
-private val testPlayingState = PlayingState(
+val testPlayingState = PlayingState(
     audioFile = "",
     duration = 60 * 1000,
     elapsed = 20 * 1000,

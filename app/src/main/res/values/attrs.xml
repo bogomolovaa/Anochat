@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <declare-styleable name="RoundedImageView">
-        <attr name="foregroundColor" format="color" />
-        <attr name="srcDrawable" format="reference" />
-        <attr name="srcFile" format="string" />
-    </declare-styleable>
-</resources>

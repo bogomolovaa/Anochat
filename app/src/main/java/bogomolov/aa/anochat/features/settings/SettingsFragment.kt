@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -75,7 +76,7 @@ class SettingsFragment : Fragment() {
                             }) {
                                 Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                             }
-                        },
+                        }
                     )
                 },
                 content = {
@@ -113,7 +114,7 @@ class SettingsFragment : Fragment() {
                                     )
                                 }
                                 Icon(
-                                    painterResource(id = R.drawable.edit_icon),
+                                    imageVector = Icons.Filled.Edit,
                                     contentDescription = "",
                                     modifier = Modifier.clickable {
                                         if (state.user != null) readPermission.launch(READ_EXTERNAL_STORAGE)
@@ -136,7 +137,7 @@ class SettingsFragment : Fragment() {
                                         fontWeight = FontWeight.Bold,
                                     )
                                     Icon(
-                                        painterResource(id = R.drawable.edit_icon),
+                                        imageVector = Icons.Filled.Edit,
                                         contentDescription = "",
                                         modifier = Modifier.clickable {
                                             showEditNameDialog(state.user?.name)
@@ -154,7 +155,7 @@ class SettingsFragment : Fragment() {
                                         fontSize = 16.sp,
                                     )
                                     Icon(
-                                        painterResource(id = R.drawable.edit_icon),
+                                        imageVector = Icons.Filled.Edit,
                                         contentDescription = "",
                                         modifier = Modifier.clickable {
                                             showEditStatusDialog(state.user?.status)

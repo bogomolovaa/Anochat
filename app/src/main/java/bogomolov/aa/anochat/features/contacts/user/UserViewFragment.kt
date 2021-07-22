@@ -46,9 +46,6 @@ class UserViewFragment : Fragment() {
         super.onCreate(savedInstanceState)
         val userId = arguments?.getLong("id")!!
         viewModel.initUser(userId)
-
-        val animationDuration = resources.getInteger(R.integer.animation_duration).toLong()
-        exitTransition = Fade().apply { duration = animationDuration }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
