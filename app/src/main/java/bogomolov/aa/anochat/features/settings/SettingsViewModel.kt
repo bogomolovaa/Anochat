@@ -1,8 +1,5 @@
 package bogomolov.aa.anochat.features.settings
 
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewModelScope
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.AuthRepository
@@ -10,13 +7,16 @@ import bogomolov.aa.anochat.features.shared.BitmapWithName
 import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+enum class SettingEditType { EDIT_USERNAME, EDIT_STATUS }
 
 data class SettingsUiState(
     val user: User? = null,
     val settings: Settings = Settings(),
-    val miniatureState: MiniatureState? = null
+    val miniatureState: MiniatureState? = null,
+    val settingEditType: SettingEditType? = null,
+    val settingText: String = ""
 )
 
 data class MiniatureState(

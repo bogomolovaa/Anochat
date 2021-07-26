@@ -20,9 +20,11 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
@@ -43,6 +45,7 @@ import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import bogomolov.aa.anochat.repository.FileStore
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -52,6 +55,7 @@ class SettingsFragment : Fragment() {
     @Inject
     lateinit var fileStore: FileStore
 
+    @ExperimentalMaterialApi
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
         ComposeView(requireContext()).apply {
             setContent {
@@ -60,13 +64,80 @@ class SettingsFragment : Fragment() {
             }
         }
 
+    @ExperimentalMaterialApi
     @Preview
     @Composable
     private fun Content(state: SettingsUiState = testSettingsUiState) {
         MaterialTheme(
             colors = LightColorPalette
         ) {
-            Scaffold(
+            val bottomSheetState = rememberBottomSheetScaffoldState()
+            val coroutineScope = rememberCoroutineScope()
+            BottomSheetScaffold(
+                sheetPeekHeight = 0.dp,
+                scaffoldState = bottomSheetState,
+                sheetContent = {
+                    if (state.settingEditType != null) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                        ) {
+                            TextField(
+                                modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+                                value = state.settingText,
+                                onValueChange = {
+                                    viewModel.updateState { copy(settingText = it) }
+                                },
+                                label = {
+                                    Text(
+                                        text = stringResource(
+                                            when (state.settingEditType) {
+                                                SettingEditType.EDIT_USERNAME -> R.string.enter_new_name
+                                                SettingEditType.EDIT_STATUS -> R.string.enter_new_status
+                                            }
+                                        )
+                                    )
+                                },
+                                colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent)
+                            )
+                        }
+                        Row(
+                            Modifier
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Button(
+                                modifier = Modifier.padding(16.dp),
+                                onClick = {
+                                if (state.settingText.isNotEmpty())
+                                    when (state.settingEditType) {
+                                        SettingEditType.EDIT_USERNAME -> viewModel.updateUser { copy(name = state.settingText) }
+                                        SettingEditType.EDIT_STATUS -> viewModel.updateUser { copy(status = state.settingText) }
+                                    }
+                                viewModel.updateState { copy(settingEditType = null) }
+                                coroutineScope.launch {
+                                    bottomSheetState.bottomSheetState.collapse()
+                                }
+                                when (state.settingEditType) {
+                                    SettingEditType.EDIT_USERNAME -> state.user?.name ?: ""
+                                    SettingEditType.EDIT_STATUS -> state.user?.status ?: ""
+                                }
+                            }) {
+                                Text(text = stringResource(id = R.string.save))
+                            }
+                            Button(
+                                modifier = Modifier.padding(16.dp),
+                                onClick = {
+                                viewModel.updateState { copy(settingEditType = null) }
+                                coroutineScope.launch {
+                                    bottomSheetState.bottomSheetState.collapse()
+                                }
+                            }) {
+                                Text(text = stringResource(id = R.string.cancel))
+                            }
+                        }
+                    }
+                },
                 topBar = {
                     TopAppBar(
                         title = { Text(stringResource(id = R.string.settings)) },
@@ -83,7 +154,11 @@ class SettingsFragment : Fragment() {
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        if (state.user == null) LinearProgressIndicator(modifier = Modifier.padding(top = 4.dp).fillMaxWidth())
+                        if (state.user == null) LinearProgressIndicator(
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .fillMaxWidth()
+                        )
                         Row(
                             modifier = Modifier.padding(16.dp)
                         ) {
@@ -140,7 +215,15 @@ class SettingsFragment : Fragment() {
                                         imageVector = Icons.Filled.Edit,
                                         contentDescription = "",
                                         modifier = Modifier.clickable {
-                                            showEditNameDialog(state.user?.name)
+                                            viewModel.updateState {
+                                                copy(
+                                                    settingText = state.user?.name ?: "",
+                                                    settingEditType = SettingEditType.EDIT_USERNAME
+                                                )
+                                            }
+                                            coroutineScope.launch {
+                                                bottomSheetState.bottomSheetState.expand()
+                                            }
                                         }
                                     )
                                 }
@@ -158,7 +241,15 @@ class SettingsFragment : Fragment() {
                                         imageVector = Icons.Filled.Edit,
                                         contentDescription = "",
                                         modifier = Modifier.clickable {
-                                            showEditStatusDialog(state.user?.status)
+                                            viewModel.updateState {
+                                                copy(
+                                                    settingText = state.user?.status ?: "",
+                                                    settingEditType = SettingEditType.EDIT_STATUS
+                                                )
+                                            }
+                                            coroutineScope.launch {
+                                                bottomSheetState.bottomSheetState.expand()
+                                            }
                                         }
                                     )
                                 }
@@ -218,28 +309,6 @@ class SettingsFragment : Fragment() {
                 onCheckedChange = onChecked
             )
         }
-    }
-
-    private fun showEditNameDialog(name: String?) {
-        val bottomSheetFragment = EditUserBottomDialogFragment(
-            SettingType.EDIT_USERNAME,
-            requireContext().resources.getString(R.string.enter_new_name),
-            name
-        ) {
-            if (it.isNotEmpty()) viewModel.updateUser { copy(name = it) }
-        }
-        bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
-    }
-
-    private fun showEditStatusDialog(status: String?) {
-        val bottomSheetFragment = EditUserBottomDialogFragment(
-            SettingType.EDIT_STATUS,
-            requireContext().resources.getString(R.string.enter_new_status),
-            status
-        ) {
-            if (it.isNotEmpty()) viewModel.updateUser { copy(status = it) }
-        }
-        bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
     }
 
     private fun openPrivacyPolicy() {
