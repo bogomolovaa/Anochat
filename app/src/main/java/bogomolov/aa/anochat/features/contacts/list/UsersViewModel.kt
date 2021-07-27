@@ -24,7 +24,12 @@ class UsersViewModel
 ) : BaseViewModel<ContactsUiState>(ContactsUiState()) {
     private var usersList: List<User>? = null
 
+    init {
+        println("UsersViewModel init")
+    }
+
     fun loadContacts(phones: List<String>) = execute {
+        println("UsersViewModel loadContacts")
         usersList = userUseCases.getUsersByPhones(phones)
         setState { copy(users = usersList) }
         usersList = userUseCases.updateUsersByPhones(phones)

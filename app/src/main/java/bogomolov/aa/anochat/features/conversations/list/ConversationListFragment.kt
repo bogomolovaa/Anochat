@@ -4,6 +4,7 @@ import android.Manifest
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -34,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
@@ -47,179 +50,184 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class ConversationListFragment : Fragment() {
-    val viewModel: ConversationListViewModel by viewModels()
-
-    private val contactsPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-            if(it) findNavController().navigate(R.id.usersFragment)
-        }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
         ComposeView(requireContext()).apply {
             setContent {
-                val state = viewModel.state.collectAsState()
-                Content(state.value)
+                ConversationsView(findNavController())
             }
         }
+}
 
-    @Composable
-    private fun Content(state: ConversationsUiState = testConversationsUiState) {
-        var showMenu by remember { mutableStateOf(false) }
+@Composable
+fun ConversationsView(navController: NavController? = null) {
+    val viewModel = viewModel<ConversationListViewModel>()
+    val state = viewModel.state.collectAsState()
+    Content(state.value, navController)
+}
 
-        MaterialTheme(
-            colors = LightColorPalette
-        ) {
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = { Text(stringResource(id = R.string.app_name)) },
-                        actions = {
-                            IconButton(onClick = { showMenu = !showMenu }) {
-                                Icon(Icons.Outlined.MoreVert, contentDescription = "")
-                            }
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
-                                DropdownMenuItem(onClick = {
-                                    findNavController().navigate(R.id.settings_graph)
-                                }) {
-                                    Text(stringResource(id = R.string.settings))
-                                }
-                                DropdownMenuItem(onClick = {
-                                    viewModel.signOut()
-                                    findNavController().navigate(R.id.signInFragment)
-                                }) {
-                                    Text(stringResource(id = R.string.sign_out))
-                                }
-                            }
-                        }
-                    )
-                },
-                floatingActionButton = {
-                    FloatingActionButton(onClick = {
-                        contactsPermission.launch(Manifest.permission.READ_CONTACTS)
-                    }) {
-                        Icon(
-                            painterResource(id = R.drawable.ic_contacts),
-                            contentDescription = ""
-                        )
-                    }
-                },
-                content = {
-                    Column(
-                    ) {
-                        if (state.pagingDataFlow != null) {
-                            val lazyPagingItems = state.pagingDataFlow.collectAsLazyPagingItems()
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 16.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                items(lazyPagingItems) { ConversationCard(it!!) }
-                            }
-                        }
-                    }
-                }
-
-            )
-        }
+@Composable
+private fun Content(state: ConversationsUiState = testConversationsUiState, navController: NavController? = null) {
+    var showMenu by remember { mutableStateOf(false) }
+    val viewModel = viewModel<ConversationListViewModel>()
+    val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        if (it) navController?.navigate(R.id.usersFragment)
     }
 
-    @Preview
-    @Composable
-    private fun ConversationCard(conversation: Conversation = testConversation) {
-        var showMenu by remember { mutableStateOf(false) }
-        Card(
-            backgroundColor = Color.Black.copy(alpha = 0.0f),
-            elevation = 0.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = {
-                            val bundle = Bundle().apply { putLong("id", conversation.id) }
-                            findNavController().navigate(R.id.dialog_graph, bundle)
-                        },
-                        onLongPress = {
-                            showMenu = true
+    MaterialTheme(
+        colors = LightColorPalette
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        IconButton(onClick = { showMenu = !showMenu }) {
+                            Icon(Icons.Outlined.MoreVert, contentDescription = "")
                         }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(onClick = {
+                                navController?.navigate(R.id.settings_graph)
+                            }) {
+                                Text(stringResource(id = R.string.settings))
+                            }
+                            DropdownMenuItem(onClick = {
+                                viewModel.signOut()
+                                navController?.navigate(R.id.signInFragment)
+                            }) {
+                                Text(stringResource(id = R.string.sign_out))
+                            }
+                        }
+                    }
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = {
+                    contactsPermission.launch(Manifest.permission.READ_CONTACTS)
+                }) {
+                    Icon(
+                        painterResource(id = R.drawable.ic_contacts),
+                        contentDescription = ""
                     )
                 }
-                .padding(start = 12.dp, end = 12.dp)
-
-        ) {
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false },
-                offset = DpOffset(70.dp, -60.dp)
-            ) {
-                DropdownMenuItem(onClick = {
-                    viewModel.deleteConversations(setOf(conversation.id))
-                    showMenu = false
-                }) {
-                    Text(stringResource(id = R.string.delete))
+            },
+            content = {
+                Column(
+                ) {
+                    if (state.pagingDataFlow != null) {
+                        val lazyPagingItems = state.pagingDataFlow.collectAsLazyPagingItems()
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(lazyPagingItems) { ConversationCard(it!!, navController) }
+                        }
+                    }
                 }
             }
 
-            val isNew = conversation.lastMessage?.isMine == false && conversation.lastMessage?.viewed == 0
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Box(contentAlignment = Alignment.TopEnd) {
-                    val imageBitmap =
-                        conversation.user.photo?.let {
-                            getBitmapFromGallery(
-                                getMiniPhotoFileName(it),
-                                LocalContext.current,
-                                1
-                            )?.asImageBitmap()
-                        }
-                    val imageModifier = Modifier
-                        .clip(CircleShape)
-                        .width(60.dp)
-                        .height(60.dp)
-                    if (imageBitmap != null) {
-                        Image(
-                            modifier = imageModifier,
-                            bitmap = imageBitmap,
-                            contentScale = ContentScale.FillWidth,
-                            contentDescription = ""
-                        )
-                    } else {
-                        Icon(
-                            painterResource(id = R.drawable.user_icon),
-                            modifier = imageModifier,
-                            contentDescription = ""
-                        )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ConversationCard(conversation: Conversation = testConversation, navController: NavController? = null) {
+    var showMenu by remember { mutableStateOf(false) }
+    val viewModel = viewModel<ConversationListViewModel>()
+    Card(
+        backgroundColor = Color.Black.copy(alpha = 0.0f),
+        elevation = 0.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        val bundle = Bundle().apply { putLong("id", conversation.id) }
+                        navController?.navigate(R.id.dialog_graph, bundle)
+                    },
+                    onLongPress = {
+                        showMenu = true
                     }
-                    if (isNew) {
-                        val color = colorResource(R.color.green)
-                        Canvas(modifier = Modifier.size(12.dp), onDraw = {
-                            drawCircle(color = color)
-                        })
+                )
+            }
+            .padding(start = 12.dp, end = 12.dp)
+
+    ) {
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false },
+            offset = DpOffset(70.dp, -60.dp)
+        ) {
+            DropdownMenuItem(onClick = {
+                viewModel.deleteConversations(setOf(conversation.id))
+                showMenu = false
+            }) {
+                Text(stringResource(id = R.string.delete))
+            }
+        }
+
+        val isNew = conversation.lastMessage?.isMine == false && conversation.lastMessage?.viewed == 0
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Box(contentAlignment = Alignment.TopEnd) {
+                val imageBitmap =
+                    conversation.user.photo?.let {
+                        getBitmapFromGallery(
+                            getMiniPhotoFileName(it),
+                            LocalContext.current,
+                            1
+                        )?.asImageBitmap()
                     }
+                val imageModifier = Modifier
+                    .clip(CircleShape)
+                    .width(60.dp)
+                    .height(60.dp)
+                if (imageBitmap != null) {
+                    Image(
+                        modifier = imageModifier,
+                        bitmap = imageBitmap,
+                        contentScale = ContentScale.FillWidth,
+                        contentDescription = ""
+                    )
+                } else {
+                    Icon(
+                        painterResource(id = R.drawable.user_icon),
+                        modifier = imageModifier,
+                        contentDescription = ""
+                    )
                 }
-                Column(
-                    modifier = Modifier
-                        .padding(start = 24.dp)
-                        .fillMaxWidth()
+                if (isNew) {
+                    val color = colorResource(R.color.green)
+                    Canvas(modifier = Modifier.size(12.dp), onDraw = {
+                        drawCircle(color = color)
+                    })
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .padding(start = 24.dp)
+                    .fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(conversation.user.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        conversation.lastMessage?.let { Text(text = it.timeString(), fontSize = 12.sp) }
-                    }
-                    conversation.lastMessage?.let {
-                        Text(
-                            text = it.shortText(),
-                            maxLines = 2,
-                            modifier = Modifier.padding(top = 12.dp),
-                            fontWeight = if (isNew) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isNew) colorResource(R.color.green) else Color.Black
-                        )
-                    }
+                    Text(conversation.user.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    conversation.lastMessage?.let { Text(text = it.timeString(), fontSize = 12.sp) }
+                }
+                conversation.lastMessage?.let {
+                    Text(
+                        text = it.shortText(),
+                        maxLines = 2,
+                        modifier = Modifier.padding(top = 12.dp),
+                        fontWeight = if (isNew) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isNew) colorResource(R.color.green) else Color.Black
+                    )
                 }
             }
         }
