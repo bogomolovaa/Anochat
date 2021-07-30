@@ -2,10 +2,7 @@ package bogomolov.aa.anochat.features.contacts.list
 
 import android.content.Context
 import android.database.Cursor
-import android.os.Bundle
 import android.provider.ContactsContract
-import android.view.LayoutInflater
-import android.view.ViewGroup
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,51 +10,35 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.flowWithLifecycle
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
-import bogomolov.aa.anochat.features.login.NavigateToConversationList
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.collect
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
-import dagger.hilt.android.AndroidEntryPoint
-
-@AndroidEntryPoint
-class UsersFragment : Fragment() {
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
-        ComposeView(requireContext()).apply {
-            setContent {
-                UsersView(arguments?.getString("uri"), findNavController())
-            }
-        }
-}
 
 @Composable
-fun UsersView(uri: String?, navController: NavController? = null) {
-    val viewModel = viewModel<UsersViewModel>()
+fun UsersView(uri: String? = null, navController: NavController? = null) {
+    val viewModel = hiltViewModel<UsersViewModel>()
     val context = LocalContext.current
     LaunchedEffect(0) {
         viewModel.loadContacts(getContactsPhones(context))
@@ -67,12 +48,16 @@ fun UsersView(uri: String?, navController: NavController? = null) {
     }
 
     val state = viewModel.state.collectAsState()
-    Content(state.value)
+    Content(state.value, viewModel, navController)
 }
 
 @Preview
 @Composable
-private fun Content(state: ContactsUiState = testContactsUiState, navController: NavController? = null) {
+private fun Content(
+    state: ContactsUiState = testContactsUiState,
+    viewModel: UsersViewModel? = null,
+    navController: NavController? = null
+) {
     MaterialTheme(
         colors = LightColorPalette
     ) {
@@ -101,7 +86,7 @@ private fun Content(state: ContactsUiState = testContactsUiState, navController:
                     Column(
                         modifier = Modifier.padding(top = if (!state.loading) 8.dp else 0.dp)
                     ) {
-                        state.users?.forEach { UserRow(it) }
+                        state.users?.forEach { UserRow(it, viewModel) }
                     }
                 }
             }
@@ -111,13 +96,12 @@ private fun Content(state: ContactsUiState = testContactsUiState, navController:
 
 
 @Composable
-private fun UserRow(user: User = testContactsUiState.users!!.first()) {
-    val viewModel = viewModel<UsersViewModel>()
+private fun UserRow(user: User = testContactsUiState.users!!.first(), viewModel: UsersViewModel? = null) {
     Card(
         backgroundColor = Color.Black.copy(alpha = 0.0f),
         elevation = 0.dp,
         modifier = Modifier.clickable(onClick = {
-            viewModel.createConversation(user)
+            viewModel?.createConversation(user)
         })
     ) {
         Row(
@@ -163,11 +147,7 @@ private fun UserRow(user: User = testContactsUiState.users!!.first()) {
 }
 
 private fun NavController.navigateToConversation(conversationId: Long, uri: String?) {
-    val bundle = Bundle().apply {
-        putLong("id", conversationId)
-        if (uri != null) putString("uri", uri)
-    }
-    navigate(R.id.dialog_graph, bundle)
+    navigate("conversation?id=$conversationId" + if (uri != null) "&uri=$uri" else "")
 }
 
 private fun getContactsPhones(context: Context): List<String> {

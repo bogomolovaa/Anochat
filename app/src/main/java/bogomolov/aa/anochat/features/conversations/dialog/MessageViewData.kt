@@ -2,8 +2,6 @@ package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.graphics.Bitmap
 import bogomolov.aa.anochat.domain.entity.Message
-import java.text.SimpleDateFormat
-import java.util.*
 
 data class MessageViewData(val message: Message) {
     var dateDelimiter: String? = null

@@ -6,11 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,7 +21,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -32,62 +28,45 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import androidx.core.net.toUri
-import androidx.fragment.app.Fragment
-import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.*
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-private const val TAG = "ConversationFragment"
 
-@AndroidEntryPoint
-class ConversationFragment : Fragment() {
-    private val viewModel: ConversationViewModel by hiltNavGraphViewModels(R.id.dialog_graph)
-
-    @ExperimentalComposeUiApi
-    @ExperimentalMaterialApi
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
-        ComposeView(requireContext()).apply {
-            val conversationId = arguments?.get("id") as Long
-            val uri = arguments?.getString("uri")?.toUri()
-
-            setContent {
-                ConversationView(viewModel, findNavController(), conversationId, uri)
-            }
-        }
-}
+private const val TAG = "ConversationView"
 
 @ExperimentalComposeUiApi
 @ExperimentalMaterialApi
 @Composable
 fun ConversationView(
-    viewModel: ConversationViewModel,
     navController: NavController,
     conversationId: Long,
-    uri: Uri?
+    uri: Uri? = null
 ) {
+    val viewModel = hiltViewModel<ConversationViewModel>(navController.getBackStackEntry("conversationRoute"))
     val keyboardController = LocalSoftwareKeyboardController.current
-
+    val context = LocalContext.current
     LaunchedEffect(0) {
         viewModel.initConversation(conversationId)
-        if (uri != null) {
-            //arguments?.remove("uri")
-            navigateToSendMediaFragment(navController = navController, conversationId = conversationId, uri = uri)
-        }
+        if (uri != null)
+            navigateToSendMediaFragment(
+                viewModel = viewModel,
+                context = context,
+                navController = navController,
+                uri = uri
+            )
     }
 
     viewModel.events.collect {
@@ -246,13 +225,19 @@ private fun FabsLayout(
 ) {
     val context = LocalContext.current
     val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
-        navigateToSendMediaFragment(navController = navController!!, conversationId = conversationId, uri = uri)
+        navigateToSendMediaFragment(
+            navController = navController!!,
+            viewModel = viewModel,
+            context = context,
+            uri = uri
+        )
     }
 
     val takePicture = rememberLauncherForActivityResult(TakePictureFromCamera()) {
         navigateToSendMediaFragment(
             navController = navController!!,
-            conversationId = conversationId,
+            viewModel = viewModel,
+            context = context,
             path = viewModel!!.currentState.photoPath
         )
     }
@@ -382,43 +367,29 @@ private fun ShowMessage(
 private fun videoOnClick(navController: NavController, message: Message, context: Context) {
     if (message.received == 1 || message.isMine) {
         val uriWithSource = getUriWithSource(message.video!!, context)
-        if (uriWithSource.uri != null) {
-            navController.navigate(
-                R.id.exoPlayerViewFragment,
-                Bundle().apply { putString("uri", uriWithSource.uri.toString()) })
-        }
+        if (uriWithSource.uri != null) navController.navigate("video?uri=${uriWithSource.uri}")
     }
 }
 
 private fun imageOnClick(navController: NavController, message: Message) {
-    if (message.received == 1 || message.isMine) {
-        val bundle = Bundle().apply {
-            putString("image", message.image)
-            putInt("quality", 2)
-            putBoolean("gallery", true)
-        }
-        navController.navigate(R.id.imageViewFragment, bundle, null)
-    }
+    if (message.received == 1 || message.isMine)
+        navController.navigate("image?name=${message.image}&gallery=true")
 }
 
 private fun navigateToUserFragment(navController: NavController, userId: Long) {
-    navController.navigate(
-        R.id.userViewFragment,
-        Bundle().apply { putLong("id", userId) })
+    navController.navigate("user/$userId")
 }
 
 private fun navigateToSendMediaFragment(
+    context: Context,
+    viewModel: ConversationViewModel?,
     navController: NavController,
-    conversationId: Long,
     uri: Uri? = null,
     path: String? = null
 ) {
-    //val conversationId = arguments?.get("id") as Long
-    navController.navigate(R.id.sendMediaFragment, Bundle().apply {
-        if (path != null) putString("path", path)
-        if (uri != null) putParcelable("uri", uri)
-        putLong("conversationId", conversationId)
-    })
+    val isVideo = context.isVideo(uri)
+    viewModel?.resizeMedia(uri, path, isVideo)
+    navController.navigate("media")
 }
 
 @SuppressLint("SimpleDateFormat")
@@ -459,6 +430,15 @@ private class TakePictureFromCamera : ActivityResultContract<File, Unit>() {
 
     }
 }
+
+
+private fun Context.isVideo(mediaUri: Uri?) =
+    mediaUri?.let {
+        it.toString().contains("document/video") ||
+                (contentResolver.getType(mediaUri)?.startsWith("video")
+                    ?: false) ||
+                mediaUri.toString().endsWith(".mp4")
+    } ?: false
 
 /*
         //todo: setEmojiSizeRes

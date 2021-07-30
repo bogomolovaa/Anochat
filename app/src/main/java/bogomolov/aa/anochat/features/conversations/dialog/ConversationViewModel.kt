@@ -20,7 +20,10 @@ import bogomolov.aa.anochat.features.shared.mvi.Event
 import bogomolov.aa.anochat.repository.FileStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -77,7 +80,8 @@ class ConversationViewModel @Inject constructor(
     private val conversationUseCases: ConversationUseCases,
     private val messageUseCases: MessageUseCases,
     private val audioPlayer: AudioPlayer,
-    private val localeProvider: LocaleProvider
+    private val localeProvider: LocaleProvider,
+    private val fileStore: FileStore
 ) : BaseViewModel<DialogUiState>(DialogUiState()) {
     private var recordingJob: Job? = null
     private var playJob: Job? = null
@@ -85,9 +89,6 @@ class ConversationViewModel @Inject constructor(
     private var tempElapsed = 0L
     private var conversationInitialized = false
     private var typingJob: Job? = null
-
-    @Inject
-    lateinit var fileStore: FileStore
 
     override fun onCleared() {
         super.onCleared()
@@ -138,7 +139,6 @@ class ConversationViewModel @Inject constructor(
     }
 
     fun startPlaying(audioFile: String? = null, messageId: String? = null) = execute {
-        println("startPlaying audioFile $audioFile messageId $messageId")
         if (currentState.playingState == null) initStartPlaying(audioFile, messageId)
         if (audioPlayer.startPlay()) {
             startTime = System.currentTimeMillis()

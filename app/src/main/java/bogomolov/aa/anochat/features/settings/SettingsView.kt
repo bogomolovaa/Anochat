@@ -5,9 +5,6 @@ import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,44 +33,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.Fragment
-import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.shared.LightColorPalette
+import bogomolov.aa.anochat.features.shared.collect
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
-import bogomolov.aa.anochat.repository.FileStore
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-
-@AndroidEntryPoint
-class SettingsFragment : Fragment() {
-    private val viewModel: SettingsViewModel by hiltNavGraphViewModels(R.id.settings_graph)
-
-    @Inject
-    lateinit var fileStore: FileStore
-
-    @ExperimentalMaterialApi
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
-        ComposeView(requireContext()).apply {
-            setContent {
-                SettingsView(findNavController(), viewModel, fileStore)
-            }
-        }
-}
 
 @ExperimentalMaterialApi
 @Composable
-fun SettingsView(
-    navController: NavController,
-    viewModel: SettingsViewModel,
-    fileStore: FileStore
-) {
+fun SettingsView(navController: NavController) {
+    val viewModel = hiltViewModel<SettingsViewModel>(navController.getBackStackEntry("settingsRoute"))
     val state = viewModel.state.collectAsState()
-    Content(state.value, navController, viewModel, fileStore)
+    Content(state.value, navController, viewModel)
 }
 
 @ExperimentalMaterialApi
@@ -83,17 +56,19 @@ fun SettingsView(
 private fun Content(
     state: SettingsUiState = testSettingsUiState,
     navController: NavController? = null,
-    viewModel: SettingsViewModel? = null,
-    fileStore: FileStore? = null
+    viewModel: SettingsViewModel? = null
 ) {
     val context = LocalContext.current
     val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
-        updatePhoto(uri, navController, viewModel, fileStore)
+        viewModel?.createMiniature(uri)
     }
     val readPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         fileChooser.launch(Unit)
     }
     val writePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    viewModel?.events?.collect {
+        if (it is MiniatureCreatedEvent) navController?.navigate("miniature")
+    }
     MaterialTheme(
         colors = LightColorPalette
     ) {
@@ -341,14 +316,6 @@ private fun openPrivacyPolicy(context: Context) {
     val i = Intent(Intent.ACTION_VIEW)
     i.data = Uri.parse(context.resources.getString(R.string.privacy_policy_url))
     context.startActivity(i)
-}
-
-private fun updatePhoto(uri: Uri, navController: NavController?, viewModel: SettingsViewModel?, fileStore: FileStore?) {
-    val miniature = fileStore?.resizeImage(uri = uri, toGallery = false)
-    if (miniature != null) {
-        viewModel?.setMiniature(miniature)
-        navController?.navigate(R.id.miniatureFragment)
-    }
 }
 
 private class StartFileChooser : ActivityResultContract<Unit, Uri>() {

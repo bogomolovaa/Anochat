@@ -1,9 +1,5 @@
 package bogomolov.aa.anochat.features.contacts.user
 
-import android.os.Bundle
-import android.util.Log
-import android.view.LayoutInflater
-import android.view.ViewGroup
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,42 +15,24 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
-import androidx.transition.Fade
-import androidx.transition.Transition
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.Flow
-
-@AndroidEntryPoint
-class UserViewFragment : Fragment() {
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
-        ComposeView(requireContext()).apply {
-            setContent {
-                UserView(arguments?.getLong("id")!!, findNavController())
-            }
-        }
-}
 
 @Composable
 fun UserView(userId: Long, navController: NavController? = null) {
-    val viewModel = viewModel<UserViewViewModel>()
+    val viewModel = hiltViewModel<UserViewViewModel>()
     LaunchedEffect(0) {
         viewModel.initUser(userId)
     }
@@ -98,13 +76,7 @@ private fun Content(state: UserUiState = testUserUiState, navController: NavCont
                                 .height(350.dp)
                                 .clickable(onClick = {
                                     val photo = state.user?.photo
-                                    if (photo != null) {
-                                        val bundle = Bundle().apply {
-                                            putString("image", photo)
-                                            putInt("quality", 1)
-                                        }
-                                        navController?.navigate(R.id.imageViewFragment, bundle)
-                                    }
+                                    if (photo != null) navController?.navigate("image?name=photo")
                                 })
                         )
                     } ?: run {
@@ -144,14 +116,7 @@ private fun ImagesRow(pagingFlow: Flow<PagingData<String>>, navController: NavCo
                             .width(100.dp)
                             .height(100.dp)
                             .clickable(onClick = {
-                                navController?.navigate(
-                                    R.id.imageViewFragment,
-                                    Bundle().apply {
-                                        putString("image", image)
-                                        putInt("quality", 1)
-                                        putBoolean("gallery", true)
-                                    }
-                                )
+                                navController?.navigate("image?name=$image&gallery=true")
                             }),
                         bitmap = imageBitmap,
                         contentDescription = "",

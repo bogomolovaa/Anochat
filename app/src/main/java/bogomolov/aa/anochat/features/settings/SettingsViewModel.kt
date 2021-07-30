@@ -1,11 +1,14 @@
 package bogomolov.aa.anochat.features.settings
 
+import android.net.Uri
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.features.shared.BitmapWithName
 import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
+import bogomolov.aa.anochat.features.shared.mvi.Event
+import bogomolov.aa.anochat.repository.FileStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -37,22 +40,29 @@ data class MaskImage(
     val scaleFactor: Float = 1f,
     val left: Int = 0,
     val top: Int = 0,
-    val width: Int  = 100,
+    val width: Int = 100,
     val height: Int = 100
 )
+
+object MiniatureCreatedEvent: Event
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val userUseCases: UserUseCases,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val fileStore: FileStore
 ) : BaseViewModel<SettingsUiState>(SettingsUiState()) {
 
     init {
         initSettings()
     }
 
-    fun setMiniature(miniature: BitmapWithName) = execute {
-        setState { copy(miniatureState = MiniatureState(miniature)) }
+    fun createMiniature(uri: Uri) = execute {
+        val miniature = fileStore.resizeImage(uri = uri, toGallery = false)
+        if (miniature != null){
+            setState { copy(miniatureState = MiniatureState(miniature)) }
+            addEvent(MiniatureCreatedEvent)
+        }
     }
 
     private fun initSettings() = execute {

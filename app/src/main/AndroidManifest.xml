@@ -63,7 +63,7 @@
 
         <activity
             android:name=".features.main.HiltTestActivity"
-            android:exported="false"  />
+            android:exported="false" />
 
     </application>
 

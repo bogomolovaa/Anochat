@@ -22,35 +22,18 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
-import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.shared.*
 import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
-class SendMediaFragment : Fragment() {
-    private val viewModel: ConversationViewModel by hiltNavGraphViewModels(R.id.dialog_graph)
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
-        ComposeView(requireContext()).apply {
-            val mediaPath = arguments?.getString("path")
-            val mediaUri = arguments?.getParcelable("uri") as Uri?
-
-            setContent {
-                SendMediaView(viewModel, findNavController(), mediaPath, mediaUri)
-            }
-        }
-}
-
 @Composable
-fun SendMediaView(viewModel: ConversationViewModel, navController: NavController, mediaPath: String?, mediaUri: Uri?) {
-    val isVideo = LocalContext.current.isVideo(mediaUri)
-    LaunchedEffect(key1 = 0){
-        viewModel.resizeMedia(mediaUri, mediaPath, isVideo)
-    }
+fun SendMediaView(navController: NavController) {
+    val viewModel = hiltViewModel<ConversationViewModel>(navController.getBackStackEntry("conversationRoute"))
     val state = viewModel.state.collectAsState()
     Content(state.value, viewModel, navController)
 }
@@ -156,11 +139,3 @@ private fun submit(
         Toast.makeText(context, "Video is processing", Toast.LENGTH_LONG).show()
     }
 }
-
-private fun Context.isVideo(mediaUri: Uri?) =
-    mediaUri?.let {
-        it.toString().contains("document/video") ||
-                (contentResolver.getType(mediaUri)?.startsWith("video")
-                    ?: false) ||
-                mediaUri.toString().endsWith(".mp4")
-    } ?: false

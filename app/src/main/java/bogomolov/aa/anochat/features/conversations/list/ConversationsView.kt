@@ -1,9 +1,9 @@
 package bogomolov.aa.anochat.features.conversations.list
 
 import android.Manifest
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.ViewGroup
+import android.app.PendingIntent
+import android.app.TaskStackBuilder
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -33,45 +32,32 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.core.net.toUri
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Conversation
+import bogomolov.aa.anochat.features.main.MainActivity
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
-import dagger.hilt.android.AndroidEntryPoint
 
-
-@AndroidEntryPoint
-class ConversationListFragment : Fragment() {
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
-        ComposeView(requireContext()).apply {
-            setContent {
-                ConversationsView(findNavController())
-            }
-        }
-}
 
 @Composable
 fun ConversationsView(navController: NavController? = null) {
-    val viewModel = viewModel<ConversationListViewModel>()
+    val viewModel = hiltViewModel<ConversationListViewModel>()
     val state = viewModel.state.collectAsState()
-    Content(state.value, navController)
+    Content(state.value,viewModel, navController)
 }
 
 @Composable
-private fun Content(state: ConversationsUiState = testConversationsUiState, navController: NavController? = null) {
+private fun Content(state: ConversationsUiState = testConversationsUiState, viewModel: ConversationListViewModel?, navController: NavController? = null) {
     var showMenu by remember { mutableStateOf(false) }
-    val viewModel = viewModel<ConversationListViewModel>()
     val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (it) navController?.navigate(R.id.usersFragment)
+        if (it) navController?.navigate("users")
     }
 
     MaterialTheme(
@@ -90,13 +76,13 @@ private fun Content(state: ConversationsUiState = testConversationsUiState, navC
                             onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(onClick = {
-                                navController?.navigate(R.id.settings_graph)
+                                navController?.navigate("settings")
                             }) {
                                 Text(stringResource(id = R.string.settings))
                             }
                             DropdownMenuItem(onClick = {
-                                viewModel.signOut()
-                                navController?.navigate(R.id.signInFragment)
+                                viewModel?.signOut()
+                                navController?.navigate("login")
                             }) {
                                 Text(stringResource(id = R.string.sign_out))
                             }
@@ -105,6 +91,7 @@ private fun Content(state: ConversationsUiState = testConversationsUiState, navC
                 )
             },
             floatingActionButton = {
+                val context = LocalContext.current
                 FloatingActionButton(onClick = {
                     contactsPermission.launch(Manifest.permission.READ_CONTACTS)
                 }) {
@@ -125,7 +112,7 @@ private fun Content(state: ConversationsUiState = testConversationsUiState, navC
                                 .padding(top = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            items(lazyPagingItems) { ConversationCard(it!!, navController) }
+                            items(lazyPagingItems) { ConversationCard(it!!, viewModel, navController) }
                         }
                     }
                 }
@@ -137,9 +124,8 @@ private fun Content(state: ConversationsUiState = testConversationsUiState, navC
 
 @Preview
 @Composable
-private fun ConversationCard(conversation: Conversation = testConversation, navController: NavController? = null) {
+private fun ConversationCard(conversation: Conversation = testConversation, viewModel: ConversationListViewModel? = null, navController: NavController? = null) {
     var showMenu by remember { mutableStateOf(false) }
-    val viewModel = viewModel<ConversationListViewModel>()
     Card(
         backgroundColor = Color.Black.copy(alpha = 0.0f),
         elevation = 0.dp,
@@ -148,8 +134,7 @@ private fun ConversationCard(conversation: Conversation = testConversation, navC
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
-                        val bundle = Bundle().apply { putLong("id", conversation.id) }
-                        navController?.navigate(R.id.dialog_graph, bundle)
+                        navController?.navigate("conversation?id=${conversation.id}")
                     },
                     onLongPress = {
                         showMenu = true
@@ -165,7 +150,7 @@ private fun ConversationCard(conversation: Conversation = testConversation, navC
             offset = DpOffset(70.dp, -60.dp)
         ) {
             DropdownMenuItem(onClick = {
-                viewModel.deleteConversations(setOf(conversation.id))
+                viewModel?.deleteConversations(setOf(conversation.id))
                 showMenu = false
             }) {
                 Text(stringResource(id = R.string.delete))

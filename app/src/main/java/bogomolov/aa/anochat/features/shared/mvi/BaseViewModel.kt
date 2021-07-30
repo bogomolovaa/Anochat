@@ -7,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -48,6 +47,6 @@ abstract class BaseViewModel<S : Any>(
     }
 
     protected suspend fun setState(reduce: S.() -> S) {
-        mutex.withLock { _state.value = _state.value.reduce().also { println("setState $it") } }
+        mutex.withLock { _state.value = _state.value.reduce() }
     }
 }

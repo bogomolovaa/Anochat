@@ -2,15 +2,14 @@ package bogomolov.aa.anochat.features.settings
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.os.Bundle
-import android.util.DisplayMetrics
-import android.view.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.*
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -22,7 +21,6 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -30,34 +28,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
 import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getFilePath
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
-import dagger.hilt.android.AndroidEntryPoint
 import java.io.FileOutputStream
 import kotlin.math.max
 import kotlin.math.min
 
-@AndroidEntryPoint
-class MiniatureFragment : Fragment() {
-    private val viewModel: SettingsViewModel by hiltNavGraphViewModels(R.id.settings_graph)
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
-        ComposeView(requireContext()).apply {
-            setContent {
-                MiniatureView(findNavController(), viewModel)
-            }
-        }
-}
-
 @Composable
-private fun MiniatureView(navController: NavController, viewModel: SettingsViewModel) {
+fun MiniatureView(navController: NavController) {
+    val viewModel = hiltViewModel<SettingsViewModel>(navController.getBackStackEntry("settingsRoute"))
     val state = viewModel.state.collectAsState()
     Content(state.value, navController, viewModel)
 }
@@ -78,7 +61,14 @@ private fun Content(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(stringResource(id = R.string.set_avatar)) }
+                    title = { Text(stringResource(id = R.string.set_avatar)) },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            navController?.popBackStack()
+                        }) {
+                            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    }
                 )
             },
             floatingActionButton = {
@@ -133,7 +123,7 @@ private fun SelectorShape(state: MiniatureState, density: Float, viewModel: Sett
                     width = (state.maskImage.width * state.maskImage.scaleFactor / density).dp,
                     height = (state.maskImage.height * state.maskImage.scaleFactor / density).dp
                 )
-                .offset { IntOffset(state.maskImage.left, state.maskImage.top).also { println("IntOffset $it") } }
+                .offset { IntOffset(state.maskImage.left, state.maskImage.top) }
                 .pointerInput(Unit) { detectMaskTransformGestures(true, viewModel) }
         ) {}
     }

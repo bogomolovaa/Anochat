@@ -3,11 +3,7 @@ package bogomolov.aa.anochat.features.shared
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -18,9 +14,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -28,50 +22,34 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
 import bogomolov.aa.anochat.R
-import kotlin.math.exp
-
 
 private const val MAX_SCALE = 5f
 private const val MIN_SCALE = 1f
-private const val TAG = "ImageViewFragment"
-
-class ImageViewFragment : Fragment() {
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
-        ComposeView(requireContext()).apply {
-            val imageName = arguments?.getString("image")!!
-            val quality = arguments?.getInt("quality")!!
-            val fromGallery = arguments?.getBoolean("gallery") ?: false
-            val bitmap = loadImage(
-                imageName = imageName,
-                quality = quality,
-                fromGallery = fromGallery,
-                requireContext()
-            )
-
-            setContent {
-                ImageView(bitmap!!, imageName, findNavController())
-            }
-        }
-}
+private const val TAG = "ImageView"
 
 @Composable
-fun ImageView(bitmap: Bitmap, imageName: String, navController: NavController) {
+fun ImageView(imageName: String, fromGallery: Boolean, navController: NavController) {
+    val context = LocalContext.current
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(0) {
+        bitmap = loadImage(
+            imageName = imageName,
+            quality = 1,
+            fromGallery = fromGallery,
+            context = context
+        )
+    }
+
     val scale = remember { mutableStateOf(1.0f) }
     val top = remember { mutableStateOf(0) }
     val left = remember { mutableStateOf(0) }
     val imageWidth = remember { mutableStateOf(0) }
     val imageHeight = remember { mutableStateOf(0) }
-    val context = LocalContext.current
     MaterialTheme(
         colors = LightColorPalette
     ) {
@@ -100,29 +78,30 @@ fun ImageView(bitmap: Bitmap, imageName: String, navController: NavController) {
                     )
                 }
         ) {
-            val imageBitmap = bitmap.asImageBitmap()
-            Image(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned {
-                        if (imageWidth.value == 0) {
-                            imageWidth.value = it.size.width
-                            imageHeight.value = it.size.height
-                        }
-                    }
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onTap = {
-                                //expand(!expanded)
+            val imageBitmap = bitmap?.asImageBitmap()
+            if (imageBitmap != null)
+                Image(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned {
+                            if (imageWidth.value == 0) {
+                                imageWidth.value = it.size.width
+                                imageHeight.value = it.size.height
                             }
-                        )
-                    }
-                    .offset { IntOffset(left.value, top.value).also { println("IntOffset $it") } }
-                    .scale(scale.value),
-                bitmap = imageBitmap,
-                contentScale = ContentScale.FillWidth,
-                contentDescription = ""
-            )
+                        }
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onTap = {
+                                    //expand(!expanded)
+                                }
+                            )
+                        }
+                        .offset { IntOffset(left.value, top.value).also { println("IntOffset $it") } }
+                        .scale(scale.value),
+                    bitmap = imageBitmap,
+                    contentScale = ContentScale.FillWidth,
+                    contentDescription = ""
+                )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

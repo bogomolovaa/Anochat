@@ -11,7 +11,6 @@ import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import javax.inject.Inject

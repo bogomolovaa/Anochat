@@ -68,7 +68,7 @@ inline fun <reified T> navigateTo(
     return runBlocking {
         return@runBlocking suspendCoroutine<T> {
             launchFragmentInHiltContainer<T>(bundle, navController) {
-                navController.setGraph(R.navigation.nav_graph)
+                //navController.setGraph(R.navigation.nav_graph)
                 navController.setCurrentDestination(destination)
                 it.resume(this)
             }

@@ -1,57 +1,37 @@
 package bogomolov.aa.anochat.features.login
 
-import android.annotation.SuppressLint
 import android.app.Activity
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.ViewGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.flowWithLifecycle
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.shared.ErrorType
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.collect
-import bogomolov.aa.anochat.features.shared.mvi.Event
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.Flow
-
-@AndroidEntryPoint
-class SignInFragment : Fragment() {
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
-        ComposeView(requireContext()).apply {
-            setContent {
-                SignInView(findNavController(), { requireActivity() })
-            }
-        }
-}
 
 @Composable
 fun SignInView(navController: NavController?, getActivity: (() -> Activity)?) {
-    val viewModel = viewModel<SignInViewModel>()
+    val viewModel = hiltViewModel<SignInViewModel>()
     viewModel.events.collect {
-        if (it is NavigateToConversationList) navController?.navigate(R.id.conversationsListFragment)
+        if (it is NavigateToConversationList) navController?.navigate("conversations")
     }
     val state = viewModel.state.collectAsState()
     Content(state.value, getActivity)
@@ -60,7 +40,7 @@ fun SignInView(navController: NavController?, getActivity: (() -> Activity)?) {
 @Preview
 @Composable
 private fun Content(state: SignInUiState = testSignInUiState, getActivity: (() -> Activity)? = null) {
-    val viewModel = viewModel<SignInViewModel>()
+    val viewModel = hiltViewModel<SignInViewModel>()
     MaterialTheme(
         colors = LightColorPalette
     ) {

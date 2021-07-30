@@ -3,15 +3,18 @@ package bogomolov.aa.anochat.features.conversations
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.TaskStackBuilder
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.os.Build
-import android.os.Bundle
 import android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import androidx.navigation.NavDeepLinkBuilder
 import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.R
@@ -162,12 +165,17 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             getBitmap(getMiniPhotoFileName(user.photo), context)
         else
             BitmapFactory.decodeResource(context.resources, R.drawable.user_icon)
-        val pendingIntent = NavDeepLinkBuilder(context)
-            .setComponentName(MainActivity::class.java)
-            .setGraph(R.navigation.nav_graph)
-            .setDestination(R.id.conversationFragment)
-            .setArguments(Bundle().apply { putLong("id", message.conversationId) })
-            .createPendingIntent()
+        val deepLinkIntent = Intent(
+            Intent.ACTION_VIEW,
+            "anochat://anochat/conversation/${message.conversationId}".toUri(),
+            context,
+            MainActivity::class.java
+        )
+        val pendingIntent: PendingIntent? = TaskStackBuilder.create(context).run {
+            addNextIntentWithParentStack(deepLinkIntent)
+            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
+
         val channelId = "anochat channel"
         val title = user.name
         val notificationBuilder: NotificationCompat.Builder =
