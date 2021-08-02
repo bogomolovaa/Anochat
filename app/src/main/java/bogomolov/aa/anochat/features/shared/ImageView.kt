@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -50,11 +51,9 @@ fun ImageView(imageName: String, fromGallery: Boolean, navController: NavControl
     val left = remember { mutableStateOf(0) }
     val imageWidth = remember { mutableStateOf(0) }
     val imageHeight = remember { mutableStateOf(0) }
-    MaterialTheme(
-        colors = LightColorPalette
-    ) {
         Box(
             modifier = Modifier
+                .background(Color.Black)
                 .fillMaxWidth()
                 .fillMaxHeight()
                 .pointerInput(Unit) {
@@ -129,7 +128,6 @@ fun ImageView(imageName: String, fromGallery: Boolean, navController: NavControl
                 )
             }
         }
-    }
 }
 
 private fun share(imageName: String, context: Context) {

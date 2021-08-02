@@ -76,7 +76,7 @@ private fun Content(state: UserUiState = testUserUiState, navController: NavCont
                                 .height(350.dp)
                                 .clickable(onClick = {
                                     val photo = state.user?.photo
-                                    if (photo != null) navController?.navigate("image?name=photo")
+                                    if (photo != null) navController?.navigate("image?name=$photo")
                                 })
                         )
                     } ?: run {

@@ -31,8 +31,8 @@ import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
+import bogomolov.aa.anochat.features.shared.EventHandler
 import bogomolov.aa.anochat.features.shared.LightColorPalette
-import bogomolov.aa.anochat.features.shared.collect
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 
@@ -43,7 +43,7 @@ fun UsersView(uri: String? = null, navController: NavController? = null) {
     LaunchedEffect(0) {
         viewModel.loadContacts(getContactsPhones(context))
     }
-    viewModel.events.collect {
+    EventHandler(viewModel.events){
         if (it is NavigateConversationEvent) navController?.navigateToConversation(it.conversationId, uri)
     }
 

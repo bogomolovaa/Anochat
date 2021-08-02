@@ -33,12 +33,15 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.navigation.NavController
+import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
@@ -69,7 +72,7 @@ fun ConversationView(
             )
     }
 
-    viewModel.events.collect {
+    EventHandler(viewModel.events){
         when (it) {
             is OnMessageSent -> keyboardController?.hide()
         }
@@ -135,7 +138,7 @@ private fun Content(
                                 .padding(start = 8.dp, end = 8.dp),
                             contentAlignment = Alignment.BottomStart
                         ) {
-                            MessagesList(state, viewModel, navController)
+                            MessagesList(state.pagingDataFlow, state.playingState, viewModel, navController)
                             ReplyLayout(state, viewModel)
                         }
                         Row(Modifier.padding(end = 64.dp)) {
@@ -287,11 +290,11 @@ private fun FabsLayout(
 @ExperimentalMaterialApi
 @Composable
 private fun MessagesList(
-    state: DialogUiState = testDialogUiState,
+    pagingDataFlow: Flow<PagingData<MessageViewData>>? = null,
+    playingState: PlayingState? = null,
     viewModel: ConversationViewModel? = null,
     navController: NavController? = null
 ) {
-    val pagingDataFlow = state.pagingDataFlow
     if (pagingDataFlow != null) {
         val lazyPagingItems = pagingDataFlow.collectAsLazyPagingItems()
         LazyColumn(
@@ -299,7 +302,7 @@ private fun MessagesList(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             reverseLayout = true,
         ) {
-            items(lazyPagingItems) { ShowMessage(it, state.playingState, viewModel, navController) }
+            items(lazyPagingItems) { ShowMessage(it, playingState, viewModel, navController) }
         }
     }
 }

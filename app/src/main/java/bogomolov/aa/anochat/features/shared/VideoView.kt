@@ -2,12 +2,13 @@ package bogomolov.aa.anochat.features.shared
 
 import android.net.Uri
 import android.view.View
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
@@ -24,10 +25,11 @@ fun VideoView(uri: Uri) {
     val window = remember { mutableStateOf(0) }
     val position = remember { mutableStateOf(0L) }
     val autoPlay = remember { mutableStateOf(true) }
-    val player = remember {
+    var player by remember { mutableStateOf<SimpleExoPlayer?>(null) }
+    LaunchedEffect(0) {
         val mediaItem = MediaItem.fromUri(uri)
 
-        SimpleExoPlayer.Builder(context).build().apply {
+        player = SimpleExoPlayer.Builder(context).build().apply {
             setMediaItem(mediaItem)
             playWhenReady = true
             seekTo(window.value, position.value)
@@ -37,9 +39,9 @@ fun VideoView(uri: Uri) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     fun updateState() {
-        autoPlay.value = player.playWhenReady
-        window.value = player.currentWindowIndex
-        position.value = 0L.coerceAtLeast(player.contentPosition)
+        autoPlay.value = player?.playWhenReady ?: false
+        window.value = player?.currentWindowIndex ?: 0
+        position.value = 0L.coerceAtLeast(player?.contentPosition ?: 0L)
     }
 
     val playerView = remember {
@@ -56,14 +58,14 @@ fun VideoView(uri: Uri) {
             @OnLifecycleEvent(Lifecycle.Event.ON_START)
             fun onStart() {
                 playerView.onResume()
-                player.playWhenReady = autoPlay.value
+                player?.playWhenReady = autoPlay.value
             }
 
             @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
             fun onStop() {
                 updateState()
                 playerView.onPause()
-                player.playWhenReady = false
+                player?.playWhenReady = false
             }
         })
         playerView
@@ -71,15 +73,23 @@ fun VideoView(uri: Uri) {
 
     DisposableEffect(Unit) {
         onDispose {
-            updateState()
-            player.release()
+            player?.release()
         }
     }
 
-    AndroidView(
-        factory = { playerView },
-        modifier = Modifier.fillMaxWidth()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .background(Color.Black)
     ) {
-        playerView.player = player
+        AndroidView(
+            factory = { playerView },
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+        ) {
+            playerView.player = player
+        }
     }
 }

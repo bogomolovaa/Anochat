@@ -209,6 +209,7 @@ private fun ConversationCard(conversation: Conversation = testConversation, view
                     Text(
                         text = it.shortText(),
                         maxLines = 2,
+                        fontSize = 14.sp,
                         modifier = Modifier.padding(top = 12.dp),
                         fontWeight = if (isNew) FontWeight.Bold else FontWeight.Normal,
                         color = if (isNew) colorResource(R.color.green) else Color.Black

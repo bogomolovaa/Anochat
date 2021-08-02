@@ -190,7 +190,12 @@ fun MessageCompose(
                 elevation = 1.dp,
                 backgroundColor = colorResource(id = R.color.time_message_color)
             ) {
-                Text(text = data.dateDelimiter!!, modifier = Modifier.padding(6.dp))
+                Text(
+                    text = data.dateDelimiter!!,
+                    modifier = Modifier.padding(6.dp),
+                    color = Color.DarkGray,
+                    fontSize = 12.sp
+                )
             }
         }
         val message = data.message
@@ -207,8 +212,8 @@ fun MessageCompose(
                                 launch {
                                     offsetX.animateTo(
                                         targetValue = windowWidth.toFloat(),
-                                        initialVelocity = 1f,
-                                        animationSpec = tween(durationMillis = 500)
+                                        initialVelocity = 0f,
+                                        animationSpec = tween(durationMillis = 1000)
                                     )
                                     offsetX.snapTo(0f)
                                 }

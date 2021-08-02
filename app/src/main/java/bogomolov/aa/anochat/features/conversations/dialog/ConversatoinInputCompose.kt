@@ -143,6 +143,7 @@ fun InputFabs(
         if (!(state.inputState == InputStates.INITIAL || state.inputState == InputStates.FAB_EXPAND))
             coroutineScope.launch { offsetY.snapTo(0f) }
         if (offsetY.value > 0) {
+            val fabSpace = 32
             FloatingActionButton(
                 onClick = {
                     coroutineScope.launch { offsetY.snapTo(0f) }
@@ -150,7 +151,7 @@ fun InputFabs(
                 },
                 Modifier
                     .size(40.dp)
-                    .offset(x = 0.dp, y = (-((56 + 18) * offsetY.value).toInt()).dp)
+                    .offset(x = 0.dp, y = (-((56 + fabSpace) * offsetY.value).toInt()).dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Mic,
@@ -164,7 +165,7 @@ fun InputFabs(
                 },
                 Modifier
                     .size(40.dp)
-                    .offset(x = 0.dp, y = (-((56 + 18 + 18 + 40) * offsetY.value).toInt()).dp)
+                    .offset(x = 0.dp, y = (-((56 + fabSpace + fabSpace + 40) * offsetY.value).toInt()).dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.PhotoCamera,
@@ -178,7 +179,7 @@ fun InputFabs(
                 },
                 Modifier
                     .size(40.dp)
-                    .offset(x = 0.dp, y = (-((56 + 18 + 2 * (18 + 40)) * offsetY.value).toInt()).dp)
+                    .offset(x = 0.dp, y = (-((56 + fabSpace + 2 * (fabSpace + 40)) * offsetY.value).toInt()).dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Photo,

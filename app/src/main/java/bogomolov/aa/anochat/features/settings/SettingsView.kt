@@ -36,8 +36,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.features.shared.EventHandler
 import bogomolov.aa.anochat.features.shared.LightColorPalette
-import bogomolov.aa.anochat.features.shared.collect
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import kotlinx.coroutines.launch
@@ -66,8 +66,10 @@ private fun Content(
         fileChooser.launch(Unit)
     }
     val writePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    viewModel?.events?.collect {
-        if (it is MiniatureCreatedEvent) navController?.navigate("miniature")
+    viewModel?.events?.let {
+        EventHandler(viewModel.events) {
+            if (it is MiniatureCreatedEvent) navController?.navigate("miniature")
+        }
     }
     MaterialTheme(
         colors = LightColorPalette

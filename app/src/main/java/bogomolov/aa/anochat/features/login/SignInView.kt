@@ -20,17 +20,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.shared.ErrorType
+import bogomolov.aa.anochat.features.shared.EventHandler
 import bogomolov.aa.anochat.features.shared.LightColorPalette
-import bogomolov.aa.anochat.features.shared.collect
 
 @Composable
 fun SignInView(navController: NavController?, getActivity: (() -> Activity)?) {
     val viewModel = hiltViewModel<SignInViewModel>()
-    viewModel.events.collect {
+    EventHandler(viewModel.events){
         if (it is NavigateToConversationList) navController?.navigate("conversations")
     }
     val state = viewModel.state.collectAsState()
