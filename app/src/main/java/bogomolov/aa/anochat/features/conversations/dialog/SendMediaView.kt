@@ -28,97 +28,88 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.features.main.Navigation
 import bogomolov.aa.anochat.features.shared.*
 import dagger.hilt.android.AndroidEntryPoint
 
 @Composable
-fun SendMediaView(navController: NavController) {
-    val viewModel = hiltViewModel<ConversationViewModel>(navController.getBackStackEntry("conversationRoute"))
+fun SendMediaView() {
+    val viewModel =
+        hiltViewModel<ConversationViewModel>(Navigation.navController!!.getBackStackEntry("conversationRoute"))
     val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel, navController)
+    Content(state.value, viewModel)
 }
 
 @Composable
-private fun Content(state: DialogUiState, viewModel: ConversationViewModel, navController: NavController) {
+private fun Content(state: DialogUiState, viewModel: ConversationViewModel) {
+    val navController = Navigation.navController!!
     val context = LocalContext.current
-    MaterialTheme(
-        colors = LightColorPalette
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(id = if (state.isVideo) R.string.send_media_video else R.string.send_media_image)) },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            navController.popBackStack()
-                        }) {
-                            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    },
-                )
-            },
-            content = {
-                val showLoading = state.isVideo && state.progress < 0.98
-                if (showLoading)
-                    LinearProgressIndicator(
-                        progress = state.progress,
-                        modifier = Modifier
-                            .padding(top = 6.dp)
-                            .fillMaxWidth()
-                    )
-                Box(
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(id = if (state.isVideo) R.string.send_media_video else R.string.send_media_image)) },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
+                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
+        },
+        content = {
+            val showLoading = state.isVideo && state.progress < 0.98
+            if (showLoading)
+                LinearProgressIndicator(
+                    progress = state.progress,
                     modifier = Modifier
+                        .padding(top = 6.dp)
                         .fillMaxWidth()
-                        .fillMaxHeight()
-                        .padding(top = if (showLoading) 16.dp else 0.dp),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    if (state.resized != null) {
-                        if (state.resized.bitmap != null) {
-                            Image(
-                                bitmap = state.resized.bitmap.asImageBitmap(),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 60.dp),
-                                contentScale = ContentScale.FillWidth,
-                                contentDescription = ""
-                            )
-                        }
-                        var text by remember { mutableStateOf("") }
-                        TextField(
-                            value = text,
-                            onValueChange = { text = it },
-                            placeholder = { Text(text = stringResource(id = R.string.enter_message)) },
+                )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .padding(top = if (showLoading) 16.dp else 0.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                if (state.resized != null) {
+                    if (state.resized.bitmap != null) {
+                        Image(
+                            bitmap = state.resized.bitmap.asImageBitmap(),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(60.dp),
-                            colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.White),
-                            trailingIcon = {
-                                IconButton(onClick = {
-                                    submit(
-                                        viewModel,
-                                        context,
-                                        navController,
-                                        state.resized,
-                                        state.isVideo,
-                                        text
-                                    )
-                                }) {
-                                    Icon(Icons.Filled.PlayArrow, contentDescription = "")
-                                }
-                            }
+                                .padding(bottom = 60.dp),
+                            contentScale = ContentScale.FillWidth,
+                            contentDescription = ""
                         )
                     }
+                    var text by remember { mutableStateOf("") }
+                    TextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        placeholder = { Text(text = stringResource(id = R.string.enter_message)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp),
+                        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.White),
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                submit(viewModel, context, state.resized, state.isVideo, text)
+                            }) {
+                                Icon(Icons.Filled.PlayArrow, contentDescription = "")
+                            }
+                        }
+                    )
                 }
             }
-        )
-    }
+        }
+    )
 }
 
 private fun submit(
     viewModel: ConversationViewModel,
     context: Context,
-    navController: NavController,
     resized: BitmapWithName,
     isVideo: Boolean,
     text: String
@@ -134,7 +125,7 @@ private fun submit(
             )
         }
         playMessageSound(context)
-        navController.popBackStack()
+        Navigation.navController?.popBackStack()
     } else {
         Toast.makeText(context, "Video is processing", Toast.LENGTH_LONG).show()
     }

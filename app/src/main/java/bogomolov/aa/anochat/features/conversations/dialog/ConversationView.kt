@@ -38,6 +38,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
+import bogomolov.aa.anochat.features.main.Navigation
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -53,26 +54,17 @@ private const val TAG = "ConversationView"
 @ExperimentalComposeUiApi
 @ExperimentalMaterialApi
 @Composable
-fun ConversationView(
-    navController: NavController,
-    conversationId: Long,
-    uri: Uri? = null
-) {
-    val viewModel = hiltViewModel<ConversationViewModel>(navController.getBackStackEntry("conversationRoute"))
+fun ConversationView(conversationId: Long, uri: Uri? = null) {
+    val viewModel =
+        hiltViewModel<ConversationViewModel>(Navigation.navController!!.getBackStackEntry("conversationRoute"))
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
     LaunchedEffect(0) {
         viewModel.initConversation(conversationId)
-        if (uri != null)
-            navigateToSendMediaFragment(
-                viewModel = viewModel,
-                context = context,
-                navController = navController,
-                uri = uri
-            )
+        if (uri != null) navigateToSendMediaFragment(viewModel = viewModel, context = context, uri = uri)
     }
 
-    EventHandler(viewModel.events){
+    EventHandler(viewModel.events) {
         when (it) {
             is OnMessageSent -> keyboardController?.hide()
         }
@@ -87,7 +79,7 @@ fun ConversationView(
         }
     })
     val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel, navController, conversationId)
+    Content(state.value, viewModel, conversationId)
 }
 
 @Preview
@@ -96,60 +88,50 @@ fun ConversationView(
 private fun Content(
     state: DialogUiState = testDialogUiState,
     viewModel: ConversationViewModel? = null,
-    navController: NavController? = null,
     conversationId: Long = 0,
 ) {
-    MaterialTheme(
-        colors = LightColorPalette
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        UserNameLayout(
-                            state = state,
-                            onClick = {
-                                val userId = viewModel?.currentState?.conversation?.user?.id
-                                if (userId != null) navigateToUserFragment(navController!!, userId)
-                            }
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            navController?.popBackStack()
-                        }) {
-                            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    UserNameLayout(
+                        state = state,
+                        onClick = { navigateToUserFragment(viewModel) }
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { Navigation.navController?.popBackStack() }) {
+                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
-                )
-            },
-            content = {
-                Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.BottomEnd
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Bottom
-                    ) {
-                        Box(
-                            Modifier
-                                .weight(1f)
-                                .padding(start = 8.dp, end = 8.dp),
-                            contentAlignment = Alignment.BottomStart
-                        ) {
-                            MessagesList(state.pagingDataFlow, state.playingState, viewModel, navController)
-                            ReplyLayout(state, viewModel)
-                        }
-                        Row(Modifier.padding(end = 64.dp)) {
-                            InputLayout(state, viewModel)
-                        }
-                    }
-                    FabsLayout(state, viewModel, navController, conversationId)
                 }
+            )
+        },
+        content = {
+            Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp, end = 8.dp),
+                        contentAlignment = Alignment.BottomStart
+                    ) {
+                        MessagesList(state.pagingDataFlow, state.playingState, viewModel)
+                        ReplyLayout(state, viewModel)
+                    }
+                    Row(Modifier.padding(end = 64.dp)) {
+                        InputLayout(state, viewModel)
+                    }
+                }
+                FabsLayout(state, viewModel)
             }
-        )
-    }
+        }
+    )
 }
 
 @Composable
@@ -222,56 +204,33 @@ private fun ReplyLayout(state: DialogUiState = testDialogUiState, viewModel: Con
 @Composable
 private fun FabsLayout(
     state: DialogUiState = testDialogUiState,
-    viewModel: ConversationViewModel?,
-    navController: NavController?,
-    conversationId: Long
+    viewModel: ConversationViewModel?
 ) {
     val context = LocalContext.current
     val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
-        navigateToSendMediaFragment(
-            navController = navController!!,
-            viewModel = viewModel,
-            context = context,
-            uri = uri
-        )
+        navigateToSendMediaFragment(viewModel = viewModel, context = context, uri = uri)
     }
-
     val takePicture = rememberLauncherForActivityResult(TakePictureFromCamera()) {
-        navigateToSendMediaFragment(
-            navController = navController!!,
-            viewModel = viewModel,
-            context = context,
-            path = viewModel!!.currentState.photoPath
-        )
+        navigateToSendMediaFragment(viewModel = viewModel, context = context, path = viewModel!!.currentState.photoPath)
     }
     val readPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        fileChooser.launch(Unit)
+        if (it) fileChooser.launch(Unit)
     }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        val photoFile = context.createTempImageFile()
-        viewModel?.updateState { copy(photoPath = photoFile.path) }
-        takePicture.launch(photoFile)
+        if (it) {
+            val photoFile = context.createTempImageFile()
+            viewModel?.updateState { copy(photoPath = photoFile.path) }
+            takePicture.launch(photoFile)
+        }
     }
     val microphonePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        viewModel?.startRecording()
+        if (it) viewModel?.startRecording()
     }
 
     InputFabs(
         state = state,
         onClick = {
-            when (state.inputState) {
-                InputStates.INITIAL -> viewModel?.updateState { copy(inputState = InputStates.FAB_EXPAND) }
-                InputStates.FAB_EXPAND -> viewModel?.updateState { copy(inputState = InputStates.INITIAL) }
-                InputStates.TEXT_ENTERED -> {
-                    viewModel?.sendMessage(SendMessageData(text = viewModel.currentState.text))
-                    playMessageSound(context)
-                }
-                InputStates.VOICE_RECORDED -> {
-                    viewModel?.sendMessage(SendMessageData(audio = viewModel.currentState.audioFile))
-                    playMessageSound(context)
-                }
-                InputStates.VOICE_RECORDING -> viewModel?.stopRecording()
-            }
+            fabOnClick(context, state.inputState, viewModel)
         },
         onVoice = {
             microphonePermission.launch(RECORD_AUDIO)
@@ -292,8 +251,7 @@ private fun FabsLayout(
 private fun MessagesList(
     pagingDataFlow: Flow<PagingData<MessageViewData>>? = null,
     playingState: PlayingState? = null,
-    viewModel: ConversationViewModel? = null,
-    navController: NavController? = null
+    viewModel: ConversationViewModel? = null
 ) {
     if (pagingDataFlow != null) {
         val lazyPagingItems = pagingDataFlow.collectAsLazyPagingItems()
@@ -302,7 +260,7 @@ private fun MessagesList(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             reverseLayout = true,
         ) {
-            items(lazyPagingItems) { ShowMessage(it, playingState, viewModel, navController) }
+            items(lazyPagingItems) { ShowMessage(it, playingState, viewModel) }
         }
     }
 }
@@ -312,8 +270,7 @@ private fun MessagesList(
 private fun ShowMessage(
     messageData: MessageViewData?,
     playingState: PlayingState?,
-    viewModel: ConversationViewModel?,
-    navController: NavController?
+    viewModel: ConversationViewModel?
 ) {
     val context = LocalContext.current
     if (messageData != null)
@@ -348,8 +305,8 @@ private fun ShowMessage(
         data = messageData,
         onClick = {
             when {
-                messageData?.message?.video != null -> videoOnClick(navController!!, messageData.message, context)
-                messageData?.message?.image != null -> imageOnClick(navController!!, messageData.message)
+                messageData?.message?.video != null -> videoOnClick(messageData.message, context)
+                messageData?.message?.image != null -> imageOnClick(messageData.message)
             }
         },
         onSwipe = {
@@ -367,32 +324,48 @@ private fun ShowMessage(
     )
 }
 
-private fun videoOnClick(navController: NavController, message: Message, context: Context) {
-    if (message.received == 1 || message.isMine) {
-        val uriWithSource = getUriWithSource(message.video!!, context)
-        if (uriWithSource.uri != null) navController.navigate("video?uri=${uriWithSource.uri}")
+private fun fabOnClick(context: Context, inputState: InputStates, viewModel: ConversationViewModel?) {
+    when (inputState) {
+        InputStates.INITIAL -> viewModel?.updateState { copy(inputState = InputStates.FAB_EXPAND) }
+        InputStates.FAB_EXPAND -> viewModel?.updateState { copy(inputState = InputStates.INITIAL) }
+        InputStates.TEXT_ENTERED -> {
+            viewModel?.sendMessage(SendMessageData(text = viewModel.currentState.text))
+            playMessageSound(context)
+        }
+        InputStates.VOICE_RECORDED -> {
+            viewModel?.sendMessage(SendMessageData(audio = viewModel.currentState.audioFile))
+            playMessageSound(context)
+        }
+        InputStates.VOICE_RECORDING -> viewModel?.stopRecording()
     }
 }
 
-private fun imageOnClick(navController: NavController, message: Message) {
-    if (message.received == 1 || message.isMine)
-        navController.navigate("image?name=${message.image}&gallery=true")
+private fun videoOnClick(message: Message, context: Context) {
+    if (message.received == 1 || message.isMine) {
+        val uriWithSource = getUriWithSource(message.video!!, context)
+        if (uriWithSource.uri != null) Navigation.navController?.navigate("video?uri=${uriWithSource.uri}")
+    }
 }
 
-private fun navigateToUserFragment(navController: NavController, userId: Long) {
-    navController.navigate("user/$userId")
+private fun imageOnClick(message: Message) {
+    if (message.received == 1 || message.isMine)
+        Navigation.navController?.navigate("image?name=${message.image}&gallery=true")
+}
+
+private fun navigateToUserFragment(viewModel: ConversationViewModel?) {
+    val userId = viewModel?.currentState?.conversation?.user?.id
+    if (userId != null) Navigation.navController?.navigate("user/$userId")
 }
 
 private fun navigateToSendMediaFragment(
     context: Context,
     viewModel: ConversationViewModel?,
-    navController: NavController,
     uri: Uri? = null,
     path: String? = null
 ) {
     val isVideo = context.isVideo(uri)
     viewModel?.resizeMedia(uri, path, isVideo)
-    navController.navigate("media")
+    Navigation.navController?.navigate("media")
 }
 
 @SuppressLint("SimpleDateFormat")

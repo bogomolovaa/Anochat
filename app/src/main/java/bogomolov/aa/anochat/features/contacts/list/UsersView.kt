@@ -31,67 +31,58 @@ import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
+import bogomolov.aa.anochat.features.main.Navigation
 import bogomolov.aa.anochat.features.shared.EventHandler
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 
 @Composable
-fun UsersView(uri: String? = null, navController: NavController? = null) {
+fun UsersView(uri: String? = null) {
     val viewModel = hiltViewModel<UsersViewModel>()
     val context = LocalContext.current
     LaunchedEffect(0) {
         viewModel.loadContacts(getContactsPhones(context))
     }
-    EventHandler(viewModel.events){
-        if (it is NavigateConversationEvent) navController?.navigateToConversation(it.conversationId, uri)
+    EventHandler(viewModel.events) {
+        if (it is NavigateConversationEvent) Navigation.navController?.navigateToConversation(it.conversationId, uri)
     }
 
     val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel, navController)
+    Content(state.value, viewModel)
 }
 
 @Preview
 @Composable
-private fun Content(
-    state: ContactsUiState = testContactsUiState,
-    viewModel: UsersViewModel? = null,
-    navController: NavController? = null
-) {
-    MaterialTheme(
-        colors = LightColorPalette
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(id = R.string.contacts)) },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            navController?.popBackStack()
-                        }) {
-                            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    },
-                )
-            },
-            content = {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (state.loading) LinearProgressIndicator(
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .fillMaxWidth()
-                    )
-                    Column(
-                        modifier = Modifier.padding(top = if (!state.loading) 8.dp else 0.dp)
-                    ) {
-                        state.users?.forEach { UserRow(it, viewModel) }
+private fun Content(state: ContactsUiState = testContactsUiState, viewModel: UsersViewModel? = null) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(id = R.string.contacts)) },
+                navigationIcon = {
+                    IconButton(onClick = { Navigation.navController?.popBackStack() }) {
+                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
+                },
+            )
+        },
+        content = {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (state.loading) LinearProgressIndicator(
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .fillMaxWidth()
+                )
+                Column(
+                    modifier = Modifier.padding(top = if (!state.loading) 8.dp else 0.dp)
+                ) {
+                    state.users?.forEach { UserRow(it, viewModel) }
                 }
             }
-        )
-    }
+        }
+    )
 }
 
 
@@ -100,9 +91,7 @@ private fun UserRow(user: User = testContactsUiState.users!!.first(), viewModel:
     Card(
         backgroundColor = Color.Black.copy(alpha = 0.0f),
         elevation = 0.dp,
-        modifier = Modifier.clickable(onClick = {
-            viewModel?.createConversation(user)
-        })
+        modifier = Modifier.clickable(onClick = { viewModel?.createConversation(user) })
     ) {
         Row(
             modifier = Modifier

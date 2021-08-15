@@ -41,90 +41,86 @@ import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.main.MainActivity
+import bogomolov.aa.anochat.features.main.Navigation
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 
 
 @Composable
-fun ConversationsView(navController: NavController? = null) {
+fun ConversationsView() {
     val viewModel = hiltViewModel<ConversationListViewModel>()
     val state = viewModel.state.collectAsState()
-    Content(state.value,viewModel, navController)
+    Content(state.value, viewModel)
 }
 
 @Composable
-private fun Content(state: ConversationsUiState = testConversationsUiState, viewModel: ConversationListViewModel?, navController: NavController? = null) {
+private fun Content(state: ConversationsUiState = testConversationsUiState, viewModel: ConversationListViewModel?) {
     var showMenu by remember { mutableStateOf(false) }
     val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (it) navController?.navigate("users")
+        if (it) Navigation.navController?.navigate("users")
     }
-
-    MaterialTheme(
-        colors = LightColorPalette
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(id = R.string.app_name)) },
-                    actions = {
-                        IconButton(onClick = { showMenu = !showMenu }) {
-                            Icon(Icons.Outlined.MoreVert, contentDescription = "")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(id = R.string.app_name)) },
+                actions = {
+                    IconButton(onClick = { showMenu = !showMenu }) {
+                        Icon(Icons.Outlined.MoreVert, contentDescription = "")
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(onClick = {
+                            Navigation.navController?.navigate("settings")
+                        }) {
+                            Text(stringResource(id = R.string.settings))
                         }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            DropdownMenuItem(onClick = {
-                                navController?.navigate("settings")
-                            }) {
-                                Text(stringResource(id = R.string.settings))
-                            }
-                            DropdownMenuItem(onClick = {
-                                viewModel?.signOut()
-                                navController?.navigate("login")
-                            }) {
-                                Text(stringResource(id = R.string.sign_out))
-                            }
+                        DropdownMenuItem(onClick = { signOut(viewModel) }) {
+                            Text(stringResource(id = R.string.sign_out))
                         }
                     }
-                )
-            },
-            floatingActionButton = {
-                val context = LocalContext.current
-                FloatingActionButton(onClick = {
-                    contactsPermission.launch(Manifest.permission.READ_CONTACTS)
-                }) {
-                    Icon(
-                        painterResource(id = R.drawable.ic_contacts),
-                        contentDescription = ""
-                    )
                 }
-            },
-            content = {
-                Column(
-                ) {
-                    if (state.pagingDataFlow != null) {
-                        val lazyPagingItems = state.pagingDataFlow.collectAsLazyPagingItems()
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            items(lazyPagingItems) { ConversationCard(it!!, viewModel, navController) }
-                        }
+            )
+        },
+        floatingActionButton = {
+            val context = LocalContext.current
+            FloatingActionButton(onClick = {
+                contactsPermission.launch(Manifest.permission.READ_CONTACTS)
+            }) {
+                Icon(
+                    painterResource(id = R.drawable.ic_contacts),
+                    contentDescription = ""
+                )
+            }
+        },
+        content = {
+            Column(
+            ) {
+                if (state.pagingDataFlow != null) {
+                    val lazyPagingItems = state.pagingDataFlow.collectAsLazyPagingItems()
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(lazyPagingItems) { ConversationCard(it!!, viewModel) }
                     }
                 }
             }
+        }
 
-        )
-    }
+    )
 }
 
 @Preview
 @Composable
-private fun ConversationCard(conversation: Conversation = testConversation, viewModel: ConversationListViewModel? = null, navController: NavController? = null) {
+private fun ConversationCard(
+    conversation: Conversation = testConversation,
+    viewModel: ConversationListViewModel? = null
+) {
     var showMenu by remember { mutableStateOf(false) }
     Card(
         backgroundColor = Color.Black.copy(alpha = 0.0f),
@@ -134,11 +130,9 @@ private fun ConversationCard(conversation: Conversation = testConversation, view
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
-                        navController?.navigate("conversation?id=${conversation.id}")
+                        Navigation.navController?.navigate("conversation?id=${conversation.id}")
                     },
-                    onLongPress = {
-                        showMenu = true
-                    }
+                    onLongPress = { showMenu = true }
                 )
             }
             .padding(start = 12.dp, end = 12.dp)
@@ -218,4 +212,9 @@ private fun ConversationCard(conversation: Conversation = testConversation, view
             }
         }
     }
+}
+
+private fun signOut(viewModel: ConversationListViewModel?) {
+    viewModel?.signOut()
+    Navigation.navController?.navigate("login")
 }

@@ -2,12 +2,17 @@ package bogomolov.aa.anochat.features.main
 
 import android.app.NotificationManager
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
+import android.view.View
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.core.net.toUri
@@ -31,6 +36,7 @@ import bogomolov.aa.anochat.features.settings.MiniatureView
 import bogomolov.aa.anochat.features.settings.SettingsView
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.features.shared.ImageView
+import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.VideoView
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
@@ -53,73 +59,78 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         //emojiSupport()
         startWorkManager()
+        //setFullScreen()
 
         setContent {
             val navController = rememberNavController()
             LaunchedEffect(0) {
+                Navigation.navController = navController
                 addSignInListener(navController)
                 onSendAction(navController)
             }
-            NavHost(navController = navController, startDestination = "conversations") {
-                composable("conversations") { ConversationsView(navController) }
-                composable(
-                    "deepLink/{id}",
-                    deepLinks = listOf(navDeepLink { uriPattern = "anochat://anochat/conversation/{id}" }),
-                ) {
-                    val id = it.arguments?.getString("id")?.toLong()!!
-                    navController.navigate("conversation?id=$id") { popUpTo("conversations") }
-                }
-                navigation(startDestination = "conversation", route = "conversationRoute") {
+            MaterialTheme(
+                colors = LightColorPalette
+            ) {
+                NavHost(navController = navController, startDestination = "conversations") {
+                    composable("conversations") { ConversationsView() }
                     composable(
-                        "conversation?id={id}",
-                        arguments = listOf(
-                            navArgument("id") { nullable = true },
-                            navArgument("uri") { nullable = true }
-                        )
+                        "deepLink/{id}",
+                        deepLinks = listOf(navDeepLink { uriPattern = "anochat://anochat/conversation/{id}" }),
                     ) {
-                        //if (it.destination.route != navController.currentDestination?.route) return@composable
-                        val conversationId = it.arguments?.getString("id")?.toLong()!!
-                        val uri = it.arguments?.getString("uri")?.toUri()
-                        ConversationView(navController, conversationId, uri)
+                        val id = it.arguments?.getString("id")?.toLong()!!
+                        navController.navigate("conversation?id=$id") { popUpTo("conversations") }
                     }
-                    composable("media") { SendMediaView(navController) }
+                    navigation(startDestination = "conversation", route = "conversationRoute") {
+                        composable(
+                            "conversation?id={id}",
+                            arguments = listOf(
+                                navArgument("id") { nullable = true },
+                                navArgument("uri") { nullable = true }
+                            )
+                        ) {
+                            //if (it.destination.route != navController.currentDestination?.route) return@composable
+                            val conversationId = it.arguments?.getString("id")?.toLong()!!
+                            val uri = it.arguments?.getString("uri")?.toUri()
+                            ConversationView(conversationId, uri)
+                        }
+                        composable("media") { SendMediaView() }
+                    }
+                    navigation(startDestination = "settings", route = "settingsRoute") {
+                        composable("settings") { SettingsView() }
+                        composable("miniature") { MiniatureView() }
+                    }
+                    composable("user/{id}") {
+                        val userId = it.arguments?.getString("id")?.toLong()!!
+                        UserView(userId)
+                    }
+                    composable(
+                        "users?uri={uri}",
+                        arguments = listOf(navArgument("uri") { nullable = true })
+                    ) {
+                        val uri = it.arguments?.getString("uri")
+                        UsersView(uri)
+                    }
+                    composable(
+                        "image?name={name}&gallery={gallery}",
+                        arguments = listOf(
+                            navArgument("name") { nullable = true },
+                            navArgument("gallery") {
+                                type = NavType.BoolType
+                                defaultValue = false
+                            })
+                    ) {
+                        val image = it.arguments?.getString("name")!!
+                        val gallery = it.arguments?.getBoolean("gallery")!!
+                        ImageView(image, gallery)
+                    }
+                    composable("video?uri={uri}") {
+                        val uri = it.arguments?.getString("uri")?.toUri()!!
+                        VideoView(uri)
+                    }
+                    composable("login") { SignInView() { this@MainActivity } }
                 }
-                navigation(startDestination = "settings", route = "settingsRoute") {
-                    composable("settings") { SettingsView(navController) }
-                    composable("miniature") { MiniatureView(navController) }
-                }
-                composable("user/{id}") {
-                    val userId = it.arguments?.getString("id")?.toLong()!!
-                    UserView(userId, navController)
-                }
-                composable(
-                    "users?uri={uri}",
-                    arguments = listOf(navArgument("uri") { nullable = true })
-                ) {
-                    val uri = it.arguments?.getString("uri")
-                    UsersView(uri, navController)
-                }
-                composable(
-                    "image?name={name}&gallery={gallery}",
-                    arguments = listOf(
-                        navArgument("name") { nullable = true },
-                        navArgument("gallery") {
-                            type = NavType.BoolType
-                            defaultValue = false
-                        })
-                ) {
-                    val image = it.arguments?.getString("name")!!
-                    val gallery = it.arguments?.getBoolean("gallery")!!
-                    ImageView(image, gallery, navController)
-                }
-                composable("video?uri={uri}") {
-                    val uri = it.arguments?.getString("uri")?.toUri()!!
-                    VideoView(uri)
-                }
-                composable("login") { SignInView(navController) { this@MainActivity } }
             }
         }
-
     }
 
     private fun onSendAction(navController: NavController) {
@@ -138,6 +149,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun addSignInListener(navController: NavController) {
         navController.addOnDestinationChangedListener { controller, destination, _ ->
+            when (destination.route) {
+                "image?name={name}&gallery={gallery}", "video?uri={uri}" -> setFullScreen()
+                else -> removeFullScreen()
+            }
             if (destination.route != "login" && !authRepository.isSignedIn()) navigateToSignIn(controller)
         }
     }
@@ -169,4 +184,22 @@ class MainActivity : AppCompatActivity() {
         EmojiCompat.init(config)
         EmojiManager.install(IosEmojiProvider())
     }
+
+    private fun setFullScreen() {
+        window.apply {
+            decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) setDecorFitsSystemWindows(true)
+        }
+    }
+
+    private fun removeFullScreen() {
+        window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
+    }
+
 }

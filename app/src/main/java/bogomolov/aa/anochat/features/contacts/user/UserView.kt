@@ -25,80 +25,77 @@ import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.features.main.Navigation
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import kotlinx.coroutines.flow.Flow
 
 @Composable
-fun UserView(userId: Long, navController: NavController? = null) {
+fun UserView(userId: Long) {
     val viewModel = hiltViewModel<UserViewViewModel>()
     LaunchedEffect(0) {
         viewModel.initUser(userId)
     }
     val state = viewModel.state.collectAsState()
-    Content(state.value, navController)
+    Content(state.value)
 }
 
 @Preview
 @Composable
-private fun Content(state: UserUiState = testUserUiState, navController: NavController? = null) {
-    MaterialTheme(
-        colors = LightColorPalette
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(state.user?.name ?: "") },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            navController?.popBackStack()
-                        }) {
-                            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    },
-                )
-            },
-            content = {
-                val scrollState = rememberScrollState()
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(scrollState)
-                ) {
-                    getBitmap(state.user?.photo, LocalContext.current)?.asImageBitmap()?.let {
-                        Image(
-                            bitmap = it,
-                            contentDescription = "user image",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(350.dp)
-                                .clickable(onClick = {
-                                    val photo = state.user?.photo
-                                    if (photo != null) navController?.navigate("image?name=$photo")
-                                })
-                        )
-                    } ?: run {
-                        Icon(
-                            painterResource(id = R.drawable.user_icon),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(300.dp),
-                            contentDescription = ""
-                        )
+private fun Content(state: UserUiState = testUserUiState) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(state.user?.name ?: "") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        Navigation.navController?.popBackStack()
+                    }) {
+                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
-                    if (state.pagingFlow != null) ImagesRow(state.pagingFlow, navController)
-                    Text("${state.user?.phone}", modifier = Modifier.padding(16.dp))
-                    Text("${state.user?.status}", modifier = Modifier.padding(16.dp))
+                },
+            )
+        },
+        content = {
+            val scrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+            ) {
+                getBitmap(state.user?.photo, LocalContext.current)?.asImageBitmap()?.let {
+                    Image(
+                        bitmap = it,
+                        contentDescription = "user image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(350.dp)
+                            .clickable(onClick = {
+                                val photo = state.user?.photo
+                                if (photo != null) Navigation.navController?.navigate("image?name=$photo")
+                            })
+                    )
+                } ?: run {
+                    Icon(
+                        painterResource(id = R.drawable.user_icon),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
+                        contentDescription = ""
+                    )
                 }
+                if (state.pagingFlow != null) ImagesRow(state.pagingFlow)
+                Text("${state.user?.phone}", modifier = Modifier.padding(16.dp))
+                Text("${state.user?.status}", modifier = Modifier.padding(16.dp))
             }
-        )
-    }
+        }
+    )
 }
 
 @Composable
-private fun ImagesRow(pagingFlow: Flow<PagingData<String>>, navController: NavController?) {
+private fun ImagesRow(pagingFlow: Flow<PagingData<String>>) {
     val lazyPagingItems = pagingFlow.collectAsLazyPagingItems()
     LazyRow(
         modifier = Modifier
@@ -116,7 +113,7 @@ private fun ImagesRow(pagingFlow: Flow<PagingData<String>>, navController: NavCo
                             .width(100.dp)
                             .height(100.dp)
                             .clickable(onClick = {
-                                navController?.navigate("image?name=$image&gallery=true")
+                                Navigation.navController?.navigate("image?name=$image&gallery=true")
                             }),
                         bitmap = imageBitmap,
                         contentDescription = "",

@@ -36,7 +36,7 @@ import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
-
+@Preview
 @Composable
 fun ConversationInput(
     state: DialogUiState = testDialogUiState,
@@ -58,6 +58,7 @@ fun ConversationInput(
                     shape = RoundedCornerShape(25.dp),
                     color = Color.White
                 ) {
+                    /*
                     Icon(
                         modifier = Modifier
                             .padding(start = 8.dp, top = 15.dp)
@@ -67,12 +68,13 @@ fun ConversationInput(
                         imageVector = Icons.Outlined.EmojiEmotions,
                         contentDescription = null
                     )
+                     */
                     TextField(
                         value = state.text,
                         onValueChange = { onTextChanged(it) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 22.dp),
+                            .padding(start = 12.dp),
                         maxLines = 5,
                         placeholder = {
                             Text(stringResource(id = R.string.enter_message))
@@ -223,7 +225,7 @@ fun InputFabs(
     }
 }
 
-@Preview
+
 @Composable
 fun UserNameLayout(
     state: DialogUiState = testDialogUiState,

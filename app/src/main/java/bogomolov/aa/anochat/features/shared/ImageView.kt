@@ -28,13 +28,14 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.features.main.Navigation
 
 private const val MAX_SCALE = 5f
 private const val MIN_SCALE = 1f
 private const val TAG = "ImageView"
 
 @Composable
-fun ImageView(imageName: String, fromGallery: Boolean, navController: NavController) {
+fun ImageView(imageName: String, fromGallery: Boolean) {
     val context = LocalContext.current
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(0) {
@@ -51,83 +52,83 @@ fun ImageView(imageName: String, fromGallery: Boolean, navController: NavControl
     val left = remember { mutableStateOf(0) }
     val imageWidth = remember { mutableStateOf(0) }
     val imageHeight = remember { mutableStateOf(0) }
-        Box(
-            modifier = Modifier
-                .background(Color.Black)
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .pointerInput(Unit) {
-                    detectTransformGestures(
-                        onGesture = { _, pan, gestureZoom, gestureRotate ->
-                            scale.value *= gestureZoom
-                            if (scale.value > MAX_SCALE) scale.value = MAX_SCALE
-                            if (scale.value < MIN_SCALE) scale.value = MIN_SCALE
-                            left.value += pan.x.toInt()
-                            top.value += pan.y.toInt()
-                            if (left.value < -(scale.value - 1) * imageWidth.value / 2)
-                                left.value = -((scale.value - 1) * imageWidth.value / 2).toInt()
-                            if (left.value > (scale.value - 1) * imageWidth.value / 2)
-                                left.value = ((scale.value - 1) * imageWidth.value / 2).toInt()
+    Box(
+        modifier = Modifier
+            .background(Color.Black)
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .pointerInput(Unit) {
+                detectTransformGestures(
+                    onGesture = { _, pan, gestureZoom, gestureRotate ->
+                        scale.value *= gestureZoom
+                        if (scale.value > MAX_SCALE) scale.value = MAX_SCALE
+                        if (scale.value < MIN_SCALE) scale.value = MIN_SCALE
+                        left.value += pan.x.toInt()
+                        top.value += pan.y.toInt()
+                        if (left.value < -(scale.value - 1) * imageWidth.value / 2)
+                            left.value = -((scale.value - 1) * imageWidth.value / 2).toInt()
+                        if (left.value > (scale.value - 1) * imageWidth.value / 2)
+                            left.value = ((scale.value - 1) * imageWidth.value / 2).toInt()
 
-                            if (top.value < -(scale.value - 1) * imageHeight.value / 2)
-                                top.value = -((scale.value - 1) * imageHeight.value / 2).toInt()
-                            if (top.value > (scale.value - 1) * imageHeight.value / 2)
-                                top.value = ((scale.value - 1) * imageHeight.value / 2).toInt()
-                        }
-                    )
-                }
-        ) {
-            val imageBitmap = bitmap?.asImageBitmap()
-            if (imageBitmap != null)
-                Image(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onGloballyPositioned {
-                            if (imageWidth.value == 0) {
-                                imageWidth.value = it.size.width
-                                imageHeight.value = it.size.height
-                            }
-                        }
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onTap = {
-                                    //expand(!expanded)
-                                }
-                            )
-                        }
-                        .offset { IntOffset(left.value, top.value).also { println("IntOffset $it") } }
-                        .scale(scale.value),
-                    bitmap = imageBitmap,
-                    contentScale = ContentScale.FillWidth,
-                    contentDescription = ""
-                )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Icon(
-                    modifier = Modifier
-                        .clickable {
-                            navController.popBackStack()
-                        },
-                    imageVector = Icons.Filled.ArrowBack,
-                    tint = Color.White,
-                    contentDescription = "Back"
-                )
-                Icon(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clickable {
-                            share(imageName, context)
-                        },
-                    imageVector = Icons.Filled.Share,
-                    tint = Color.White,
-                    contentDescription = "Back"
+                        if (top.value < -(scale.value - 1) * imageHeight.value / 2)
+                            top.value = -((scale.value - 1) * imageHeight.value / 2).toInt()
+                        if (top.value > (scale.value - 1) * imageHeight.value / 2)
+                            top.value = ((scale.value - 1) * imageHeight.value / 2).toInt()
+                    }
                 )
             }
+    ) {
+        val imageBitmap = bitmap?.asImageBitmap()
+        if (imageBitmap != null)
+            Image(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned {
+                        if (imageWidth.value == 0) {
+                            imageWidth.value = it.size.width
+                            imageHeight.value = it.size.height
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                //expand(!expanded)
+                            }
+                        )
+                    }
+                    .offset { IntOffset(left.value, top.value).also { println("IntOffset $it") } }
+                    .scale(scale.value),
+                bitmap = imageBitmap,
+                contentScale = ContentScale.FillWidth,
+                contentDescription = ""
+            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Icon(
+                modifier = Modifier
+                    .clickable {
+                        Navigation.navController?.popBackStack()
+                    },
+                imageVector = Icons.Filled.ArrowBack,
+                tint = Color.White,
+                contentDescription = "Back"
+            )
+            Icon(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clickable {
+                        share(imageName, context)
+                    },
+                imageVector = Icons.Filled.Share,
+                tint = Color.White,
+                contentDescription = "Back"
+            )
         }
+    }
 }
 
 private fun share(imageName: String, context: Context) {
