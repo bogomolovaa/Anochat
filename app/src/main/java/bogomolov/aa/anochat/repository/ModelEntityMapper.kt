@@ -86,15 +86,13 @@ open class ModelEntityMapper {
         else null
 
 
-    inline fun <reified T> entityToModel(fromList: List<*>): List<T> {
-        val toList = ArrayList<T>()
-        if (T::class.java.isAssignableFrom(Message::class.java))
-            for (fromEntity in fromList) toList.add(entityToModel(fromEntity as MessageEntity) as T)
-        if (T::class.java.isAssignableFrom(User::class.java))
-            for (fromEntity in fromList) toList.add(entityToModel(fromEntity as UserEntity) as T)
-        if (T::class.java.isAssignableFrom(Conversation::class.java))
-            for (fromEntity in fromList) toList.add(entityToModel(fromEntity as ConversationJoined) as T)
-        return toList
-    }
-
+    inline fun <reified T> entityToModel(fromList: List<*>): List<T> =
+        fromList.mapNotNull {
+            when (it) {
+                is MessageEntity -> entityToModel(it) as T
+                is UserEntity -> entityToModel(it) as T
+                is ConversationJoined -> entityToModel(it) as T
+                else -> null
+            }
+        }
 }
