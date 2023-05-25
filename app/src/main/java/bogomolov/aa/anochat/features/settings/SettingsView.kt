@@ -57,7 +57,7 @@ fun SettingsView() {
 private fun Content(state: SettingsUiState = testSettingsUiState, viewModel: SettingsViewModel? = null) {
     val context = LocalContext.current
     val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
-        viewModel?.createMiniature(uri)
+        uri?.let { viewModel?.createMiniature(it) }
     }
     val readPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         fileChooser.launch(Unit)
@@ -311,7 +311,7 @@ private fun openPrivacyPolicy(context: Context) {
     context.startActivity(i)
 }
 
-private class StartFileChooser : ActivityResultContract<Unit, Uri>() {
+private class StartFileChooser : ActivityResultContract<Unit, Uri?>() {
     override fun createIntent(context: Context, input: Unit?): Intent {
         val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             type = "image/*"
