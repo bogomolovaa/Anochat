@@ -34,11 +34,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.features.main.Navigation
+import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.EventHandler
-import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import kotlinx.coroutines.launch
@@ -46,7 +44,8 @@ import kotlinx.coroutines.launch
 @ExperimentalMaterialApi
 @Composable
 fun SettingsView() {
-    val viewModel = hiltViewModel<SettingsViewModel>(Navigation.navController!!.getBackStackEntry("settingsRoute"))
+    val navController = LocalNavController.current
+    val viewModel = hiltViewModel<SettingsViewModel>(navController.getBackStackEntry("settingsRoute"))
     val state = viewModel.state.collectAsState()
     Content(state.value, viewModel)
 }
@@ -56,6 +55,7 @@ fun SettingsView() {
 @Composable
 private fun Content(state: SettingsUiState = testSettingsUiState, viewModel: SettingsViewModel? = null) {
     val context = LocalContext.current
+    val navController = LocalNavController.current
     val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
         uri?.let { viewModel?.createMiniature(it) }
     }
@@ -65,7 +65,7 @@ private fun Content(state: SettingsUiState = testSettingsUiState, viewModel: Set
     val writePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     viewModel?.events?.let {
         EventHandler(viewModel.events) {
-            if (it is MiniatureCreatedEvent) Navigation.navController?.navigate("miniature")
+            if (it is MiniatureCreatedEvent) navController.navigate("miniature")
         }
     }
     val bottomSheetState = rememberBottomSheetScaffoldState()
@@ -138,7 +138,7 @@ private fun Content(state: SettingsUiState = testSettingsUiState, viewModel: Set
                 title = { Text(stringResource(id = R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = {
-                        Navigation.navController?.popBackStack()
+                        navController.popBackStack()
                     }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }

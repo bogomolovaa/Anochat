@@ -14,7 +14,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.core.net.toUri
 import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
@@ -44,6 +46,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
+val LocalNavController = compositionLocalOf<NavHostController> { error("No NavController provided") }
+
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
@@ -63,71 +67,72 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             val navController = rememberNavController()
-            LaunchedEffect(0) {
-                Navigation.navController = navController
-                addSignInListener(navController)
-                onSendAction(navController)
-            }
-            MaterialTheme(
-                colors = LightColorPalette
-            ) {
-                NavHost(navController = navController, startDestination = "conversations") {
-                    composable("conversations") { ConversationsView() }
-                    composable(
-                        "deepLink/{id}",
-                        deepLinks = listOf(navDeepLink { uriPattern = "anochat://anochat/conversation/{id}" }),
-                    ) {
-                        val id = it.arguments?.getString("id")?.toLong()!!
-                        navController.navigate("conversation?id=$id") { popUpTo("conversations") }
-                    }
-                    navigation(startDestination = "conversation", route = "conversationRoute") {
+            CompositionLocalProvider(LocalNavController provides navController) {
+                LaunchedEffect(0) {
+                    addSignInListener(navController)
+                    onSendAction(navController)
+                }
+                MaterialTheme(
+                    colors = LightColorPalette
+                ) {
+                    NavHost(navController = navController, startDestination = "conversations") {
+                        composable("conversations") { ConversationsView() }
                         composable(
-                            "conversation?id={id}",
-                            arguments = listOf(
-                                navArgument("id") { nullable = true },
-                                navArgument("uri") { nullable = true }
-                            )
+                            "deepLink/{id}",
+                            deepLinks = listOf(navDeepLink { uriPattern = "anochat://anochat/conversation/{id}" }),
                         ) {
-                            //if (it.destination.route != navController.currentDestination?.route) return@composable
-                            val conversationId = it.arguments?.getString("id")?.toLong()!!
-                            val uri = it.arguments?.getString("uri")?.toUri()
-                            ConversationView(conversationId, uri)
+                            val id = it.arguments?.getString("id")?.toLong()!!
+                            navController.navigate("conversation?id=$id") { popUpTo("conversations") }
                         }
-                        composable("media") { SendMediaView() }
+                        navigation(startDestination = "conversation", route = "conversationRoute") {
+                            composable(
+                                "conversation?id={id}",
+                                arguments = listOf(
+                                    navArgument("id") { nullable = true },
+                                    navArgument("uri") { nullable = true }
+                                )
+                            ) {
+                                //if (it.destination.route != navController.currentDestination?.route) return@composable
+                                val conversationId = it.arguments?.getString("id")?.toLong()!!
+                                val uri = it.arguments?.getString("uri")?.toUri()
+                                ConversationView(conversationId, uri)
+                            }
+                            composable("media") { SendMediaView() }
+                        }
+                        navigation(startDestination = "settings", route = "settingsRoute") {
+                            composable("settings") { SettingsView() }
+                            composable("miniature") { MiniatureView() }
+                        }
+                        composable("user/{id}") {
+                            val userId = it.arguments?.getString("id")?.toLong()!!
+                            UserView(userId)
+                        }
+                        composable(
+                            "users?uri={uri}",
+                            arguments = listOf(navArgument("uri") { nullable = true })
+                        ) {
+                            val uri = it.arguments?.getString("uri")
+                            UsersView(uri)
+                        }
+                        composable(
+                            "image?name={name}&gallery={gallery}",
+                            arguments = listOf(
+                                navArgument("name") { nullable = true },
+                                navArgument("gallery") {
+                                    type = NavType.BoolType
+                                    defaultValue = false
+                                })
+                        ) {
+                            val image = it.arguments?.getString("name")!!
+                            val gallery = it.arguments?.getBoolean("gallery")!!
+                            ImageView(image, gallery)
+                        }
+                        composable("video?uri={uri}") {
+                            val uri = it.arguments?.getString("uri")?.toUri()!!
+                            VideoView(uri)
+                        }
+                        composable("login") { SignInView() { this@MainActivity } }
                     }
-                    navigation(startDestination = "settings", route = "settingsRoute") {
-                        composable("settings") { SettingsView() }
-                        composable("miniature") { MiniatureView() }
-                    }
-                    composable("user/{id}") {
-                        val userId = it.arguments?.getString("id")?.toLong()!!
-                        UserView(userId)
-                    }
-                    composable(
-                        "users?uri={uri}",
-                        arguments = listOf(navArgument("uri") { nullable = true })
-                    ) {
-                        val uri = it.arguments?.getString("uri")
-                        UsersView(uri)
-                    }
-                    composable(
-                        "image?name={name}&gallery={gallery}",
-                        arguments = listOf(
-                            navArgument("name") { nullable = true },
-                            navArgument("gallery") {
-                                type = NavType.BoolType
-                                defaultValue = false
-                            })
-                    ) {
-                        val image = it.arguments?.getString("name")!!
-                        val gallery = it.arguments?.getBoolean("gallery")!!
-                        ImageView(image, gallery)
-                    }
-                    composable("video?uri={uri}") {
-                        val uri = it.arguments?.getString("uri")?.toUri()!!
-                        VideoView(uri)
-                    }
-                    composable("login") { SignInView() { this@MainActivity } }
                 }
             }
         }

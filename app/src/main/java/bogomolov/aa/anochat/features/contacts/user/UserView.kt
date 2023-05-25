@@ -20,13 +20,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.features.main.Navigation
-import bogomolov.aa.anochat.features.shared.LightColorPalette
+import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import kotlinx.coroutines.flow.Flow
@@ -44,13 +42,14 @@ fun UserView(userId: Long) {
 @Preview
 @Composable
 private fun Content(state: UserUiState = testUserUiState) {
+    val navController = LocalNavController.current
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(state.user?.name ?: "") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        Navigation.navController?.popBackStack()
+                        navController.popBackStack()
                     }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
@@ -74,7 +73,7 @@ private fun Content(state: UserUiState = testUserUiState) {
                             .height(350.dp)
                             .clickable(onClick = {
                                 val photo = state.user?.photo
-                                if (photo != null) Navigation.navController?.navigate("image?name=$photo")
+                                if (photo != null) navController.navigate("image?name=$photo")
                             })
                     )
                 } ?: run {
@@ -97,6 +96,7 @@ private fun Content(state: UserUiState = testUserUiState) {
 @Composable
 private fun ImagesRow(pagingFlow: Flow<PagingData<String>>) {
     val lazyPagingItems = pagingFlow.collectAsLazyPagingItems()
+    val navController = LocalNavController.current
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
@@ -113,7 +113,7 @@ private fun ImagesRow(pagingFlow: Flow<PagingData<String>>) {
                             .width(100.dp)
                             .height(100.dp)
                             .clickable(onClick = {
-                                Navigation.navController?.navigate("image?name=$image&gallery=true")
+                                navController.navigate("image?name=$image&gallery=true")
                             }),
                         bitmap = imageBitmap,
                         contentDescription = "",

@@ -26,26 +26,25 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
-import bogomolov.aa.anochat.features.main.Navigation
+import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.EventHandler
-import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 
 @Composable
 fun UsersView(uri: String? = null) {
     val viewModel = hiltViewModel<UsersViewModel>()
+    val navController = LocalNavController.current
     val context = LocalContext.current
     LaunchedEffect(0) {
         viewModel.loadContacts(getContactsPhones(context))
     }
     EventHandler(viewModel.events) {
-        if (it is NavigateConversationEvent) Navigation.navController?.navigateToConversation(it.conversationId, uri)
+        if (it is NavigateConversationEvent) navController.navigateToConversation(it.conversationId, uri)
     }
 
     val state = viewModel.state.collectAsState()
@@ -55,12 +54,13 @@ fun UsersView(uri: String? = null) {
 @Preview
 @Composable
 private fun Content(state: ContactsUiState = testContactsUiState, viewModel: UsersViewModel? = null) {
+    val navController = LocalNavController.current
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.contacts)) },
                 navigationIcon = {
-                    IconButton(onClick = { Navigation.navController?.popBackStack() }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },

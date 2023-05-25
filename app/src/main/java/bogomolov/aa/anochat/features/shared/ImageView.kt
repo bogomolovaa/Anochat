@@ -11,7 +11,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
@@ -26,9 +25,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.features.main.Navigation
+import bogomolov.aa.anochat.features.main.LocalNavController
 
 private const val MAX_SCALE = 5f
 private const val MIN_SCALE = 1f
@@ -36,6 +34,7 @@ private const val TAG = "ImageView"
 
 @Composable
 fun ImageView(imageName: String, fromGallery: Boolean) {
+    val navController = LocalNavController.current
     val context = LocalContext.current
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(0) {
@@ -111,7 +110,7 @@ fun ImageView(imageName: String, fromGallery: Boolean) {
             Icon(
                 modifier = Modifier
                     .clickable {
-                        Navigation.navController?.popBackStack()
+                        navController.popBackStack()
                     },
                 imageVector = Icons.Filled.ArrowBack,
                 tint = Color.White,

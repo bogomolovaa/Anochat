@@ -19,7 +19,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
-import bogomolov.aa.anochat.features.main.Navigation
+import bogomolov.aa.anochat.features.main.LocalNavController
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.StyledPlayerView
@@ -31,6 +31,7 @@ fun VideoView(uri: Uri) {
     val position = remember { mutableStateOf(0L) }
     val autoPlay = remember { mutableStateOf(true) }
     var player by remember { mutableStateOf<SimpleExoPlayer?>(null) }
+    val navController = LocalNavController.current
     LaunchedEffect(0) {
         val mediaItem = MediaItem.fromUri(uri)
 
@@ -105,7 +106,7 @@ fun VideoView(uri: Uri) {
             Icon(
                 modifier = Modifier
                     .clickable {
-                        Navigation.navController?.popBackStack()
+                        navController.popBackStack()
                     },
                 imageVector = Icons.Filled.ArrowBack,
                 tint = Color.White,

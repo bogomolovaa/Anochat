@@ -38,11 +38,10 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
-import bogomolov.aa.anochat.features.main.Navigation
+import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
@@ -55,13 +54,14 @@ private const val TAG = "ConversationView"
 @ExperimentalMaterialApi
 @Composable
 fun ConversationView(conversationId: Long, uri: Uri? = null) {
+    val navController = LocalNavController.current
     val viewModel =
-        hiltViewModel<ConversationViewModel>(Navigation.navController!!.getBackStackEntry("conversationRoute"))
+        hiltViewModel<ConversationViewModel>(navController.getBackStackEntry("conversationRoute"))
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
     LaunchedEffect(0) {
         viewModel.initConversation(conversationId)
-        if (uri != null) navigateToSendMediaFragment(viewModel = viewModel, context = context, uri = uri)
+        if (uri != null) navigateToSendMediaFragment(viewModel = viewModel, context = context, uri = uri, navController = navController)
     }
 
     EventHandler(viewModel.events) {
@@ -90,17 +90,18 @@ private fun Content(
     viewModel: ConversationViewModel? = null,
     conversationId: Long = 0,
 ) {
+    val navController = LocalNavController.current
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     UserNameLayout(
                         state = state,
-                        onClick = { navigateToUserFragment(viewModel) }
+                        onClick = { navigateToUserFragment(viewModel, navController) }
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { Navigation.navController?.popBackStack() }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -207,11 +208,17 @@ private fun FabsLayout(
     viewModel: ConversationViewModel?
 ) {
     val context = LocalContext.current
+    val navController = LocalNavController.current
     val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
-        navigateToSendMediaFragment(viewModel = viewModel, context = context, uri = uri)
+        navigateToSendMediaFragment(viewModel = viewModel, context = context, uri = uri, navController = navController)
     }
     val takePicture = rememberLauncherForActivityResult(TakePictureFromCamera()) {
-        navigateToSendMediaFragment(viewModel = viewModel, context = context, path = viewModel!!.currentState.photoPath)
+        navigateToSendMediaFragment(
+            viewModel = viewModel,
+            context = context,
+            path = viewModel!!.currentState.photoPath,
+            navController = navController
+        )
     }
     val readPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         if (it) fileChooser.launch(Unit)
@@ -273,6 +280,7 @@ private fun ShowMessage(
     viewModel: ConversationViewModel?
 ) {
     val context = LocalContext.current
+    val navController = LocalNavController.current
     if (messageData != null)
         LaunchedEffect(messageData.message.id) {
             viewModel?.notifyAsViewed(messageData)
@@ -305,8 +313,8 @@ private fun ShowMessage(
         data = messageData,
         onClick = {
             when {
-                messageData?.message?.video != null -> videoOnClick(messageData.message, context)
-                messageData?.message?.image != null -> imageOnClick(messageData.message)
+                messageData?.message?.video != null -> videoOnClick(messageData.message, context, navController)
+                messageData?.message?.image != null -> imageOnClick(messageData.message, navController)
             }
         },
         onSwipe = {
@@ -340,32 +348,33 @@ private fun fabOnClick(context: Context, inputState: InputStates, viewModel: Con
     }
 }
 
-private fun videoOnClick(message: Message, context: Context) {
+private fun videoOnClick(message: Message, context: Context, navController: NavController) {
     if (message.received == 1 || message.isMine) {
         val uriWithSource = getUriWithSource(message.video!!, context)
-        if (uriWithSource.uri != null) Navigation.navController?.navigate("video?uri=${uriWithSource.uri}")
+        if (uriWithSource.uri != null) navController?.navigate("video?uri=${uriWithSource.uri}")
     }
 }
 
-private fun imageOnClick(message: Message) {
+private fun imageOnClick(message: Message, navController: NavController) {
     if (message.received == 1 || message.isMine)
-        Navigation.navController?.navigate("image?name=${message.image}&gallery=true")
+        navController.navigate("image?name=${message.image}&gallery=true")
 }
 
-private fun navigateToUserFragment(viewModel: ConversationViewModel?) {
+private fun navigateToUserFragment(viewModel: ConversationViewModel?, navController: NavController) {
     val userId = viewModel?.currentState?.conversation?.user?.id
-    if (userId != null) Navigation.navController?.navigate("user/$userId")
+    if (userId != null) navController.navigate("user/$userId")
 }
 
 private fun navigateToSendMediaFragment(
     context: Context,
     viewModel: ConversationViewModel?,
     uri: Uri? = null,
-    path: String? = null
+    path: String? = null,
+    navController: NavController
 ) {
     val isVideo = context.isVideo(uri)
     viewModel?.resizeMedia(uri, path, isVideo)
-    Navigation.navController?.navigate("media")
+    navController.navigate("media")
 }
 
 @SuppressLint("SimpleDateFormat")

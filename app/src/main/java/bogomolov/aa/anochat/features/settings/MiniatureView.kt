@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.features.main.Navigation
+import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getFilePath
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
@@ -41,7 +41,8 @@ import kotlin.math.min
 
 @Composable
 fun MiniatureView() {
-    val viewModel = hiltViewModel<SettingsViewModel>(Navigation.navController!!.getBackStackEntry("settingsRoute"))
+    val navController = LocalNavController.current
+    val viewModel = hiltViewModel<SettingsViewModel>(navController.getBackStackEntry("settingsRoute"))
     val state = viewModel.state.collectAsState()
     Content(state.value, viewModel)
 }
@@ -52,19 +53,20 @@ private fun Content(settingsState: SettingsUiState = testSettingsUiState, viewMo
     val state = settingsState.miniatureState!!
     val density = LocalDensity.current.density
     val context = LocalContext.current
+    val navController = LocalNavController.current
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.set_avatar)) },
                 navigationIcon = {
-                    IconButton(onClick = { Navigation.navController?.popBackStack() }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { createMiniature(context, viewModel!!) }) {
+            FloatingActionButton(onClick = { createMiniature(context, viewModel!!, navController) }) {
                 Icon(
                     painterResource(id = R.drawable.ok_icon),
                     contentDescription = "",
@@ -132,7 +134,7 @@ private suspend fun PointerInputScope.detectMaskTransformGestures(offset: Boolea
     )
 }
 
-private fun createMiniature(context: Context, viewModel: SettingsViewModel) {
+private fun createMiniature(context: Context, viewModel: SettingsViewModel, navController: NavController) {
     val state = viewModel.currentState.miniatureState!!
     val maskWidth = state.maskImage.width * state.maskImage.scaleFactor
     val maskHeight = state.maskImage.height * state.maskImage.scaleFactor
@@ -155,7 +157,7 @@ private fun createMiniature(context: Context, viewModel: SettingsViewModel) {
     miniBitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(miniPhotoPath))
 
     viewModel.updateUser { copy(photo = viewModel.currentState.miniatureState?.miniature?.name) }
-    Navigation.navController?.navigateUp()
+    navController.popBackStack()
 }
 
 private fun initDimensions(
