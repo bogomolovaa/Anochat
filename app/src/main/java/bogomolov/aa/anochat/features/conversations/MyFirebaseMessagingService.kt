@@ -15,7 +15,6 @@ import android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
-import androidx.navigation.NavDeepLinkBuilder
 import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.ConversationUseCases
@@ -35,6 +34,9 @@ import kotlinx.coroutines.launch
 import java.lang.Long
 import java.util.*
 import javax.inject.Inject
+import kotlin.String
+import kotlin.longArrayOf
+import kotlin.run
 
 private const val TYPE_MESSAGE = "message"
 private const val TYPE_REPORT = "report"
@@ -78,7 +80,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             val viewed = data["viewed"]?.toInt() ?: 0
             val messageId = data["messageId"]
             if (messageId != null)
-                serviceScope.launch(Dispatchers.IO) {
+                serviceScope.launch {
                     when (type) {
                         TYPE_KEY -> {
                             firebase.deleteRemoteMessage(messageId)
@@ -145,12 +147,14 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     private fun showNotification(message: Message) {
-        val inBackground = (application as AnochatAplication).inBackground
-        val settings = authRepository.getSettings()
-        if (inBackground && settings.notifications) {
-            val conversation =
-                conversationUseCases.getConversation(message.conversationId)
-            if (conversation != null) sendNotification(message, conversation.user, settings)
+        serviceScope.launch {
+            val inBackground = (application as AnochatAplication).inBackground
+            val settings = authRepository.getSettings()
+            if (inBackground && settings.notifications) {
+                val conversation =
+                    conversationUseCases.getConversation(message.conversationId)
+                if (conversation != null) sendNotification(message, conversation.user, settings)
+            }
         }
     }
 

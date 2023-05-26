@@ -11,7 +11,9 @@ import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.FileStore
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,55 +29,69 @@ class UserRepositoryImpl @Inject constructor(
     override fun getImagesDataSource(userId: Long) =
         Pager(PagingConfig(pageSize = 10)) {
             db.messageDao().getImages(userId)
-        }.flow
+        }.flow.flowOn(Dispatchers.IO)
 
-    override fun getUsersByPhones(phones: List<String>) =
-        db.userDao().getAll(phones, getMyUID()!!).map { mapper.entityToModel(it)!! }
+    override suspend fun getUsersByPhones(phones: List<String>) =
+        withContext(Dispatchers.IO) {
+            db.userDao().getAll(phones, getMyUID()!!).map { mapper.entityToModel(it)!! }
+        }
 
     override suspend fun updateUsersByPhones(phones: List<String>) =
-        if (phones.isNotEmpty()) {
-            val myUid = getMyUID()!!
-            firebase.receiveUsersByPhones(phones).filter { it.uid != myUid }
-                .onEach { user -> updateLocalUserFromRemote(user, loadFullPhoto = false) }
-        } else listOf()
+        withContext(Dispatchers.IO) {
+            if (phones.isNotEmpty()) {
+                val myUid = getMyUID()!!
+                firebase.receiveUsersByPhones(phones).filter { it.uid != myUid }
+                    .onEach { user -> updateLocalUserFromRemote(user, loadFullPhoto = false) }
+            } else listOf()
+        }
 
     override suspend fun updateUsersInConversations() {
-        val myUid = getMyUID() ?: return
-        val users = db.userDao().getOpenedConversationUsers(myUid)
-        mapper.entityToModel<User>(users).forEach { user ->
-            firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it) }
+        withContext(Dispatchers.IO) {
+            val myUid = getMyUID() ?: return@withContext
+            val users = db.userDao().getOpenedConversationUsers(myUid)
+            mapper.entityToModel<User>(users).forEach { user ->
+                firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it) }
+            }
         }
     }
 
     override suspend fun getMyUser() = getOrAddUser(getMyUID()!!, false)
 
-    override fun getUser(id: Long) = mapper.entityToModel(db.userDao().getUser(id))!!
+    override suspend fun getUser(id: Long) =
+        withContext(Dispatchers.IO) {
+            mapper.entityToModel(db.userDao().getUser(id))!!
+        }
 
     override suspend fun updateMyUser(user: User) {
-        val savedUser = db.userDao().getUser(user.id)
-        if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
-        if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
-        if (user.photo != null && user.photo != savedUser.photo) {
-            uploadFile(user.photo, user.uid)
-            uploadFile(getMiniPhotoFileName(user.photo), user.uid)
-            firebase.updatePhoto(user.uid, user.photo)
+        withContext(Dispatchers.IO) {
+            val savedUser = db.userDao().getUser(user.id)
+            if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
+            if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
+            if (user.photo != null && user.photo != savedUser.photo) {
+                uploadFile(user.photo, user.uid)
+                uploadFile(getMiniPhotoFileName(user.photo), user.uid)
+                firebase.updatePhoto(user.uid, user.photo)
+            }
+            db.userDao().update(mapper.modelToEntity(user))
         }
-        db.userDao().update(mapper.modelToEntity(user))
     }
 
     override suspend fun searchByPhone(phone: String) =
-        firebase.findByPhone(phone).onEach { user ->
-            updateLocalUserFromRemote(user, saveLocal = false, loadFullPhoto = false)
+        withContext(Dispatchers.IO) {
+            firebase.findByPhone(phone).onEach { user ->
+                updateLocalUserFromRemote(user, saveLocal = false, loadFullPhoto = false)
+            }
         }
 
-    override fun addUserStatusListener(uid: String, scope: CoroutineScope) =
-        firebase.addUserStatusListener(getMyUID()!!, uid, scope)
+    override suspend fun addUserStatusListener(uid: String) =
+        firebase.addUserStatusListener(getMyUID()!!, uid)
 
-    override suspend fun getOrAddUser(uid: String, loadFullPhoto: Boolean): User {
-        val userEntity = db.userDao().findByUid(uid)
-        val user = mapper.entityToModel(userEntity) ?: firebase.getUser(uid)!!
-        return user.also { updateLocalUserFromRemote(user = it, loadFullPhoto = loadFullPhoto) }
-    }
+    override suspend fun getOrAddUser(uid: String, loadFullPhoto: Boolean): User =
+        withContext(Dispatchers.IO) {
+            val userEntity = db.userDao().findByUid(uid)
+            val user = mapper.entityToModel(userEntity) ?: firebase.getUser(uid)!!
+            user.also { updateLocalUserFromRemote(user = it, loadFullPhoto = loadFullPhoto) }
+        }
 
 
     private suspend fun updateLocalUserFromRemote(

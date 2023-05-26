@@ -12,7 +12,6 @@ import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import javax.inject.Inject
 
 data class ConversationsUiState(
@@ -31,18 +30,22 @@ class ConversationListViewModel
     }
 
     private fun initConversations() {
-        viewModelScope.launch(dispatcher) {
-            val flow = conversationUseCases.loadConversationsDataSource().cachedIn(viewModelScope.plus(dispatcher))
+        viewModelScope.launch {
+            val flow = conversationUseCases.loadConversationsDataSource().cachedIn(viewModelScope)
             setState { copy(pagingDataFlow = flow) }
         }
     }
 
-    fun deleteConversations(ids: Set<Long>) = execute {
-        conversationUseCases.deleteConversations(HashSet(ids))
+    fun deleteConversations(ids: Set<Long>) {
+        viewModelScope.launch {
+            conversationUseCases.deleteConversations(ids.toSet())
+        }
     }
 
-    fun signOut() = execute {
-        authRepository.signOut()
+    fun signOut() {
+        viewModelScope.launch {
+            authRepository.signOut()
+        }
     }
 }
 

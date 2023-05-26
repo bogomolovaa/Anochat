@@ -6,10 +6,10 @@ import bogomolov.aa.anochat.domain.entity.Message
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository : MessageUseCasesInRepository {
-    fun saveMessage(message: Message): Long
-    fun getPendingMessages(uid: String): List<Message>
-    fun getMessage(messageId: String): Message?
-    fun sendMessage(message: Message, uid: String): String
+    suspend fun saveMessage(message: Message): Long
+    suspend fun getPendingMessages(uid: String): List<Message>
+    suspend fun getMessage(messageId: String): Message?
+    suspend fun sendMessage(message: Message, uid: String): String
     suspend fun sendAttachment(
         message: Message,
         uid: String,
@@ -22,9 +22,9 @@ interface MessageRepository : MessageUseCasesInRepository {
         convert: ByteArray.() -> ByteArray
     )
 
-    fun notifyAsReceived(messageId: String)
-    fun notifyAsNotReceived(messageId: String)
-    fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean)
+    suspend fun notifyAsReceived(messageId: String)
+    suspend fun notifyAsNotReceived(messageId: String)
+    suspend fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean)
     fun loadMessagesDataSource(conversationId: Long): Flow<PagingData<Message>>
 
 }
@@ -32,10 +32,10 @@ interface MessageRepository : MessageUseCasesInRepository {
 interface MessageUseCasesInRepository {
     fun searchMessagesDataSource(search: String): Flow<PagingData<Conversation>>
 
-    fun deleteMessages(ids: Set<Long>)
-    fun receiveReport(messageId: String, received: Int, viewed: Int)
-    fun notifyAsViewed(message: Message)
+    suspend fun deleteMessages(ids: Set<Long>)
+    suspend fun receiveReport(messageId: String, received: Int, viewed: Int)
+    suspend fun notifyAsViewed(message: Message)
 
-    fun startTypingTo(uid: String)
-    fun stopTypingTo(uid: String)
+    suspend fun startTypingTo(uid: String)
+    suspend fun stopTypingTo(uid: String)
 }

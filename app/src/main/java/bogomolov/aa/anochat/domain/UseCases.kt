@@ -3,10 +3,7 @@ package bogomolov.aa.anochat.domain
 import android.util.Log
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.repositories.*
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -62,30 +59,33 @@ open class MessageUseCases @Inject constructor(
         }
     }
 
-    fun sendMessage(message: Message, uid: String) {
+    suspend fun sendMessage(message: Message, uid: String) = coroutineScope {
         Log.d(TAG, "sendMessage $message to uid $uid")
         if (message.isNotSaved()) message.id = messageRep.saveMessage(message)
         val secretKey = crypto.getSecretKey(uid)
         if (secretKey != null) {
-            if (message.hasAttachment())
-                GlobalScope.launch(dispatcher) {
-                    messageRep.sendAttachment(message, uid) { crypto.encrypt(secretKey, this) }
-                }
+            if (message.hasAttachment()) launch {
+                messageRep.sendAttachment(message, uid) { crypto.encrypt(secretKey, this) }
+            }
             message.text = crypto.encryptString(secretKey, message.text)
             message.messageId = messageRep.sendMessage(message, uid)
         } else if (keyIsNotSentTo(uid))
             sendPublicKey(crypto.generatePublicKey(uid), uid, initiator = true)
     }
 
-    fun receivedPublicKey(publicKey: String, uid: String) {
+    private val receivingContext = CoroutineScope(Dispatchers.IO)
+
+    suspend fun receivedPublicKey(publicKey: String, uid: String) {
         val myPublicKey = crypto.generatePublicKey(uid)
         generateSecretKey(publicKey, uid)
         sendPublicKey(myPublicKey, uid, initiator = false)
     }
 
     fun finallyReceivedPublicKey(publicKey: String, uid: String) {
-        val generated = generateSecretKey(publicKey, uid)
-        if (generated) sendPendingMessages(uid)
+        receivingContext.launch {
+            val generated = generateSecretKey(publicKey, uid)
+            if (generated) sendPendingMessages(uid)
+        }
     }
 
     fun loadMessagesDataSource(conversationId: Long) =
@@ -106,7 +106,7 @@ open class MessageUseCases @Inject constructor(
     }
 
 
-    private fun sendPublicKey(publicKey: String?, uid: String, initiator: Boolean) {
+    private suspend fun sendPublicKey(publicKey: String?, uid: String, initiator: Boolean) {
         if (publicKey != null) {
             Log.d(TAG, "send publicKey for $uid")
             messageRep.sendPublicKey(publicKey, uid, initiator)
@@ -128,7 +128,7 @@ open class MessageUseCases @Inject constructor(
         return generated
     }
 
-    private fun sendPendingMessages(uid: String) {
+    private suspend fun sendPendingMessages(uid: String) {
         for (message in messageRep.getPendingMessages(uid)) sendMessage(message, uid)
     }
 

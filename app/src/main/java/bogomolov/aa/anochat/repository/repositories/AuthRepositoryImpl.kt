@@ -16,15 +16,12 @@ import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.iid.FirebaseInstanceId
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 private const val TAG = "AuthRepositoryImpl"
 
@@ -35,78 +32,89 @@ class AuthRepositoryImpl @Inject constructor(
 ) : AuthRepository {
     private var phoneVerificationId: String? = null
 
-    override fun signOut() {
-        firebase.setOffline()
-        FirebaseAuth.getInstance().signOut()
+    override suspend fun signOut() {
+        withContext(Dispatchers.IO) {
+            firebase.setOffline()
+            FirebaseAuth.getInstance().signOut()
+        }
     }
 
     override fun isSignedIn() = FirebaseAuth.getInstance().currentUser?.uid != null
 
-    override fun updateSettings(settings: Settings) {
-        keyValueStore.setValue(Settings.NOTIFICATIONS, settings.notifications)
-        keyValueStore.setValue(Settings.SOUND, settings.sound)
-        keyValueStore.setValue(Settings.VIBRATION, settings.vibration)
-        keyValueStore.setValue(Settings.GALLERY, settings.gallery)
+    override suspend fun updateSettings(settings: Settings) {
+        withContext(Dispatchers.IO) {
+            keyValueStore.setValue(Settings.NOTIFICATIONS, settings.notifications)
+            keyValueStore.setValue(Settings.SOUND, settings.sound)
+            keyValueStore.setValue(Settings.VIBRATION, settings.vibration)
+            keyValueStore.setValue(Settings.GALLERY, settings.gallery)
+        }
     }
 
-    override fun getSettings() = Settings(
-        notifications = keyValueStore.getBooleanValue(Settings.NOTIFICATIONS) ?: true,
-        sound = keyValueStore.getBooleanValue(Settings.SOUND) ?: true,
-        vibration = keyValueStore.getBooleanValue(Settings.VIBRATION) ?: true,
-        gallery = keyValueStore.getBooleanValue(Settings.GALLERY) ?: true
-    )
+    override suspend fun getSettings() =
+        withContext(Dispatchers.IO) {
+            Settings(
+                notifications = keyValueStore.getBooleanValue(Settings.NOTIFICATIONS) ?: true,
+                sound = keyValueStore.getBooleanValue(Settings.SOUND) ?: true,
+                vibration = keyValueStore.getBooleanValue(Settings.VIBRATION) ?: true,
+                gallery = keyValueStore.getBooleanValue(Settings.GALLERY) ?: true
+            )
+        }
 
     override suspend fun verifySmsCode(
         phoneNumber: String,
         code: String,
         phoneVerification: PhoneVerification
     ) {
-        val credential = PhoneAuthProvider.getCredential(phoneVerificationId!!, code)
-        signIn(phoneNumber, credential, phoneVerification)
+        withContext(Dispatchers.IO) {
+            val credential = PhoneAuthProvider.getCredential(phoneVerificationId!!, code)
+            signIn(phoneNumber, credential, phoneVerification)
+        }
     }
 
-    override fun sendPhoneNumber(
+    override suspend fun sendPhoneNumber(
         phoneNumber: String,
         getActivity: () -> Activity,
         phoneVerification: PhoneVerification,
-    ) {
-        val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+    ) = coroutineScope {
+        withContext(Dispatchers.IO) {
+            val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
 
-            override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-                GlobalScope.launch(Dispatchers.IO) {
-                    signIn(phoneNumber, credential, phoneVerification)
+                override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                    launch {
+                        signIn(phoneNumber, credential, phoneVerification)
+                    }
+                }
+
+                override fun onCodeSent(
+                    verificationId: String,
+                    token: PhoneAuthProvider.ForceResendingToken
+                ) {
+                    phoneVerificationId = verificationId
+                    phoneVerification.onCodeSent()
+                }
+
+                // This callback is invoked in an invalid request for verification is made,
+                // for instance if the the phone number format is not valid.
+                //FirebaseAuthInvalidCredentialsException - Invalid request
+                //FirebaseTooManyRequestsException - The SMS quota for the project has been exceeded
+                override fun onVerificationFailed(e: FirebaseException) {
+                    Log.w(TAG, "onVerificationFailed", e)
+                    val errorMessage = when (e) {
+                        is FirebaseNetworkException -> ErrorType.PHONE_NO_CONNECTION.toString()
+                        is FirebaseAuthInvalidCredentialsException -> ErrorType.WRONG_PHONE.toString()
+                        else -> e.message
+                    } ?: "empty message"
+                    phoneVerification.onPhoneError(SignInError(errorMessage))
                 }
             }
-
-            override fun onCodeSent(
-                verificationId: String,
-                token: PhoneAuthProvider.ForceResendingToken
-            ) {
-                phoneVerificationId = verificationId
-                phoneVerification.onCodeSent()
-            }
-
-            // This callback is invoked in an invalid request for verification is made,
-            // for instance if the the phone number format is not valid.
-            //FirebaseAuthInvalidCredentialsException - Invalid request
-            //FirebaseTooManyRequestsException - The SMS quota for the project has been exceeded
-            override fun onVerificationFailed(e: FirebaseException) {
-                Log.w(TAG, "onVerificationFailed", e)
-                val errorMessage = when (e) {
-                    is FirebaseNetworkException -> ErrorType.PHONE_NO_CONNECTION.toString()
-                    is FirebaseAuthInvalidCredentialsException -> ErrorType.WRONG_PHONE.toString()
-                    else -> e.message
-                } ?: "empty message"
-                phoneVerification.onPhoneError(SignInError(errorMessage))
-            }
+            PhoneAuthProvider.getInstance().verifyPhoneNumber(
+                phoneNumber,
+                60,
+                TimeUnit.SECONDS,
+                getActivity(),
+                callbacks
+            )
         }
-        PhoneAuthProvider.getInstance().verifyPhoneNumber(
-            phoneNumber,
-            60,
-            TimeUnit.SECONDS,
-            getActivity(),
-            callbacks
-        )
     }
 
     private suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): String? {
@@ -142,7 +150,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun userSignIn(credential: PhoneAuthCredential): String? = suspendCoroutine {
+    private suspend fun userSignIn(credential: PhoneAuthCredential): String? = suspendCancellableCoroutine {
         val auth = FirebaseAuth.getInstance()
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->

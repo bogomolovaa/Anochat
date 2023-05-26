@@ -44,6 +44,8 @@
     <string name="menu_share">Share</string>
     <string name="share_image">Share image</string>
     <string name="open_video">Open video</string>
+    <string name="status_online">online</string>
+    <string name="status_typing">typing…</string>
 
 
 

@@ -1,26 +1,5 @@
 package bogomolov.aa.anochat.espresso
 
-import android.os.Bundle
-import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.withText
-import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.entity.User
-import bogomolov.aa.anochat.domain.repositories.UserRepository
-import bogomolov.aa.anochat.features.contacts.user.UserViewFragment
-import bogomolov.aa.anochat.navigateTo
-import bogomolov.aa.anochat.repository.Firebase
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.mockito.Mockito
-import javax.inject.Inject
-
 /*
 @HiltAndroidTest
 class UserViewTest {

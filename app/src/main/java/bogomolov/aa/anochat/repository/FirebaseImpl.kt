@@ -8,9 +8,8 @@ import com.google.firebase.database.*
 import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -18,61 +17,56 @@ private const val TAG = "FirebaseRepository"
 
 class FirebaseImpl : Firebase {
     private lateinit var token: String
+    private val firebaseScope = CoroutineScope(Dispatchers.IO)
 
     init {
-        GlobalScope.launch(Dispatchers.IO) {
+        firebaseScope.launch {
             //FirebaseDatabase.getInstance().setLogLevel(Logger.Level.DEBUG)
             FirebaseDatabase.getInstance().setPersistenceEnabled(true)
             updateToken()
         }
     }
 
-    override fun addUserStatusListener(
+    override suspend fun addUserStatusListener(
         myUid: String,
-        uid: String,
-        scope: CoroutineScope
+        uid: String
     ): Flow<Triple<Boolean, Boolean, Long>> {
         val userRef = FirebaseDatabase.getInstance().getReference("users/${uid}")
-        val onlineFlow = MutableSharedFlow<Boolean>()
-        val lastTimeFlow = MutableSharedFlow<Long>()
-        val typingFlow = MutableSharedFlow<Boolean>()
-        val onlineListener =
-            userRef.child("online").addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val online = snapshot.getValue(Int::class.java) ?: false
-                    scope.launch(Dispatchers.IO) {
-                        onlineFlow.emit(online == 1)
+        val onlineFlow = MutableSharedFlow<Boolean>(replay = 1)
+        val lastTimeFlow =
+            MutableSharedFlow<Long>(replay = 1)
+        val typingFlow = MutableSharedFlow<Boolean>(replay = 1)
+        firebaseScope.launch {
+            val onlineListener =
+                userRef.child("online").addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val online = snapshot.getValue(Int::class.java) ?: false
+                        onlineFlow.tryEmit(online == 1)
                     }
-                }
 
-                override fun onCancelled(error: DatabaseError) {}
-            })
-        val lastOnlineListener =
-            userRef.child("lastOnline").addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val lastOnline = snapshot.getValue(Long::class.java) ?: 0L
-                    scope.launch(Dispatchers.IO) {
-                        lastTimeFlow.emit(lastOnline)
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+            val lastOnlineListener =
+                userRef.child("lastOnline").addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val lastOnline = snapshot.getValue(Long::class.java) ?: 0L
+                        lastTimeFlow.tryEmit(lastOnline)
                     }
-                }
 
-                override fun onCancelled(error: DatabaseError) {}
-            })
-        val typingRef =
-            FirebaseDatabase.getInstance().reference.child("typing/$uid/$myUid")
-        val typingListener =
-            typingRef.child("started").addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val typing = snapshot.getValue(Int::class.java) ?: 0
-                    Log.i("test", "snapshot ${snapshot.getValue(Int::class.java)}")
-                    scope.launch(Dispatchers.IO) {
-                        typingFlow.emit(typing == 1)
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+            val typingRef =
+                FirebaseDatabase.getInstance().reference.child("typing/$uid/$myUid")
+            val typingListener =
+                typingRef.child("started").addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val typing = snapshot.getValue(Int::class.java) ?: 0
+                        Log.i("test", "snapshot ${snapshot.getValue(Int::class.java)}")
+                        typingFlow.tryEmit(typing == 1)
                     }
-                }
 
-                override fun onCancelled(error: DatabaseError) {}
-            })
-        scope.launch(Dispatchers.IO) {
+                    override fun onCancelled(error: DatabaseError) {}
+                })
             try {
                 delay(Long.MAX_VALUE)
             } finally {
@@ -81,11 +75,12 @@ class FirebaseImpl : Firebase {
                 userRef.removeEventListener(typingListener)
             }
         }
-        return typingFlow.combine(onlineFlow) { typing, online -> Pair(typing, online) }
-            .combine(lastTimeFlow) { p, time -> Triple(p.first, p.second, time) }
+        return combine(typingFlow, onlineFlow, lastTimeFlow) { typing, online, lastTime ->
+            Triple(typing, online, lastTime)
+        }
     }
 
-    override suspend fun findByPhone(phone: String): List<User> = suspendCoroutine {
+    override suspend fun findByPhone(phone: String): List<User> = suspendCancellableCoroutine {
         Log.d(TAG, "findUsers")
         val users = ArrayList<User>()
         val respRef = FirebaseDatabase.getInstance().getReference("users")
@@ -106,7 +101,7 @@ class FirebaseImpl : Firebase {
         })
     }
 
-    override suspend fun receiveUsersByPhones(phones: List<String>): List<User> = suspendCoroutine {
+    override suspend fun receiveUsersByPhones(phones: List<String>): List<User> = suspendCancellableCoroutine {
         val phonesMap = HashMap<String, String>()
         for (phone in phones) phonesMap[phone] = ""
         val ref = FirebaseDatabase.getInstance().reference.child("requests").push()
@@ -174,7 +169,7 @@ class FirebaseImpl : Firebase {
         ).addOnFailureListener {
             Log.w(TAG, "sendMessage failure", it)
         }.addOnSuccessListener {
-            GlobalScope.launch(Dispatchers.IO) { onSuccess() }
+            firebaseScope.launch { onSuccess() }
         }
         return ref.key!!
     }
@@ -233,22 +228,21 @@ class FirebaseImpl : Firebase {
         fileName: String,
         uid: String,
         isPrivate: Boolean
-    ): ByteArray? =
-        suspendCoroutine { continuation ->
-            val path = if (isPrivate) "/files/" else "/user/$uid/"
-            val fileRef = FirebaseStorage.getInstance()
-                .getReference(path).child(fileName)
-            Log.d(TAG, "start downloading: $fileName ref $fileRef")
+    ): ByteArray? = suspendCancellableCoroutine { continuation ->
+        val path = if (isPrivate) "/files/" else "/user/$uid/"
+        val fileRef = FirebaseStorage.getInstance()
+            .getReference(path).child(fileName)
+        Log.d(TAG, "start downloading: $fileName ref $fileRef")
 
-            fileRef.getBytes(Long.MAX_VALUE).addOnSuccessListener {
-                Log.d(TAG, "downloaded $fileName")
-                if (isPrivate) fileRef.delete()
-                continuation.resume(it)
-            }.addOnFailureListener {
-                Log.w(TAG, "NOT downloaded $fileName $it")
-                continuation.resume(null)
-            }
+        fileRef.getBytes(Long.MAX_VALUE).addOnSuccessListener {
+            Log.d(TAG, "downloaded $fileName")
+            if (isPrivate) fileRef.delete()
+            continuation.resume(it)
+        }.addOnFailureListener {
+            Log.w(TAG, "NOT downloaded $fileName $it")
+            continuation.resume(null)
         }
+    }
 
 
     override fun deleteRemoteMessage(messageId: String) {
@@ -256,7 +250,7 @@ class FirebaseImpl : Firebase {
         myRef.child("messages").child(messageId).removeValue()
     }
 
-    override suspend fun getUser(uid: String): User? = suspendCoroutine {
+    override suspend fun getUser(uid: String): User? = suspendCancellableCoroutine {
         val ref = FirebaseDatabase.getInstance().getReference("users/$uid")
         ref.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {

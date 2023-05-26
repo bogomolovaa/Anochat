@@ -17,7 +17,7 @@ interface Event
 
 abstract class BaseViewModel<S : Any>(
     val initialState: S,
-    val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val _state: MutableStateFlow<S> = MutableStateFlow(initialState)
@@ -27,10 +27,6 @@ abstract class BaseViewModel<S : Any>(
 
     private val mutex = Mutex()
     val currentState get() = state.value
-
-    protected fun execute(run: suspend () -> Unit) {
-        viewModelScope.launch(dispatcher) { run() }
-    }
 
     fun updateState(reduce: S.() -> S) {
         viewModelScope.launch(dispatcher) {
@@ -46,7 +42,13 @@ abstract class BaseViewModel<S : Any>(
         _events.send(event)
     }
 
-    protected suspend fun setState(reduce: S.() -> S) {
+    protected fun setState(reduce: S.() -> S) {
+        viewModelScope.launch(dispatcher) {
+            setStateInternal(reduce)
+        }
+    }
+
+    private suspend fun setStateInternal(reduce: S.() -> S) {
         mutex.withLock { _state.value = _state.value.reduce() }
     }
 }

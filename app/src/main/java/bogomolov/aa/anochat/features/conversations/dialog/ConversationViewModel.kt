@@ -1,7 +1,8 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
-import android.annotation.SuppressLint
+import android.content.Context
 import android.net.Uri
+import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
@@ -18,18 +19,27 @@ import bogomolov.aa.anochat.features.shared.LocaleProvider
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.Event
 import bogomolov.aa.anochat.repository.FileStore
+import bogomolov.aa.anochat.repository.FileTooBigException
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.*
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
-const val ONLINE_STATUS = "online"
-const val TYPING_STATUS = "typing..."
+sealed class UserStatus(open val time: Long? = null) {
+    object Empty : UserStatus()
+    object Online : UserStatus()
+    object Typing : UserStatus()
+    data class LastSeen(override val time: Long) : UserStatus(time)
+}
 
 enum class InputStates {
     INITIAL,
@@ -41,7 +51,7 @@ enum class InputStates {
 
 data class DialogUiState(
     val conversation: Conversation? = null,
-    val onlineStatus: String = "",
+    val userStatus: UserStatus = UserStatus.Empty,
     val inputState: InputStates = InputStates.INITIAL,
     val replyMessage: Message? = null,
     val audioFile: String? = null,
@@ -49,7 +59,6 @@ data class DialogUiState(
     val text: String = "",
     val audioLengthText: String = "",
     val playingState: PlayingState? = null,
-    val pagingData: PagingData<MessageViewData>? = null,
     val pagingDataFlow: Flow<PagingData<MessageViewData>>? = null,
 
     val resized: BitmapWithName? = null,
@@ -81,7 +90,8 @@ class ConversationViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases,
     private val audioPlayer: AudioPlayer,
     private val localeProvider: LocaleProvider,
-    private val fileStore: FileStore
+    private val fileStore: FileStore,
+    @ApplicationContext private val context: Context
 ) : BaseViewModel<DialogUiState>(DialogUiState()) {
     private var recordingJob: Job? = null
     private var playJob: Job? = null
@@ -91,70 +101,76 @@ class ConversationViewModel @Inject constructor(
     private var typingJob: Job? = null
 
     override fun onCleared() {
+        currentState.conversation?.id?.let {
+            conversationUseCases.deleteConversationIfNoMessages(it)
+        }
         super.onCleared()
-        GlobalScope.launch(dispatcher) {
-            currentState.conversation?.id?.let {
-                conversationUseCases.deleteConversationIfNoMessages(
-                    it
-                )
+    }
+
+    fun resizeMedia(mediaUri: Uri?, mediaPath: String?, isVideo: Boolean) {
+        viewModelScope.launch {
+            try {
+                updateState { copy(resized = null, isVideo = isVideo) }
+                val resized = if (isVideo) fileStore.resizeVideo(mediaUri!!)
+                else fileStore.resizeImage(mediaUri, mediaPath, toGallery = (mediaUri == null))
+                updateState { copy(resized = resized, isVideo = isVideo) }
+                resized?.progress?.collect {
+                    updateState { copy(progress = it.toFloat() / 100) }
+                }
+            } catch (e: FileTooBigException) {
+                Toast.makeText(context, "Too large file", Toast.LENGTH_LONG).show()
             }
         }
     }
 
-
-    fun resizeMedia(mediaUri: Uri?, mediaPath: String?, isVideo: Boolean) = execute {
-        updateState { copy(resized = null, isVideo = isVideo) }
-        val resized = if (isVideo) fileStore.resizeVideo(mediaUri!!, viewModelScope)
-        else fileStore.resizeImage(mediaUri, mediaPath, toGallery = (mediaUri == null))
-        updateState { copy(resized = resized, isVideo = isVideo) }
-        resized?.progress?.collect {
-            updateState { copy(progress = it.toFloat() / 100) }
-        }
-    }
-
-    fun notifyAsViewed(messageData: MessageViewData) = execute {
-        currentState.conversation?.user?.uid?.let { uid ->
-            messageUseCases.notifyAsViewed(messageData.message, uid)
-        }
-    }
-
-    fun textChanged(enteredText: String) = execute {
-        val uid = currentState.conversation?.user?.uid
-        if (uid != null) {
-            if (typingJob == null) messageUseCases.startTypingTo(uid)
-            typingJob?.cancel()
-            typingJob = GlobalScope.launch(dispatcher) {
-                delay(3000)
-                messageUseCases.stopTypingTo(uid)
-                typingJob = null
+    fun notifyAsViewed(messageData: MessageViewData) {
+        viewModelScope.launch {
+            currentState.conversation?.user?.uid?.let { uid ->
+                messageUseCases.notifyAsViewed(messageData.message, uid)
             }
         }
-        if (enteredText.isNotEmpty()) {
-            setState {
-                copy(text = enteredText, inputState = InputStates.TEXT_ENTERED)
-            }
-        } else {
-            setState { copy(text = "", inputState = InputStates.INITIAL) }
-        }
     }
 
-    fun startPlaying(audioFile: String? = null, messageId: String? = null) = execute {
-        if (currentState.playingState == null) initStartPlaying(audioFile, messageId)
-        if (audioPlayer.startPlay()) {
-            startTime = System.currentTimeMillis()
-            playJob = viewModelScope.launch(dispatcher) {
-                while (true) {
-                    delay(1000)
-                    val time = System.currentTimeMillis() - startTime + tempElapsed
-                    setState { copy(playingState = playingState?.copy(elapsed = time)) }
-                    if(!isActive) break
+    fun textChanged(enteredText: String) {
+        viewModelScope.launch {
+            if (enteredText.isNotEmpty()) {
+                setState {
+                    copy(text = enteredText, inputState = InputStates.TEXT_ENTERED)
+                }
+            } else {
+                setState { copy(text = "", inputState = InputStates.INITIAL) }
+            }
+            currentState.conversation?.user?.uid?.let {
+                if (typingJob == null) messageUseCases.startTypingTo(it)
+                typingJob?.cancel()
+                typingJob = launch {
+                    delay(3000)
+                    messageUseCases.stopTypingTo(it)
+                    typingJob = null
                 }
             }
-            setState { copy(playingState = playingState?.copy(paused = false)) }
         }
     }
 
-    private suspend fun initStartPlaying(audioFile: String? = null, messageId: String? = null) {
+    fun startPlaying(audioFile: String? = null, messageId: String? = null) {
+        viewModelScope.launch(dispatcher) {
+            if (currentState.playingState == null) initStartPlaying(audioFile, messageId)
+            if (audioPlayer.startPlay()) {
+                startTime = System.currentTimeMillis()
+                playJob = launch {
+                    while (true) {
+                        delay(1000)
+                        val time = System.currentTimeMillis() - startTime + tempElapsed
+                        setState { copy(playingState = playingState?.copy(elapsed = time)) }
+                        if (!isActive) break
+                    }
+                }
+                setState { copy(playingState = playingState?.copy(paused = false)) }
+            }
+        }
+    }
+
+    private fun initStartPlaying(audioFile: String? = null, messageId: String? = null) {
         if (audioFile != null) {
             val duration = audioPlayer.initPlayer(audioFile) {
                 playJob?.cancel()
@@ -166,7 +182,7 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun pausePlaying() = execute {
+    fun pausePlaying() {
         if (audioPlayer.pausePlay()) {
             tempElapsed += System.currentTimeMillis() - startTime
             playJob?.cancel()
@@ -175,10 +191,11 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun startRecording() = execute {
-        val audioFile = audioPlayer.startRecording()
-        setState { copy(audioFile = audioFile, inputState = InputStates.VOICE_RECORDING) }
+    fun startRecording() {
+        recordingJob?.cancel()
         recordingJob = viewModelScope.launch(dispatcher) {
+            val audioFile = audioPlayer.startRecording()
+            setState { copy(audioFile = audioFile, inputState = InputStates.VOICE_RECORDING) }
             val startTime = System.currentTimeMillis()
             while (true) {
                 val time = System.currentTimeMillis() - startTime
@@ -189,83 +206,83 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun stopRecording() = execute {
-        audioPlayer.stopRecording()
-        recordingJob?.cancel()
-        setState { copy(inputState = InputStates.VOICE_RECORDED) }
+    fun stopRecording() {
+        viewModelScope.launch(dispatcher) {
+            audioPlayer.stopRecording()
+            recordingJob?.cancel()
+            setState { copy(inputState = InputStates.VOICE_RECORDED) }
+        }
     }
 
-    fun sendMessage(data: SendMessageData) = execute {
-        val conversation = currentState.conversation
-        if (conversation != null) {
-            val replyId = currentState.replyMessage?.messageId
-            val message = Message(
-                text = data.text ?: "",
-                time = System.currentTimeMillis(),
-                isMine = true,
-                conversationId = conversation.id,
-                replyMessageId = replyId,
-                audio = data.audio,
-                image = data.image,
-                video = data.video
-            )
-            setState {
-                copy(
-                    inputState = InputStates.INITIAL,
-                    text = "",
-                    replyMessage = null,
-                    photoPath = null,
-                    audioFile = null,
+    fun sendMessage(data: SendMessageData) {
+        viewModelScope.launch {
+            currentState.conversation?.let {
+                val replyId = currentState.replyMessage?.messageId
+                val message = Message(
+                    text = data.text ?: "",
+                    time = System.currentTimeMillis(),
+                    isMine = true,
+                    conversationId = it.id,
+                    replyMessageId = replyId,
+                    audio = data.audio,
+                    image = data.image,
+                    video = data.video
                 )
+                setState {
+                    copy(
+                        inputState = InputStates.INITIAL,
+                        text = "",
+                        replyMessage = null,
+                        photoPath = null,
+                        audioFile = null,
+                    )
+                }
+                messageUseCases.sendMessage(message, it.user.uid)
+                addEvent(OnMessageSent)
             }
-            messageUseCases.sendMessage(message, conversation.user.uid)
-            addEvent(OnMessageSent)
         }
     }
 
-    fun deleteMessages(ids: Set<Long>) = execute {
-        messageUseCases.deleteMessages(ids)
-    }
-
-    fun initConversation(conversationId: Long) = execute {
-        if (!conversationInitialized) {
-            conversationInitialized = true
-            val conversation = conversationUseCases.getConversation(conversationId)!!
-            setState { copy(conversation = conversation) }
-            subscribeToMessages(conversation)
-            subscribeToOnlineStatus(conversation.user.uid)
+    fun deleteMessages(ids: Set<Long>) {
+        viewModelScope.launch {
+            messageUseCases.deleteMessages(ids)
         }
     }
 
-    private fun subscribeToMessages(conversation: Conversation) = execute {
+    fun initConversation(conversationId: Long) {
+        viewModelScope.launch(dispatcher) {
+            if (!conversationInitialized) {
+                conversationInitialized = true
+                val conversation = conversationUseCases.getConversation(conversationId)!!
+                setState { copy(conversation = conversation) }
+                launch {
+                    subscribeToOnlineStatus(conversation.user.uid)
+                }
+                subscribeToMessages(conversation)
+            }
+        }
+    }
+
+    private fun subscribeToMessages(conversation: Conversation) {
         val pagingDataFlow = messageUseCases.loadMessagesDataSource(conversation.id).flowOn(dispatcher)
-            .cachedIn(viewModelScope.plus(dispatcher)).map {
+            .cachedIn(viewModelScope).map {
                 it.map { MessageViewData(it) }.insertSeparators { m1, m2 ->
                     insertDateSeparators(m1, m2, localeProvider.locale)
                     null
                 }
             }
         setState { copy(pagingDataFlow = pagingDataFlow) }
-        //pagingDataFlow.collectLatest { setState { copy(pagingData = it) } }
     }
 
-    private fun subscribeToOnlineStatus(uid: String) {
-        val flow = userUseCases.addUserStatusListener(uid, viewModelScope)
-        viewModelScope.launch(dispatcher) {
-            flow.collect {
-                val typing = it.first
-                val online = it.second
-                val lastSeenTime = it.third
-                val status = if (typing) TYPING_STATUS
-                else if (online) ONLINE_STATUS else timeToString(lastSeenTime)
-                setState { copy(onlineStatus = status) }
-            }
+    private suspend fun subscribeToOnlineStatus(uid: String) {
+        userUseCases.addUserStatusListener(uid).collect {
+            val typing = it.first
+            val online = it.second
+            val lastSeenTime = it.third
+            val status = if (typing) UserStatus.Typing
+            else if (online) UserStatus.Online else UserStatus.LastSeen(lastSeenTime)
+            setState { copy(userStatus = status) }
         }
-    }
-
-    @SuppressLint("SimpleDateFormat")
-    private fun timeToString(lastTimeOnline: Long): String {
-        return SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(lastTimeOnline))
     }
 }
 

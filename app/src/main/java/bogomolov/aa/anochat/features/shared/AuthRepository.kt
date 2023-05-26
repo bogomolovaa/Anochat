@@ -23,7 +23,7 @@ interface PhoneVerification {
 }
 
 interface AuthRepository {
-    fun sendPhoneNumber(
+    suspend fun sendPhoneNumber(
         phoneNumber: String,
         getActivity: () -> Activity,
         phoneVerification: PhoneVerification,
@@ -35,9 +35,9 @@ interface AuthRepository {
         phoneVerification: PhoneVerification
     )
 
-    fun signOut()
+    suspend fun signOut()
     fun isSignedIn(): Boolean
 
-    fun updateSettings(settings: Settings)
-    fun getSettings(): Settings
+    suspend fun updateSettings(settings: Settings)
+    suspend fun getSettings(): Settings
 }

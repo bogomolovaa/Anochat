@@ -1,46 +1,5 @@
 package bogomolov.aa.anochat.espresso
 
-import android.Manifest
-import android.app.Activity
-import android.app.Instrumentation
-import android.content.Intent
-import android.net.Uri
-import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.replaceText
-import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.intent.Intents
-import androidx.test.espresso.intent.Intents.intended
-import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
-import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
-import androidx.test.espresso.matcher.ViewMatchers.*
-import androidx.test.rule.GrantPermissionRule
-import bogomolov.aa.anochat.DEFAULT_MY_UID
-import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.entity.User
-import bogomolov.aa.anochat.features.settings.SettingsFragment
-import bogomolov.aa.anochat.features.shared.AuthRepository
-import bogomolov.aa.anochat.features.shared.Settings
-import bogomolov.aa.anochat.navigateTo
-import bogomolov.aa.anochat.repository.Firebase
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runBlockingTest
-import kotlinx.coroutines.test.setMain
-import org.hamcrest.core.AllOf.allOf
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.mockito.Mockito
-import javax.inject.Inject
-
 /*
 @HiltAndroidTest
 @ExperimentalCoroutinesApi

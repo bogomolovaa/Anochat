@@ -11,6 +11,8 @@ import bogomolov.aa.anochat.domain.repositories.ConversationRepository
 import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
 import bogomolov.aa.anochat.repository.entity.ConversationEntity
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,31 +23,40 @@ class ConversationRepositoryImpl @Inject constructor(
     private val keyValueStore: KeyValueStore,
 ) : ConversationRepository {
     private val mapper = ModelEntityMapper()
+    private var deleteConversationJob: Job? = null
 
-    override fun getConversation(id: Long): Conversation? =
-        mapper.entityToModel(db.conversationDao().loadConversation(id))
+    override suspend fun getConversation(id: Long): Conversation? =
+        withContext(Dispatchers.IO) {
+            mapper.entityToModel(db.conversationDao().loadConversation(id))
+        }
 
     override fun loadConversationsDataSource() =
         Pager(PagingConfig(pageSize = 10)) {
             db.conversationDao().loadConversations(keyValueStore.getMyUID() ?: "")
-        }.flow.map { it.map { mapper.entityToModel(it)!! } }
+        }.flow.map { it.map { mapper.entityToModel(it)!! } }.flowOn(Dispatchers.IO)
 
-    override fun deleteConversations(ids: Set<Long>) {
-        db.messageDao().deleteByConversationIds(ids)
-        db.conversationDao().deleteByIds(ids)
+    override suspend fun deleteConversations(ids: Set<Long>) {
+        withContext(Dispatchers.IO) {
+            db.messageDao().deleteByConversationIds(ids)
+            db.conversationDao().deleteByIds(ids)
+        }
     }
 
     override fun deleteConversationIfNoMessages(conversationId: Long) {
-        val number = db.messageDao().getMessagesNumber(conversationId)
-        if (number == 0) db.conversationDao().deleteByIds(setOf(conversationId))
+        deleteConversationJob?.cancel()
+        deleteConversationJob = CoroutineScope(Dispatchers.IO).launch {
+            val number = db.messageDao().getMessagesNumber(conversationId)
+            if (number == 0) db.conversationDao().deleteByIds(setOf(conversationId))
+        }
     }
 
-    override fun createOrGetConversation(user: User): Long {
-        val myUid = keyValueStore.getMyUID()!!
-        val conversationEntity = db.conversationDao().getConversationByUser(user.id, myUid)
-            ?: ConversationEntity(userId = user.id, myUid = myUid).apply {
-                id = db.conversationDao().add(this)
-            }
-        return conversationEntity.id
-    }
+    override suspend fun createOrGetConversation(user: User): Long =
+        withContext(Dispatchers.IO) {
+            val myUid = keyValueStore.getMyUID()!!
+            val conversationEntity = db.conversationDao().getConversationByUser(user.id, myUid)
+                ?: ConversationEntity(userId = user.id, myUid = myUid).apply {
+                    id = db.conversationDao().add(this)
+                }
+            conversationEntity.id
+        }
 }

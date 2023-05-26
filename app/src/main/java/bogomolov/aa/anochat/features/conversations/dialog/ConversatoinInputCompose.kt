@@ -1,5 +1,7 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
+import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -10,7 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -35,6 +36,8 @@ import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Preview
 @Composable
@@ -268,18 +271,31 @@ fun UserNameLayout(
                 Text(text = conversation.user.name, fontSize = 18.sp, fontWeight = Bold, color = Color.White)
                 Text(
                     modifier = Modifier.padding(top = 4.dp),
-                    text = state.onlineStatus, fontSize = 12.sp, color = Color.White
+                    text = state.userStatus.print(LocalContext.current), fontSize = 12.sp, color = Color.White
                 )
             }
         }
     }
 }
 
+private fun UserStatus.print(context: Context) =
+    when(this){
+        is UserStatus.Empty -> ""
+        is UserStatus.Online -> context.getString(R.string.status_online)
+        is UserStatus.Typing -> context.getString(R.string.status_typing)
+        is UserStatus.LastSeen -> timeToString(this.time)
+    }
+
+@SuppressLint("SimpleDateFormat")
+private fun timeToString(lastTimeOnline: Long): String {
+    return SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(lastTimeOnline))
+}
+
 val testDialogUiState = DialogUiState(
     inputState = InputStates.INITIAL,
     conversation = testConversation,
     pagingDataFlow = flowOf(),
-    onlineStatus = "online",
+    userStatus = UserStatus.Online,
     audioLengthText = "0:15",
     text = "Text",
     replyMessage = Message(text = "text")

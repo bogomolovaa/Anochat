@@ -1,44 +1,5 @@
 package bogomolov.aa.anochat.espresso
 
-import android.view.KeyEvent
-import androidx.emoji.bundled.BundledEmojiCompatConfig
-import androidx.emoji.text.EmojiCompat
-import androidx.navigation.testing.TestNavHostController
-import androidx.recyclerview.widget.RecyclerView
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu
-import androidx.test.espresso.action.ViewActions.*
-import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
-import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.contrib.RecyclerViewActions
-import androidx.test.espresso.matcher.ViewMatchers.*
-import bogomolov.aa.anochat.MockitoKotlinAndroidTest.Companion.any
-import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.entity.Message
-import bogomolov.aa.anochat.domain.entity.User
-import bogomolov.aa.anochat.domain.repositories.ConversationRepository
-import bogomolov.aa.anochat.domain.repositories.MessageRepository
-import bogomolov.aa.anochat.domain.repositories.UserRepository
-import bogomolov.aa.anochat.features.conversations.list.ConversationListFragment
-import bogomolov.aa.anochat.features.shared.AuthRepository
-import bogomolov.aa.anochat.getStringRes
-import bogomolov.aa.anochat.navigateTo
-import bogomolov.aa.anochat.repository.Firebase
-import com.vanniktech.emoji.EmojiManager
-import com.vanniktech.emoji.ios.IosEmojiProvider
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import org.hamcrest.MatcherAssert.assertThat
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.mockito.Mockito
-import javax.inject.Inject
-
 /*
 @HiltAndroidTest
 class ConversationListTest {

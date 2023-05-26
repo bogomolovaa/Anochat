@@ -1,28 +1,5 @@
 package bogomolov.aa.anochat.espresso
 
-import androidx.navigation.testing.TestNavHostController
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.replaceText
-import androidx.test.espresso.matcher.ViewMatchers.withId
-import bogomolov.aa.anochat.MockitoKotlinAndroidTest.Companion.any
-import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.features.login.SignInFragment
-import bogomolov.aa.anochat.features.shared.AuthRepository
-import bogomolov.aa.anochat.features.shared.PhoneVerification
-import bogomolov.aa.anochat.navigateTo
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito
-import javax.inject.Inject
-
 /*
 @HiltAndroidTest
 class SignInTest {

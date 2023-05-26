@@ -1,34 +1,5 @@
 package bogomolov.aa.anochat.espresso
 
-import android.view.KeyEvent
-import androidx.navigation.testing.TestNavHostController
-import androidx.recyclerview.widget.RecyclerView
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions
-import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
-import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.contrib.RecyclerViewActions
-import androidx.test.espresso.matcher.ViewMatchers.*
-import bogomolov.aa.anochat.R
-import bogomolov.aa.anochat.domain.entity.User
-import bogomolov.aa.anochat.domain.repositories.UserRepository
-import bogomolov.aa.anochat.features.contacts.list.*
-import bogomolov.aa.anochat.navigateTo
-import bogomolov.aa.anochat.repository.Firebase
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.runBlocking
-import org.hamcrest.MatcherAssert.assertThat
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.mockito.ArgumentMatchers.anyList
-import org.mockito.Mockito
-import javax.inject.Inject
-
 /*
 @HiltAndroidTest
 class ContactsTest {

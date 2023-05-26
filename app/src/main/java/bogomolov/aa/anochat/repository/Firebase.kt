@@ -2,7 +2,6 @@ package bogomolov.aa.anochat.repository
 
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
 interface Firebase {
@@ -10,10 +9,9 @@ interface Firebase {
     suspend fun updateToken(): String?
     fun setOffline()
     fun setOnline()
-    fun addUserStatusListener(
+    suspend fun addUserStatusListener(
         myUid: String,
-        uid: String,
-        scope: CoroutineScope
+        uid: String
     ): Flow<Triple<Boolean, Boolean, Long>>
 
     suspend fun findByPhone(phone: String): List<User>

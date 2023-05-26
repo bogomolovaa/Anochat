@@ -12,7 +12,6 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
-import android.widget.Toast
 import bogomolov.aa.anochat.features.shared.*
 import com.arthenica.mobileffmpeg.Config
 import com.arthenica.mobileffmpeg.Config.RETURN_CODE_CANCEL
@@ -34,26 +33,29 @@ private const val TAG = "FileStoreImpl"
 private const val MAX_IMAGE_DIM = 1024f
 
 interface FileStore {
-    fun saveByteArray(byteArray: ByteArray, fileName: String, toGallery: Boolean)
+    suspend fun saveByteArray(byteArray: ByteArray, fileName: String, toGallery: Boolean)
     fun getByteArray(fromGallery: Boolean, fileName: String): ByteArray?
     fun fileExists(fileName: String): Boolean
-    fun resizeImage(
+    suspend fun resizeImage(
         uri: Uri? = null,
         path: String? = null,
         toGallery: Boolean
     ): BitmapWithName?
 
-    fun resizeVideo(uri: Uri, coroutineScope: CoroutineScope): BitmapWithName?
-    fun createVideoThumbnail(videoName: String)
+    suspend fun resizeVideo(uri: Uri): BitmapWithName?
+    suspend fun createVideoThumbnail(videoName: String)
 }
+
+class FileTooBigException() : Exception()
 
 @Singleton
 class FileStoreImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val authRepository: AuthRepository
 ) : FileStore {
+    private val finalizerScope = CoroutineScope(Dispatchers.IO)
 
-    override fun saveByteArray(byteArray: ByteArray, fileName: String, toGallery: Boolean) {
+    override suspend fun saveByteArray(byteArray: ByteArray, fileName: String, toGallery: Boolean) {
         if (toGallery && authRepository.getSettings().gallery)
             try {
                 val outputStream = getGalleryOutputStream(fileName, context)
@@ -77,45 +79,42 @@ class FileStoreImpl @Inject constructor(
 
     override fun fileExists(fileName: String) = File(getFilePath(context, fileName)).exists()
 
-    override fun resizeVideo(uri: Uri, coroutineScope: CoroutineScope): BitmapWithName? {
-        val size = (getRealSizeFromUri(context, uri)?.toFloat() ?: 0f) / 1024 / 1024
-        if (size > 200) {
-            Toast.makeText(context, "Too large file", Toast.LENGTH_LONG).show()
-            return null
-        }
-        val videoName = getRandomFileName()
-        val originalVideoFile = File(getFilePath(context, nameToVideo(videoName + "_")))
-        val videoFile = File(getFilePath(context, nameToVideo(videoName)))
-
-        saveUriToFile(uri, originalVideoFile)
-        val thumbnailBitmap = createVideoThumbnail(originalVideoFile)
-        if (thumbnailBitmap != null) {
-            saveImageToPath(thumbnailBitmap, nameToImage(videoName))
-            val result = BitmapWithName(videoName, thumbnailBitmap).apply { processed = false }
-            coroutineScope.launch(Dispatchers.Default) {
-                val mediaPlayer = MediaPlayer.create(context, uri)
-                val videoLength = mediaPlayer.duration
-                mediaPlayer.release()
+    override suspend fun resizeVideo(uri: Uri): BitmapWithName? = coroutineScope {
+        withContext(Dispatchers.IO) {
+            val size = (getRealSizeFromUri(context, uri)?.toFloat() ?: 0f) / 1024 / 1024
+            if (size > 200) throw FileTooBigException()
+            val videoName = getRandomFileName()
+            val originalVideoFile = File(getFilePath(context, nameToVideo(videoName + "_")))
+            val videoFile = File(getFilePath(context, nameToVideo(videoName)))
+            saveUriToFile(uri, originalVideoFile)
+            createVideoThumbnail(originalVideoFile)?.let {
+                saveImageToPath(it, nameToImage(videoName))
+                val result = BitmapWithName(videoName, it).apply { processed = false }
+                val videoLength = getVideoDuration(uri)
                 if (videoLength > 0) {
                     Config.resetStatistics()
                     Config.enableStatisticsCallback { statistics ->
-                        if (!isActive)
-                            GlobalScope.launch(Dispatchers.Default) {
-                                FFmpeg.cancel()
-                            }
-                        coroutineScope.launch(Dispatchers.Default) {
-                            val progress = statistics.time.toFloat() / videoLength
-                            result.progress.emit((100 * progress).toInt())
-                        }
+                        if (!isActive) cancelCompression()
+                        val progress = statistics.time.toFloat() / videoLength
+                        result.progress.tryEmit((100 * progress).toInt())
                     }
+                    compressVideo(originalVideoFile.absolutePath, videoFile.absolutePath)
+                    originalVideoFile.delete()
+                    result.processed = true
                 }
-                compressVideo(originalVideoFile.absolutePath, videoFile.absolutePath)
-                originalVideoFile.delete()
-                result.processed = true
+                result
             }
-            return result
         }
-        return null
+    }
+
+    private fun cancelCompression() {
+        finalizerScope.launch {
+            FFmpeg.cancel()
+        }
+    }
+
+    private fun getVideoDuration(uri: Uri) = MediaPlayer.create(context, uri).run {
+        duration.also { release() }
     }
 
     private fun compressVideo(inputPath: String, outputPath: String) {
@@ -135,7 +134,7 @@ class FileStoreImpl @Inject constructor(
         }
     }
 
-    override fun createVideoThumbnail(videoName: String) {
+    override suspend fun createVideoThumbnail(videoName: String) {
         getUri(videoName, context)?.let { uri ->
             val tempVideoFile = File(getFilePath(context, "temp_$videoName"))
             saveUriToFile(uri, tempVideoFile)
@@ -160,7 +159,7 @@ class FileStoreImpl @Inject constructor(
         }
     }
 
-    override fun resizeImage(
+    override suspend fun resizeImage(
         uri: Uri?,
         path: String?,
         toGallery: Boolean
