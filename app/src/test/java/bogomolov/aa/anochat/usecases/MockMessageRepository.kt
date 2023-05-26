@@ -16,7 +16,7 @@ class MockMessageRepository(
     private var message: Message? = null
     var attachment = getAttachment()
 
-    override fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean) {
+    override suspend fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean) {
         if (initiator) {
             remoteUseCases.receivedPublicKey(publicKey, myUid)
         } else {
@@ -24,33 +24,33 @@ class MockMessageRepository(
         }
     }
 
-    override fun getPendingMessages(uid: String): List<Message> {
+    override suspend fun getPendingMessages(uid: String): List<Message> {
         val message = this.message
         return if (message != null && message.sent == 0) listOf(message) else listOf()
     }
 
-    override fun saveMessage(message: Message): Long {
+    override suspend fun saveMessage(message: Message): Long {
         this.message = message
         return 1
     }
 
-    override fun sendMessage(message: Message, uid: String): String {
+    override suspend fun sendMessage(message: Message, uid: String): String {
         runBlocking {
             remoteUseCases.receiveMessage(message, myUid) {}
         }
         return message.messageId
     }
 
-    override fun notifyAsReceived(messageId: String) {
+    override suspend fun notifyAsReceived(messageId: String) {
         remoteUseCases.receiveReport(messageId, 1, 0)
     }
 
-    override fun getMessage(messageId: String): Message? {
+    override suspend fun getMessage(messageId: String): Message? {
         val message = this.message
         return if (message != null && message.messageId == messageId) message else null
     }
 
-    override fun receiveReport(messageId: String, received: Int, viewed: Int) {
+    override suspend fun receiveReport(messageId: String, received: Int, viewed: Int) {
         val message = getMessage(messageId)
         if (message != null) {
             message.received = received
@@ -58,7 +58,7 @@ class MockMessageRepository(
         }
     }
 
-    override fun notifyAsNotReceived(messageId: String) {
+    override suspend fun notifyAsNotReceived(messageId: String) {
         println("message $messageId notifyAsNotReceived")
     }
 
@@ -88,19 +88,19 @@ class MockMessageRepository(
         TODO("Not yet implemented")
     }
 
-    override fun deleteMessages(ids: Set<Long>) {
+    override suspend fun deleteMessages(ids: Set<Long>) {
         TODO("Not yet implemented")
     }
 
-    override fun notifyAsViewed(message: Message) {
+    override suspend fun notifyAsViewed(message: Message) {
         TODO("Not yet implemented")
     }
 
-    override fun startTypingTo(uid: String) {
+    override suspend fun startTypingTo(uid: String) {
         TODO("Not yet implemented")
     }
 
-    override fun stopTypingTo(uid: String) {
+    override suspend fun stopTypingTo(uid: String) {
         TODO("Not yet implemented")
     }
 }
