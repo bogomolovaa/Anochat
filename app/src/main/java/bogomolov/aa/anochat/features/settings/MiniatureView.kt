@@ -42,7 +42,7 @@ import kotlin.math.min
 @Composable
 fun MiniatureView() {
     val navController = LocalNavController.current
-    val viewModel = hiltViewModel<SettingsViewModel>(navController.getBackStackEntry("settingsRoute"))
+    val viewModel = hiltViewModel<SettingsViewModel>(navController!!.getBackStackEntry("settingsRoute"))
     val state = viewModel.state.collectAsState()
     Content(state.value, viewModel)
 }
@@ -59,7 +59,7 @@ private fun Content(settingsState: SettingsUiState = testSettingsUiState, viewMo
             TopAppBar(
                 title = { Text(stringResource(id = R.string.set_avatar)) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navController?.popBackStack() }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -134,7 +134,7 @@ private suspend fun PointerInputScope.detectMaskTransformGestures(offset: Boolea
     )
 }
 
-private fun createMiniature(context: Context, viewModel: SettingsViewModel, navController: NavController) {
+private fun createMiniature(context: Context, viewModel: SettingsViewModel, navController: NavController?) {
     val state = viewModel.currentState.miniatureState!!
     val maskWidth = state.maskImage.width * state.maskImage.scaleFactor
     val maskHeight = state.maskImage.height * state.maskImage.scaleFactor
@@ -157,7 +157,7 @@ private fun createMiniature(context: Context, viewModel: SettingsViewModel, navC
     miniBitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(miniPhotoPath))
 
     viewModel.updateUser { copy(photo = viewModel.currentState.miniatureState?.miniature?.name) }
-    navController.popBackStack()
+    navController?.popBackStack()
 }
 
 private fun initDimensions(

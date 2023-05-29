@@ -51,7 +51,7 @@ private fun Content(state: ConversationsUiState = testConversationsUiState, view
     var showMenu by remember { mutableStateOf(false) }
     val navController = LocalNavController.current
     val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (it) navController.navigate("users")
+        if (it) navController?.navigate("users")
     }
     Scaffold(
         topBar = {
@@ -66,13 +66,13 @@ private fun Content(state: ConversationsUiState = testConversationsUiState, view
                         onDismissRequest = { showMenu = false }
                     ) {
                         DropdownMenuItem(onClick = {
-                            navController.navigate("settings")
+                            navController?.navigate("settings")
                         }) {
                             Text(stringResource(id = R.string.settings))
                         }
                         DropdownMenuItem(onClick = {
                             viewModel?.signOut()
-                            navController.navigate("login")
+                            navController?.navigate("login")
                         }) {
                             Text(stringResource(id = R.string.sign_out))
                         }
@@ -127,7 +127,7 @@ private fun ConversationCard(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
-                        navController.navigate("conversation?id=${conversation.id}")
+                        navController?.navigate("conversation?id=${conversation.id}")
                     },
                     onLongPress = { showMenu = true }
                 )

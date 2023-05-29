@@ -31,7 +31,7 @@ fun SignInView(getActivity: (() -> Activity)?) {
     val navController = LocalNavController.current
     val viewModel = hiltViewModel<SignInViewModel>()
     EventHandler(viewModel.events) {
-        if (it is NavigateToConversationList) navController.navigate("conversations")
+        if (it is NavigateToConversationList) navController?.navigate("conversations")
     }
     val state = viewModel.state.collectAsState()
     Content(state.value, getActivity)

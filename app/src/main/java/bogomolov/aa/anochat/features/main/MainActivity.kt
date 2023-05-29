@@ -44,7 +44,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-val LocalNavController = compositionLocalOf<NavHostController> { error("No NavController provided") }
+val LocalNavController = compositionLocalOf<NavHostController?> { null}
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {

@@ -44,7 +44,7 @@ fun UsersView(uri: String? = null) {
         viewModel.loadContacts(getContactsPhones(context))
     }
     EventHandler(viewModel.events) {
-        if (it is NavigateConversationEvent) navController.navigateToConversation(it.conversationId, uri)
+        if (it is NavigateConversationEvent) navController?.navigateToConversation(it.conversationId, uri)
     }
 
     val state = viewModel.state.collectAsState()
@@ -60,7 +60,7 @@ private fun Content(state: ContactsUiState = testContactsUiState, viewModel: Use
             TopAppBar(
                 title = { Text(stringResource(id = R.string.contacts)) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navController?.popBackStack() }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },

@@ -56,7 +56,7 @@ private const val TAG = "ConversationView"
 fun ConversationView(conversationId: Long, uri: Uri? = null) {
     val navController = LocalNavController.current
     val viewModel =
-        hiltViewModel<ConversationViewModel>(navController.getBackStackEntry("conversationRoute"))
+        hiltViewModel<ConversationViewModel>(navController!!.getBackStackEntry("conversationRoute"))
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
     LaunchedEffect(0) {
@@ -101,7 +101,7 @@ private fun Content(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navController?.popBackStack() }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -348,21 +348,21 @@ private fun fabOnClick(context: Context, inputState: InputStates, viewModel: Con
     }
 }
 
-private fun videoOnClick(message: Message, context: Context, navController: NavController) {
+private fun videoOnClick(message: Message, context: Context, navController: NavController?) {
     if (message.received == 1 || message.isMine) {
         val uriWithSource = getUriWithSource(message.video!!, context)
         if (uriWithSource.uri != null) navController?.navigate("video?uri=${uriWithSource.uri}")
     }
 }
 
-private fun imageOnClick(message: Message, navController: NavController) {
+private fun imageOnClick(message: Message, navController: NavController?) {
     if (message.received == 1 || message.isMine)
-        navController.navigate("image?name=${message.image}&gallery=true")
+        navController?.navigate("image?name=${message.image}&gallery=true")
 }
 
-private fun navigateToUserFragment(viewModel: ConversationViewModel?, navController: NavController) {
+private fun navigateToUserFragment(viewModel: ConversationViewModel?, navController: NavController?) {
     val userId = viewModel?.currentState?.conversation?.user?.id
-    if (userId != null) navController.navigate("user/$userId")
+    if (userId != null) navController?.navigate("user/$userId")
 }
 
 private fun navigateToSendMediaFragment(
@@ -370,11 +370,11 @@ private fun navigateToSendMediaFragment(
     viewModel: ConversationViewModel?,
     uri: Uri? = null,
     path: String? = null,
-    navController: NavController
+    navController: NavController?
 ) {
     val isVideo = context.isVideo(uri)
     viewModel?.resizeMedia(uri, path, isVideo)
-    navController.navigate("media")
+    navController?.navigate("media")
 }
 
 @SuppressLint("SimpleDateFormat")

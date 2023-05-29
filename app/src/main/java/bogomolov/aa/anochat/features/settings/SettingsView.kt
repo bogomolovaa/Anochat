@@ -45,7 +45,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsView() {
     val navController = LocalNavController.current
-    val viewModel = hiltViewModel<SettingsViewModel>(navController.getBackStackEntry("settingsRoute"))
+    val viewModel = hiltViewModel<SettingsViewModel>(navController!!.getBackStackEntry("settingsRoute"))
     val state = viewModel.state.collectAsState()
     Content(state.value, viewModel)
 }
@@ -65,7 +65,7 @@ private fun Content(state: SettingsUiState = testSettingsUiState, viewModel: Set
     val writePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     viewModel?.events?.let {
         EventHandler(viewModel.events) {
-            if (it is MiniatureCreatedEvent) navController.navigate("miniature")
+            if (it is MiniatureCreatedEvent) navController?.navigate("miniature")
         }
     }
     val bottomSheetState = rememberBottomSheetScaffoldState()
@@ -138,7 +138,7 @@ private fun Content(state: SettingsUiState = testSettingsUiState, viewModel: Set
                 title = { Text(stringResource(id = R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = {
-                        navController.popBackStack()
+                        navController?.popBackStack()
                     }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }

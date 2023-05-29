@@ -110,7 +110,7 @@ fun ImageView(imageName: String, fromGallery: Boolean) {
             Icon(
                 modifier = Modifier
                     .clickable {
-                        navController.popBackStack()
+                        navController?.popBackStack()
                     },
                 imageVector = Icons.Filled.ArrowBack,
                 tint = Color.White,

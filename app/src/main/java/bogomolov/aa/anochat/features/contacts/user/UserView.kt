@@ -49,7 +49,7 @@ private fun Content(state: UserUiState = testUserUiState) {
                 title = { Text(state.user?.name ?: "") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        navController.popBackStack()
+                        navController?.popBackStack()
                     }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
@@ -73,7 +73,7 @@ private fun Content(state: UserUiState = testUserUiState) {
                             .height(350.dp)
                             .clickable(onClick = {
                                 val photo = state.user?.photo
-                                if (photo != null) navController.navigate("image?name=$photo")
+                                if (photo != null) navController?.navigate("image?name=$photo")
                             })
                     )
                 } ?: run {
@@ -113,7 +113,7 @@ private fun ImagesRow(pagingFlow: Flow<PagingData<String>>) {
                             .width(100.dp)
                             .height(100.dp)
                             .clickable(onClick = {
-                                navController.navigate("image?name=$image&gallery=true")
+                                navController?.navigate("image?name=$image&gallery=true")
                             }),
                         bitmap = imageBitmap,
                         contentDescription = "",

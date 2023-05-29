@@ -30,7 +30,7 @@ import bogomolov.aa.anochat.features.shared.playMessageSound
 fun SendMediaView() {
     val navController = LocalNavController.current
     val viewModel =
-        hiltViewModel<ConversationViewModel>(navController.getBackStackEntry("conversationRoute"))
+        hiltViewModel<ConversationViewModel>(navController!!.getBackStackEntry("conversationRoute"))
     val state = viewModel.state.collectAsState()
     Content(state.value, viewModel)
 }
@@ -45,7 +45,7 @@ private fun Content(state: DialogUiState, viewModel: ConversationViewModel) {
                 title = { Text(stringResource(id = if (state.isVideo) R.string.send_media_video else R.string.send_media_image)) },
                 navigationIcon = {
                     IconButton(onClick = {
-                        navController.popBackStack()
+                        navController?.popBackStack()
                     }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
@@ -108,7 +108,7 @@ private fun submit(
     resized: BitmapWithName,
     isVideo: Boolean,
     text: String,
-    navController: NavController
+    navController: NavController?
 ) {
     if (resized.processed) {
         if (isVideo) {
@@ -121,7 +121,7 @@ private fun submit(
             )
         }
         playMessageSound(context)
-        navController.popBackStack()
+        navController?.popBackStack()
     } else {
         Toast.makeText(context, "Video is processing", Toast.LENGTH_LONG).show()
     }
