@@ -10,9 +10,7 @@ import bogomolov.aa.anochat.domain.repositories.MessageRepository
 import bogomolov.aa.anochat.domain.repositories.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.runBlockingTest
-import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito
@@ -25,8 +23,8 @@ private const val UID2 = "uid2"
 class TestMessageUseCases {
 
     @Test
-    fun initial_send_message() = runBlockingTest {
-        Dispatchers.setMain(TestCoroutineDispatcher())
+    fun initial_send_message() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher())
 
         val attachment = ByteArray(1000) { it.toByte() }
         val messageRep1 = MockMessageRepository(UID1) { attachment }
@@ -36,9 +34,7 @@ class TestMessageUseCases {
         val userRep1 = Mockito.mock(UserRepository::class.java)
         val userRep2 = Mockito.mock(UserRepository::class.java)
         val useCases1 = createUseCases(UID1, messageRep1, conversationRep1, userRep1)
-        useCases1.dispatcher = Dispatchers.Main
         val useCases2 = createUseCases(UID2, messageRep2, conversationRep2, userRep2)
-        useCases2.dispatcher = Dispatchers.Main
         messageRep1.remoteUseCases = useCases2
         messageRep2.remoteUseCases = useCases1
 

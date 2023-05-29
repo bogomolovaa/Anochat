@@ -33,7 +33,6 @@ open class MessageUseCases @Inject constructor(
     private val keyValueStore: KeyValueStore,
     private val crypto: Crypto
 ) : MessageUseCasesInRepository by messageRep {
-    var dispatcher: CoroutineDispatcher = Dispatchers.IO
 
     suspend fun receiveMessage(
         message: Message,
@@ -73,19 +72,15 @@ open class MessageUseCases @Inject constructor(
             sendPublicKey(crypto.generatePublicKey(uid), uid, initiator = true)
     }
 
-    private val receivingContext = CoroutineScope(Dispatchers.IO)
-
     suspend fun receivedPublicKey(publicKey: String, uid: String) {
         val myPublicKey = crypto.generatePublicKey(uid)
         generateSecretKey(publicKey, uid)
         sendPublicKey(myPublicKey, uid, initiator = false)
     }
 
-    fun finallyReceivedPublicKey(publicKey: String, uid: String) {
-        receivingContext.launch {
-            val generated = generateSecretKey(publicKey, uid)
-            if (generated) sendPendingMessages(uid)
-        }
+    suspend fun finallyReceivedPublicKey(publicKey: String, uid: String) {
+        val generated = generateSecretKey(publicKey, uid)
+        if (generated) sendPendingMessages(uid)
     }
 
     fun loadMessagesDataSource(conversationId: Long) =

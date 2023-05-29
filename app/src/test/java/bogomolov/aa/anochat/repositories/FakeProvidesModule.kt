@@ -1,8 +1,9 @@
-package bogomolov.aa.anochat
+package bogomolov.aa.anochat.repositories
 
 import android.app.Application
 import android.content.Context
 import androidx.room.Room
+import bogomolov.aa.anochat.MockKeyValueStore
 import bogomolov.aa.anochat.di.ProvidesModule
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.features.shared.AudioPlayer
@@ -14,6 +15,12 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.mockito.Mockito
 import javax.inject.Singleton
 
@@ -30,7 +37,7 @@ object FakeProvidesModule {
         Room.inMemoryDatabaseBuilder(
             application,
             AppDatabase::class.java,
-        ).build()
+        ).allowMainThreadQueries().build()
 
     @Provides
     fun providesContext(application: Application): Context = application
@@ -54,4 +61,8 @@ object FakeProvidesModule {
     @Singleton
     @Provides
     fun providesFileStore(): FileStore = Mockito.mock(FileStore::class.java)
+
+    @Singleton
+    @Provides
+    fun providesDispatcher(): CoroutineDispatcher = StandardTestDispatcher()
 }

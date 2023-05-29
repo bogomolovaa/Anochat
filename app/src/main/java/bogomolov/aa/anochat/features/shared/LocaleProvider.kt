@@ -13,5 +13,5 @@ class LocaleProviderImpl @Inject constructor(
     private val context: Context
 ) : LocaleProvider{
     override val locale: Locale
-        get() = ConfigurationCompat.getLocales(context.resources.configuration)[0]
+        get() = ConfigurationCompat.getLocales(context.resources.configuration)[0] ?: throw Exception()
 }

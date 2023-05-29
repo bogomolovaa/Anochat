@@ -11,6 +11,7 @@ import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.FileStore
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -23,18 +24,19 @@ class MessageRepositoryImpl @Inject constructor(
     private val db: AppDatabase,
     private val firebase: Firebase,
     private val keyValueStore: KeyValueStore,
-    private val fileStore: FileStore
+    private val fileStore: FileStore,
+    private val dispatcher: CoroutineDispatcher
 ) : MessageRepository {
     private val mapper = ModelEntityMapper()
 
     override suspend fun startTypingTo(uid: String) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             firebase.sendTyping(getMyUID()!!, uid, 1)
         }
     }
 
     override suspend fun stopTypingTo(uid: String) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             firebase.sendTyping(getMyUID()!!, uid, 0)
         }
     }
@@ -42,28 +44,28 @@ class MessageRepositoryImpl @Inject constructor(
     override fun searchMessagesDataSource(search: String) =
         Pager(PagingConfig(pageSize = 10)) {
             db.messageDao().searchText("%$search%", getMyUID()!!)
-        }.flow.map { it.map { mapper.entityToModel(it)!! } }.flowOn(Dispatchers.IO)
+        }.flow.map { it.map { mapper.entityToModel(it)!! } }.flowOn(dispatcher)
 
 
     override fun loadMessagesDataSource(conversationId: Long) =
         Pager(PagingConfig(pageSize = 30)) {
             db.messageDao().loadAll(conversationId)
-        }.flow.map { it.map { mapper.entityToModel(it)!! } }.flowOn(Dispatchers.IO)
+        }.flow.map { it.map { mapper.entityToModel(it)!! } }.flowOn(dispatcher)
 
     override suspend fun deleteMessages(ids: Set<Long>) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             db.messageDao().deleteByIds(ids)
         }
     }
 
     override suspend fun receiveReport(messageId: String, received: Int, viewed: Int) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             db.messageDao().updateReport(messageId, received, viewed)
         }
     }
 
     override suspend fun saveMessage(message: Message): Long =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             val entity = mapper.modelToEntity(message).apply { myUid = getMyUID()!! }
             db.messageDao().insert(entity).also { id ->
                 db.conversationDao().updateLastMessage(id, message.conversationId)
@@ -71,18 +73,18 @@ class MessageRepositoryImpl @Inject constructor(
         }
 
     override suspend fun getPendingMessages(uid: String): List<Message> =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             val userId = db.userDao().findByUid(uid)?.id ?: return@withContext listOf()
             mapper.entityToModel(db.messageDao().getNotSent(userId, getMyUID()!!))
         }
 
     override suspend fun getMessage(messageId: String) =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             mapper.entityToModel(db.messageDao().getByMessageId(messageId))
         }
 
     override suspend fun sendMessage(message: Message, uid: String) =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             firebase.sendMessage(message, uid) { db.messageDao().updateAsSent(message.id) }
                 .also { db.messageDao().updateMessageId(message.id, it) }
         }
@@ -91,7 +93,7 @@ class MessageRepositoryImpl @Inject constructor(
         message: Message,
         uid: String,
         convert: ByteArray.() -> ByteArray
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): Boolean = withContext(dispatcher) {
         val fileName = message.getAttachment() ?: return@withContext false
         val fromGallery = message.image != null
         val byteArray = fileStore.getByteArray(fromGallery, fileName) ?: return@withContext false
@@ -103,7 +105,7 @@ class MessageRepositoryImpl @Inject constructor(
         uid: String,
         convert: ByteArray.() -> ByteArray
     ) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             val fileName = message.getAttachment() ?: return@withContext
             val byteArray = firebase.downloadFile(fileName, uid, true) ?: run {
                 db.messageDao().updateAsNotReceived(message.id)
@@ -117,25 +119,25 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
     override suspend fun notifyAsReceived(messageId: String) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             firebase.sendReport(messageId, 1, 0)
         }
     }
 
     override suspend fun notifyAsNotReceived(messageId: String) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             firebase.sendReport(messageId, -1, 0)
         }
     }
 
     override suspend fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             firebase.sendMessage(uid = uid, publicKey = publicKey, initiator = initiator)
         }
     }
 
     override suspend fun notifyAsViewed(message: Message) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             firebase.sendReport(message.messageId, 1, 1)
             db.messageDao().updateAsViewed(message.id)
         }

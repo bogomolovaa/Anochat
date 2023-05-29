@@ -17,7 +17,7 @@ interface Event
 
 abstract class BaseViewModel<S : Any>(
     val initialState: S,
-    val dispatcher: CoroutineDispatcher = Dispatchers.Default
+    var dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val _state: MutableStateFlow<S> = MutableStateFlow(initialState)

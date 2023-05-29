@@ -55,8 +55,11 @@ private const val TAG = "ConversationView"
 @Composable
 fun ConversationView(conversationId: Long, uri: Uri? = null) {
     val navController = LocalNavController.current
+    val route = remember {
+        navController!!.getBackStackEntry("conversationRoute")
+    }
     val viewModel =
-        hiltViewModel<ConversationViewModel>(navController!!.getBackStackEntry("conversationRoute"))
+        hiltViewModel<ConversationViewModel>(route)
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
     LaunchedEffect(0) {
@@ -385,8 +388,8 @@ private fun Context.createTempImageFile(): File {
     return File.createTempFile(imageFileName, ".jpg", storageDir).apply { deleteOnExit() }
 }
 
-private class StartFileChooser : ActivityResultContract<Unit, Uri>() {
-    override fun createIntent(context: Context, input: Unit?): Intent {
+private class StartFileChooser : ActivityResultContract<Unit, Uri?>() {
+    override fun createIntent(context: Context, input: Unit): Intent {
         val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             type = "*/*"
             putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))

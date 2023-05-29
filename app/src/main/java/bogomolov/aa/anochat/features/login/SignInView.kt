@@ -156,5 +156,7 @@ private fun fabOnClick(viewModel: SignInViewModel, getActivity: (() -> Activity)
         }
         LoginState.VERIFICATION_ID_RECEIVED, LoginState.NOT_LOGGED ->
             viewModel.submitSmsCode()
+        else ->{
+        }
     }
 }

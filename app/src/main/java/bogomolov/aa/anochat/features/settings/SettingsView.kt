@@ -312,7 +312,7 @@ private fun openPrivacyPolicy(context: Context) {
 }
 
 private class StartFileChooser : ActivityResultContract<Unit, Uri?>() {
-    override fun createIntent(context: Context, input: Unit?): Intent {
+    override fun createIntent(context: Context, input: Unit): Intent {
         val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             type = "image/*"
             addCategory(Intent.CATEGORY_OPENABLE)

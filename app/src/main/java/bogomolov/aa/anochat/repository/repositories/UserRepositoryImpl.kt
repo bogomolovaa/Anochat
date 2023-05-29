@@ -11,6 +11,7 @@ import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.FileStore
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
@@ -22,22 +23,23 @@ class UserRepositoryImpl @Inject constructor(
     private val db: AppDatabase,
     private val firebase: Firebase,
     private val keyValueStore: KeyValueStore,
-    private val fileStore: FileStore
+    private val fileStore: FileStore,
+    private val dispatcher: CoroutineDispatcher
 ) : UserRepository {
     private val mapper = ModelEntityMapper()
 
     override fun getImagesDataSource(userId: Long) =
         Pager(PagingConfig(pageSize = 10)) {
             db.messageDao().getImages(userId)
-        }.flow.flowOn(Dispatchers.IO)
+        }.flow.flowOn(dispatcher)
 
     override suspend fun getUsersByPhones(phones: List<String>) =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             db.userDao().getAll(phones, getMyUID()!!).map { mapper.entityToModel(it)!! }
         }
 
     override suspend fun updateUsersByPhones(phones: List<String>) =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             if (phones.isNotEmpty()) {
                 val myUid = getMyUID()!!
                 firebase.receiveUsersByPhones(phones).filter { it.uid != myUid }
@@ -46,7 +48,7 @@ class UserRepositoryImpl @Inject constructor(
         }
 
     override suspend fun updateUsersInConversations() {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             val myUid = getMyUID() ?: return@withContext
             val users = db.userDao().getOpenedConversationUsers(myUid)
             mapper.entityToModel<User>(users).forEach { user ->
@@ -58,12 +60,12 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun getMyUser() = getOrAddUser(getMyUID()!!, false)
 
     override suspend fun getUser(id: Long) =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             mapper.entityToModel(db.userDao().getUser(id))!!
         }
 
     override suspend fun updateMyUser(user: User) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             val savedUser = db.userDao().getUser(user.id)
             if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
             if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
@@ -77,7 +79,7 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun searchByPhone(phone: String) =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             firebase.findByPhone(phone).onEach { user ->
                 updateLocalUserFromRemote(user, saveLocal = false, loadFullPhoto = false)
             }
@@ -87,7 +89,7 @@ class UserRepositoryImpl @Inject constructor(
         firebase.addUserStatusListener(getMyUID()!!, uid)
 
     override suspend fun getOrAddUser(uid: String, loadFullPhoto: Boolean): User =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             val userEntity = db.userDao().findByUid(uid)
             val user = mapper.entityToModel(userEntity) ?: firebase.getUser(uid)!!
             user.also { updateLocalUserFromRemote(user = it, loadFullPhoto = loadFullPhoto) }

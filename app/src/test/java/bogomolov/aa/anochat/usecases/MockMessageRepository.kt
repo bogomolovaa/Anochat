@@ -35,9 +35,7 @@ class MockMessageRepository(
     }
 
     override suspend fun sendMessage(message: Message, uid: String): String {
-        runBlocking {
-            remoteUseCases.receiveMessage(message, myUid) {}
-        }
+        remoteUseCases.receiveMessage(message, myUid) {}
         return message.messageId
     }
 
@@ -75,7 +73,7 @@ class MockMessageRepository(
         message: Message,
         uid: String,
         convert: (ByteArray) -> ByteArray
-    ){
+    ) {
         attachment = convert(getAttachment())
     }
 

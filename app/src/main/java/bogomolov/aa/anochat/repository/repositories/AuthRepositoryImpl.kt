@@ -28,12 +28,13 @@ private const val TAG = "AuthRepositoryImpl"
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val keyValueStore: KeyValueStore,
-    private val firebase: Firebase
+    private val firebase: Firebase,
+    private val dispatcher: CoroutineDispatcher
 ) : AuthRepository {
     private var phoneVerificationId: String? = null
 
     override suspend fun signOut() {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             firebase.setOffline()
             FirebaseAuth.getInstance().signOut()
         }
@@ -42,7 +43,7 @@ class AuthRepositoryImpl @Inject constructor(
     override fun isSignedIn() = FirebaseAuth.getInstance().currentUser?.uid != null
 
     override suspend fun updateSettings(settings: Settings) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             keyValueStore.setValue(Settings.NOTIFICATIONS, settings.notifications)
             keyValueStore.setValue(Settings.SOUND, settings.sound)
             keyValueStore.setValue(Settings.VIBRATION, settings.vibration)
@@ -51,7 +52,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getSettings() =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             Settings(
                 notifications = keyValueStore.getBooleanValue(Settings.NOTIFICATIONS) ?: true,
                 sound = keyValueStore.getBooleanValue(Settings.SOUND) ?: true,
@@ -65,7 +66,7 @@ class AuthRepositoryImpl @Inject constructor(
         code: String,
         phoneVerification: PhoneVerification
     ) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             val credential = PhoneAuthProvider.getCredential(phoneVerificationId!!, code)
             signIn(phoneNumber, credential, phoneVerification)
         }
@@ -76,7 +77,7 @@ class AuthRepositoryImpl @Inject constructor(
         getActivity: () -> Activity,
         phoneVerification: PhoneVerification,
     ) = coroutineScope {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
 
                 override fun onVerificationCompleted(credential: PhoneAuthCredential) {
