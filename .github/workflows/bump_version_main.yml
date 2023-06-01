@@ -35,7 +35,7 @@ jobs:
             
         - name: Commit and push changes
           run: |
-            git config user.name github-actions
-            git config user.email github-actions@github.com
-            git commit -am "Bump version ${{ steps.version.outputs.version }}"
+            git config user.name bogomolovaa
+            git config user.email alllexander@gmail.com
+            git commit -am "Bump version to ${{ steps.version.outputs.version }}"
             git push origin HEAD
