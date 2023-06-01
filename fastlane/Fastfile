@@ -1,0 +1,63 @@
+# update_fastlane
+
+default_platform(:android)
+
+platform :android do
+  desc "Runs all the tests"
+  lane :test do
+    gradle(task: "test")
+  end
+  
+  desc "Submit a new Build to Firebase App Distribution"
+  lane :build_and_deploy_firebase do |options|
+    deploy_firebase(appId: ENV["FIREBASE_APP_ID"], version: options[:version])
+
+    versionName = get_version_name(
+        gradle_file_path:"app/build.gradle",
+        ext_constant_name:"versionName"
+    )
+    message = "Anochat v#{versionName} uploaded to Firebase App Distribution\nhttps://appdistribution.firebase.dev/i/971d876da0a6e4f2"
+    notify_telegram(message: message)
+  end
+
+  desc "Prepare and upload APK to Firebase App Distribution"
+    private_lane :deploy_firebase do |options|
+      build(build_flavor:options[:build_flavor], build_task:'assemble', version:options[:version])
+      firebase_app_distribution(
+                        app: options[:appId],
+                        release_notes: "release notes",
+                        groups: ENV["FIREBASE_APP_DISTRIBUTION_GROUPS"],
+                        firebase_cli_path: ENV["FIREBASE_CLI_PATH"] # for pipeline
+                    )
+  end
+
+
+  desc "Build the APK or Bundle"
+  private_lane :build do |options|
+    #update_app_version(version:options[:version])
+    build_flavor = options[:build_flavor] || ""
+    build_task = "clean "
+    build_task += options[:build_task] || "bundle"
+    gradle(
+      task: build_task,
+      flavor: build_flavor,
+      build_type: "Release"
+    )
+  end
+
+  desc "Send message to Telegram channel"
+  private_lane :notify_telegram do |options|
+      telegram(
+         token: ENV['TELEGRAM_BOT_TOKEN'],
+         text: options[:message],
+         chat_id: ENV['TELEGRAM_CHAT_ID']
+      )
+    end
+
+  desc "Update app module version"
+  private_lane :update_app_version do |options|
+      increment_version_code(gradle_file_path: "app/build.gradle")
+      android_set_version_name(version_name: "#{options[:version]}",gradle_file: "app/build.gradle")
+  end
+
+end
