@@ -23,7 +23,7 @@ object ProvidesModule {
             application,
             AppDatabase::class.java,
             DB_NAME
-        ).addMigrations(MIGRATION).build() //.fallbackToDestructiveMigration()
+        ).addMigrations(MIGRATION).build()
 
     @Provides
     fun providesContext(application: Application): Context = application
