@@ -16,7 +16,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 2023.6.1
-        versionName "18"
+        versionName "2023.6.1"
         multiDexEnabled true
         javaCompileOptions {
             annotationProcessorOptions {
