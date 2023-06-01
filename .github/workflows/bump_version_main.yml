@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Checkout code
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
 
         - name: Get next version name
           uses: reecetech/version-increment@2023.4.1
@@ -35,7 +35,7 @@ jobs:
             
         - name: Commit and push changes
           run: |
-            git config user.email "alllexander@gmail.com"
-            git config user.name "bogomolovaa"
-            git commit -am "Bump version code and change version name"
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git commit -am "Bump version ${{ steps.version.outputs.version }}"
             git push origin HEAD
