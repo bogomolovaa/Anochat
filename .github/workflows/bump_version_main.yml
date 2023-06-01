@@ -30,8 +30,8 @@ jobs:
           uses: chkfung/android-version-actions@v1.2.1
           with:
             gradlePath: app/build.gradle
-            versionCode: ${{steps.version.outputs.version}}
-            versionName: ${{env.VERSION_CODE}}
+            versionCode: ${{env.VERSION_CODE}}
+            versionName: ${{steps.version.outputs.version}}
             
         - name: Commit and push changes
           run: |
