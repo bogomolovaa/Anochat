@@ -32,3 +32,10 @@ jobs:
             gradlePath: app/build.gradle
             versionCode: ${{steps.version.outputs.version}}
             versionName: ${{env.VERSION_CODE}}
+            
+        - name: Commit and push changes
+          run: |
+            git config user.email "alllexander@gmail.com"
+            git config user.name "bogomolovaa"
+            git commit -am "Bump version code and change version name"
+            git push origin HEAD
