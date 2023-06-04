@@ -46,6 +46,8 @@ jobs:
     - name: Write GOOGLE_SERVICES_JSON
       run: |
         echo -n "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -w 0 -d > app/google-services.json
+        echo "FIREBASE_APP_DISTRIBUTION_GROUPS:"
+        echo "${{ env.FIREBASE_APP_DISTRIBUTION_GROUPS }}"
         
     - name: npm install firebase-tools
       run: |
