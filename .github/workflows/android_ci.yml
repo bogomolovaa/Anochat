@@ -39,11 +39,12 @@ jobs:
         
     - name: Write KEYSTORE_PROPERTIES
       run: |
-        echo "${{ secrets.KEYSTORE_PROPERTIES }}" > keystore.properties
+        echo -n "${{ secrets.KEYSTORE_PROPERTIES }}" | base64 -w 0 -d > keystore.properties
+         cat keystore.properties
         
     - name: Write GOOGLE_SERVICES_JSON
       run: |
-        echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > app/google-services.json
+        echo -n "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -w 0 -d > app/google-services.json
         cat app/google-services.json
         
     - name: npm install firebase-tools
