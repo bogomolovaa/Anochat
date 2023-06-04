@@ -1,9 +1,10 @@
 name: Android CI
 
 on:
-  push:
-    branches:
-      - master
+  workflow_run:
+    workflows: ["Bump version"]
+    types:
+      - completed
 
 jobs:
   build_and_deploy:
@@ -15,6 +16,7 @@ jobs:
       TELEGRAM_BOT_TOKEN: ${{secrets.TELEGRAM_BOT_TOKEN}}
       TELEGRAM_CHAT_ID: ${{secrets.TELEGRAM_CHAT_ID}}
       FIREBASE_APP_ID: ${{secrets.FIREBASE_APP_ID}}
+      
 
     steps:
     - name: Checkout code
@@ -40,12 +42,10 @@ jobs:
     - name: Write KEYSTORE_PROPERTIES
       run: |
         echo -n "${{ secrets.KEYSTORE_PROPERTIES }}" | base64 -w 0 -d > keystore.properties
-         cat keystore.properties
         
     - name: Write GOOGLE_SERVICES_JSON
       run: |
         echo -n "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -w 0 -d > app/google-services.json
-        cat app/google-services.json
         
     - name: npm install firebase-tools
       run: |
