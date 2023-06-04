@@ -43,7 +43,8 @@ jobs:
         
     - name: Write GOOGLE_SERVICES_JSON
       run: |
-        echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > app/google-services.json     
+        echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > app/google-services.json
+        cat app/google-services.json
         
     - name: npm install firebase-tools
       run: |
