@@ -100,7 +100,6 @@ open class MessageUseCases @Inject constructor(
         }
     }
 
-
     private suspend fun sendPublicKey(publicKey: String?, uid: String, initiator: Boolean) {
         if (publicKey != null) {
             Log.d(TAG, "send publicKey for $uid")
