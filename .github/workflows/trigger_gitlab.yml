@@ -1,5 +1,11 @@
 name: trigger gitlab
-on: [push]
+
+on:
+  workflow_run:
+    workflows: ["Bump version"]
+    types:
+      - completed
+      
 jobs:
 
   build:
