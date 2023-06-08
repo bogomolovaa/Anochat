@@ -10,4 +10,4 @@ jobs:
       uses: appleboy/gitlab-ci-action@master
       with:
         token: ${{ secrets.GITLAB_TOKEN }}
-        project_id: 46693370
+        project_id: glpat-ke8ykyvAUqPSisnN_tp5
