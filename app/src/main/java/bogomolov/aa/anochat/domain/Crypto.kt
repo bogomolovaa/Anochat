@@ -90,6 +90,7 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
             //val params = paramGen.generateParameters().getParameterSpec(DHParameterSpec::class.java)
             //keyGen.initialize(params)
 
+            
             //Use fixed
             val g = BigInteger(
                 "7961C6D7913FDF8A034593294FA52D6F8354E9EDFE3EDC8EF082D36662D69DFE8CA7DC7480121C98B9774DFF915FB710D79E1BCBA68C0D429CD6B9AD73C0EF20",
