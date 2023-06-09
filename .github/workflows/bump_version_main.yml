@@ -14,12 +14,12 @@ jobs:
             
         - name: Get next version
           run: |
-            full_version=$(grep -o "versionName\s\+.*" app/build.gradle | awk '{ print $2 }' | tr -d \''"\')
+            full_version=$(grep -o "versionName" app/build.gradle.kts | awk '{ print $3 }' | tr -d \''"\')
             IFS='.' read -r -a array <<< "$full_version"
             version_name="$(date '+%Y.%-m.')"
             version_name+=$((array[2] + 1))
             echo "VERSION_NAME=$version_name" >> $GITHUB_ENV
-            version_code=$(grep "versionCode\s\+.*" app/build.gradle | awk '{print $2}' | tr -d '\n')
+            version_code=$(grep "versionCode" app/build.gradle.kts | awk '{print $3}' | tr -d '\n')
             version_code=$((version_code + 1))
             echo "VERSION_CODE=$version_code" >> $GITHUB_ENV
             tag_name="v${version_name}"
