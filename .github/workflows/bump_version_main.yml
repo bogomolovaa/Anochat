@@ -14,15 +14,15 @@ jobs:
             
         - name: Get next version
           run: |
-            full_versionGrep=$(grep -o "versionName" app/build.gradle.kts)
+            full_versionGrep=$(grep -o "versionName.*" app/build.gradle.kts)
             echo "full_versionGrep:$full_versionGrep"
-            full_versionAwk1=$(grep -o "versionName" app/build.gradle.kts | awk '{ print $1 }')
+            full_versionAwk1=$(grep -o "versionName.*" app/build.gradle.kts | awk '{ print $1 }')
             echo "full_versionAwk1:$full_versionAwk1"
-            full_versionAwk2=$(grep -o "versionName" app/build.gradle.kts | awk '{ print $2 }')
+            full_versionAwk2=$(grep -o "versionName.*" app/build.gradle.kts | awk '{ print $2 }')
             echo "full_versionAwk2:$full_versionAwk2"
-            full_versionAwk3=$(grep -o "versionName" app/build.gradle.kts | awk '{ print $3 }')
+            full_versionAwk3=$(grep -o "versionName.*" app/build.gradle.kts | awk '{ print $3 }')
             echo "full_versionAwk3:$full_versionAwk3"
-            full_version=$(grep -o "versionName" app/build.gradle.kts | awk '{ print $3 }' | tr -d \''"\')
+            full_version=$(grep -o "versionName.*" app/build.gradle.kts | awk '{ print $3 }' | tr -d \''"\')
             echo "full_version:$full_version"
             IFS='.' read -r -a array <<< "$full_version"
             echo "array0:${array[0]}"
@@ -33,7 +33,7 @@ jobs:
             version_name+=$((array[2] + 1))
             echo "version_name2:$version_name"
             echo "VERSION_NAME=$version_name" >> $GITHUB_ENV
-            version_code=$(grep "versionCode" app/build.gradle.kts | awk '{print $3}' | tr -d '\n')
+            version_code=$(grep "versionCode.*" app/build.gradle.kts | awk '{print $3}' | tr -d '\n')
             version_code=$((version_code + 1))
             echo "VERSION_CODE=$version_code" >> $GITHUB_ENV
             tag_name="v${version_name}"
