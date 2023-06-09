@@ -13,7 +13,7 @@ platform :android do
     deploy_firebase(appId: ENV["FIREBASE_APP_ID"], version: options[:version])
 
     versionName = get_version_name(
-        gradle_file_path:"app/build.gradle",
+        gradle_file_path:"app/build.gradle.kts",
         ext_constant_name:"versionName"
     )
     message = "Anochat v#{versionName} uploaded to Firebase App Distribution\nhttps://appdistribution.firebase.dev/i/971d876da0a6e4f2"
@@ -34,7 +34,6 @@ platform :android do
 
   desc "Build the APK or Bundle"
   private_lane :build do |options|
-    #update_app_version(version:options[:version])
     build_flavor = options[:build_flavor] || ""
     build_task = "clean "
     build_task += options[:build_task] || "bundle"
@@ -53,11 +52,5 @@ platform :android do
          chat_id: ENV['TELEGRAM_CHAT_ID']
       )
     end
-
-  desc "Update app module version"
-  private_lane :update_app_version do |options|
-      increment_version_code(gradle_file_path: "app/build.gradle")
-      android_set_version_name(version_name: "#{options[:version]}",gradle_file: "app/build.gradle")
-  end
 
 end
