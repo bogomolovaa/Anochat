@@ -70,27 +70,26 @@ android {
 }
 
 dependencies {
-    implementation("androidx.exifinterface:exifinterface:1.3.2")
-    kapt("androidx.room:room-compiler:2.3.0")
+    implementation("androidx.exifinterface:exifinterface:1.3.6")
 
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("androidx.paging:paging-runtime-ktx:3.1.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
 
     implementation("androidx.work:work-runtime-ktx:2.5.0")
-    implementation("androidx.preference:preference-ktx:1.1.1")
+    implementation("androidx.preference:preference-ktx:1.2.0")
     implementation("androidx.room:room-runtime:2.3.0")
+    kapt("androidx.room:room-compiler:2.3.0")
     implementation("com.android.support:multidex:1.0.3")
     implementation("androidx.emoji:emoji-appcompat:1.1.0")
     implementation("androidx.emoji:emoji-bundled:1.1.0")
-    implementation("com.google.android.material:material:1.4.0-rc01")
+    implementation("com.google.android.material:material:1.9.0")
 
     implementation("com.google.firebase:firebase-auth:22.0.0")
     implementation("com.google.firebase:firebase-database-ktx:20.2.2")
@@ -99,7 +98,6 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx:20.2.0")
     implementation("com.google.firebase:firebase-crashlytics-ktx:18.3.7")
 
-    implementation("androidx.annotation:annotation:1.2.0")
     implementation("com.vanniktech:emoji-ios:0.6.0")
     implementation("com.arthenica:mobile-ffmpeg-min-gpl:4.4.LTS")
 
@@ -109,10 +107,10 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.44")
     kapt("com.google.dagger:hilt-compiler:2.44")
 
-    implementation("com.google.android.exoplayer:exoplayer-core:2.14.1")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.14.1")
+    implementation("com.google.android.exoplayer:exoplayer-core:2.18.7")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.18.7")
 
-    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.7")
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.10")
 
     implementation("androidx.compose.ui:ui:1.0.0")
     // Tooling support (Previews, etc.)
@@ -132,8 +130,8 @@ dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0-alpha03")
 
 
-    testImplementation("junit:junit:4.13")
-    testImplementation("org.mockito:mockito-core:3.7.7")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1") {
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-debug")
