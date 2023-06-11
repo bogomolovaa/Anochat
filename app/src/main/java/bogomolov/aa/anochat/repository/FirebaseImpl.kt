@@ -5,10 +5,9 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.google.firebase.iid.FirebaseInstanceId
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -287,18 +286,17 @@ class FirebaseImpl : Firebase {
     }
 
     override suspend fun updateToken(): String? = suspendCoroutine {
-        FirebaseInstanceId.getInstance().instanceId
-            .addOnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    Log.w(TAG, "getToken() failed", task.exception)
-                    it.resume(null)
-                } else {
-                    val newToken = task.result!!.token
-                    Log.d(TAG, "token $newToken")
-                    token = newToken
-                    it.resume(newToken)
-                }
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w(TAG, "getToken() failed", task.exception)
+                it.resume(null)
+            } else {
+                val newToken = task.result
+                Log.d(TAG, "token $newToken")
+                token = newToken
+                it.resume(newToken)
             }
+        }
     }
 
     private fun userFromRef(snapshot: DataSnapshot): User {

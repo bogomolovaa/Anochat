@@ -48,19 +48,24 @@ fun UsersView(uri: String? = null) {
     }
 
     val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel)
+    Content(state.value, viewModel){
+        navController?.popBackStack()
+    }
 }
 
 @Preview
 @Composable
-private fun Content(state: ContactsUiState = testContactsUiState, viewModel: UsersViewModel? = null) {
-    val navController = LocalNavController.current
+private fun Content(
+    state: ContactsUiState = testContactsUiState,
+    viewModel: UsersViewModel? = null,
+    doBack: () -> Unit = {}
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.contacts)) },
                 navigationIcon = {
-                    IconButton(onClick = { navController?.popBackStack() }) {
+                    IconButton(onClick = { doBack() }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },

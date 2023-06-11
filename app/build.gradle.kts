@@ -9,6 +9,7 @@ plugins {
     id("kotlin-kapt")
     id("com.google.gms.google-services")
     id("com.google.dagger.hilt.android")
+    id("com.google.firebase.crashlytics")
 }
 
 val keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -77,10 +78,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
-    implementation("androidx.cardview:cardview:1.0.0")
-    implementation("androidx.recyclerview:recyclerview:1.3.0")
     implementation("androidx.paging:paging-runtime-ktx:3.1.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
@@ -93,11 +91,14 @@ dependencies {
     implementation("androidx.emoji:emoji-appcompat:1.1.0")
     implementation("androidx.emoji:emoji-bundled:1.1.0")
     implementation("com.google.android.material:material:1.4.0-rc01")
-    implementation("com.google.firebase:firebase-auth:19.2.0")
-    implementation("com.google.firebase:firebase-database-ktx:19.2.1")
-    implementation("com.google.firebase:firebase-messaging:20.1.0")
-    implementation("com.google.firebase:firebase-analytics:17.2.2")
-    implementation("com.google.firebase:firebase-storage-ktx:19.1.1")
+
+    implementation("com.google.firebase:firebase-auth:22.0.0")
+    implementation("com.google.firebase:firebase-database-ktx:20.2.2")
+    implementation("com.google.firebase:firebase-messaging:23.1.2")
+    implementation("com.google.firebase:firebase-analytics:21.3.0")
+    implementation("com.google.firebase:firebase-storage-ktx:20.2.0")
+    implementation("com.google.firebase:firebase-crashlytics-ktx:18.3.7")
+
     implementation("androidx.annotation:annotation:1.2.0")
     implementation("com.vanniktech:emoji-ios:0.6.0")
     implementation("com.arthenica:mobile-ffmpeg-min-gpl:4.4.LTS")

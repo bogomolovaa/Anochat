@@ -15,7 +15,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.iid.FirebaseInstanceId
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -120,7 +120,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     private suspend fun signIn(phoneNumber: String, credential: PhoneAuthCredential): String? {
         val uid = userSignIn(credential) ?: return null
-        if (uid != keyValueStore.getMyUID()) FirebaseInstanceId.getInstance().deleteInstanceId()
+        if (uid != keyValueStore.getMyUID()) FirebaseMessaging.getInstance().deleteToken()
         val token = firebase.updateToken() ?: return null
         val myRef = FirebaseDatabase.getInstance().reference
         myRef.child("user_tokens").child(uid)

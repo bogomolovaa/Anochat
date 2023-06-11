@@ -170,7 +170,6 @@ fun MessageCompose(
     onSwipe: () -> Unit = {},
     playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> }
 ) {
-    println("MessageCompose data $data")
     if (data == null) return
     var windowWidth by remember { mutableStateOf(0) }
     Column(

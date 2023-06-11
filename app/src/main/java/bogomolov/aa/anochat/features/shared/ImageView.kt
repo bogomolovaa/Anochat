@@ -95,7 +95,7 @@ fun ImageView(imageName: String, fromGallery: Boolean) {
                             }
                         )
                     }
-                    .offset { IntOffset(left.value, top.value).also { println("IntOffset $it") } }
+                    .offset { IntOffset(left.value, top.value) }
                     .scale(scale.value),
                 bitmap = imageBitmap,
                 contentScale = ContentScale.FillWidth,
