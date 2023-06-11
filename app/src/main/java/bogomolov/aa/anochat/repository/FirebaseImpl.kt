@@ -100,33 +100,34 @@ class FirebaseImpl : Firebase {
         })
     }
 
-    override suspend fun receiveUsersByPhones(phones: List<String>): List<User> = suspendCancellableCoroutine {
-        val phonesMap = HashMap<String, String>()
-        for (phone in phones) phonesMap[phone] = ""
-        val ref = FirebaseDatabase.getInstance().reference.child("requests").push()
-        ref.setValue(phonesMap)
-        val requestKey = ref.key
-        val respRef = FirebaseDatabase.getInstance().getReference("responses/$requestKey")
-        respRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (snapshot.value != null) {
-                    val users = ArrayList<User>()
-                    for (child in snapshot.children) {
-                        val user = userFromRef(child)
-                        users.add(user)
+    override suspend fun receiveUsersByPhones(phones: List<String>): List<User> =
+        suspendCancellableCoroutine {
+            val phonesMap = HashMap<String, String>()
+            for (phone in phones) phonesMap[phone] = ""
+            val ref = FirebaseDatabase.getInstance().reference.child("requests").push()
+            ref.setValue(phonesMap)
+            val requestKey = ref.key
+            val respRef = FirebaseDatabase.getInstance().getReference("responses/$requestKey")
+            respRef.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.value != null) {
+                        val users = ArrayList<User>()
+                        for (child in snapshot.children) {
+                            val user = userFromRef(child)
+                            users.add(user)
+                        }
+                        respRef.removeValue()
+                        respRef.removeEventListener(this)
+                        it.resume(users)
                     }
-                    respRef.removeValue()
-                    respRef.removeEventListener(this)
-                    it.resume(users)
                 }
-            }
 
-            override fun onCancelled(p0: DatabaseError) {
-                Log.w(TAG, "Firebase request cancelled: $p0")
-                it.resume(listOf())
-            }
-        })
-    }
+                override fun onCancelled(p0: DatabaseError) {
+                    Log.w(TAG, "Firebase request cancelled: $p0")
+                    it.resume(listOf())
+                }
+            })
+        }
 
     override fun sendReport(messageId: String, received: Int, viewed: Int) {
         Log.i(TAG, "sendReport messageId $messageId")
@@ -156,7 +157,7 @@ class FirebaseImpl : Firebase {
         val ref = FirebaseDatabase.getInstance().reference.child("messages").push()
         ref.setValue(
             mapOf(
-                "message" to if (message != null) message.text + message.time.toString() else null, //text end - temporary storage for timestamp
+                "message" to message?.let { it.text + it.time.toString() }, //text end - temporary storage for timestamp
                 "reply" to message?.replyMessageId,
                 "image" to (message?.image ?: message?.video), //temporary storage for video
                 "audio" to message?.audio,

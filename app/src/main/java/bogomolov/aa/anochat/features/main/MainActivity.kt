@@ -23,6 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.work.*
+import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.features.contacts.UpdateWorker
 import bogomolov.aa.anochat.features.contacts.list.UsersView
@@ -37,13 +38,15 @@ import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.features.shared.ImageView
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.VideoView
+import bogomolov.aa.anochat.repository.Firebase
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-val LocalNavController = compositionLocalOf<NavHostController?> { null}
+val LocalNavController = compositionLocalOf<NavHostController?> { null }
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -53,6 +56,9 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     internal lateinit var userUseCases: UserUseCases
+
+    @Inject
+    lateinit var firebase: Firebase
 
     @ExperimentalMaterialApi
     @ExperimentalComposeUiApi
@@ -76,7 +82,9 @@ class MainActivity : AppCompatActivity() {
                         composable("conversations") { ConversationsView() }
                         composable(
                             "deepLink/{id}",
-                            deepLinks = listOf(navDeepLink { uriPattern = "anochat://anochat/conversation/{id}" }),
+                            deepLinks = listOf(navDeepLink {
+                                uriPattern = "anochat://anochat/conversation/{id}"
+                            }),
                         ) {
                             val id = it.arguments?.getString("id")?.toLong()!!
                             navController.navigate("conversation?id=$id") { popUpTo("conversations") }
@@ -143,10 +151,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onResume() {
+        super.onResume()
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancelAll()
+        (application as AnochatAplication).inBackground = false
+        firebase.setOnline()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        (application as AnochatAplication).inBackground = true
+        firebase.setOffline()
     }
 
     private fun addSignInListener(navController: NavController) {
@@ -155,7 +171,9 @@ class MainActivity : AppCompatActivity() {
                 "image?name={name}&gallery={gallery}", "video?uri={uri}" -> setFullScreen()
                 else -> removeFullScreen()
             }
-            if (destination.route != "login" && !authRepository.isSignedIn()) navigateToSignIn(controller)
+            if (destination.route != "login" && !authRepository.isSignedIn()) navigateToSignIn(
+                controller
+            )
         }
     }
 

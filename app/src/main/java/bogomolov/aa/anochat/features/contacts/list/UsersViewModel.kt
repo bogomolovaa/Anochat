@@ -4,7 +4,7 @@ import androidx.lifecycle.viewModelScope
 import bogomolov.aa.anochat.domain.ConversationUseCases
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.domain.entity.User
-import bogomolov.aa.anochat.domain.entity.isNotValidPhone
+import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import bogomolov.aa.anochat.features.shared.mvi.Event
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,13 +46,13 @@ class UsersViewModel
         currentState.search?.let {
             query?.let {
                 viewModelScope.launch {
-                    if (isNotValidPhone(query)) {
-                        val searchedUsers = usersList?.filter { it.name.startsWith(query) }
-                        setState { copy(search = search?.copy(text = query), users = searchedUsers) }
-                    } else {
+                    if (isValidPhone(query)) {
                         setState { copy(search = search?.copy(text = query), loading = true) }
                         val searchedUsers = userUseCases.searchByPhone(query)
                         setState { copy(loading = false, users = searchedUsers) }
+                    } else {
+                        val searchedUsers = usersList?.filter { it.name.startsWith(query) }
+                        setState { copy(search = search?.copy(text = query), users = searchedUsers) }
                     }
                 }
             } ?: kotlin.run {
@@ -75,6 +75,11 @@ class UsersViewModel
 
 val testContactsUiState = ContactsUiState(
     users = listOf(
+        User(phone = "+12345671", name = "name1", status = "status1"),
+        User(phone = "+12345672", name = "name2", status = "status2"),
+        User(phone = "+12345673", name = "name3", status = "status3"),
+        User(phone = "+12345674", name = "name4", status = "status4"),
+        User(phone = "+12345675", name = "name5", status = "status5"),
         User(phone = "+12345671", name = "name1", status = "status1"),
         User(phone = "+12345672", name = "name2", status = "status2"),
         User(phone = "+12345673", name = "name3", status = "status3"),

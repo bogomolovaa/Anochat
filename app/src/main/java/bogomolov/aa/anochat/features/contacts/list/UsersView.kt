@@ -6,6 +6,7 @@ import android.provider.ContactsContract
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -130,10 +131,12 @@ private fun Content(
                         .padding(top = 4.dp)
                         .fillMaxWidth()
                 )
-                Column(
+                LazyColumn(
                     modifier = Modifier.padding(top = if (!state.loading) 8.dp else 0.dp)
                 ) {
-                    state.users?.forEach { UserRow(it, viewModel) }
+                    items(count = state.users?.size ?: 0) {
+                        state.users?.get(it)?.let { UserRow(it, viewModel) }
+                    }
                 }
             }
         }

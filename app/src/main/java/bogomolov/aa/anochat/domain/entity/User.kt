@@ -9,6 +9,4 @@ data class User(
     val status: String? = null
 )
 
-fun isNotValidPhone(string: String) = string.contains("[^+0-9]".toRegex())
-
-fun isValidPhone(string: String) = !isNotValidPhone(string) && string.length >= 8
+fun isValidPhone(string: String) = !string.contains("[^+0-9]".toRegex()) && string.length >= 8
