@@ -82,10 +82,11 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
 
-    implementation("androidx.work:work-runtime-ktx:2.5.0")
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
     implementation("androidx.preference:preference-ktx:1.2.0")
-    implementation("androidx.room:room-runtime:2.3.0")
-    kapt("androidx.room:room-compiler:2.3.0")
+    implementation("androidx.room:room-runtime:2.5.1")
+    implementation("androidx.room:room-paging:2.5.1")
+    kapt("androidx.room:room-compiler:2.5.1")
     implementation("com.android.support:multidex:1.0.3")
     implementation("androidx.emoji:emoji-appcompat:1.1.0")
     implementation("androidx.emoji:emoji-bundled:1.1.0")
@@ -105,7 +106,7 @@ dependencies {
     implementation("androidx.hilt:hilt-work:1.0.0")
     kapt("androidx.hilt:hilt-compiler:1.0.0")
     implementation("com.google.dagger:hilt-android:2.44")
-    kapt("com.google.dagger:hilt-compiler:2.44")
+    kapt("com.google.dagger:hilt-compiler:2.46.1")
 
     implementation("com.google.android.exoplayer:exoplayer-core:2.18.7")
     implementation("com.google.android.exoplayer:exoplayer-ui:2.18.7")
