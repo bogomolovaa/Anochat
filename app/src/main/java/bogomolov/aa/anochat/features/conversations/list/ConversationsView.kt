@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.main.LocalNavController
@@ -47,12 +46,16 @@ fun ConversationsView() {
 }
 
 @Composable
-private fun Content(state: ConversationsUiState = testConversationsUiState, viewModel: ConversationListViewModel?) {
+private fun Content(
+    state: ConversationsUiState = testConversationsUiState,
+    viewModel: ConversationListViewModel?
+) {
     var showMenu by remember { mutableStateOf(false) }
     val navController = LocalNavController.current
-    val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (it) navController?.navigate("users")
-    }
+    val contactsPermission =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+            if (it) navController?.navigate("users")
+        }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -91,8 +94,9 @@ private fun Content(state: ConversationsUiState = testConversationsUiState, view
                 )
             }
         },
-        content = {
+        content = { padding ->
             Column(
+                modifier = Modifier.padding(padding)
             ) {
                 if (state.pagingDataFlow != null) {
                     val lazyPagingItems = state.pagingDataFlow.collectAsLazyPagingItems()
@@ -102,7 +106,9 @@ private fun Content(state: ConversationsUiState = testConversationsUiState, view
                             .padding(top = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(lazyPagingItems) { ConversationCard(it!!, viewModel) }
+                        items(count = lazyPagingItems.itemCount) { index ->
+                            lazyPagingItems[index]?.let { ConversationCard(it, viewModel) }
+                        }
                     }
                 }
             }
@@ -148,7 +154,8 @@ private fun ConversationCard(
             }
         }
 
-        val isNew = conversation.lastMessage?.isMine == false && conversation.lastMessage?.viewed == 0
+        val isNew =
+            conversation.lastMessage?.isMine == false && conversation.lastMessage?.viewed == 0
         Row(modifier = Modifier.fillMaxWidth()) {
             Box(contentAlignment = Alignment.TopEnd) {
                 val imageBitmap =

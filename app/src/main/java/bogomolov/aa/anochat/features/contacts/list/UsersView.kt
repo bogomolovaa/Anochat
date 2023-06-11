@@ -48,7 +48,7 @@ fun UsersView(uri: String? = null) {
     }
 
     val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel){
+    Content(state.value, viewModel) {
         navController?.popBackStack()
     }
 }
@@ -71,9 +71,11 @@ private fun Content(
                 },
             )
         },
-        content = {
+        content = { padding ->
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxWidth()
             ) {
                 if (state.loading) LinearProgressIndicator(
                     modifier = Modifier

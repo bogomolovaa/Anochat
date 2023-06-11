@@ -58,9 +58,11 @@ private fun Content(state: SignInUiState = testSignInUiState, getActivity: (() -
                     )
             }
         },
-        content = {
+        content = { padding ->
             Box(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxWidth()
             ) {
                 if (state.state == LoginState.PHONE_SUBMITTED || state.state == LoginState.CODE_SUBMITTED)
                     LinearProgressIndicator(
@@ -156,7 +158,7 @@ private fun fabOnClick(viewModel: SignInViewModel, getActivity: (() -> Activity)
         }
         LoginState.VERIFICATION_ID_RECEIVED, LoginState.NOT_LOGGED ->
             viewModel.submitSmsCode()
-        else ->{
+        else -> {
         }
     }
 }

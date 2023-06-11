@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.getBitmap
@@ -56,10 +55,11 @@ private fun Content(state: UserUiState = testUserUiState) {
                 },
             )
         },
-        content = {
+        content = { padding ->
             val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
+                    .padding(padding)
                     .fillMaxWidth()
                     .verticalScroll(scrollState)
             ) {
@@ -104,7 +104,8 @@ private fun ImagesRow(pagingFlow: Flow<PagingData<String>>) {
             .padding(start = 5.dp, top = 5.dp, end = 5.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(lazyPagingItems) { image ->
+        items(count = lazyPagingItems.itemCount) { index ->
+            val image = lazyPagingItems[index]
             Card {
                 val imageBitmap = getBitmapFromGallery(image, LocalContext.current, 8)?.asImageBitmap()
                 if (imageBitmap != null)

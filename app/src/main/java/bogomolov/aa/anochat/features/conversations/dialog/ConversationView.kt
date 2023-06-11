@@ -35,7 +35,6 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.navigation.NavController
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.LocalNavController
@@ -64,7 +63,12 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
     val context = LocalContext.current
     LaunchedEffect(0) {
         viewModel.initConversation(conversationId)
-        if (uri != null) navigateToSendMediaFragment(viewModel = viewModel, context = context, uri = uri, navController = navController)
+        if (uri != null) navigateToSendMediaFragment(
+            viewModel = viewModel,
+            context = context,
+            uri = uri,
+            navController = navController
+        )
     }
 
     EventHandler(viewModel.events) {
@@ -110,9 +114,11 @@ private fun Content(
                 }
             )
         },
-        content = {
+        content = { padding ->
             Box(
-                Modifier.fillMaxSize(),
+                Modifier
+                    .padding(padding)
+                    .fillMaxSize(),
                 contentAlignment = Alignment.BottomEnd
             ) {
                 Column(
@@ -270,7 +276,9 @@ private fun MessagesList(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             reverseLayout = true,
         ) {
-            items(lazyPagingItems) { ShowMessage(it, playingState, viewModel) }
+            items(count = lazyPagingItems.itemCount) { index ->
+                ShowMessage(lazyPagingItems[index], playingState, viewModel)
+            }
         }
     }
 }
