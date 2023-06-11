@@ -11,4 +11,4 @@ data class User(
 
 fun isNotValidPhone(string: String) = string.contains("[^+0-9]".toRegex())
 
-fun isValidPhone(string: String) = !isNotValidPhone(string)
+fun isValidPhone(string: String) = !isNotValidPhone(string) && string.length >= 8

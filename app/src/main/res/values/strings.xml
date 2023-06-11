@@ -19,6 +19,7 @@
     <string name="send_media_image">Send image</string>
     <string name="send_media_video">Send video</string>
     <string name="search">Search</string>
+    <string name="search_phone_placeholder">Find friend</string>
     <string name="sign_up">Sign up</string>
     <string name="select_file">Select a File to Upload</string>
     <string name="enter_message">Enter text</string>

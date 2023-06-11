@@ -58,7 +58,6 @@ class MockMessageRepository(
     }
 
     override suspend fun notifyAsNotReceived(messageId: String) {
-        println("message $messageId notifyAsNotReceived")
     }
 
     override suspend fun sendAttachment(

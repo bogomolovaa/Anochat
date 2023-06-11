@@ -10,11 +10,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -44,7 +47,10 @@ fun UsersView(uri: String? = null) {
         viewModel.loadContacts(getContactsPhones(context))
     }
     EventHandler(viewModel.events) {
-        if (it is NavigateConversationEvent) navController?.navigateToConversation(it.conversationId, uri)
+        if (it is NavigateConversationEvent) navController?.navigateToConversation(
+            it.conversationId,
+            uri
+        )
     }
 
     val state = viewModel.state.collectAsState()
@@ -60,10 +66,52 @@ private fun Content(
     viewModel: UsersViewModel? = null,
     doBack: () -> Unit = {}
 ) {
+    val focusRequester = remember { FocusRequester() }
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(id = R.string.contacts)) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (state.search == null) {
+                            Text(stringResource(id = R.string.contacts))
+                            Spacer(Modifier.weight(1f))
+                            IconButton(
+                                onClick = { viewModel?.search() }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Search,
+                                    contentDescription = "Search"
+                                )
+                            }
+                        } else {
+                            TextField(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .focusRequester(focusRequester),
+                                value = state.search.text,
+                                placeholder = { Text(stringResource(id = R.string.search_phone_placeholder)) },
+                                onValueChange = { viewModel?.search(it) },
+                                singleLine = true,
+                                colors = TextFieldDefaults.textFieldColors(
+                                    cursorColor = Color.White,
+                                    backgroundColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    disabledIndicatorColor = Color.Transparent
+                                ),
+                            )
+                            IconButton(
+                                onClick = { viewModel?.search(null) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "Clear"
+                                )
+                            }
+                            SideEffect {
+                                focusRequester.requestFocus()
+                            }
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { doBack() }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -94,7 +142,10 @@ private fun Content(
 
 
 @Composable
-private fun UserRow(user: User = testContactsUiState.users!!.first(), viewModel: UsersViewModel? = null) {
+private fun UserRow(
+    user: User = testContactsUiState.users!!.first(),
+    viewModel: UsersViewModel? = null
+) {
     Card(
         backgroundColor = Color.Black.copy(alpha = 0.0f),
         elevation = 0.dp,
