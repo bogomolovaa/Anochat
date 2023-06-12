@@ -80,6 +80,7 @@ private fun Content(state: SignInUiState = testSignInUiState, getActivity: (() -
                         modifier = Modifier
                             .padding(16.dp)
                             .fillMaxWidth(),
+                        singleLine = true,
                         label = {
                             if (phoneErrorMessage != null) {
                                 Text(phoneErrorMessage)
@@ -102,6 +103,7 @@ private fun Content(state: SignInUiState = testSignInUiState, getActivity: (() -
                                 .padding(16.dp)
                                 .fillMaxWidth()
                                 .focusRequester(focusRequester),
+                            singleLine = true,
                             label = {
                                 if (codeErrorMessage != null) {
                                     Text(codeErrorMessage)

@@ -12,7 +12,6 @@ import bogomolov.aa.anochat.repository.FileStore
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -118,27 +117,27 @@ class MessageRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun notifyAsReceived(messageId: String) {
+    override suspend fun notifyAsReceived(messageId: String, uid: String) {
         withContext(dispatcher) {
-            firebase.sendReport(messageId, 1, 0)
+            firebase.sendReport(messageId, uid, 1, 0)
         }
     }
 
-    override suspend fun notifyAsNotReceived(messageId: String) {
+    override suspend fun notifyAsNotReceived(messageId: String, uid: String) {
         withContext(dispatcher) {
-            firebase.sendReport(messageId, -1, 0)
+            firebase.sendReport(messageId, uid, -1, 0)
         }
     }
 
     override suspend fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean) {
         withContext(dispatcher) {
-            firebase.sendMessage(uid = uid, publicKey = publicKey, initiator = initiator)
+            firebase.sendKey(uid, publicKey, initiator)
         }
     }
 
-    override suspend fun notifyAsViewed(message: Message) {
+    override suspend fun notifyAsViewed(message: Message, uid: String) {
         withContext(dispatcher) {
-            firebase.sendReport(message.messageId, 1, 1)
+            firebase.sendReport(message.messageId, uid, 1, 1)
             db.messageDao().updateAsViewed(message.id)
         }
     }

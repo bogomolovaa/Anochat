@@ -7,7 +7,6 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 
 @Composable
 fun <T> EventHandler(uiEvents: Flow<T>, eventCollector: suspend (T) -> Unit) {

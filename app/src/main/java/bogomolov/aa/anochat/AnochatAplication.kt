@@ -2,22 +2,24 @@ package bogomolov.aa.anochat
 
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
-import androidx.lifecycle.*
 import androidx.work.Configuration
-import bogomolov.aa.anochat.repository.Firebase
+import bogomolov.aa.anochat.domain.MessageUseCases
+import bogomolov.aa.anochat.features.shared.AuthRepository
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @HiltAndroidApp
-class AnochatAplication: Application(), Configuration.Provider {
+class AnochatAplication : Application(), Configuration.Provider {
     var inBackground = true
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+
+    @Inject
+    internal lateinit var messageUseCases: MessageUseCases
+
+    @Inject
+    internal lateinit var authRepository: AuthRepository
 
     override fun getWorkManagerConfiguration() =
         Configuration.Builder()
@@ -27,5 +29,6 @@ class AnochatAplication: Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        authRepository.initAuthListener(messageUseCases)
     }
 }

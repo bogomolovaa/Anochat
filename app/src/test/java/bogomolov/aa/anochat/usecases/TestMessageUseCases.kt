@@ -10,10 +10,13 @@ import bogomolov.aa.anochat.domain.repositories.MessageRepository
 import bogomolov.aa.anochat.domain.repositories.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito
+import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 
 private const val UID1 = "uid1"
@@ -68,7 +71,8 @@ class TestMessageUseCases {
             conversationRepository,
             userRepository,
             keyValueStore,
-            Crypto(keyValueStore)
+            Crypto(keyValueStore),
+            mock()
         )
     }
 }

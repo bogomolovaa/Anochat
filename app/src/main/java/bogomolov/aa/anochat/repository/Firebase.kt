@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.repository
 
+import bogomolov.aa.anochat.domain.MessagesListener
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
 import kotlinx.coroutines.flow.Flow
@@ -21,14 +22,28 @@ interface Firebase {
     fun updatePhoto(uid: String, photo: String)
     suspend fun receiveUsersByPhones(phones: List<String>): List<User>
 
-    fun sendReport(messageId: String, received: Int, viewed: Int)
+    fun setMessagesListener(listener: MessagesListener)
+
+    fun removeMessagesListener()
+
     fun sendMessage(
-        message: Message? = null,
+        message: Message?,
         uid: String,
-        publicKey: String? = null,
-        initiator: Boolean = false,
-        onSuccess: () -> Unit = {}
+        onSuccess: () -> Unit
     ): String
+
+    fun sendReport(
+        messageId: String,
+        uid: String,
+        received: Int,
+        viewed: Int
+    )
+
+    fun sendKey(
+        uid: String,
+        publicKey: String?,
+        initiator: Boolean
+    )
 
     suspend fun uploadFile(
         fileName: String,

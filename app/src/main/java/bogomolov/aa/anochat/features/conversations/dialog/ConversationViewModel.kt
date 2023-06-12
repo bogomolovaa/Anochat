@@ -25,7 +25,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
@@ -123,10 +122,10 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun notifyAsViewed(messageData: MessageViewData) {
+    fun messageDisplayed(messageData: MessageViewData) {
         viewModelScope.launch {
             currentState.conversation?.user?.uid?.let { uid ->
-                messageUseCases.notifyAsViewed(messageData.message, uid)
+                messageUseCases.messageDisplayed(messageData.message, uid)
             }
         }
     }

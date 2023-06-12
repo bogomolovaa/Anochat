@@ -294,7 +294,7 @@ private fun ShowMessage(
     val navController = LocalNavController.current
     if (messageData != null)
         LaunchedEffect(messageData.message.id) {
-            viewModel?.notifyAsViewed(messageData)
+            viewModel?.messageDisplayed(messageData)
         }
 
     if (messageData?.message?.image != null || messageData?.message?.video != null) {

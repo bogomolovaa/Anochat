@@ -3,9 +3,18 @@ package bogomolov.aa.anochat.domain
 import android.util.Log
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.repositories.*
-import kotlinx.coroutines.*
+import bogomolov.aa.anochat.repository.NotificationsService
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
+
+
+interface MessagesListener {
+    suspend fun onMessageReceived(message: Message, uid: String)
+    suspend fun onReportReceived(messageId: String, received: Int, viewed: Int)
+    suspend fun onPublicKeyReceived(uid: String, publicKey: String, initiator: Boolean)
+}
 
 @Singleton
 open class UserUseCases @Inject constructor(private val userRepository: UserRepository) :
@@ -31,8 +40,31 @@ open class MessageUseCases @Inject constructor(
     private val conversationRep: ConversationRepository,
     private val userRep: UserRepository,
     private val keyValueStore: KeyValueStore,
-    private val crypto: Crypto
+    private val crypto: Crypto,
+    private val notificationsService: NotificationsService
 ) : MessageUseCasesInRepository by messageRep {
+
+    val messagesListener = object : MessagesListener{
+        override suspend fun onMessageReceived(message: Message, uid: String) {
+            receiveMessage(message, uid) {
+                notificationsService.showNotification(it)
+            }
+        }
+
+        override suspend fun onReportReceived(messageId: String, received: Int, viewed: Int) {
+            receiveReport(messageId, received, viewed)
+        }
+
+        override suspend fun onPublicKeyReceived(uid: String, publicKey: String, initiator: Boolean) {
+            if (initiator) {
+                Log.d(TAG, "receivedPublicKey from $uid")
+                receivedPublicKey(publicKey, uid)
+            } else {
+                Log.d(TAG, "finallyReceivedPublicKey from $uid")
+                finallyReceivedPublicKey(publicKey, uid)
+            }
+        }
+    }
 
     suspend fun receiveMessage(
         message: Message,
@@ -48,20 +80,20 @@ open class MessageUseCases @Inject constructor(
             val replyId = message.replyMessageId
             if (!replyId.isNullOrEmpty()) message.replyMessage = messageRep.getMessage(replyId)
             message.id = messageRep.saveMessage(message)
-            messageRep.notifyAsReceived(message.messageId)
+            messageRep.notifyAsReceived(message.messageId, uid)
             onSuccess(message)
         } catch (e: WrongSecretKeyException) {
             Log.w(TAG, "not received message $message from $uid: ${e.message} secret key")
-            messageRep.notifyAsNotReceived(message.messageId)
+            messageRep.notifyAsNotReceived(message.messageId, uid)
             if (keyIsNotSentTo(uid))
                 sendPublicKey(crypto.generatePublicKey(uid), uid, initiator = true)
         }
     }
 
     suspend fun sendMessage(message: Message, uid: String) = coroutineScope {
-        Log.d(TAG, "sendMessage $message to uid $uid")
         if (message.isNotSaved()) message.id = messageRep.saveMessage(message)
         val secretKey = crypto.getSecretKey(uid)
+        Log.d(TAG, "sendMessage $message to uid $uid secretKey $secretKey")
         if (secretKey != null) {
             if (message.hasAttachment()) launch {
                 messageRep.sendAttachment(message, uid) { crypto.encrypt(secretKey, this) }
@@ -86,10 +118,10 @@ open class MessageUseCases @Inject constructor(
     fun loadMessagesDataSource(conversationId: Long) =
         messageRep.loadMessagesDataSource(conversationId)
 
-    suspend fun notifyAsViewed(message: Message, uid: String) {
+    suspend fun messageDisplayed(message: Message, uid: String) {
         if (!message.isMine && message.viewed == 0) {
             message.viewed = 1
-            messageRep.notifyAsViewed(message)
+            messageRep.notifyAsViewed(message, uid)
         }
         if (!message.isMine && message.hasAttachment() && message.received == 0) {
             crypto.getSecretKey(uid)?.let { secretKey ->

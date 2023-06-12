@@ -22,8 +22,8 @@ interface MessageRepository : MessageUseCasesInRepository {
         convert: ByteArray.() -> ByteArray
     )
 
-    suspend fun notifyAsReceived(messageId: String)
-    suspend fun notifyAsNotReceived(messageId: String)
+    suspend fun notifyAsReceived(messageId: String, uid: String)
+    suspend fun notifyAsNotReceived(messageId: String, uid: String)
     suspend fun sendPublicKey(publicKey: String, uid: String, initiator: Boolean)
     fun loadMessagesDataSource(conversationId: Long): Flow<PagingData<Message>>
 
@@ -34,7 +34,7 @@ interface MessageUseCasesInRepository {
 
     suspend fun deleteMessages(ids: Set<Long>)
     suspend fun receiveReport(messageId: String, received: Int, viewed: Int)
-    suspend fun notifyAsViewed(message: Message)
+    suspend fun notifyAsViewed(message: Message, uid: String)
 
     suspend fun startTypingTo(uid: String)
     suspend fun stopTypingTo(uid: String)

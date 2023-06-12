@@ -7,7 +7,6 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
 
 class MockMessageRepository(
     private val myUid: String,
@@ -40,7 +39,7 @@ class MockMessageRepository(
         return message.messageId
     }
 
-    override suspend fun notifyAsReceived(messageId: String) {
+    override suspend fun notifyAsReceived(messageId: String, uid: String) {
         remoteUseCases.receiveReport(messageId, 1, 0)
     }
 
@@ -57,7 +56,7 @@ class MockMessageRepository(
         }
     }
 
-    override suspend fun notifyAsNotReceived(messageId: String) {
+    override suspend fun notifyAsNotReceived(messageId: String, uid: String) {
     }
 
     override suspend fun sendAttachment(
@@ -89,7 +88,7 @@ class MockMessageRepository(
     override suspend fun deleteMessages(ids: Set<Long>) {
     }
 
-    override suspend fun notifyAsViewed(message: Message) {
+    override suspend fun notifyAsViewed(message: Message, uid: String) {
     }
 
     override suspend fun startTypingTo(uid: String) {

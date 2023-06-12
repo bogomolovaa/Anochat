@@ -30,9 +30,5 @@ object ProvidesModule {
 
     @Singleton
     @Provides
-    fun providesFirebase(): Firebase = FirebaseImpl()
-
-    @Singleton
-    @Provides
     fun providesDispatcher(): CoroutineDispatcher = Dispatchers.IO
 }

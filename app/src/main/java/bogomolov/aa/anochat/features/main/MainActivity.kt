@@ -42,7 +42,6 @@ import bogomolov.aa.anochat.repository.Firebase
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -171,9 +170,8 @@ class MainActivity : AppCompatActivity() {
                 "image?name={name}&gallery={gallery}", "video?uri={uri}" -> setFullScreen()
                 else -> removeFullScreen()
             }
-            if (destination.route != "login" && !authRepository.isSignedIn()) navigateToSignIn(
-                controller
-            )
+            if (destination.route != "login" && !authRepository.isSignedIn())
+                navigateToSignIn(controller)
         }
     }
 

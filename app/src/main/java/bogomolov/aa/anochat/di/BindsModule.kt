@@ -5,9 +5,7 @@ import bogomolov.aa.anochat.domain.repositories.ConversationRepository
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
 import bogomolov.aa.anochat.domain.repositories.UserRepository
 import bogomolov.aa.anochat.features.shared.*
-import bogomolov.aa.anochat.repository.FileStore
-import bogomolov.aa.anochat.repository.FileStoreImpl
-import bogomolov.aa.anochat.repository.KeyValueStoreImpl
+import bogomolov.aa.anochat.repository.*
 import bogomolov.aa.anochat.repository.repositories.AuthRepositoryImpl
 import bogomolov.aa.anochat.repository.repositories.ConversationRepositoryImpl
 import bogomolov.aa.anochat.repository.repositories.MessageRepositoryImpl
@@ -44,4 +42,7 @@ abstract class BindsModule {
 
     @Binds
     abstract fun bindsLocaleProvider(localeProvider: LocaleProviderImpl): LocaleProvider
+
+    @Binds
+    abstract fun bindsFirebase(firebase: FirebaseImpl): Firebase
 }

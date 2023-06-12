@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.features.shared
 
 import android.app.Activity
+import bogomolov.aa.anochat.domain.MessageUseCases
 
 data class SignInError(val message: String) {
     constructor(errorType: ErrorType) : this(errorType.toString())
@@ -23,6 +24,9 @@ interface PhoneVerification {
 }
 
 interface AuthRepository {
+
+    fun initAuthListener(messageUseCases: MessageUseCases)
+
     suspend fun sendPhoneNumber(
         phoneNumber: String,
         getActivity: () -> Activity,

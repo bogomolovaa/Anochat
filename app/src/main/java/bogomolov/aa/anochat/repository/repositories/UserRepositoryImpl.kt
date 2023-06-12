@@ -11,10 +11,8 @@ import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.FileStore
 import bogomolov.aa.anochat.repository.Firebase
 import bogomolov.aa.anochat.repository.ModelEntityMapper
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,6 +25,8 @@ class UserRepositoryImpl @Inject constructor(
     private val dispatcher: CoroutineDispatcher
 ) : UserRepository {
     private val mapper = ModelEntityMapper()
+
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     override fun getImagesDataSource(userId: Long) =
         Pager(PagingConfig(pageSize = 10)) {
@@ -118,14 +118,18 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun downloadFile(fileName: String, uid: String) {
-        val byteArray = firebase.downloadFile(fileName, uid)
-        if (byteArray != null) fileStore.saveByteArray(byteArray, fileName, toGallery = false)
+    private fun downloadFile(fileName: String, uid: String) {
+        scope.launch {
+            val byteArray = firebase.downloadFile(fileName, uid)
+            if (byteArray != null) fileStore.saveByteArray(byteArray, fileName, toGallery = false)
+        }
     }
 
-    private suspend fun uploadFile(fileName: String, uid: String) {
-        val byteArray = fileStore.getByteArray(false, fileName) ?: return
-        firebase.uploadFile(fileName, uid, byteArray)
+    private fun uploadFile(fileName: String, uid: String) {
+        scope.launch {
+            val byteArray = fileStore.getByteArray(false, fileName) ?: return@launch
+            firebase.uploadFile(fileName, uid, byteArray)
+        }
     }
 
     private fun getMyUID() = keyValueStore.getMyUID()

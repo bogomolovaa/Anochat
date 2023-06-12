@@ -2,10 +2,7 @@ package bogomolov.aa.anochat.repository.repositories
 
 import android.app.Activity
 import android.util.Log
-import bogomolov.aa.anochat.domain.KeyValueStore
-import bogomolov.aa.anochat.domain.getMyUID
-import bogomolov.aa.anochat.domain.setMyUID
-import bogomolov.aa.anochat.domain.setValue
+import bogomolov.aa.anochat.domain.*
 import bogomolov.aa.anochat.features.shared.*
 import bogomolov.aa.anochat.repository.Firebase
 import com.google.firebase.FirebaseException
@@ -37,6 +34,16 @@ class AuthRepositoryImpl @Inject constructor(
         withContext(dispatcher) {
             firebase.setOffline()
             FirebaseAuth.getInstance().signOut()
+        }
+    }
+
+    override fun initAuthListener(messageUseCases: MessageUseCases) {
+        FirebaseAuth.getInstance().addAuthStateListener {
+            if (it.currentUser?.uid != null) {
+                firebase.setMessagesListener(messageUseCases.messagesListener)
+            } else {
+                firebase.removeMessagesListener()
+            }
         }
     }
 
@@ -151,16 +158,17 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun userSignIn(credential: PhoneAuthCredential): String? = suspendCancellableCoroutine {
-        val auth = FirebaseAuth.getInstance()
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    it.resume(auth.currentUser?.uid)
-                } else {
-                    it.resumeWithException(task.exception!!)
+    private suspend fun userSignIn(credential: PhoneAuthCredential): String? =
+        suspendCancellableCoroutine {
+            val auth = FirebaseAuth.getInstance()
+            auth.signInWithCredential(credential)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        it.resume(auth.currentUser?.uid)
+                    } else {
+                        it.resumeWithException(task.exception!!)
+                    }
                 }
-            }
-    }
+        }
 
 }
