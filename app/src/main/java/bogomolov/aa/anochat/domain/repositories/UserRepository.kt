@@ -13,7 +13,7 @@ interface UserUseCasesInRepository {
     suspend fun getUsersByPhones(phones: List<String>): List<User>
 
     suspend fun updateUsersByPhones(phones: List<String>): List<User>
-    suspend fun updateUsersInConversations()
+    suspend fun updateUsersInConversations(blocking: Boolean)
     suspend fun getMyUser(): User
     suspend fun getUser(id: Long): User
     suspend fun updateMyUser(user: User)

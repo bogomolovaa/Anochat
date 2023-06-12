@@ -17,7 +17,7 @@ class UpdateWorker @AssistedInject constructor(
 ) : Worker(appContext, workerParams) {
 
     override fun doWork(): Result {
-        runBlocking { userUseCases.updateUsersInConversations() }
+        runBlocking { userUseCases.updateUsersInConversations(true) }
         return Result.success()
     }
 }

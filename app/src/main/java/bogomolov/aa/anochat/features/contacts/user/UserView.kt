@@ -26,6 +26,7 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.getBitmap
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
+import bogomolov.aa.anochat.features.shared.nameToImage
 import kotlinx.coroutines.flow.Flow
 
 @Composable
@@ -63,19 +64,21 @@ private fun Content(state: UserUiState = testUserUiState) {
                     .fillMaxWidth()
                     .verticalScroll(scrollState)
             ) {
-                getBitmap(state.user?.photo, LocalContext.current)?.asImageBitmap()?.let {
-                    Image(
-                        bitmap = it,
-                        contentDescription = "user image",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(350.dp)
-                            .clickable(onClick = {
-                                val photo = state.user?.photo
-                                if (photo != null) navController?.navigate("image?name=$photo")
-                            })
-                    )
+                state.user?.photo?.let {
+                    val photo = nameToImage(it)
+                    getBitmap(photo, LocalContext.current)?.asImageBitmap()?.let {
+                        Image(
+                            bitmap = it,
+                            contentDescription = "user image",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(350.dp)
+                                .clickable(onClick = {
+                                    navController?.navigate("image?name=$photo")
+                                })
+                        )
+                    }
                 } ?: run {
                     Icon(
                         painterResource(id = R.drawable.user_icon),
@@ -107,7 +110,8 @@ private fun ImagesRow(pagingFlow: Flow<PagingData<String>>) {
         items(count = lazyPagingItems.itemCount) { index ->
             val image = lazyPagingItems[index]
             Card {
-                val imageBitmap = getBitmapFromGallery(image, LocalContext.current, 8)?.asImageBitmap()
+                val imageBitmap =
+                    getBitmapFromGallery(image, LocalContext.current, 8)?.asImageBitmap()
                 if (imageBitmap != null)
                     Image(
                         modifier = Modifier

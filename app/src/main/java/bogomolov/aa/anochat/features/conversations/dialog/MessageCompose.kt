@@ -95,7 +95,6 @@ fun ReplyMessage(
 
 }
 
-@Preview(widthDp = 320)
 @Composable
 fun PlayAudio(
     state: PlayingState? = testPlayingState,
@@ -162,6 +161,7 @@ fun PlayAudio(
     }
 }
 
+@Preview(widthDp = 320)
 @ExperimentalMaterialApi
 @Composable
 fun MessageCompose(

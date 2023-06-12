@@ -7,6 +7,7 @@ import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.getMyUID
 import bogomolov.aa.anochat.domain.repositories.UserRepository
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
+import bogomolov.aa.anochat.features.shared.nameToImage
 import bogomolov.aa.anochat.repository.AppDatabase
 import bogomolov.aa.anochat.repository.FileStore
 import bogomolov.aa.anochat.repository.Firebase
@@ -47,12 +48,12 @@ class UserRepositoryImpl @Inject constructor(
             } else listOf()
         }
 
-    override suspend fun updateUsersInConversations() {
+    override suspend fun updateUsersInConversations(blocking: Boolean) {
         withContext(dispatcher) {
             val myUid = getMyUID() ?: return@withContext
             val users = db.userDao().getOpenedConversationUsers(myUid)
             mapper.entityToModel<User>(users).forEach { user ->
-                firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it) }
+                firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it, blocking) }
             }
         }
     }
@@ -70,7 +71,7 @@ class UserRepositoryImpl @Inject constructor(
             if (user.name != savedUser.name) firebase.renameUser(user.uid, user.name)
             if (user.status != savedUser.status) firebase.updateStatus(user.uid, user.status)
             if (user.photo != null && user.photo != savedUser.photo) {
-                uploadFile(user.photo, user.uid)
+                uploadFile(nameToImage(user.photo), user.uid)
                 uploadFile(getMiniPhotoFileName(user.photo), user.uid)
                 firebase.updatePhoto(user.uid, user.photo)
             }
@@ -99,7 +100,8 @@ class UserRepositoryImpl @Inject constructor(
     private suspend fun updateLocalUserFromRemote(
         user: User,
         saveLocal: Boolean = true,
-        loadFullPhoto: Boolean = true
+        loadFullPhoto: Boolean = true,
+        blocking: Boolean = false
     ) {
         val savedUser = db.userDao().findByUid(user.uid)
         if (savedUser != null) {
@@ -110,19 +112,23 @@ class UserRepositoryImpl @Inject constructor(
         }
         if (user.photo != null) {
             val photoChanged = user.photo != savedUser?.photo
-            if (photoChanged) downloadFile(getMiniPhotoFileName(user.photo), user.uid)
+            if (photoChanged) downloadFile(getMiniPhotoFileName(user.photo), user.uid, blocking)
             if (loadFullPhoto) {
-                val fileExist = fileStore.fileExists(user.photo)
-                if (photoChanged || !fileExist) downloadFile(user.photo, user.uid)
+                nameToImage(user.photo).let {
+                    val fileExist = fileStore.fileExists(it)
+                    if (photoChanged || !fileExist) downloadFile(it, user.uid, blocking)
+                }
             }
         }
     }
 
-    private fun downloadFile(fileName: String, uid: String) {
-        scope.launch {
+    private suspend fun downloadFile(fileName: String, uid: String, blocking: Boolean) {
+        val update = suspend {
             val byteArray = firebase.downloadFile(fileName, uid)
             if (byteArray != null) fileStore.saveByteArray(byteArray, fileName, toGallery = false)
         }
+        if (blocking) update()
+        scope.launch { update() }
     }
 
     private fun uploadFile(fileName: String, uid: String) {

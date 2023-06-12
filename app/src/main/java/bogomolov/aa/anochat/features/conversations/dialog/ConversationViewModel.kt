@@ -263,7 +263,7 @@ class ConversationViewModel @Inject constructor(
     }
 
     private fun subscribeToMessages(conversation: Conversation) {
-        val pagingDataFlow = messageUseCases.loadMessagesDataSource(conversation.id).flowOn(dispatcher)
+        val pagingDataFlow = messageUseCases.loadMessagesDataSource(conversation.id)
             .cachedIn(viewModelScope).map {
                 it.map { MessageViewData(it) }.insertSeparators { m1, m2 ->
                     insertDateSeparators(m1, m2, localeProvider.locale)

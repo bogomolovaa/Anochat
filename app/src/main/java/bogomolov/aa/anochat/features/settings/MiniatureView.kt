@@ -76,7 +76,7 @@ private fun Content(settingsState: SettingsUiState = testSettingsUiState, viewMo
         },
         content = {
             Box(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.padding(it).fillMaxWidth()
             ) {
                 val imageBitmap = state.miniature.bitmap?.asImageBitmap()
                 if (imageBitmap != null) {

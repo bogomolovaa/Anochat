@@ -25,16 +25,18 @@ private enum class MessageType {
     KEY,
 }
 
+
 @Singleton
 class FirebaseImpl @Inject constructor() : Firebase {
     private lateinit var token: String
     private val firebaseScope = CoroutineScope(Dispatchers.IO)
     private var removeListener: (() -> Unit)? = null
+    private val DOWNLOAD_TIMEOUTS = listOf(1, 3, 10, 30, 60, 300)
 
     init {
         firebaseScope.launch {
             //FirebaseDatabase.getInstance().setLogLevel(Logger.Level.DEBUG)
-            FirebaseDatabase.getInstance().setPersistenceEnabled(true)
+            //FirebaseDatabase.getInstance().setPersistenceEnabled(true)
             updateToken()
         }
     }
@@ -71,12 +73,14 @@ class FirebaseImpl @Inject constructor() : Firebase {
                                 MessageType.REPORT -> receiveReport(listener, data)
                                 MessageType.KEY -> receiveKey(listener, uid, data)
                             }
+                            messageRef.removeValue()
                         }
 
                         override fun onCancelled(p0: DatabaseError) {
                         }
                     })
                 }
+                snapshot.key?.let { ref.child(it).removeValue() }
             }
 
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
@@ -185,7 +189,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
             } finally {
                 userRef.removeEventListener(onlineListener)
                 userRef.removeEventListener(lastOnlineListener)
-                userRef.removeEventListener(typingListener)
+                typingRef.removeEventListener(typingListener)
             }
         }
         return combine(typingFlow, onlineFlow, lastTimeFlow) { typing, online, lastTime ->
@@ -386,10 +390,10 @@ class FirebaseImpl @Inject constructor() : Firebase {
         uid: String,
         isPrivate: Boolean
     ): ByteArray? {
-        repeat(1) {
+        repeat(DOWNLOAD_TIMEOUTS.size) {
             val result = tryDownloadFile(fileName, uid, isPrivate)
             if (result != null) return result
-            else delay(it * 10 * 1000L)
+            else delay(DOWNLOAD_TIMEOUTS[it] * 1000L)
         }
         return null
     }
