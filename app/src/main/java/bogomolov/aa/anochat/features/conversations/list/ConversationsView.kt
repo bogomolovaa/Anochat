@@ -130,7 +130,7 @@ private fun ConversationCard(
         elevation = 0.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .pointerInput(Unit) {
+            .pointerInput(conversation.id) {
                 detectTapGestures(
                     onTap = {
                         navController?.navigate("conversation?id=${conversation.id}")

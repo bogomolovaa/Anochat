@@ -1,14 +1,10 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
-import android.graphics.Bitmap
 import bogomolov.aa.anochat.domain.entity.Message
 
 data class MessageViewData(val message: Message) {
     var dateDelimiter: String? = null
-    var detailedImageLoaded = false
-    var bitmap: Bitmap? = null
     var playingState: PlayingState? = null
-    var replyBitmap: Bitmap? = null
     var replyPlayingState: PlayingState? = null
 
     fun hasTimeMessage() = dateDelimiter != null
@@ -25,9 +21,7 @@ data class MessageViewData(val message: Message) {
     override fun equals(other: Any?): Boolean {
         return if (other is MessageViewData) {
             message == other.message
-                    && bitmap == other.bitmap
                     && playingState == other.playingState
-                    && replyBitmap == other.replyBitmap
                     && replyPlayingState == other.replyPlayingState
         } else false
     }

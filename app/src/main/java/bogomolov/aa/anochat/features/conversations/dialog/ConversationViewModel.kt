@@ -286,13 +286,14 @@ class ConversationViewModel @Inject constructor(
 }
 
 private fun insertDateSeparators(message1: MessageViewData?, message2: MessageViewData?, locale: Locale) {
-    if (message1 != null && message2 != null) {
-        val day1 = GregorianCalendar().apply { time = Date(message1.message.time) }
-            .get(Calendar.DAY_OF_YEAR)
-        val day2 = GregorianCalendar().apply { time = Date(message2.message.time) }
-            .get(Calendar.DAY_OF_YEAR)
-        if (day1 != day2)
-            message1.dateDelimiter =
-                SimpleDateFormat("dd MMMM yyyy", locale).format(Date(message1.message.time))
+    if (message1 != null) {
+        val day1 = GregorianCalendar().apply { time = Date(message1.message.time) }.get(Calendar.DAY_OF_YEAR)
+        if (message2 != null) {
+            val day2 = GregorianCalendar().apply { time = Date(message2.message.time) }.get(Calendar.DAY_OF_YEAR)
+            if (day1 != day2)
+                message1.dateDelimiter = SimpleDateFormat("dd MMMM yyyy", locale).format(Date(message1.message.time))
+        } else {
+            message1.dateDelimiter = SimpleDateFormat("dd MMMM yyyy", locale).format(Date(message1.message.time))
+        }
     }
 }

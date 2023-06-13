@@ -296,23 +296,23 @@ private fun ShowMessage(
         LaunchedEffect(messageData.message.id) {
             viewModel?.messageDisplayed(messageData)
         }
-
-    if (messageData?.message?.image != null || messageData?.message?.video != null) {
-        var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-        LaunchedEffect(messageData.message.id) {
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var replyBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    val messageThumbnail = messageData?.message?.getThumbnail()
+    val replyMessageThumbnail = messageData?.message?.replyMessage?.getThumbnail()
+    if (messageThumbnail != null || replyMessageThumbnail != null) {
+        LaunchedEffect(messageData.message) {
             withContext(Dispatchers.IO) {
-                val image = if (messageData.message.image != null) messageData.message.image
-                else videoThumbnail(messageData.message.video!!)
-                bitmap = getBitmapFromGallery(image, context, 1)
+                messageThumbnail?.let { bitmap = getBitmapFromGallery(it, context, 1) }
+                replyMessageThumbnail?.let { replyBitmap = getBitmapFromGallery(it, context, 1) }
             }
         }
         DisposableEffect(messageData.message.id) {
             onDispose {
                 bitmap = null
-                messageData.bitmap = null
+                replyBitmap = null
             }
         }
-        messageData.bitmap = bitmap
     }
     if (messageData != null) {
         messageData.playingState =
@@ -322,6 +322,8 @@ private fun ShowMessage(
     }
     MessageCompose(
         data = messageData,
+        bitmap = bitmap,
+        replyBitmap = replyBitmap,
         onClick = {
             when {
                 messageData?.message?.video != null -> videoOnClick(messageData.message, context, navController)
@@ -342,6 +344,8 @@ private fun ShowMessage(
         }
     )
 }
+
+private fun Message.getThumbnail() = image ?: video?.let { videoThumbnail(it) }
 
 private fun fabOnClick(context: Context, inputState: InputStates, viewModel: ConversationViewModel?) {
     when (inputState) {

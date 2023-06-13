@@ -3,6 +3,7 @@ package bogomolov.aa.anochat.features.conversations.dialog
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -166,6 +167,8 @@ fun PlayAudio(
 @Composable
 fun MessageCompose(
     data: MessageViewData? = testMessageViewData,
+    bitmap: Bitmap? = null,
+    replyBitmap: Bitmap? = null,
     onClick: () -> Unit = {},
     onSwipe: () -> Unit = {},
     playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> }
@@ -203,7 +206,7 @@ fun MessageCompose(
             modifier = Modifier
                 .widthIn(min = 120.dp, max = 258.dp)
                 .align(if (message.isMine) Alignment.End else Alignment.Start)
-                .pointerInput(Unit) {
+                .pointerInput(data.message.messageId) {
                     coroutineScope {
                         detectHorizontalDragGestures { change, dragAmount ->
                             if (dragAmount > 40) {
@@ -212,7 +215,10 @@ fun MessageCompose(
                                     offsetX.animateTo(
                                         targetValue = windowWidth.toFloat(),
                                         initialVelocity = 0f,
-                                        animationSpec = tween(durationMillis = 1000)
+                                        animationSpec = tween(
+                                            durationMillis = 500,
+                                            easing = LinearEasing
+                                        )
                                     )
                                     offsetX.snapTo(0f)
                                 }
@@ -231,13 +237,12 @@ fun MessageCompose(
         ) {
             Column(modifier = Modifier.padding(4.dp)) {
                 message.replyMessage?.let {
-                    ReplyMessage(it, data.replyBitmap, data.replyPlayingState, playOnClick)
+                    ReplyMessage(it, replyBitmap, data.replyPlayingState, playOnClick)
                 }
                 if (message.audio != null) {
                     PlayAudio(data.playingState, message.audio, message.messageId, playOnClick)
                 } else if (message.image != null || message.video != null) {
                     Row {
-                        val bitmap = data.bitmap
                         Box(modifier = Modifier
                             .clickable { onClick() }
                             .padding(bottom = 4.dp)) {
