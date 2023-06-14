@@ -42,6 +42,7 @@ import bogomolov.aa.anochat.repository.Firebase
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.hilt.android.AndroidEntryPoint
+import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -59,20 +60,27 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var firebase: Firebase
 
+    private var navController: NavController? = null
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        navController?.let { onSendAction(it, intent) }
+    }
+
     @ExperimentalMaterialApi
     @ExperimentalComposeUiApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //emojiSupport()
         startWorkManager()
-        //setFullScreen()
 
         setContent {
             val navController = rememberNavController()
             CompositionLocalProvider(LocalNavController provides navController) {
                 LaunchedEffect(0) {
                     addSignInListener(navController)
-                    onSendAction(navController)
+                    onSendAction(navController, intent)
+                    this@MainActivity.navController = navController
                 }
                 MaterialTheme(
                     colors = LightColorPalette
@@ -90,13 +98,12 @@ class MainActivity : AppCompatActivity() {
                         }
                         navigation(startDestination = "conversation", route = "conversationRoute") {
                             composable(
-                                "conversation?id={id}",
+                                "conversation?id={id}&uri={uri}",
                                 arguments = listOf(
                                     navArgument("id") { nullable = true },
                                     navArgument("uri") { nullable = true }
                                 )
                             ) {
-                                //if (it.destination.route != navController.currentDestination?.route) return@composable
                                 val conversationId = it.arguments?.getString("id")?.toLong()!!
                                 val uri = it.arguments?.getString("uri")?.toUri()
                                 ConversationView(conversationId, uri)
@@ -119,17 +126,11 @@ class MainActivity : AppCompatActivity() {
                             UsersView(uri)
                         }
                         composable(
-                            "image?name={name}&gallery={gallery}",
-                            arguments = listOf(
-                                navArgument("name") { nullable = true },
-                                navArgument("gallery") {
-                                    type = NavType.BoolType
-                                    defaultValue = false
-                                })
+                            "image?name={name}",
+                            arguments = listOf(                                navArgument("name") { nullable = true }                                )
                         ) {
                             val image = it.arguments?.getString("name")!!
-                            val gallery = it.arguments?.getBoolean("gallery")!!
-                            ImageView(image, gallery)
+                            ImageView(image)
                         }
                         composable("video?uri={uri}") {
                             val uri = it.arguments?.getString("uri")?.toUri()!!
@@ -142,10 +143,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun onSendAction(navController: NavController) {
+    private fun onSendAction(navController: NavController, intent: Intent?) {
         if (intent?.action == Intent.ACTION_SEND) {
             (intent.getParcelableExtra<Parcelable>(Intent.EXTRA_STREAM) as? Uri)?.let { uri ->
-                navController.navigate("users?uri=$uri")
+                navController.navigate("users?uri=${URLEncoder.encode(uri.toString(), "utf-8")}")
             }
         }
     }
@@ -167,7 +168,7 @@ class MainActivity : AppCompatActivity() {
     private fun addSignInListener(navController: NavController) {
         navController.addOnDestinationChangedListener { controller, destination, _ ->
             when (destination.route) {
-                "image?name={name}&gallery={gallery}", "video?uri={uri}" -> setFullScreen()
+                "image?name={name}", "video?uri={uri}" -> setFullScreen()
                 else -> removeFullScreen()
             }
             if (destination.route != "login" && !authRepository.isSignedIn())

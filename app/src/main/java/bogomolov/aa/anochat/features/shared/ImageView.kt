@@ -3,7 +3,6 @@ package bogomolov.aa.anochat.features.shared
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +21,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -33,24 +33,29 @@ private const val MIN_SCALE = 1f
 private const val TAG = "ImageView"
 
 @Composable
-fun ImageView(imageName: String, fromGallery: Boolean) {
+fun ImageView(imageName: String) {
     val navController = LocalNavController.current
     val context = LocalContext.current
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(0) {
-        bitmap = loadImage(
-            imageName = imageName,
-            quality = 1,
-            fromGallery = fromGallery,
-            context = context
-        )
+        bitmap = getBitmapFromGallery(imageName, context, 1)
     }
 
-    val scale = remember { mutableStateOf(1.0f) }
-    val top = remember { mutableStateOf(0) }
-    val left = remember { mutableStateOf(0) }
-    val imageWidth = remember { mutableStateOf(0) }
-    val imageHeight = remember { mutableStateOf(0) }
+    var controlsVisible by remember { mutableStateOf(true) }
+    var initialTop by remember { mutableStateOf(0) }
+    var initialLeft by remember { mutableStateOf(0) }
+
+    var scale by remember { mutableStateOf(1.0f) }
+    var top by remember { mutableStateOf(initialTop) }
+    var left by remember { mutableStateOf(0) }
+    var imageWidth by remember { mutableStateOf(0) }
+    var imageHeight by remember { mutableStateOf(0) }
+    var windowWidth by remember { mutableStateOf(0) }
+    var windowHeight by remember { mutableStateOf(0) }
+
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val screenWidth = configuration.screenWidthDp.dp
     Box(
         modifier = Modifier
             .background(Color.Black)
@@ -59,74 +64,91 @@ fun ImageView(imageName: String, fromGallery: Boolean) {
             .pointerInput(Unit) {
                 detectTransformGestures(
                     onGesture = { _, pan, gestureZoom, gestureRotate ->
-                        scale.value *= gestureZoom
-                        if (scale.value > MAX_SCALE) scale.value = MAX_SCALE
-                        if (scale.value < MIN_SCALE) scale.value = MIN_SCALE
-                        left.value += pan.x.toInt()
-                        top.value += pan.y.toInt()
-                        if (left.value < -(scale.value - 1) * imageWidth.value / 2)
-                            left.value = -((scale.value - 1) * imageWidth.value / 2).toInt()
-                        if (left.value > (scale.value - 1) * imageWidth.value / 2)
-                            left.value = ((scale.value - 1) * imageWidth.value / 2).toInt()
+                        scale *= gestureZoom
+                        if (scale > MAX_SCALE) scale = MAX_SCALE
+                        if (scale < MIN_SCALE) scale = MIN_SCALE
 
-                        if (top.value < -(scale.value - 1) * imageHeight.value / 2)
-                            top.value = -((scale.value - 1) * imageHeight.value / 2).toInt()
-                        if (top.value > (scale.value - 1) * imageHeight.value / 2)
-                            top.value = ((scale.value - 1) * imageHeight.value / 2).toInt()
+                        val scaleX = windowWidth.toFloat() / imageWidth
+                        if (scale > scaleX) {
+                            left += pan.x.toInt()
+                            left = left.coerceAtLeast((initialLeft - (scale - scaleX) * imageWidth / 2).toInt())
+                            left = left.coerceAtMost((initialLeft + (scale - scaleX) * imageWidth / 2).toInt())
+                        }
+
+                        val scaleY = windowHeight.toFloat() / imageHeight
+                        if (scale > scaleY) {
+                            top += pan.y.toInt()
+                            top = top.coerceAtLeast((initialTop - (scale - scaleY) * imageHeight / 2).toInt())
+                            top = top.coerceAtMost((initialTop + (scale - scaleY) * imageHeight / 2).toInt())
+                        }
                     }
                 )
             }
+            .onGloballyPositioned {
+                if (windowWidth == 0) {
+                    windowWidth = it.size.width
+                    windowHeight = it.size.height
+                }
+            }
     ) {
         val imageBitmap = bitmap?.asImageBitmap()
-        if (imageBitmap != null)
+        if (imageBitmap != null) {
+            val scaleWidth = screenHeight / screenWidth > imageBitmap.height / imageBitmap.width
             Image(
                 modifier = Modifier
-                    .fillMaxWidth()
                     .onGloballyPositioned {
-                        if (imageWidth.value == 0) {
-                            imageWidth.value = it.size.width
-                            imageHeight.value = it.size.height
+                        if (imageWidth == 0) {
+                            imageWidth = it.size.width
+                            imageHeight = it.size.height
+                            initialTop = (windowHeight - imageHeight) / 2
+                            initialLeft = (windowWidth - imageWidth) / 2
+                            top += initialTop
+                            left += initialLeft
                         }
                     }
                     .pointerInput(Unit) {
                         detectTapGestures(
                             onTap = {
-                                //expand(!expanded)
+                                controlsVisible = !controlsVisible
                             }
                         )
                     }
-                    .offset { IntOffset(left.value, top.value) }
-                    .scale(scale.value),
+                    .offset { IntOffset(left, top) }
+                    .scale(scale).run {
+                        if (scaleWidth) fillMaxWidth() else fillMaxHeight()
+                    },
                 bitmap = imageBitmap,
-                contentScale = ContentScale.FillWidth,
+                contentScale = if (scaleWidth) ContentScale.FillWidth else ContentScale.FillHeight,
                 contentDescription = ""
             )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Icon(
-                modifier = Modifier
-                    .clickable {
-                        navController?.popBackStack()
-                    },
-                imageVector = Icons.Filled.ArrowBack,
-                tint = Color.White,
-                contentDescription = "Back"
-            )
-            Icon(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable {
-                        share(imageName, context)
-                    },
-                imageVector = Icons.Filled.Share,
-                tint = Color.White,
-                contentDescription = "Back"
-            )
         }
+        if (controlsVisible)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .clickable {
+                            navController?.popBackStack()
+                        },
+                    imageVector = Icons.Filled.ArrowBack,
+                    tint = Color.White,
+                    contentDescription = "Back"
+                )
+                Icon(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable {
+                            share(imageName, context)
+                        },
+                    imageVector = Icons.Filled.Share,
+                    tint = Color.White,
+                    contentDescription = "Share"
+                )
+            }
     }
 }
 
@@ -140,14 +162,4 @@ private fun share(imageName: String, context: Context) {
         val title = context.resources.getString(R.string.share_image)
         context.startActivity(Intent.createChooser(intent, title))
     }
-}
-
-private fun loadImage(imageName: String, quality: Int, fromGallery: Boolean, context: Context): Bitmap? {
-    try {
-        return if (fromGallery) getBitmapFromGallery(imageName, context, quality)
-        else getBitmap(imageName, context, quality)
-    } catch (e: Exception) {
-        Log.w(TAG, "image not loaded", e)
-    }
-    return null
 }

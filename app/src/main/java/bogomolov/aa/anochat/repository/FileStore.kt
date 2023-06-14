@@ -53,7 +53,7 @@ class FileStoreImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val authRepository: AuthRepository
 ) : FileStore {
-    private val finalizerScope = CoroutineScope(Dispatchers.IO)
+    private val resizerScope = CoroutineScope(Dispatchers.IO)
 
     override suspend fun saveByteArray(byteArray: ByteArray, fileName: String, toGallery: Boolean) {
         if (toGallery && authRepository.getSettings().gallery)
@@ -79,7 +79,7 @@ class FileStoreImpl @Inject constructor(
 
     override fun fileExists(fileName: String) = File(getFilePath(context, fileName)).exists()
 
-    override suspend fun resizeVideo(uri: Uri): BitmapWithName? = coroutineScope {
+    override suspend fun resizeVideo(uri: Uri): BitmapWithName? =
         withContext(Dispatchers.IO) {
             val size = (getRealSizeFromUri(context, uri)?.toFloat() ?: 0f) / 1024 / 1024
             if (size > 200) throw FileTooBigException()
@@ -90,25 +90,26 @@ class FileStoreImpl @Inject constructor(
             createVideoThumbnail(originalVideoFile)?.let {
                 saveImageToPath(it, nameToImage(videoName))
                 val result = BitmapWithName(videoName, it).apply { processed = false }
-                val videoLength = getVideoDuration(uri)
-                if (videoLength > 0) {
-                    Config.resetStatistics()
-                    Config.enableStatisticsCallback { statistics ->
-                        if (!isActive) cancelCompression()
-                        val progress = statistics.time.toFloat() / videoLength
-                        result.progress.tryEmit((100 * progress).toInt())
+                resizerScope.launch {
+                    val videoLength = getVideoDuration(uri)
+                    if (videoLength > 0) {
+                        Config.resetStatistics()
+                        Config.enableStatisticsCallback { statistics ->
+                            if (!isActive) cancelCompression()
+                            val progress = statistics.time.toFloat() / videoLength
+                            result.progress.tryEmit((100 * progress).toInt())
+                        }
+                        compressVideo(originalVideoFile.absolutePath, videoFile.absolutePath)
+                        originalVideoFile.delete()
+                        result.processed = true
                     }
-                    compressVideo(originalVideoFile.absolutePath, videoFile.absolutePath)
-                    originalVideoFile.delete()
-                    result.processed = true
                 }
                 result
             }
         }
-    }
 
     private fun cancelCompression() {
-        finalizerScope.launch {
+        resizerScope.launch {
             FFmpeg.cancel()
         }
     }

@@ -42,7 +42,6 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.*
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -68,12 +67,14 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
     val context = LocalContext.current
     LaunchedEffect(0) {
         viewModel.initConversation(conversationId)
-        if (uri != null) navigateToSendMediaFragment(
-            viewModel = viewModel,
-            context = context,
-            uri = uri,
-            navController = navController
-        )
+        if (uri != null && viewModel.uri != uri)
+            navigateToSendMediaFragment(
+                viewModel = viewModel,
+                context = context,
+                uri = uri,
+                navController = navController
+            )
+        viewModel.uri = uri
     }
 
     EventHandler(viewModel.events) {
@@ -298,7 +299,6 @@ private fun MessagesList(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             state = listState,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
             reverseLayout = true,
         ) {
             items(count = lazyPagingItems.itemCount) { index ->
@@ -417,7 +417,7 @@ private fun videoOnClick(message: Message, context: Context, navController: NavC
 
 private fun imageOnClick(message: Message, navController: NavController?) {
     if (message.received == 1 || message.isMine)
-        navController?.navigate("image?name=${message.image}&gallery=true")
+        navController?.navigate("image?name=${message.image}")
 }
 
 private fun navigateToUserFragment(viewModel: ConversationViewModel?, navController: NavController?) {

@@ -38,6 +38,7 @@ import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.EventHandler
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
+import java.net.URLEncoder
 
 @Composable
 fun UsersView(uri: String? = null) {
@@ -198,7 +199,11 @@ private fun UserRow(
 }
 
 private fun NavController.navigateToConversation(conversationId: Long, uri: String?) {
-    navigate("conversation?id=$conversationId" + if (uri != null) "&uri=$uri" else "")
+    navigate(
+        "conversation?id=$conversationId" + if (uri != null) "&uri=${
+            URLEncoder.encode(uri.toString(), "utf-8")
+        }" else ""
+    )
 }
 
 private fun getContactsPhones(context: Context): List<String> {

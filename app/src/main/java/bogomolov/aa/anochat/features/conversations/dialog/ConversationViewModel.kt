@@ -82,6 +82,7 @@ data class SendMessageData(
 )
 
 object OnMessageSent : Event
+object FileTooBig : Event
 
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
@@ -90,8 +91,7 @@ class ConversationViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases,
     private val audioPlayer: AudioPlayer,
     private val localeProvider: LocaleProvider,
-    private val fileStore: FileStore,
-    @ApplicationContext private val context: Context
+    private val fileStore: FileStore
 ) : BaseViewModel<DialogUiState>(DialogUiState()) {
     private var recordingJob: Job? = null
     private var playJob: Job? = null
@@ -99,6 +99,7 @@ class ConversationViewModel @Inject constructor(
     private var tempElapsed = 0L
     private var conversationInitialized = false
     private var typingJob: Job? = null
+    var uri: Uri? = null
 
     override fun onCleared() {
         currentState.conversation?.id?.let {
@@ -118,7 +119,7 @@ class ConversationViewModel @Inject constructor(
                     updateState { copy(progress = it.toFloat() / 100) }
                 }
             } catch (e: FileTooBigException) {
-                Toast.makeText(context, "Too large file", Toast.LENGTH_LONG).show()
+                addEvent(FileTooBig)
             }
         }
     }

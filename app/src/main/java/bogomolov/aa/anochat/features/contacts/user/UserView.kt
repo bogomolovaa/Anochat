@@ -118,7 +118,7 @@ private fun ImagesRow(pagingFlow: Flow<PagingData<String>>) {
                             .width(100.dp)
                             .height(100.dp)
                             .clickable(onClick = {
-                                navController?.navigate("image?name=$image&gallery=true")
+                                navController?.navigate("image?name=$image")
                             }),
                         bitmap = imageBitmap,
                         contentDescription = "",

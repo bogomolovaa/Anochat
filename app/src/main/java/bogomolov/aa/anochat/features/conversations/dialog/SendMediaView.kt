@@ -21,16 +21,22 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
-import bogomolov.aa.anochat.features.shared.BitmapWithName
-import bogomolov.aa.anochat.features.shared.nameToImage
-import bogomolov.aa.anochat.features.shared.nameToVideo
-import bogomolov.aa.anochat.features.shared.playMessageSound
+import bogomolov.aa.anochat.features.shared.*
 
 @Composable
 fun SendMediaView() {
     val navController = LocalNavController.current
     val viewModel =
         hiltViewModel<ConversationViewModel>(navController!!.getBackStackEntry("conversationRoute"))
+    val context = LocalContext.current
+    EventHandler(viewModel.events) {
+        when (it) {
+            is FileTooBig -> {
+                Toast.makeText(context, context.getText(R.string.too_large_file), Toast.LENGTH_LONG).show()
+                navController.popBackStack()
+            }
+        }
+    }
     val state = viewModel.state.collectAsState()
     Content(state.value, viewModel)
 }
@@ -53,49 +59,51 @@ private fun Content(state: DialogUiState, viewModel: ConversationViewModel) {
             )
         },
         content = {
-            val showLoading = state.isVideo && state.progress < 0.98
-            if (showLoading)
-                LinearProgressIndicator(
-                    progress = state.progress,
+            Column(modifier = Modifier.fillMaxWidth().padding(it)) {
+                val showLoading = state.isVideo && state.progress < 0.98
+                if (showLoading)
+                    LinearProgressIndicator(
+                        progress = state.progress,
+                        modifier = Modifier
+                            .padding(top = 6.dp)
+                            .fillMaxWidth()
+                    )
+                Box(
                     modifier = Modifier
-                        .padding(top = 6.dp)
                         .fillMaxWidth()
-                )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
-                    .padding(top = if (showLoading) 16.dp else 0.dp),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                if (state.resized != null) {
-                    if (state.resized.bitmap != null) {
-                        Image(
-                            bitmap = state.resized.bitmap.asImageBitmap(),
+                        .fillMaxHeight()
+                        .padding(top = if (showLoading) 16.dp else 0.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    if (state.resized != null) {
+                        if (state.resized.bitmap != null) {
+                            Image(
+                                bitmap = state.resized.bitmap.asImageBitmap(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 60.dp),
+                                contentScale = ContentScale.FillWidth,
+                                contentDescription = ""
+                            )
+                        }
+                        var text by remember { mutableStateOf("") }
+                        TextField(
+                            value = text,
+                            onValueChange = { text = it },
+                            placeholder = { Text(text = stringResource(id = R.string.enter_message)) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 60.dp),
-                            contentScale = ContentScale.FillWidth,
-                            contentDescription = ""
+                                .height(60.dp),
+                            colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.White),
+                            trailingIcon = {
+                                IconButton(onClick = {
+                                    submit(viewModel, context, state.resized, state.isVideo, text, navController)
+                                }) {
+                                    Icon(Icons.Filled.PlayArrow, contentDescription = "")
+                                }
+                            }
                         )
                     }
-                    var text by remember { mutableStateOf("") }
-                    TextField(
-                        value = text,
-                        onValueChange = { text = it },
-                        placeholder = { Text(text = stringResource(id = R.string.enter_message)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp),
-                        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.White),
-                        trailingIcon = {
-                            IconButton(onClick = {
-                                submit(viewModel, context, state.resized, state.isVideo, text, navController)
-                            }) {
-                                Icon(Icons.Filled.PlayArrow, contentDescription = "")
-                            }
-                        }
-                    )
                 }
             }
         }

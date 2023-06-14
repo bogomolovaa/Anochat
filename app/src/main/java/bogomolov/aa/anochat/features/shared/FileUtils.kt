@@ -15,7 +15,7 @@ import android.util.Log
 import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
 import androidx.core.content.FileProvider
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.*
 
 private const val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz1234567890"
@@ -24,7 +24,7 @@ private const val TAG = "FileUtils"
 
 data class BitmapWithName(val name: String, val bitmap: Bitmap?){
     var processed: Boolean = true
-    var progress = MutableSharedFlow<Int>(0)
+    var progress = MutableStateFlow(0)
 }
 
 fun getMiniPhotoFileName(fileName: String) = File(fileName).nameWithoutExtension + "_mini.jpg"
