@@ -5,13 +5,12 @@ import android.graphics.Bitmap
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -61,37 +60,29 @@ fun ReplyMessage(
         Surface(
             modifier = Modifier
                 .width(4.dp)
-                .fillMaxHeight(),
-            color = colorResource(R.color.colorAccent)
+                .fillMaxHeight(), color = colorResource(R.color.colorAccent)
         ) { }
         if (message.audio != null) {
             PlayAudio(replyPlayingState, message.audio, message.messageId, playOnClick)
         } else {
-            if (message.text.isNotEmpty())
-                Text(
-                    text = message.text,
-                    style = TextStyle(fontSize = 14.sp),
-                    modifier = Modifier
-                        .padding(start = 4.dp, top = 6.dp, bottom = 6.dp, end = 4.dp)
-                        .widthIn(max = 300.dp),
-                    maxLines = 2
-                )
-            if (bitmap != null)
-                Image(
-                    modifier = Modifier.heightIn(max = 48.dp),
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = null
-                )
-        }
-        if (onClear != null)
-            Icon(
-                imageVector = Icons.Filled.Clear,
-                contentDescription = null,
-                tint = Color.Red,
+            if (message.text.isNotEmpty()) Text(
+                text = message.text,
+                style = TextStyle(fontSize = 14.sp),
                 modifier = Modifier
-                    .size(20.dp)
-                    .clickable { onClear() }
+                    .padding(start = 4.dp, top = 6.dp, bottom = 6.dp, end = 4.dp)
+                    .widthIn(max = 300.dp),
+                maxLines = 2
             )
+            if (bitmap != null) Image(
+                modifier = Modifier.heightIn(max = 48.dp), bitmap = bitmap.asImageBitmap(), contentDescription = null
+            )
+        }
+        if (onClear != null) Icon(imageVector = Icons.Filled.Clear,
+            contentDescription = null,
+            tint = Color.Red,
+            modifier = Modifier
+                .size(20.dp)
+                .clickable { onClear() })
     }
 
 }
@@ -105,12 +96,9 @@ fun PlayAudio(
     onClear: (() -> Unit)? = null
 ) {
     Row(
-        Modifier
-            .height(56.dp)
+        Modifier.height(56.dp)
     ) {
-        Icon(
-            imageVector = if (audio == null) Icons.Filled.ErrorOutline else
-                if (state?.paused != false) Icons.Filled.PlayArrow else Icons.Filled.Pause,
+        Icon(imageVector = if (audio == null) Icons.Filled.ErrorOutline else if (state?.paused != false) Icons.Filled.PlayArrow else Icons.Filled.Pause,
             contentDescription = null,
             tint = if (audio == null) Color.Red else Color.Black,
             modifier = Modifier
@@ -118,27 +106,25 @@ fun PlayAudio(
                 .size(36.dp)
                 .clickable {
                     playOnClick(audio, messageId)
-                }
-        )
+                })
         Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .width(142.dp)
                 .padding(start = 8.dp, end = 8.dp)
         ) {
-            LinearProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
-                progress = state?.let {
-                    if (state.duration > 0) state.elapsed.toFloat() / state.duration else 0f
-                } ?: 0f
-            )
+            LinearProgressIndicator(modifier = Modifier.align(Alignment.Center), progress = state?.let {
+                if (state.duration > 0) state.elapsed.toFloat() / state.duration else 0f
+            } ?: 0f)
             Text(
-                text = timeToString(state?.elapsed), modifier = Modifier
+                text = timeToString(state?.elapsed),
+                modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(bottom = 2.dp)
             )
             Text(
-                text = timeToString(state?.duration), modifier = Modifier
+                text = timeToString(state?.duration),
+                modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(bottom = 2.dp)
             )
@@ -150,43 +136,42 @@ fun PlayAudio(
                 .padding(top = 12.dp, bottom = 12.dp, end = 4.dp)
                 .size(36.dp)
         )
-        if (onClear != null)
-            Icon(
-                imageVector = Icons.Filled.Clear,
-                contentDescription = null,
-                tint = Color.Red,
-                modifier = Modifier
-                    .size(20.dp)
-                    .clickable { onClear() }
-            )
+        if (onClear != null) Icon(imageVector = Icons.Filled.Clear,
+            contentDescription = null,
+            tint = Color.Red,
+            modifier = Modifier
+                .size(20.dp)
+                .clickable { onClear() })
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Preview(widthDp = 320)
 @ExperimentalMaterialApi
 @Composable
 fun MessageCompose(
     data: MessageViewData? = testMessageViewData,
+    selected: Boolean = false,
+    loadingBitmaps: Boolean = false,
     bitmap: Bitmap? = null,
     replyBitmap: Bitmap? = null,
     onClick: () -> Unit = {},
+    onSelect: () -> Unit = {},
     onSwipe: () -> Unit = {},
     playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> }
 ) {
     if (data == null) return
     var windowWidth by remember { mutableStateOf(0) }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .onGloballyPositioned {
-                windowWidth = it.size.width
-            }
-            .padding(bottom = 4.dp)
+    Column(modifier = Modifier
+        .onGloballyPositioned {
+            windowWidth = it.size.width
+        }
+        .fillMaxWidth()
     ) {
         if (data.hasTimeMessage()) {
             Card(
                 modifier = Modifier
-                    .padding(8.dp)
+                    .padding(top = 8.dp, bottom = 4.dp)
                     .align(CenterHorizontally),
                 shape = RoundedCornerShape(6.dp),
                 elevation = 1.dp,
@@ -202,10 +187,20 @@ fun MessageCompose(
         }
         val message = data.message
         val offsetX = remember { Animatable(0f) }
-        Card(
+        Column(
             modifier = Modifier
+                .fillMaxWidth()
+                .background(colorResource(if (selected) R.color.selected_message_color else android.R.color.transparent))
+                .padding(4.dp)
+        ) {
+            Card(modifier = Modifier
                 .widthIn(min = 120.dp, max = 258.dp)
                 .align(if (message.isMine) Alignment.End else Alignment.Start)
+                .pointerInput(data.message.messageId) {
+                    detectTapGestures(onLongPress = {
+                        onSelect()
+                    })
+                }
                 .pointerInput(data.message.messageId) {
                     coroutineScope {
                         detectHorizontalDragGestures { change, dragAmount ->
@@ -215,10 +210,7 @@ fun MessageCompose(
                                     offsetX.animateTo(
                                         targetValue = windowWidth.toFloat(),
                                         initialVelocity = 0f,
-                                        animationSpec = tween(
-                                            durationMillis = 500,
-                                            easing = LinearEasing
-                                        )
+                                        animationSpec = tween(durationMillis = 500, easing = LinearEasing)
                                     )
                                     offsetX.snapTo(0f)
                                 }
@@ -227,113 +219,131 @@ fun MessageCompose(
                     }
                 }
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) },
-            shape = RoundedCornerShape(6.dp),
-            elevation = 1.dp,
-            backgroundColor = colorResource(
-                id =
-                if (message.isMine) R.color.my_message_color
-                else R.color.not_my_message_color
-            )
-        ) {
-            Column(modifier = Modifier.padding(4.dp)) {
-                message.replyMessage?.let {
-                    ReplyMessage(it, replyBitmap, data.replyPlayingState, playOnClick)
-                }
-                if (message.audio != null) {
-                    PlayAudio(data.playingState, message.audio, message.messageId, playOnClick)
-                } else if (message.image != null || message.video != null) {
-                    Row {
-                        Box(modifier = Modifier
-                            .clickable { onClick() }
-                            .padding(bottom = 4.dp)) {
-                            when {
-                                message.attachmentStatus == AttachmentStatus.LOADING -> {
-                                    Box(
-                                        Modifier
-                                            .size(250.dp)
-                                            .background(colorResource(id = R.color.time_message_color))
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier
-                                                .size(100.dp)
-                                                .align(Alignment.Center),
-                                        )
+                shape = RoundedCornerShape(6.dp),
+                elevation = 1.dp,
+                backgroundColor = colorResource(
+                    id = if (message.isMine) R.color.my_message_color
+                    else R.color.not_my_message_color
+                )
+            ) {
+                Column(modifier = Modifier.padding(4.dp)) {
+                    message.replyMessage?.let {
+                        ReplyMessage(it, replyBitmap, data.replyPlayingState, playOnClick)
+                    }
+                    if (message.audio != null) {
+                        PlayAudio(data.playingState, message.audio, message.messageId, playOnClick)
+                    } else if (message.image != null || message.video != null) {
+                        Row {
+                            Box(modifier = Modifier
+                                .combinedClickable(
+                                    onClick = {
+                                        onClick()
+                                    },
+                                    onLongClick = {
+                                        onSelect()
                                     }
-                                }
-                                message.attachmentStatus == AttachmentStatus.LOADED && bitmap != null -> {
-                                    Image(
-                                        modifier = Modifier.size(250.dp),
-                                        contentScale = ContentScale.Crop,
-                                        bitmap = bitmap.asImageBitmap(),
-                                        contentDescription = null
-                                    )
-                                    if (message.video != null)
+                                )
+                                .padding(bottom = 4.dp)) {
+                                when {
+                                    loadingBitmaps -> {
+                                        Box(
+                                            Modifier
+                                                .size(250.dp)
+                                                .background(colorResource(id = R.color.time_message_color))
+                                        ) {
+
+                                        }
+                                    }
+                                    message.attachmentStatus == AttachmentStatus.LOADING -> {
+                                        Box(
+                                            Modifier
+                                                .size(250.dp)
+                                                .background(colorResource(id = R.color.time_message_color))
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier
+                                                    .size(100.dp)
+                                                    .align(Alignment.Center),
+                                            )
+                                        }
+                                    }
+                                    message.attachmentStatus == AttachmentStatus.LOADED && bitmap != null -> {
                                         Image(
+                                            modifier = Modifier.size(250.dp),
+                                            contentScale = ContentScale.Crop,
+                                            bitmap = bitmap.asImageBitmap(),
+                                            contentDescription = null
+                                        )
+                                        if (message.video != null) Image(
                                             modifier = Modifier
                                                 .size(50.dp)
                                                 .align(Alignment.Center),
                                             painter = painterResource(R.drawable.ic_play_circle),
                                             contentDescription = null
                                         )
-                                }
-                                message.attachmentStatus == AttachmentStatus.NOT_LOADED ||
-                                        (message.attachmentStatus == AttachmentStatus.LOADED && bitmap == null) -> {
-                                    Box(
-                                        Modifier
-                                            .size(250.dp)
-                                            .background(colorResource(id = R.color.time_message_color))
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.ErrorOutline,
-                                            modifier = Modifier
-                                                .size(100.dp)
-                                                .align(Alignment.Center),
-                                            tint = Color.Red,
-                                            contentDescription = null
-                                        )
+                                    }
+                                    message.attachmentStatus == AttachmentStatus.NOT_LOADED || (message.attachmentStatus == AttachmentStatus.LOADED && bitmap == null) -> {
+                                        Box(
+                                            Modifier
+                                                .size(250.dp)
+                                                .background(colorResource(id = R.color.time_message_color))
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.ErrorOutline,
+                                                modifier = Modifier
+                                                    .size(100.dp)
+                                                    .align(Alignment.Center),
+                                                tint = Color.Red,
+                                                contentDescription = null
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-                if (message.text.isNotEmpty())
-                    Row {
+                    if (message.text.isNotEmpty()) Row {
                         val annotatedString = textToAnnotatedString(message.text)
                         val uriHandler = LocalUriHandler.current
-                        ClickableText(
-                            modifier = Modifier.padding(start = 4.dp, top = 2.dp, end = 4.dp, bottom = 1.dp),
+                        Text(
+                            modifier = Modifier
+                                .padding(start = 4.dp, top = 2.dp, end = 4.dp, bottom = 1.dp)
+                                .combinedClickable(
+                                    interactionSource = MutableInteractionSource(),
+                                    indication = null,
+                                    onClick = {
+                                        annotatedString
+                                            .getStringAnnotations("URL", 0, annotatedString.length)
+                                            .firstOrNull()
+                                            ?.let { stringAnnotation ->
+                                                uriHandler.openUri(stringAnnotation.item)
+                                            }
+                                    },
+                                    onLongClick = {
+                                        onSelect()
+                                    }
+                                ),
                             text = annotatedString,
                             style = TextStyle(fontSize = 16.sp),
-                            onClick = {
-                                annotatedString
-                                    .getStringAnnotations("URL", it, it)
-                                    .firstOrNull()?.let { stringAnnotation ->
-                                        uriHandler.openUri(stringAnnotation.item)
-                                    }
-                            }
                         )
                     }
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.End)
-                ) {
-                    Text(
-                        modifier = Modifier.padding(end = 4.dp),
-                        text = message.shortTimeString(),
-                        color = Color.Black,
-                        fontSize = 12.sp
-                    )
-                    if (message.isMine) {
-                        if (!data.sent())
-                            Icon(
+                    Row(
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(end = 4.dp),
+                            text = message.shortTimeString(),
+                            color = Color.Black,
+                            fontSize = 12.sp
+                        )
+                        if (message.isMine) {
+                            if (!data.sent()) Icon(
                                 imageVector = Icons.Filled.WatchLater,
                                 modifier = Modifier.height(16.dp),
                                 tint = colorResource(id = R.color.report_message_color0),
                                 contentDescription = null
                             )
-                        if (data.sentAndNotReceived() || data.receivedAndNotViewed())
-                            Icon(
+                            if (data.sentAndNotReceived() || data.receivedAndNotViewed()) Icon(
                                 imageVector = Icons.Filled.Done,
                                 modifier = Modifier.height(16.dp),
                                 tint = colorResource(
@@ -342,20 +352,19 @@ fun MessageCompose(
                                 ),
                                 contentDescription = null
                             )
-                        if (data.viewed())
-                            Icon(
+                            if (data.viewed()) Icon(
                                 imageVector = Icons.Filled.DoneAll,
                                 modifier = Modifier.height(16.dp),
                                 tint = colorResource(id = R.color.report_message_color1),
                                 contentDescription = null
                             )
-                        if (data.error())
-                            Icon(
+                            if (data.error()) Icon(
                                 imageVector = Icons.Filled.ErrorOutline,
                                 modifier = Modifier.height(16.dp),
                                 tint = Color.Red,
                                 contentDescription = null
                             )
+                        }
                     }
                 }
             }
@@ -374,38 +383,29 @@ private fun textToAnnotatedString(text: String) = with(AnnotatedString.Builder()
         val end = it.range.last + 1
         addStyle(
             style = SpanStyle(
-                color = LightColorPalette.primary,
-                textDecoration = TextDecoration.Underline
-            ),
-            start = start,
-            end = end
+                color = LightColorPalette.primary, textDecoration = TextDecoration.Underline
+            ), start = start, end = end
         )
         addStringAnnotation(
-            tag = "URL",
-            annotation = it.value,
-            start = start,
-            end = end
+            tag = "URL", annotation = it.value, start = start, end = end
         )
     }
     toAnnotatedString()
 }
 
 val testPlayingState = PlayingState(
-    audioFile = "",
-    duration = 60 * 1000,
-    elapsed = 20 * 1000,
-    paused = false
+    audioFile = "", duration = 60 * 1000, elapsed = 20 * 1000, paused = false
 )
 
 private val testMessageViewData = MessageViewData(
     Message(
         id = 0L,
-        //text = "some very very long text",
-        text = "",
+        text = "some very very long text",
+        //text = "",
         time = System.currentTimeMillis(),
         isMine = false,
         image = null,
-        audio = "xxx",
+        //audio = "xxx",
         video = null,
         sent = 1,
         received = 1,
@@ -413,7 +413,7 @@ private val testMessageViewData = MessageViewData(
         //replyMessage = Message(text = "reply to message")
     )
 ).apply {
-    playingState = testPlayingState
+    //playingState = testPlayingState
     //bitmap = Bitmap.createBitmap(800, 800, Bitmap.Config.RGB_565)
     //replyBitmap = Bitmap.createBitmap(400, 400, Bitmap.Config.RGB_565)
     dateDelimiter = "16 july"

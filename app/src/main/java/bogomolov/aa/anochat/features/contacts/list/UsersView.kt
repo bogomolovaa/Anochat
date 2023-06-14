@@ -45,7 +45,8 @@ fun UsersView(uri: String? = null) {
     val navController = LocalNavController.current
     val context = LocalContext.current
     LaunchedEffect(0) {
-        viewModel.loadContacts(getContactsPhones(context))
+        //viewModel.loadContacts(getContactsPhones(context))
+        viewModel.loadContacts(listOf())
     }
     EventHandler(viewModel.events) {
         if (it is NavigateConversationEvent) navController?.navigateToConversation(
@@ -229,8 +230,3 @@ private fun Context.queryContacts(): Cursor? {
         null
     )
 }
-
-/*
-   viewModel.resetSearch()
-   viewModel.search(query)
-*/

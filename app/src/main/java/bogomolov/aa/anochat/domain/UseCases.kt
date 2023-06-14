@@ -44,7 +44,7 @@ open class MessageUseCases @Inject constructor(
     private val notificationsService: NotificationsService
 ) : MessageUseCasesInRepository by messageRep {
 
-    val messagesListener = object : MessagesListener{
+    val messagesListener = object : MessagesListener {
         override suspend fun onMessageReceived(message: Message, uid: String) {
             receiveMessage(message, uid) {
                 notificationsService.showNotification(it)
@@ -71,6 +71,7 @@ open class MessageUseCases @Inject constructor(
         uid: String,
         onSuccess: (Message) -> Unit
     ) {
+        if (messageRep.getMessage(message.messageId) != null) return
         Log.d(TAG, "receiveMessage $message")
         try {
             val secretKey = crypto.getSecretKey(uid) ?: throw WrongSecretKeyException("null")

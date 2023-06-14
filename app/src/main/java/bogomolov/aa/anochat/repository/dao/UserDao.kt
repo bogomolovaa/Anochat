@@ -24,6 +24,9 @@ interface UserDao {
     @Query("select * from UserEntity where phone in (:phoneList) and uid != :myUid")
     fun getAll(phoneList: List<String>, myUid: String): List<UserEntity>
 
+    @Query("select * from UserEntity where uid != :myUid")
+    fun getAll(myUid: String): List<UserEntity>
+
     @Query("select * from UserEntity where id in (SELECT userId FROM ConversationEntity where myUid = :myUid)")
     fun getOpenedConversationUsers(myUid: String): List<UserEntity>
 }

@@ -11,6 +11,7 @@ interface UserRepository : UserUseCasesInRepository {
 interface UserUseCasesInRepository {
     fun getImagesDataSource(userId: Long): Flow<PagingData<String>>
     suspend fun getUsersByPhones(phones: List<String>): List<User>
+    suspend fun getAllUsers(): List<User>
 
     suspend fun updateUsersByPhones(phones: List<String>): List<User>
     suspend fun updateUsersInConversations(blocking: Boolean)

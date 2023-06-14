@@ -39,6 +39,11 @@ class UserRepositoryImpl @Inject constructor(
             db.userDao().getAll(phones, getMyUID()!!).map { mapper.entityToModel(it)!! }
         }
 
+    override suspend fun getAllUsers() =
+        withContext(dispatcher) {
+            db.userDao().getAll(getMyUID()!!).map { mapper.entityToModel(it)!! }
+        }
+
     override suspend fun updateUsersByPhones(phones: List<String>) =
         withContext(dispatcher) {
             if (phones.isNotEmpty()) {

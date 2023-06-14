@@ -34,8 +34,8 @@ class UsersViewModel
 
     fun loadContacts(phones: List<String>) {
         viewModelScope.launch {
-            //TODO: refactor to single method
-            usersList = userUseCases.getUsersByPhones(phones)
+            //usersList = userUseCases.getUsersByPhones(phones)
+            usersList = userUseCases.getAllUsers()
             setState { copy(users = usersList) }
             //usersList = userUseCases.updateUsersByPhones(phones)
             //setState { copy(loading = false, users = usersList) }

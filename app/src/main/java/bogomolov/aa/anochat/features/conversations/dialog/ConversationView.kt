@@ -13,10 +13,13 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -39,7 +42,9 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -86,7 +91,7 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
         }
     })
     val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel, conversationId)
+    Content(state.value, viewModel)
 }
 
 @Preview
@@ -94,18 +99,36 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
 @Composable
 private fun Content(
     state: DialogUiState = testDialogUiState,
-    viewModel: ConversationViewModel? = null,
-    conversationId: Long = 0,
+    viewModel: ConversationViewModel? = null
 ) {
     val navController = LocalNavController.current
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    UserNameLayout(
-                        state = state,
-                        onClick = { navigateToUserFragment(viewModel, navController) }
-                    )
+                    Row() {
+                        UserNameLayout(
+                            state = state,
+                            onClick = { navigateToUserFragment(viewModel, navController) }
+                        )
+                        if (state.selectedMessages.isNotEmpty()) {
+                            Spacer(Modifier.weight(1f))
+                            IconButton(
+                                onClick = { viewModel?.deleteMessages() }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = "Clear"
+                                )
+                            }
+                            IconButton(
+                                onClick = { viewModel?.clearMessages() }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "Clear"
+                                )
+                            }
+                        }
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController?.popBackStack() }) {
@@ -128,10 +151,10 @@ private fun Content(
                     Box(
                         Modifier
                             .weight(1f)
-                            .padding(start = 8.dp, end = 8.dp),
+                            .padding(start = 4.dp, end = 4.dp),
                         contentAlignment = Alignment.BottomStart
                     ) {
-                        MessagesList(state.pagingDataFlow, state.playingState, viewModel)
+                        MessagesList(state.pagingDataFlow, state, viewModel)
                         ReplyLayout(state, viewModel)
                     }
                     Row(Modifier.padding(end = 64.dp)) {
@@ -266,18 +289,28 @@ private fun FabsLayout(
 @Composable
 private fun MessagesList(
     pagingDataFlow: Flow<PagingData<MessageViewData>>? = null,
-    playingState: PlayingState? = null,
+    state: DialogUiState = testDialogUiState,
     viewModel: ConversationViewModel? = null
 ) {
     if (pagingDataFlow != null) {
         val lazyPagingItems = pagingDataFlow.collectAsLazyPagingItems()
+        val listState = rememberLazyListState()
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             reverseLayout = true,
         ) {
             items(count = lazyPagingItems.itemCount) { index ->
-                ShowMessage(lazyPagingItems[index], playingState, viewModel)
+                lazyPagingItems[index]?.let {
+                    ShowMessage(
+                        messageData = it,
+                        selected = state.selectedMessages.contains(it.message),
+                        isScrolling = listState.isScrollInProgress,
+                        playingState = state.playingState,
+                        viewModel = viewModel
+                    )
+                }
             }
         }
     }
@@ -287,6 +320,8 @@ private fun MessagesList(
 @Composable
 private fun ShowMessage(
     messageData: MessageViewData?,
+    selected: Boolean = false,
+    isScrolling: Boolean = false,
     playingState: PlayingState?,
     viewModel: ConversationViewModel?
 ) {
@@ -296,6 +331,7 @@ private fun ShowMessage(
         LaunchedEffect(messageData.message.id) {
             viewModel?.messageDisplayed(messageData)
         }
+    var loading by remember { mutableStateOf(true) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var replyBitmap by remember { mutableStateOf<Bitmap?>(null) }
     val messageThumbnail = messageData?.message?.getThumbnail()
@@ -303,8 +339,10 @@ private fun ShowMessage(
     if (messageThumbnail != null || replyMessageThumbnail != null) {
         LaunchedEffect(messageData.message) {
             withContext(Dispatchers.IO) {
+                if (isScrolling) delay(300)
                 messageThumbnail?.let { bitmap = getBitmapFromGallery(it, context, 1) }
-                replyMessageThumbnail?.let { replyBitmap = getBitmapFromGallery(it, context, 1) }
+                replyMessageThumbnail?.let { replyBitmap = getBitmapFromGallery(it, context, 8) }
+                loading = false
             }
         }
         DisposableEffect(messageData.message.id) {
@@ -322,12 +360,19 @@ private fun ShowMessage(
     }
     MessageCompose(
         data = messageData,
+        selected = selected,
+        loadingBitmaps = loading,
         bitmap = bitmap,
         replyBitmap = replyBitmap,
         onClick = {
             when {
                 messageData?.message?.video != null -> videoOnClick(messageData.message, context, navController)
                 messageData?.message?.image != null -> imageOnClick(messageData.message, navController)
+            }
+        },
+        onSelect = {
+            messageData?.message?.let {
+                viewModel?.selectMessage(it)
             }
         },
         onSwipe = {

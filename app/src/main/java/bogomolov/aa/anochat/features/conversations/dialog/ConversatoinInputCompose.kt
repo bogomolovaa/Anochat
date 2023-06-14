@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-@Preview
+
 @Composable
 fun ConversationInput(
     state: DialogUiState = testDialogUiState,
@@ -228,7 +228,7 @@ fun InputFabs(
     }
 }
 
-
+@Preview
 @Composable
 fun UserNameLayout(
     state: DialogUiState = testDialogUiState,
@@ -237,7 +237,6 @@ fun UserNameLayout(
     val conversation = state.conversation
     if (conversation != null) {
         Row(modifier = Modifier
-            .fillMaxWidth()
             .clickable {
                 onClick()
             }) {

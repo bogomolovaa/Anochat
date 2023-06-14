@@ -186,12 +186,12 @@ class MainActivity : AppCompatActivity() {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val uploadWorkRequest = PeriodicWorkRequestBuilder<UpdateWorker>(1, TimeUnit.MINUTES)
+        val uploadWorkRequest = PeriodicWorkRequestBuilder<UpdateWorker>(1, TimeUnit.HOURS)
             .setConstraints(constraints)
             .build()
 
         WorkManager.getInstance(application).enqueueUniquePeriodicWork(
-            "updateUsers",
+            "update",
             ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
             uploadWorkRequest
         )

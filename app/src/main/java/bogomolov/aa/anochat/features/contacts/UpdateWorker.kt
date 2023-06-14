@@ -7,6 +7,7 @@ import androidx.work.WorkerParameters
 import bogomolov.aa.anochat.domain.UserUseCases
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
 @HiltWorker
@@ -17,7 +18,10 @@ class UpdateWorker @AssistedInject constructor(
 ) : Worker(appContext, workerParams) {
 
     override fun doWork(): Result {
-        runBlocking { userUseCases.updateUsersInConversations(true) }
+        runBlocking {
+            userUseCases.updateUsersInConversations(true)
+            delay(10 * 1000)
+        }
         return Result.success()
     }
 }

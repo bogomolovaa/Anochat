@@ -59,6 +59,7 @@ data class DialogUiState(
     val audioLengthText: String = "",
     val playingState: PlayingState? = null,
     val pagingDataFlow: Flow<PagingData<MessageViewData>>? = null,
+    val selectedMessages: List<Message> = listOf(),
 
     val resized: BitmapWithName? = null,
     val isVideo: Boolean = false,
@@ -242,9 +243,26 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun deleteMessages(ids: Set<Long>) {
+    fun deleteMessages() {
         viewModelScope.launch {
-            messageUseCases.deleteMessages(ids)
+            messageUseCases.deleteMessages(currentState.selectedMessages.map { it.id }.toSet())
+            clearMessages()
+        }
+    }
+
+    fun clearMessages() {
+        updateState { copy(selectedMessages = listOf()) }
+    }
+
+    fun selectMessage(message: Message) {
+        updateState {
+            copy(selectedMessages = selectedMessages.toMutableList().apply {
+                if (!contains(message)) {
+                    add(message)
+                } else {
+                    remove(message)
+                }
+            })
         }
     }
 

@@ -67,13 +67,13 @@ class FirebaseImpl @Inject constructor() : Firebase {
                             )
                             val data = snapshot.value as Map<String, Any>
                             val type = MessageType.valueOf(data["type"] as String)
+                            val removeRef: () -> Unit = { messageRef.removeValue() }
                             when (type) {
                                 MessageType.MESSAGE ->
-                                    receiveMessage(listener, uid, messageId, data)
-                                MessageType.REPORT -> receiveReport(listener, data)
+                                    receiveMessage(listener, uid, messageId, data, removeRef)
+                                MessageType.REPORT -> receiveReport(listener, data, removeRef)
                                 MessageType.KEY -> receiveKey(listener, uid, data)
                             }
-                            messageRef.removeValue()
                         }
 
                         override fun onCancelled(p0: DatabaseError) {
@@ -104,7 +104,8 @@ class FirebaseImpl @Inject constructor() : Firebase {
         messagesListener: MessagesListener,
         uid: String,
         messageId: String,
-        data: Map<String, Any>
+        data: Map<String, Any>,
+        onSuccess: () -> Unit
     ) {
         firebaseScope.launch {
             val message = Message(
@@ -117,17 +118,18 @@ class FirebaseImpl @Inject constructor() : Firebase {
                 video = data["video"] as String?
             )
             messagesListener.onMessageReceived(message, uid)
+            onSuccess()
         }
     }
 
-    private fun receiveReport(messagesListener: MessagesListener, data: Map<String, Any>) {
+    private fun receiveReport(messagesListener: MessagesListener, data: Map<String, Any>, onSuccess: () -> Unit) {
         firebaseScope.launch {
-            //if (viewed == 1 || received == -1) deleteRemoteMessage(messageId)
             val messageId = data["message"] as String
             val viewed = data["viewed"] as Long
             val received = data["received"] as Long
             Log.d(TAG, "receivedReport received $received viewed $viewed")
             messagesListener.onReportReceived(messageId, received.toInt(), viewed.toInt())
+            onSuccess()
         }
     }
 
@@ -139,7 +141,6 @@ class FirebaseImpl @Inject constructor() : Firebase {
         firebaseScope.launch {
             val publicKey = data["key"] as String
             val initiator = data["initiator"] as Boolean
-            //deleteRemoteMessage(messageId)
             messagesListener.onPublicKeyReceived(uid, publicKey, initiator)
         }
     }
