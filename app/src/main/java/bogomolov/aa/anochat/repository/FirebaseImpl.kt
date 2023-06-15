@@ -323,29 +323,36 @@ class FirebaseImpl @Inject constructor() : Firebase {
             Log.w(TAG, "send ${type.name} failure", it)
             continuation.resume(null)
         }.addOnSuccessListener {
-            ref.child("time").addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val timestamp = snapshot.value as Long
-                    val notifyRef =
-                        FirebaseDatabase.getInstance().reference.child("notifications").child(uid).push()
-                    notifyRef.setValue(
-                        mapOf(
-                            "message" to ref.key,
-                            "source" to myUid,
-                        )
-                    ).addOnFailureListener {
-                        Log.w(TAG, "notify ${type.name} failure", it)
-                        continuation.resume(null)
-                    }.addOnSuccessListener {
-                        continuation.resume(Pair(ref.key!!, timestamp))
-                    }
-                }
-
-                override fun onCancelled(p0: DatabaseError) {
-                    Log.w(TAG, "send ${type.name} get timestamp failure", p0.toException())
+            val notify: (Long) -> Unit = { timestamp ->
+                val notifyRef =
+                    FirebaseDatabase.getInstance().reference.child("notifications").child(uid).push()
+                notifyRef.setValue(
+                    mapOf(
+                        "message" to ref.key,
+                        "source" to myUid,
+                    )
+                ).addOnFailureListener {
+                    Log.w(TAG, "notify ${type.name} failure", it)
                     continuation.resume(null)
+                }.addOnSuccessListener {
+                    continuation.resume(Pair(ref.key!!, timestamp))
                 }
-            })
+            }
+            if (type == MessageType.MESSAGE) {
+                ref.child("time").addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val timestamp = snapshot.value as Long
+                        notify(timestamp)
+                    }
+
+                    override fun onCancelled(p0: DatabaseError) {
+                        Log.w(TAG, "send ${type.name} get timestamp failure", p0.toException())
+                        continuation.resume(null)
+                    }
+                })
+            } else {
+                notify(0)
+            }
         }
     }
 
