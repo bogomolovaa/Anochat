@@ -34,9 +34,8 @@ class MockMessageRepository(
         return 1
     }
 
-    override suspend fun sendMessage(message: Message, uid: String): String {
-        remoteUseCases.receiveMessage(message, myUid) {}
-        return message.messageId
+    override suspend fun sendMessage(message: Message, uid: String) {
+        remoteUseCases.receiveMessage(message, myUid)
     }
 
     override suspend fun notifyAsReceived(messageId: String, uid: String) {
@@ -49,10 +48,8 @@ class MockMessageRepository(
     }
 
     override suspend fun receiveReport(messageId: String, received: Int, viewed: Int) {
-        val message = getMessage(messageId)
-        if (message != null) {
-            message.received = received
-            message.viewed = viewed
+        getMessage(messageId)?.let {
+            this.message = it.copy(received = received, viewed = viewed)
         }
     }
 

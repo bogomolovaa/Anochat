@@ -46,7 +46,7 @@ open class MessageUseCases @Inject constructor(
 
     val messagesListener = object : MessagesListener {
         override suspend fun onMessageReceived(message: Message, uid: String) {
-            receiveMessage(message, uid) {
+            receiveMessage(message, uid)?.let {
                 notificationsService.showNotification(it)
             }
         }
@@ -66,41 +66,36 @@ open class MessageUseCases @Inject constructor(
         }
     }
 
-    suspend fun receiveMessage(
-        message: Message,
-        uid: String,
-        onSuccess: (Message) -> Unit
-    ) {
-        if (messageRep.getMessage(message.messageId) != null) return
+    suspend fun receiveMessage(message: Message, uid: String): Message? {
+        if (messageRep.getMessage(message.messageId) != null) return null
         Log.d(TAG, "receiveMessage $message")
         try {
             val secretKey = crypto.getSecretKey(uid) ?: throw WrongSecretKeyException("null")
-            message.text = crypto.decryptString(message.text, secretKey)
-            val user = userRep.getOrAddUser(uid)
-            message.conversationId = conversationRep.createOrGetConversation(user)
-            val replyId = message.replyMessageId
-            if (!replyId.isNullOrEmpty()) message.replyMessage = messageRep.getMessage(replyId)
-            message.id = messageRep.saveMessage(message)
             messageRep.notifyAsReceived(message.messageId, uid)
-            onSuccess(message)
+            return message.copy(
+                text = crypto.decryptString(message.text, secretKey),
+                conversationId = conversationRep.createOrGetConversation(userRep.getOrAddUser(uid)),
+                replyMessage = message.replyMessageId?.let { messageRep.getMessage(it) },
+            ).run { copy(id = messageRep.saveMessage(this)) }
         } catch (e: WrongSecretKeyException) {
             Log.w(TAG, "not received message $message from $uid: ${e.message} secret key")
             messageRep.notifyAsNotReceived(message.messageId, uid)
             if (keyIsNotSentTo(uid))
                 sendPublicKey(crypto.generatePublicKey(uid), uid, initiator = true)
         }
+        return null
     }
 
     suspend fun sendMessage(message: Message, uid: String) = coroutineScope {
-        if (message.isNotSaved()) message.id = messageRep.saveMessage(message)
+        val id = if (message.isNotSaved()) messageRep.saveMessage(message) else message.id
         val secretKey = crypto.getSecretKey(uid)
         Log.d(TAG, "sendMessage $message to uid $uid secretKey $secretKey")
         if (secretKey != null) {
             if (message.hasAttachment()) launch {
                 messageRep.sendAttachment(message, uid) { crypto.encrypt(secretKey, this) }
             }
-            message.text = crypto.encryptString(secretKey, message.text)
-            messageRep.sendMessage(message, uid)
+            val text = crypto.encryptString(secretKey, message.text)
+            messageRep.sendMessage(message.copy(id = id, text = text), uid)
         } else if (keyIsNotSentTo(uid))
             sendPublicKey(crypto.generatePublicKey(uid), uid, initiator = true)
     }
@@ -121,7 +116,6 @@ open class MessageUseCases @Inject constructor(
 
     suspend fun messageDisplayed(message: Message, uid: String) {
         if (!message.isMine && message.viewed == 0) {
-            message.viewed = 1
             messageRep.notifyAsViewed(message, uid)
         }
         if (!message.isMine && message.hasAttachment() && message.received == 0) {

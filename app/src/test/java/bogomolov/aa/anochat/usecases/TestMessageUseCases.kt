@@ -15,7 +15,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 
@@ -32,10 +31,10 @@ class TestMessageUseCases {
         val attachment = ByteArray(1000) { it.toByte() }
         val messageRep1 = MockMessageRepository(UID1) { attachment }
         val messageRep2 = MockMessageRepository(UID2) { messageRep1.attachment }
-        val conversationRep1 = Mockito.mock(ConversationRepository::class.java)
-        val conversationRep2 = Mockito.mock(ConversationRepository::class.java)
-        val userRep1 = Mockito.mock(UserRepository::class.java)
-        val userRep2 = Mockito.mock(UserRepository::class.java)
+        val conversationRep1 = mock(ConversationRepository::class.java)
+        val conversationRep2 = mock(ConversationRepository::class.java)
+        val userRep1 = mock(UserRepository::class.java)
+        val userRep2 = mock(UserRepository::class.java)
         val useCases1 = createUseCases(UID1, messageRep1, conversationRep1, userRep1)
         val useCases2 = createUseCases(UID2, messageRep2, conversationRep2, userRep2)
         messageRep1.remoteUseCases = useCases2
@@ -55,7 +54,7 @@ class TestMessageUseCases {
         assertEquals(text, message2?.text)
         assertEquals(message1.messageId, message2?.messageId)
         assertEquals(message1.image, message2?.image)
-        assertEquals(1, message1.received)
+        assertEquals(1,  messageRep1.getMessage(message1.messageId)?.received)
         assert(attachment.contentEquals(messageRep2.attachment))
     }
 

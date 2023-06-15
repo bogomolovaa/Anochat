@@ -9,22 +9,22 @@ enum class AttachmentStatus {
 }
 
 data class Message(
-    var id: Long = 0L,
-    var text: String = "",
+    val id: Long = 0L,
+    val text: String = "",
     val time: Long = 0L,
-    var conversationId: Long = 0L,
+    val conversationId: Long = 0L,
     var isMine: Boolean = false,
     val messageId: String = "",
-    var replyMessage: Message? = null,
-    var replyMessageId: String? = null,
-    var image: String? = null,
-    var audio: String? = null,
-    var video: String? = null,
-    var publicKey: String? = null,
+    val replyMessage: Message? = null,
+    val replyMessageId: String? = null,
+    val image: String? = null,
+    val audio: String? = null,
+    val video: String? = null,
+    val publicKey: String? = null,
 
-    var sent: Int = 0,
-    var received: Int = 0,
-    var viewed: Int = 0
+    val sent: Int = 0,
+    val received: Int = 0,
+    val viewed: Int = 0
 ) {
 
     override fun hashCode(): Int = id.toString().hashCode()

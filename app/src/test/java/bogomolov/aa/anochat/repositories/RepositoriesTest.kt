@@ -82,9 +82,9 @@ class RepositoriesTest {
         userRepository.getOrAddUser(user.uid)
         val conversationId = conversationRepository.createOrGetConversation(user)
         val message = Message(text = "text", conversationId = conversationId, isMine = true)
-        message.id = messageRepository.saveMessage(message)
+        val id = messageRepository.saveMessage(message)
         val messages = messageRepository.getPendingMessages(user.uid)
-        assertEquals(message.id, messages[0].id)
+        assertEquals(id, messages[0].id)
     }
 
     @Test
@@ -93,7 +93,7 @@ class RepositoriesTest {
         conversationRepository.createOrGetConversation(user)
         val updatedUser = user.copy(status = "status")
         Mockito.`when`(fireBase.getUser(user.uid)).thenReturn(updatedUser)
-        userRepository.updateUsersInConversations()
+        userRepository.updateUsersInConversations(true)
         assertEquals(updatedUser.status, userRepository.getUser(user.id).status)
     }
 }
