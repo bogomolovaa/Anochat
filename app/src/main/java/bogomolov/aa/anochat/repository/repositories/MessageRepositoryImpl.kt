@@ -30,19 +30,19 @@ class MessageRepositoryImpl @Inject constructor(
 
     override suspend fun startTypingTo(uid: String) {
         withContext(dispatcher) {
-            firebase.sendTyping(getMyUID()!!, uid, 1)
+            firebase.sendTyping(getMyUID(), uid, 1)
         }
     }
 
     override suspend fun stopTypingTo(uid: String) {
         withContext(dispatcher) {
-            firebase.sendTyping(getMyUID()!!, uid, 0)
+            firebase.sendTyping(getMyUID(), uid, 0)
         }
     }
 
     override fun searchMessagesDataSource(search: String) =
         Pager(PagingConfig(pageSize = 10)) {
-            db.messageDao().searchText("%$search%", getMyUID()!!)
+            db.messageDao().searchText("%$search%", getMyUID())
         }.flow.map { it.map { mapper.entityToModel(it)!! } }.flowOn(dispatcher)
 
 
@@ -65,7 +65,10 @@ class MessageRepositoryImpl @Inject constructor(
 
     override suspend fun saveMessage(message: Message): Long =
         withContext(dispatcher) {
-            val entity = mapper.modelToEntity(message).apply { myUid = getMyUID()!! }
+            val myUid = getMyUID()
+            val time = db.messageDao().getLastMessageTime(myUid)
+            val entity = mapper.modelToEntity(message.copy(time = if (message.time <= time) time + 1 else message.time))
+                .copy(myUid = myUid)
             db.messageDao().insert(entity).also { id ->
                 db.conversationDao().updateLastMessage(id, message.conversationId)
             }
@@ -74,7 +77,7 @@ class MessageRepositoryImpl @Inject constructor(
     override suspend fun getPendingMessages(uid: String): List<Message> =
         withContext(dispatcher) {
             val userId = db.userDao().findByUid(uid)?.id ?: return@withContext listOf()
-            mapper.entityToModel(db.messageDao().getNotSent(userId, getMyUID()!!))
+            mapper.entityToModel(db.messageDao().getNotSent(userId, getMyUID()))
         }
 
     override suspend fun getMessage(messageId: String) =

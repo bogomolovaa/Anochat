@@ -23,7 +23,7 @@ private val IV = "12345678".toByteArray()
 class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
 
     fun getSecretKey(uid: String): SecretKey? {
-        return getKey(getSecretKeyName(getMyUID()!!, uid))
+        return getKey(getSecretKeyName(getMyUID(), uid))
     }
 
     fun encrypt(secretKey: SecretKey, clear: ByteArray): ByteArray {
@@ -59,7 +59,7 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
         publicKeyString: String,
         uid: String
     ): SecretKey? {
-        val myUid = getMyUID()!!
+        val myUid = getMyUID()
         val privateKey = getPrivateKey(myUid, uid)
         return if (privateKey != null) {
             val publicKeyByteArray = keyValueStore.base64ToByteArray(publicKeyString)
@@ -76,7 +76,7 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
         val publicKeyByteArray = keyPair?.public?.encoded
         val privateKey = keyPair?.private
         return if (publicKeyByteArray != null && privateKey != null) {
-            saveKey(getPrivateKeyName(getMyUID()!!, uid), privateKey)
+            saveKey(getPrivateKeyName(getMyUID(), uid), privateKey)
             keyValueStore.byteArrayToBase64(publicKeyByteArray)
         } else null
     }
@@ -84,14 +84,6 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
 
     private fun createKeyPair(): KeyPair? {
         try {
-            //Generate params
-            //val paramGen = AlgorithmParameterGenerator.getInstance("DH")
-            //paramGen.init(512)
-            //val params = paramGen.generateParameters().getParameterSpec(DHParameterSpec::class.java)
-            //keyGen.initialize(params)
-
-            
-            //Use fixed
             val g = BigInteger(
                 "7961C6D7913FDF8A034593294FA52D6F8354E9EDFE3EDC8EF082D36662D69DFE8CA7DC7480121C98B9774DFF915FB710D79E1BCBA68C0D429CD6B9AD73C0EF20",
                 16
@@ -118,10 +110,8 @@ class Crypto @Inject constructor(private val keyValueStore: KeyValueStore) {
         keyValueStore.setValue(name, array)
     }
 
-    private fun <T> getKey(name: String): T? {
-        val array: ByteArray? = keyValueStore.getValue(name)
-        return if (array != null) deserializeKey<T>(array) else null
-    }
+    private fun <T> getKey(name: String) =
+        keyValueStore.getValue<ByteArray?>(name)?.let { deserializeKey<T>(it) }
 
     private fun getPrivateKey(myUid: String, uid: String): PrivateKey? =
         getKey(getPrivateKeyName(myUid, uid))

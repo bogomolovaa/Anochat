@@ -16,7 +16,7 @@ interface KeyValueStore {
 
 fun KeyValueStore.setMyUID(myUid: String?) = setValue(UID, myUid)
 
-fun KeyValueStore.getMyUID() = getValue<String>(UID)
+fun KeyValueStore.getMyUID() = getValue<String>(UID)!!
 
 inline fun <reified T> KeyValueStore.setValue(key: String, value: T?) {
     when (T::class) {

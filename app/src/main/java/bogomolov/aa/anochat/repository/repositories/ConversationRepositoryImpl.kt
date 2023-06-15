@@ -53,7 +53,7 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override suspend fun createOrGetConversation(user: User): Long =
         withContext(dispatcher) {
-            val myUid = keyValueStore.getMyUID()!!
+            val myUid = keyValueStore.getMyUID()
             val conversationEntity = db.conversationDao().getConversationByUser(user.id, myUid)
                 ?: ConversationEntity(userId = user.id, myUid = myUid).apply {
                     id = db.conversationDao().add(this)

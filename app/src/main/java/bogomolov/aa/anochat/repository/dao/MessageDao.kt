@@ -18,6 +18,9 @@ interface MessageDao {
     @Query("select count(id) from MessageEntity where conversationId = :conversationId")
     fun getMessagesNumber(conversationId: Long): Int
 
+    @Query("select max(time) from MessageEntity where myUid = :myUid")
+    fun getLastMessageTime(myUid: String): Long
+
     @Query("delete from MessageEntity where id in (:ids)")
     fun deleteByIds(ids: Set<Long>): Int
 

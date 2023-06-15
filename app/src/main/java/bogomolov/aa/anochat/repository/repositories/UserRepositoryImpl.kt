@@ -36,18 +36,18 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun getUsersByPhones(phones: List<String>) =
         withContext(dispatcher) {
-            db.userDao().getAll(phones, getMyUID()!!).map { mapper.entityToModel(it)!! }
+            db.userDao().getAll(phones, getMyUID()).map { mapper.entityToModel(it)!! }
         }
 
     override suspend fun getAllUsers() =
         withContext(dispatcher) {
-            db.userDao().getAll(getMyUID()!!).map { mapper.entityToModel(it)!! }
+            db.userDao().getAll(getMyUID()).map { mapper.entityToModel(it)!! }
         }
 
     override suspend fun updateUsersByPhones(phones: List<String>) =
         withContext(dispatcher) {
             if (phones.isNotEmpty()) {
-                val myUid = getMyUID()!!
+                val myUid = getMyUID()
                 firebase.receiveUsersByPhones(phones).filter { it.uid != myUid }
                     .onEach { user -> updateLocalUserFromRemote(user, loadFullPhoto = false) }
             } else listOf()
@@ -55,7 +55,7 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun updateUsersInConversations(blocking: Boolean) {
         withContext(dispatcher) {
-            val myUid = getMyUID() ?: return@withContext
+            val myUid = getMyUID()
             val users = db.userDao().getOpenedConversationUsers(myUid)
             mapper.entityToModel<User>(users).forEach { user ->
                 firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it, blocking) }
@@ -63,7 +63,7 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getMyUser() = getOrAddUser(getMyUID()!!, false)
+    override suspend fun getMyUser() = getOrAddUser(getMyUID(), false)
 
     override suspend fun getUser(id: Long) =
         withContext(dispatcher) {
@@ -92,7 +92,7 @@ class UserRepositoryImpl @Inject constructor(
         }
 
     override suspend fun addUserStatusListener(uid: String) =
-        firebase.addUserStatusListener(getMyUID()!!, uid)
+        firebase.addUserStatusListener(getMyUID(), uid)
 
     override suspend fun getOrAddUser(uid: String, loadFullPhoto: Boolean): User =
         withContext(dispatcher) {
