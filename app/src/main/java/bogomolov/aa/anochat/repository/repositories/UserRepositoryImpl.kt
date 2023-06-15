@@ -49,7 +49,7 @@ class UserRepositoryImpl @Inject constructor(
             if (phones.isNotEmpty()) {
                 val myUid = getMyUID()
                 firebase.receiveUsersByPhones(phones).filter { it.uid != myUid }
-                    .onEach { user -> updateLocalUserFromRemote(user, loadFullPhoto = false) }
+                    .map { updateLocalUserFromRemote(it, loadFullPhoto = false) }
             } else listOf()
         }
 
@@ -58,7 +58,7 @@ class UserRepositoryImpl @Inject constructor(
             val myUid = getMyUID()
             val users = db.userDao().getOpenedConversationUsers(myUid)
             mapper.entityToModel<User>(users).forEach { user ->
-                firebase.getUser(user.uid)?.also { updateLocalUserFromRemote(it, blocking) }
+                firebase.getUser(user.uid)?.let { updateLocalUserFromRemote(it, blocking) }
             }
         }
     }
@@ -86,9 +86,7 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun searchByPhone(phone: String) =
         withContext(dispatcher) {
-            firebase.findByPhone(phone).onEach { user ->
-                updateLocalUserFromRemote(user, saveLocal = false, loadFullPhoto = false)
-            }
+            firebase.findByPhone(phone).map { updateLocalUserFromRemote(it, saveLocal = false, loadFullPhoto = false) }
         }
 
     override suspend fun addUserStatusListener(uid: String) =
@@ -98,7 +96,7 @@ class UserRepositoryImpl @Inject constructor(
         withContext(dispatcher) {
             val userEntity = db.userDao().findByUid(uid)
             val user = mapper.entityToModel(userEntity) ?: firebase.getUser(uid)!!
-            user.also { updateLocalUserFromRemote(user = it, loadFullPhoto = loadFullPhoto) }
+            updateLocalUserFromRemote(user = user, loadFullPhoto = loadFullPhoto)
         }
 
 
@@ -107,14 +105,8 @@ class UserRepositoryImpl @Inject constructor(
         saveLocal: Boolean = true,
         loadFullPhoto: Boolean = true,
         blocking: Boolean = false
-    ) {
+    ): User {
         val savedUser = db.userDao().findByUid(user.uid)
-        if (savedUser != null) {
-            user.id = savedUser.id
-            db.userDao().update(mapper.modelToEntity(user))
-        } else if (saveLocal) {
-            user.id = db.userDao().add(mapper.modelToEntity(user))
-        }
         if (user.photo != null) {
             val photoChanged = user.photo != savedUser?.photo
             if (photoChanged) downloadFile(getMiniPhotoFileName(user.photo), user.uid, blocking)
@@ -125,6 +117,11 @@ class UserRepositoryImpl @Inject constructor(
                 }
             }
         }
+        return if (savedUser != null) {
+            user.copy(id = savedUser.id).also { db.userDao().update(mapper.modelToEntity(it)) }
+        } else if (saveLocal) {
+            user.copy(id = db.userDao().add(mapper.modelToEntity(user)))
+        } else user
     }
 
     private suspend fun downloadFile(fileName: String, uid: String, blocking: Boolean) {

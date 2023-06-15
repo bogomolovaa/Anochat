@@ -27,8 +27,6 @@ data class Message(
     val viewed: Int = 0
 ) {
 
-    override fun hashCode(): Int = id.toString().hashCode()
-
     @SuppressLint("SimpleDateFormat")
     fun timeString(): String = SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(time))
 

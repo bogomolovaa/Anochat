@@ -70,8 +70,8 @@ class RepositoriesTest {
 
     @Test
     fun test_deleteConversationIfNoMessages() = runTest {
-        user.id = userRepository.getOrAddUser(user.uid).id
-        val conversationId = conversationRepository.createOrGetConversation(user)
+        val id = userRepository.getOrAddUser(user.uid).id
+        val conversationId = conversationRepository.createOrGetConversation(user.copy(id = id))
         conversationRepository.deleteConversationIfNoMessages(conversationId)
         advanceUntilIdle()
         assertEquals(null, conversationRepository.getConversation(conversationId))
@@ -79,7 +79,7 @@ class RepositoriesTest {
 
     @Test
     fun test_getPendingMessages() = runTest {
-        userRepository.getOrAddUser(user.uid)
+        val user = userRepository.getOrAddUser(user.uid)
         val conversationId = conversationRepository.createOrGetConversation(user)
         val message = Message(text = "text", conversationId = conversationId, isMine = true)
         val id = messageRepository.saveMessage(message)
@@ -89,11 +89,11 @@ class RepositoriesTest {
 
     @Test
     fun test_updateUsersInConversations() = runTest {
-        user.id = userRepository.getOrAddUser(user.uid).id
-        conversationRepository.createOrGetConversation(user)
-        val updatedUser = user.copy(status = "status")
+        val id = userRepository.getOrAddUser(user.uid).id
+        conversationRepository.createOrGetConversation(user.copy(id = id))
+        val updatedUser = user.copy(id = id, status = "status")
         Mockito.`when`(fireBase.getUser(user.uid)).thenReturn(updatedUser)
         userRepository.updateUsersInConversations(true)
-        assertEquals(updatedUser.status, userRepository.getUser(user.id).status)
+        assertEquals(updatedUser.status, userRepository.getUser(id).status)
     }
 }
