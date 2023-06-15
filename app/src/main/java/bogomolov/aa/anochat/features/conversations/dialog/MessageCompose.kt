@@ -397,7 +397,7 @@ val testPlayingState = PlayingState(
     audioFile = "", duration = 60 * 1000, elapsed = 20 * 1000, paused = false
 )
 
-private val testMessageViewData = MessageViewData(
+val testMessageViewData = MessageViewData(
     Message(
         id = 0L,
         text = "some very very long text",

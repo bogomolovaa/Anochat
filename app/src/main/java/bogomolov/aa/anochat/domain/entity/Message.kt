@@ -14,7 +14,7 @@ data class Message(
     var time: Long = 0L,
     var conversationId: Long = 0L,
     var isMine: Boolean = false,
-    var messageId: String = "",
+    val messageId: String = "",
     var replyMessage: Message? = null,
     var replyMessageId: String? = null,
     var image: String? = null,

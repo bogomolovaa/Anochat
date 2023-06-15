@@ -72,7 +72,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
                                 MessageType.MESSAGE ->
                                     receiveMessage(listener, uid, messageId, data, removeRef)
                                 MessageType.REPORT -> receiveReport(listener, data, removeRef)
-                                MessageType.KEY -> receiveKey(listener, uid, data)
+                                MessageType.KEY -> receiveKey(listener, uid, data, removeRef)
                             }
                         }
 
@@ -136,12 +136,14 @@ class FirebaseImpl @Inject constructor() : Firebase {
     private fun receiveKey(
         messagesListener: MessagesListener,
         uid: String,
-        data: Map<String, Any>
+        data: Map<String, Any>,
+        onSuccess: () -> Unit
     ) {
         firebaseScope.launch {
             val publicKey = data["key"] as String
             val initiator = data["initiator"] as Boolean
             messagesListener.onPublicKeyReceived(uid, publicKey, initiator)
+            onSuccess()
         }
     }
 
@@ -248,13 +250,12 @@ class FirebaseImpl @Inject constructor() : Firebase {
             })
         }
 
-    override fun sendMessage(
+    override suspend fun sendMessage(
         message: Message?,
-        uid: String,
-        onSuccess: () -> Unit
-    ) = send(type = MessageType.MESSAGE, message = message, uid = uid, onSuccess = onSuccess)
+        uid: String
+    ) = send(type = MessageType.MESSAGE, message = message, uid = uid)
 
-    override fun sendReport(
+    override suspend fun sendReport(
         messageId: String,
         uid: String,
         received: Int,
@@ -269,7 +270,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
         )
     }
 
-    override fun sendKey(
+    override suspend fun sendKey(
         uid: String,
         publicKey: String?,
         initiator: Boolean
@@ -282,7 +283,7 @@ class FirebaseImpl @Inject constructor() : Firebase {
         )
     }
 
-    private fun send(
+    private suspend fun send(
         type: MessageType,
         message: Message? = null,
         messageId: String? = null,
@@ -290,23 +291,21 @@ class FirebaseImpl @Inject constructor() : Firebase {
         received: Int = 0,
         viewed: Int = 0,
         publicKey: String? = null,
-        initiator: Boolean = false,
-        onSuccess: () -> Unit = {}
-    ): String {
+        initiator: Boolean = false
+    ) = suspendCancellableCoroutine { continuation ->
         Log.i(TAG, "firebase send ${type.name}")
         val myUid = FirebaseAuth.getInstance().currentUser?.uid
-        val ref =
-            FirebaseDatabase.getInstance().reference.child("messages").child("${myUid}/$uid").push()
+        val ref = FirebaseDatabase.getInstance().reference.child("messages/${myUid}/$uid").push()
         ref.setValue(
             when (type) {
                 MessageType.MESSAGE -> mapOf(
                     "type" to type.name,
                     "message" to message?.text,
-                    "time" to message?.time,
+                    "time" to mapOf(".sv" to "timestamp"),
                     "reply" to message?.replyMessageId,
                     "image" to message?.image,
                     "video" to message?.video,
-                    "audio" to message?.audio
+                    "audio" to message?.audio,
                 )
                 MessageType.REPORT -> mapOf(
                     "type" to type.name,
@@ -322,21 +321,32 @@ class FirebaseImpl @Inject constructor() : Firebase {
             }
         ).addOnFailureListener {
             Log.w(TAG, "send ${type.name} failure", it)
+            continuation.resume(null)
         }.addOnSuccessListener {
-            val notifyRef =
-                FirebaseDatabase.getInstance().reference.child("notifications").child(uid).push()
-            notifyRef.setValue(
-                mapOf(
-                    "message" to ref.key,
-                    "source" to myUid,
-                )
-            ).addOnFailureListener {
-                Log.w(TAG, "notify ${type.name} failure", it)
-            }.addOnSuccessListener {
-                firebaseScope.launch { onSuccess() }
-            }
+            ref.child("time").addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val timestamp = snapshot.value as Long
+                    val notifyRef =
+                        FirebaseDatabase.getInstance().reference.child("notifications").child(uid).push()
+                    notifyRef.setValue(
+                        mapOf(
+                            "message" to ref.key,
+                            "source" to myUid,
+                        )
+                    ).addOnFailureListener {
+                        Log.w(TAG, "notify ${type.name} failure", it)
+                        continuation.resume(null)
+                    }.addOnSuccessListener {
+                        continuation.resume(Pair(ref.key!!, timestamp))
+                    }
+                }
+
+                override fun onCancelled(p0: DatabaseError) {
+                    Log.w(TAG, "send ${type.name} get timestamp failure", p0.toException())
+                    continuation.resume(null)
+                }
+            })
         }
-        return ref.key!!
     }
 
     override fun deleteRemoteMessage(messageId: String) {

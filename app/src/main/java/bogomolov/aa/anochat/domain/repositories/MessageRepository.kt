@@ -9,7 +9,7 @@ interface MessageRepository : MessageUseCasesInRepository {
     suspend fun saveMessage(message: Message): Long
     suspend fun getPendingMessages(uid: String): List<Message>
     suspend fun getMessage(messageId: String): Message?
-    suspend fun sendMessage(message: Message, uid: String): String
+    suspend fun sendMessage(message: Message, uid: String)
     suspend fun sendAttachment(
         message: Message,
         uid: String,

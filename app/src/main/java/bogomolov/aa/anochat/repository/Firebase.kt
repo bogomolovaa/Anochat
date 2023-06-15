@@ -26,20 +26,19 @@ interface Firebase {
 
     fun removeMessagesListener()
 
-    fun sendMessage(
+    suspend fun sendMessage(
         message: Message?,
-        uid: String,
-        onSuccess: () -> Unit
-    ): String
+        uid: String
+    ): Pair<String, Long>?
 
-    fun sendReport(
+    suspend fun sendReport(
         messageId: String,
         uid: String,
         received: Int,
         viewed: Int
     )
 
-    fun sendKey(
+    suspend fun sendKey(
         uid: String,
         publicKey: String?,
         initiator: Boolean

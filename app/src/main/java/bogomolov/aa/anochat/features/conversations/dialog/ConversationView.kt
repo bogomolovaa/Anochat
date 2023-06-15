@@ -32,9 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.*
 import androidx.navigation.NavController
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -83,9 +81,8 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
         }
     }
     val lifecycleOwner = LocalLifecycleOwner.current
-    lifecycleOwner.lifecycle.addObserver(object : LifecycleObserver {
-        @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-        fun onPause() {
+    lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
+        override fun onPause(owner: LifecycleOwner) {
             keyboardController?.hide()
             if (viewModel.currentState.inputState == InputStates.FAB_EXPAND)
                 viewModel.updateState { copy(inputState = InputStates.INITIAL) }
@@ -107,7 +104,7 @@ private fun Content(
         topBar = {
             TopAppBar(
                 title = {
-                    Row() {
+                    Row {
                         UserNameLayout(
                             state = state,
                             onClick = { navigateToUserFragment(viewModel, navController) }

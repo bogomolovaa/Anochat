@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.paging.PagingData
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.conversations.list.testConversation
@@ -293,9 +294,9 @@ private fun timeToString(lastTimeOnline: Long): String {
 val testDialogUiState = DialogUiState(
     inputState = InputStates.INITIAL,
     conversation = testConversation,
-    pagingDataFlow = flowOf(),
     userStatus = UserStatus.Online,
     audioLengthText = "0:15",
     text = "Text",
-    replyMessage = Message(text = "text")
+    replyMessage = Message(text = "text"),
+    pagingDataFlow = flowOf(PagingData.from(listOf(testMessageViewData)))
 )

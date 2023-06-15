@@ -100,7 +100,7 @@ open class MessageUseCases @Inject constructor(
                 messageRep.sendAttachment(message, uid) { crypto.encrypt(secretKey, this) }
             }
             message.text = crypto.encryptString(secretKey, message.text)
-            message.messageId = messageRep.sendMessage(message, uid)
+            messageRep.sendMessage(message, uid)
         } else if (keyIsNotSentTo(uid))
             sendPublicKey(crypto.generatePublicKey(uid), uid, initiator = true)
     }

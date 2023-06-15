@@ -82,11 +82,17 @@ class MessageRepositoryImpl @Inject constructor(
             mapper.entityToModel(db.messageDao().getByMessageId(messageId))
         }
 
-    override suspend fun sendMessage(message: Message, uid: String) =
+    override suspend fun sendMessage(message: Message, uid: String) {
         withContext(dispatcher) {
-            firebase.sendMessage(message, uid) { db.messageDao().updateAsSent(message.id) }
-                .also { db.messageDao().updateMessageId(message.id, it) }
+            firebase.sendMessage(message, uid)?.let {
+                db.messageDao().updateAsSent(
+                    id = message.id,
+                    messageId = it.first,
+                    time = it.second
+                )
+            }
         }
+    }
 
     override suspend fun sendAttachment(
         message: Message,
