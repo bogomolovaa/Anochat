@@ -11,7 +11,7 @@ enum class AttachmentStatus {
 data class Message(
     var id: Long = 0L,
     var text: String = "",
-    var time: Long = 0L,
+    val time: Long = 0L,
     var conversationId: Long = 0L,
     var isMine: Boolean = false,
     val messageId: String = "",

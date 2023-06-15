@@ -67,7 +67,7 @@ class MessageRepositoryImpl @Inject constructor(
         withContext(dispatcher) {
             val myUid = getMyUID()
             val time = db.messageDao().getLastMessageTime(myUid)
-            val entity = mapper.modelToEntity(message.copy(time = if (message.time <= time) time + 1 else message.time))
+            val entity = mapper.modelToEntity(message.copy(time = time + 1))
                 .copy(myUid = myUid)
             db.messageDao().insert(entity).also { id ->
                 db.conversationDao().updateLastMessage(id, message.conversationId)

@@ -221,7 +221,6 @@ class ConversationViewModel @Inject constructor(
                 val replyId = currentState.replyMessage?.messageId
                 val message = Message(
                     text = data.text ?: "",
-                    time = System.currentTimeMillis(),
                     isMine = true,
                     conversationId = it.id,
                     replyMessageId = replyId,
