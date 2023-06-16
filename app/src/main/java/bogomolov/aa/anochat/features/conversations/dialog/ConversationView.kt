@@ -198,13 +198,13 @@ private fun ReplyLayout(state: DialogUiState = testDialogUiState, viewModel: Con
     val playingState = state.playingState
     val context = LocalContext.current
     if (replyMessage != null) {
-        var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+        val bitmap = remember { mutableStateOf<Bitmap?>(null) }
         if (replyMessage.image != null || replyMessage.video != null)
             LaunchedEffect(replyMessage.id) {
                 withContext(Dispatchers.IO) {
                     val image = if (replyMessage.image != null) replyMessage.image
                     else videoThumbnail(replyMessage.video!!)
-                    bitmap = getBitmapFromGallery(image, context, 4)
+                    bitmap.value = getBitmapFromGallery(image, context, 4)
                 }
             }
         Card(
@@ -286,7 +286,7 @@ private fun FabsLayout(
 @ExperimentalMaterialApi
 @Composable
 private fun MessagesList(
-    pagingDataFlow: Flow<PagingData<MessageViewData>>? = null,
+    pagingDataFlow: Flow<PagingData<Any>>? = null,
     state: DialogUiState = testDialogUiState,
     viewModel: ConversationViewModel? = null
 ) {
@@ -300,13 +300,16 @@ private fun MessagesList(
         ) {
             items(count = lazyPagingItems.itemCount) { index ->
                 lazyPagingItems[index]?.let {
-                    ShowMessage(
-                        messageData = it,
-                        selected = state.selectedMessages.contains(it.message),
-                        isScrolling = listState.isScrollInProgress,
-                        playingState = state.playingState,
-                        viewModel = viewModel
-                    )
+                    when (it) {
+                        is Message -> ShowMessage(
+                            message = it,
+                            selected = state.selectedMessages.contains(it),
+                            isScrolling = listState.isScrollInProgress,
+                            playingState = state.playingState,
+                            viewModel = viewModel
+                        )
+                        is DateDelimiter -> DateDelimiterCompose(it)
+                    }
                 }
             }
         }
@@ -316,7 +319,7 @@ private fun MessagesList(
 @ExperimentalMaterialApi
 @Composable
 private fun ShowMessage(
-    messageData: MessageViewData?,
+    message: Message = testMessage,
     selected: Boolean = false,
     isScrolling: Boolean = false,
     playingState: PlayingState?,
@@ -324,58 +327,50 @@ private fun ShowMessage(
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
-    if (messageData != null)
-        LaunchedEffect(messageData.message.id) {
-            viewModel?.messageDisplayed(messageData)
-        }
+    LaunchedEffect(message.id) {
+        viewModel?.messageDisplayed(message)
+    }
     var loading by remember { mutableStateOf(true) }
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var replyBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    val messageThumbnail = messageData?.message?.getThumbnail()
-    val replyMessageThumbnail = messageData?.message?.replyMessage?.getThumbnail()
+    val bitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val replyBitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val messageThumbnail = message.getThumbnail()
+    val replyMessageThumbnail = message.replyMessage?.getThumbnail()
     if (messageThumbnail != null || replyMessageThumbnail != null) {
-        LaunchedEffect(messageData.message) {
+        LaunchedEffect(message) {
             withContext(Dispatchers.IO) {
                 if (isScrolling) delay(300)
-                messageThumbnail?.let { bitmap = getBitmapFromGallery(it, context, 1) }
-                replyMessageThumbnail?.let { replyBitmap = getBitmapFromGallery(it, context, 8) }
+                messageThumbnail?.let { bitmap.value = getBitmapFromGallery(it, context, 1) }
+                replyMessageThumbnail?.let { replyBitmap.value = getBitmapFromGallery(it, context, 8) }
                 loading = false
             }
         }
-        DisposableEffect(messageData.message.id) {
+        DisposableEffect(message.id) {
             onDispose {
-                bitmap = null
-                replyBitmap = null
+                bitmap.value = null
+                replyBitmap.value = null
             }
         }
     }
-    if (messageData != null) {
-        messageData.playingState =
-            if (playingState?.messageId == messageData.message.messageId) playingState else null
-        messageData.replyPlayingState =
-            if (playingState?.messageId == messageData.message.replyMessage?.messageId) playingState else null
-    }
+
     MessageCompose(
-        data = messageData,
+        message = message,
+        playingState = if (playingState?.messageId == message.messageId) playingState else null,
+        replyPlayingState = if (playingState?.messageId == message.replyMessage?.messageId) playingState else null,
         selected = selected,
         loadingBitmaps = loading,
         bitmap = bitmap,
         replyBitmap = replyBitmap,
         onClick = {
             when {
-                messageData?.message?.video != null -> videoOnClick(messageData.message, context, navController)
-                messageData?.message?.image != null -> imageOnClick(messageData.message, navController)
+                message.video != null -> videoOnClick(message, context, navController)
+                message.image != null -> imageOnClick(message, navController)
             }
         },
         onSelect = {
-            messageData?.message?.let {
-                viewModel?.selectMessage(it)
-            }
+            viewModel?.selectMessage(message)
         },
         onSwipe = {
-            messageData?.message?.let {
-                viewModel?.updateState { copy(replyMessage = it) }
-            }
+            viewModel?.updateState { copy(replyMessage = message) }
         },
         playOnClick = { audioFile: String?, messageId: String? ->
             if (playingState?.paused != false) {

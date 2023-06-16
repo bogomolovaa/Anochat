@@ -33,7 +33,7 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override fun loadConversationsDataSource() =
         Pager(PagingConfig(pageSize = 10)) {
-            db.conversationDao().loadConversations(keyValueStore.getMyUID() ?: "")
+            db.conversationDao().loadConversations(keyValueStore.getMyUID())
         }.flow.map { it.map { mapper.entityToModel(it)!! } }.flowOn(dispatcher)
 
     override suspend fun deleteConversations(ids: Set<Long>) {

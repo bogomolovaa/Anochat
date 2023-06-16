@@ -74,7 +74,7 @@ afterEvaluate {
         kotlinOptions {
             freeCompilerArgs += listOf(
                 "-P",
-                "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=" + project.buildDir.absolutePath + "/compose/reports"
+                "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=" + project.buildDir.absolutePath + "/compose"
             )
         }
     }

@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.domain.entity
 
 import android.annotation.SuppressLint
+import androidx.compose.runtime.Immutable
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -8,6 +9,7 @@ enum class AttachmentStatus {
     LOADING, LOADED, NOT_LOADED
 }
 
+@Immutable
 data class Message(
     val id: Long = 0L,
     val text: String = "",
@@ -26,6 +28,16 @@ data class Message(
     val received: Int = 0,
     val viewed: Int = 0
 ) {
+
+    fun hasReplyMessage() = replyMessage != null
+    fun getReplyText() = replyMessage?.text ?: ""
+
+    fun sent() = sent == 1
+    fun received() = received == 1
+    fun error() = received == -1
+    fun viewed() = viewed == 1
+    fun sentAndNotReceived() = sent() && !received() && !error()
+    fun receivedAndNotViewed() = received() && !viewed()
 
     @SuppressLint("SimpleDateFormat")
     fun timeString(): String = SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(time))

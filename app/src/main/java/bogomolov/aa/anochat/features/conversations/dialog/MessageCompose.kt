@@ -47,7 +47,7 @@ import kotlin.math.roundToInt
 @Composable
 fun ReplyMessage(
     message: Message,
-    bitmap: Bitmap?,
+    bitmap: MutableState<Bitmap?> = mutableStateOf(null),
     replyPlayingState: PlayingState?,
     playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> },
     onClear: (() -> Unit)? = null
@@ -73,9 +73,11 @@ fun ReplyMessage(
                     .widthIn(max = 300.dp),
                 maxLines = 2
             )
-            if (bitmap != null) Image(
-                modifier = Modifier.heightIn(max = 48.dp), bitmap = bitmap.asImageBitmap(), contentDescription = null
-            )
+            bitmap.value?.let {
+                Image(
+                    modifier = Modifier.heightIn(max = 48.dp), bitmap = it.asImageBitmap(), contentDescription = null
+                )
+            }
         }
         if (onClear != null) Icon(imageVector = Icons.Filled.Clear,
             contentDescription = null,
@@ -145,22 +147,47 @@ fun PlayAudio(
     }
 }
 
+@Composable
+fun DateDelimiterCompose(delimiter: DateDelimiter) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        Card(
+            modifier = Modifier
+                .padding(top = 8.dp, bottom = 4.dp)
+                .align(CenterHorizontally),
+            shape = RoundedCornerShape(6.dp),
+            elevation = 1.dp,
+            backgroundColor = colorResource(id = R.color.time_message_color)
+        ) {
+            Text(
+                text = delimiter.time,
+                modifier = Modifier.padding(6.dp),
+                color = Color.DarkGray,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Preview(widthDp = 320)
 @ExperimentalMaterialApi
 @Composable
 fun MessageCompose(
-    data: MessageViewData? = testMessageViewData,
+    message: Message = testMessage,
+    playingState: PlayingState? = testPlayingState,
+    replyPlayingState: PlayingState? = null,
     selected: Boolean = false,
     loadingBitmaps: Boolean = false,
-    bitmap: Bitmap? = null,
-    replyBitmap: Bitmap? = null,
+    bitmap: MutableState<Bitmap?> = mutableStateOf(null),
+    replyBitmap: MutableState<Bitmap?> = mutableStateOf(null),
     onClick: () -> Unit = {},
     onSelect: () -> Unit = {},
     onSwipe: () -> Unit = {},
     playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> }
 ) {
-    if (data == null) return
     var windowWidth by remember { mutableStateOf(0) }
     Column(modifier = Modifier
         .onGloballyPositioned {
@@ -168,24 +195,6 @@ fun MessageCompose(
         }
         .fillMaxWidth()
     ) {
-        if (data.hasTimeMessage()) {
-            Card(
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 4.dp)
-                    .align(CenterHorizontally),
-                shape = RoundedCornerShape(6.dp),
-                elevation = 1.dp,
-                backgroundColor = colorResource(id = R.color.time_message_color)
-            ) {
-                Text(
-                    text = data.dateDelimiter!!,
-                    modifier = Modifier.padding(6.dp),
-                    color = Color.DarkGray,
-                    fontSize = 12.sp
-                )
-            }
-        }
-        val message = data.message
         val offsetX = remember { Animatable(0f) }
         Column(
             modifier = Modifier
@@ -196,12 +205,12 @@ fun MessageCompose(
             Card(modifier = Modifier
                 .widthIn(min = 120.dp, max = 258.dp)
                 .align(if (message.isMine) Alignment.End else Alignment.Start)
-                .pointerInput(data.message.messageId) {
+                .pointerInput(message.messageId) {
                     detectTapGestures(onLongPress = {
                         onSelect()
                     })
                 }
-                .pointerInput(data.message.messageId) {
+                .pointerInput(message.messageId) {
                     coroutineScope {
                         detectHorizontalDragGestures { change, dragAmount ->
                             if (dragAmount > 40) {
@@ -228,10 +237,10 @@ fun MessageCompose(
             ) {
                 Column(modifier = Modifier.padding(4.dp)) {
                     message.replyMessage?.let {
-                        ReplyMessage(it, replyBitmap, data.replyPlayingState, playOnClick)
+                        ReplyMessage(it, replyBitmap, replyPlayingState, playOnClick)
                     }
                     if (message.audio != null) {
-                        PlayAudio(data.playingState, message.audio, message.messageId, playOnClick)
+                        PlayAudio(playingState, message.audio, message.messageId, playOnClick)
                     } else if (message.image != null || message.video != null) {
                         Row {
                             Box(modifier = Modifier
@@ -267,13 +276,15 @@ fun MessageCompose(
                                             )
                                         }
                                     }
-                                    message.attachmentStatus == AttachmentStatus.LOADED && bitmap != null -> {
-                                        Image(
-                                            modifier = Modifier.size(250.dp),
-                                            contentScale = ContentScale.Crop,
-                                            bitmap = bitmap.asImageBitmap(),
-                                            contentDescription = null
-                                        )
+                                    message.attachmentStatus == AttachmentStatus.LOADED && bitmap.value != null -> {
+                                        bitmap.value?.let {
+                                            Image(
+                                                modifier = Modifier.size(250.dp),
+                                                contentScale = ContentScale.Crop,
+                                                bitmap = it.asImageBitmap(),
+                                                contentDescription = null
+                                            )
+                                        }
                                         if (message.video != null) Image(
                                             modifier = Modifier
                                                 .size(50.dp)
@@ -337,28 +348,28 @@ fun MessageCompose(
                             fontSize = 12.sp
                         )
                         if (message.isMine) {
-                            if (!data.sent()) Icon(
+                            if (!message.sent()) Icon(
                                 imageVector = Icons.Filled.WatchLater,
                                 modifier = Modifier.height(16.dp),
                                 tint = colorResource(id = R.color.report_message_color0),
                                 contentDescription = null
                             )
-                            if (data.sentAndNotReceived() || data.receivedAndNotViewed()) Icon(
+                            if (message.sentAndNotReceived() || message.receivedAndNotViewed()) Icon(
                                 imageVector = Icons.Filled.Done,
                                 modifier = Modifier.height(16.dp),
                                 tint = colorResource(
-                                    id = if (data.sentAndNotReceived()) R.color.report_message_color0
+                                    id = if (message.sentAndNotReceived()) R.color.report_message_color0
                                     else R.color.report_message_color1
                                 ),
                                 contentDescription = null
                             )
-                            if (data.viewed()) Icon(
+                            if (message.viewed()) Icon(
                                 imageVector = Icons.Filled.DoneAll,
                                 modifier = Modifier.height(16.dp),
                                 tint = colorResource(id = R.color.report_message_color1),
                                 contentDescription = null
                             )
-                            if (data.error()) Icon(
+                            if (message.error()) Icon(
                                 imageVector = Icons.Filled.ErrorOutline,
                                 modifier = Modifier.height(16.dp),
                                 tint = Color.Red,
@@ -393,28 +404,29 @@ private fun textToAnnotatedString(text: String) = with(AnnotatedString.Builder()
     toAnnotatedString()
 }
 
+data class DateDelimiter(
+    val time: String
+)
+
 val testPlayingState = PlayingState(
     audioFile = "", duration = 60 * 1000, elapsed = 20 * 1000, paused = false
 )
 
-val testMessageViewData = MessageViewData(
-    Message(
-        id = 0L,
-        text = "some very very long text",
-        //text = "",
-        time = System.currentTimeMillis(),
-        isMine = false,
-        image = null,
-        //audio = "xxx",
-        video = null,
-        sent = 1,
-        received = 1,
-        viewed = 1,
-        //replyMessage = Message(text = "reply to message")
-    )
-).apply {
-    //playingState = testPlayingState
-    //bitmap = Bitmap.createBitmap(800, 800, Bitmap.Config.RGB_565)
-    //replyBitmap = Bitmap.createBitmap(400, 400, Bitmap.Config.RGB_565)
-    dateDelimiter = "16 july"
-}
+val testMessage = Message(
+    id = 0L,
+    text = "some very very long text",
+    //text = "",
+    time = System.currentTimeMillis(),
+    isMine = false,
+    image = null,
+    audio = "xxx",
+    video = null,
+    sent = 1,
+    received = 1,
+    viewed = 1,
+    //replyMessage = Message(text = "reply to message")
+)
+
+//playingState = testPlayingState
+//bitmap = Bitmap.createBitmap(800, 800, Bitmap.Config.RGB_565)
+//replyBitmap = Bitmap.createBitmap(400, 400, Bitmap.Config.RGB_565)

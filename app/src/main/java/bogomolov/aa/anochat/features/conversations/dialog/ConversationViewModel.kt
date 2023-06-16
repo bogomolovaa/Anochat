@@ -58,7 +58,7 @@ data class DialogUiState(
     val text: String = "",
     val audioLengthText: String = "",
     val playingState: PlayingState? = null,
-    val pagingDataFlow: Flow<PagingData<MessageViewData>>? = null,
+    val pagingDataFlow: Flow<PagingData<Any>>? = null,
     val selectedMessages: List<Message> = listOf(),
 
     val resized: BitmapWithName? = null,
@@ -124,10 +124,10 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun messageDisplayed(messageData: MessageViewData) {
+    fun messageDisplayed(message: Message) {
         viewModelScope.launch {
             currentState.conversation?.user?.uid?.let { uid ->
-                messageUseCases.messageDisplayed(messageData.message, uid)
+                messageUseCases.messageDisplayed(message, uid)
             }
         }
     }
@@ -283,9 +283,8 @@ class ConversationViewModel @Inject constructor(
     private fun subscribeToMessages(conversation: Conversation) {
         val pagingDataFlow = messageUseCases.loadMessagesDataSource(conversation.id)
             .cachedIn(viewModelScope).map {
-                it.map { MessageViewData(it) }.insertSeparators { m1, m2 ->
-                    insertDateSeparators(m1, m2, localeProvider.locale)
-                    null
+                it.insertSeparators { m1, m2 ->
+                    insertDateSeparators(m1, m2, localeProvider.locale)?.let { DateDelimiter(it) }
                 }
             }
         setState { copy(pagingDataFlow = pagingDataFlow) }
@@ -303,15 +302,16 @@ class ConversationViewModel @Inject constructor(
     }
 }
 
-private fun insertDateSeparators(message1: MessageViewData?, message2: MessageViewData?, locale: Locale) {
+private fun insertDateSeparators(message1: Message?, message2: Message?, locale: Locale): String? {
     if (message1 != null) {
-        val day1 = GregorianCalendar().apply { time = Date(message1.message.time) }.get(Calendar.DAY_OF_YEAR)
+        val day1 = GregorianCalendar().apply { time = Date(message1.time) }.get(Calendar.DAY_OF_YEAR)
         if (message2 != null) {
-            val day2 = GregorianCalendar().apply { time = Date(message2.message.time) }.get(Calendar.DAY_OF_YEAR)
+            val day2 = GregorianCalendar().apply { time = Date(message2.time) }.get(Calendar.DAY_OF_YEAR)
             if (day1 != day2)
-                message1.dateDelimiter = SimpleDateFormat("dd MMMM yyyy", locale).format(Date(message1.message.time))
+                return SimpleDateFormat("dd MMMM yyyy", locale).format(Date(message1.time))
         } else {
-            message1.dateDelimiter = SimpleDateFormat("dd MMMM yyyy", locale).format(Date(message1.message.time))
+            return SimpleDateFormat("dd MMMM yyyy", locale).format(Date(message1.time))
         }
     }
+    return null
 }

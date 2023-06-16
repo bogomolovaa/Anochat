@@ -298,5 +298,5 @@ val testDialogUiState = DialogUiState(
     audioLengthText = "0:15",
     text = "Text",
     replyMessage = Message(text = "text"),
-    pagingDataFlow = flowOf(PagingData.from(listOf(testMessageViewData)))
+    pagingDataFlow = flowOf(PagingData.from(listOf(testMessage)))
 )
