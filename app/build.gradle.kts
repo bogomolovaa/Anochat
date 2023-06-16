@@ -69,6 +69,17 @@ android {
     }
 }
 
+afterEvaluate {
+    tasks.named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileDebugKotlin") {
+        kotlinOptions {
+            freeCompilerArgs += listOf(
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=" + project.buildDir.absolutePath + "/compose/reports"
+            )
+        }
+    }
+}
+
 dependencies {
     implementation("androidx.exifinterface:exifinterface:1.3.6")
 
