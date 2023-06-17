@@ -1,6 +1,7 @@
 package bogomolov.aa.anochat.features.shared
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -18,3 +19,13 @@ fun <T> EventHandler(uiEvents: Flow<T>, eventCollector: suspend (T) -> Unit) {
         uiEventsLifecycleAware.collect(eventCollector)
     }
 }
+
+@Immutable
+class ImmutableList<T>(list: List<T>): List<T> by list
+
+fun <T> List<T>.asImmutableList() = ImmutableList(this)
+
+@Immutable
+class ImmutableFlow<T>(flow: Flow<T>): Flow<T> by flow
+
+fun <T> Flow<T>.asImmutableFlow() = ImmutableFlow(this)

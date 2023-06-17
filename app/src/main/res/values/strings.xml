@@ -48,7 +48,7 @@
     <string name="status_online">online</string>
     <string name="status_typing">typing…</string>
     <string name="too_large_file">Too large file</string>
-
+    <string name="video_is_processing">Video is processing</string>
 
 
     <string name="enter_valid_phone">Enter valid phone number</string>

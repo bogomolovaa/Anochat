@@ -138,12 +138,15 @@ fun PlayAudio(
                 .padding(top = 12.dp, bottom = 12.dp, end = 4.dp)
                 .size(36.dp)
         )
-        if (onClear != null) Icon(imageVector = Icons.Filled.Clear,
-            contentDescription = null,
-            tint = Color.Red,
-            modifier = Modifier
-                .size(20.dp)
-                .clickable { onClear() })
+        if (onClear != null)
+            Icon(
+                imageVector = Icons.Filled.Clear,
+                contentDescription = null,
+                tint = Color.Red,
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable { onClear() }
+            )
     }
 }
 

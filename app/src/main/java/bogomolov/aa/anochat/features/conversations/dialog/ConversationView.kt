@@ -13,7 +13,6 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -41,8 +40,7 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
@@ -56,70 +54,76 @@ private const val TAG = "ConversationView"
 @Composable
 fun ConversationView(conversationId: Long, uri: Uri? = null) {
     val navController = LocalNavController.current
-    val route = remember {
-        navController!!.getBackStackEntry("conversationRoute")
-    }
-    val viewModel =
-        hiltViewModel<ConversationViewModel>(route)
+    val route = remember { navController!!.getBackStackEntry("conversationRoute") }
+    val viewModel = hiltViewModel<ConversationViewModel>(route)
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
+    val navigateToSendMedia: (Uri?) -> Unit = remember {
+        {
+            val isVideo = context.isVideo(it)
+            viewModel.resizeMedia(it, isVideo)
+            navController?.navigate("media")
+        }
+    }
     LaunchedEffect(0) {
         viewModel.initConversation(conversationId)
-        if (uri != null && viewModel.uri != uri)
-            navigateToSendMediaFragment(
-                viewModel = viewModel,
-                context = context,
-                uri = uri,
-                navController = navController
-            )
+        if (uri != null && viewModel.uri != uri) navigateToSendMedia(uri)
         viewModel.uri = uri
     }
-
     EventHandler(viewModel.events) {
         when (it) {
-            is OnMessageSent -> keyboardController?.hide()
+            is OnMessageSent -> {
+                keyboardController?.hide()
+                playMessageSound(context)
+            }
         }
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
         override fun onPause(owner: LifecycleOwner) {
             keyboardController?.hide()
-            if (viewModel.currentState.inputState == InputStates.FAB_EXPAND)
-                viewModel.updateState { copy(inputState = InputStates.INITIAL) }
+            if (viewModel.currentState.inputState.state == InputState.State.FAB_EXPAND)
+                viewModel.resetInputState()
         }
     })
     val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel)
+    Content(state.value, viewModel, navigateToSendMedia)
 }
 
 @Preview
 @ExperimentalMaterialApi
 @Composable
 private fun Content(
-    state: DialogUiState = testDialogUiState,
-    viewModel: ConversationViewModel? = null
+    state: DialogState = testDialogUiState,
+    viewModel: ConversationViewModel? = null,
+    navigateToSendMedia: (Uri?) -> Unit = { }
 ) {
     val navController = LocalNavController.current
+    val play: (String?, String?) -> Unit =
+        remember { { audioFile, messageId -> viewModel?.play(audioFile, messageId) } }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Row {
-                        UserNameLayout(
-                            state = state,
-                            onClick = { navigateToUserFragment(viewModel, navController) }
-                        )
+                        state.conversation?.let {
+                            UserNameLayout(
+                                userStatus = state.userStatus,
+                                conversation = it,
+                                onClick = remember { { navController?.navigate("user/${it.user.id}") } }
+                            )
+                        }
                         if (state.selectedMessages.isNotEmpty()) {
                             Spacer(Modifier.weight(1f))
                             IconButton(
-                                onClick = { viewModel?.deleteMessages() }) {
+                                onClick = remember { { viewModel?.deleteMessages() } }) {
                                 Icon(
                                     imageVector = Icons.Filled.Delete,
                                     contentDescription = "Clear"
                                 )
                             }
                             IconButton(
-                                onClick = { viewModel?.clearMessages() }) {
+                                onClick = remember { { viewModel?.clearMessages() } }) {
                                 Icon(
                                     imageVector = Icons.Filled.Clear,
                                     contentDescription = "Clear"
@@ -129,126 +133,116 @@ private fun Content(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController?.popBackStack() }) {
+                    IconButton(onClick = remember { { navController?.popBackStack() } }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
-        },
-        content = { padding ->
-            Box(
-                Modifier
-                    .padding(padding)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.BottomEnd
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Box(
-                        Modifier
-                            .weight(1f)
-                            .padding(start = 4.dp, end = 4.dp),
-                        contentAlignment = Alignment.BottomStart
-                    ) {
-                        MessagesList(state.pagingDataFlow, state, viewModel)
-                        ReplyLayout(state, viewModel)
-                    }
-                    Row(Modifier.padding(end = 64.dp)) {
-                        InputLayout(state, viewModel)
-                    }
-                }
-                FabsLayout(state, viewModel)
-            }
         }
-    )
-}
-
-@Composable
-private fun InputLayout(state: DialogUiState = testDialogUiState, viewModel: ConversationViewModel? = null) {
-    val playingState = state.playingState
-    MaterialTheme(colors = LightColorPalette) {
-        ConversationInput(
-            state = state,
-            playingState = playingState,
-            playOnClick = { audioFile, messageId ->
-                if (playingState?.paused != false) {
-                    viewModel?.startPlaying(audioFile, messageId)
-                } else {
-                    viewModel?.pausePlaying()
+    ) { padding ->
+        Box(
+            Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .padding(start = 4.dp, end = 4.dp),
+                    contentAlignment = Alignment.BottomStart
+                ) {
+                    viewModel?.messagesFlow?.let {
+                        MessagesList(
+                            messagesFlow = it,
+                            selectedMessages = state.selectedMessages,
+                            playingState = state.playingState,
+                            play = play,
+                            messageDisplayed = remember { { viewModel.messageDisplayed(it) } },
+                            selectMessage = remember { { viewModel.selectMessage(it) } },
+                            setReplyMessage = remember { { viewModel.setReplyMessage(it) } }
+                        )
+                    }
+                    state.replyMessage?.let {
+                        ReplyLayout(
+                            replyMessage = it,
+                            playingState = state.playingState,
+                            play = play,
+                            clear = remember { { viewModel?.clearReplyMessage() } }
+                        )
+                    }
                 }
-            },
-            onTextChanged = { text ->
-                viewModel?.textChanged(text)
-            },
-            onClear = {
-                viewModel?.updateState { copy(inputState = InputStates.INITIAL, audioFile = null) }
-            },
-            emojiOnClick = {
-
+                ConversationInput(
+                    inputState = state.inputState,
+                    playingState = state.playingState,
+                    playOnClick = remember { { audioFile, messageId -> viewModel?.play(audioFile, messageId) } },
+                    onTextChanged = remember { { viewModel?.textChanged(it) } },
+                    onClear = remember { { viewModel?.resetInputState() } }
+                )
             }
-        )
+            FabsLayout(
+                inputState = state.inputState.state,
+                setPhotoPath = remember { { viewModel?.setPhotoPath(it) } },
+                fabPressed = remember { { viewModel?.fabPressed() } },
+                resetInputState = remember { { viewModel?.resetInputState() } },
+                startRecording = remember { { viewModel?.startRecording() } },
+                navigateToSendMedia = navigateToSendMedia
+            )
+        }
     }
 }
 
 @Composable
-private fun ReplyLayout(state: DialogUiState = testDialogUiState, viewModel: ConversationViewModel?) {
-    val replyMessage = state.replyMessage
-    val playingState = state.playingState
+private fun ReplyLayout(
+    replyMessage: Message,
+    playingState: PlayingState?,
+    play: (String?, String?) -> Unit,
+    clear: () -> Unit
+) {
     val context = LocalContext.current
-    if (replyMessage != null) {
-        val bitmap = remember { mutableStateOf<Bitmap?>(null) }
-        if (replyMessage.image != null || replyMessage.video != null)
-            LaunchedEffect(replyMessage.id) {
-                withContext(Dispatchers.IO) {
-                    val image = if (replyMessage.image != null) replyMessage.image
-                    else videoThumbnail(replyMessage.video!!)
-                    bitmap.value = getBitmapFromGallery(image, context, 4)
-                }
+    val bitmap = remember { mutableStateOf<Bitmap?>(null) }
+    if (replyMessage.image != null || replyMessage.video != null)
+        LaunchedEffect(replyMessage.id) {
+            withContext(Dispatchers.IO) {
+                val image = replyMessage.image ?: replyMessage.video?.let { videoThumbnail(it) }
+                bitmap.value = getBitmapFromGallery(image, context, 4)
             }
-        Card(
-            modifier = Modifier.padding(bottom = 4.dp),
-            shape = RoundedCornerShape(6.dp),
-            elevation = 1.dp,
-            backgroundColor = colorResource(id = R.color.time_message_color)
-        ) {
-            ReplyMessage(
-                message = replyMessage,
-                bitmap = bitmap,
-                replyPlayingState = if (playingState?.messageId == replyMessage.messageId) playingState else null,
-                playOnClick = { audioFile, messageId ->
-                    if (playingState?.paused != false) {
-                        viewModel?.startPlaying(audioFile, messageId)
-                    } else {
-                        viewModel?.pausePlaying()
-                    }
-                },
-                onClear = {
-                    viewModel?.updateState { copy(replyMessage = null) }
-                }
-            )
         }
+    Card(
+        modifier = Modifier.padding(bottom = 4.dp),
+        shape = RoundedCornerShape(6.dp),
+        elevation = 1.dp,
+        backgroundColor = colorResource(id = R.color.time_message_color)
+    ) {
+        ReplyMessage(
+            message = replyMessage,
+            bitmap = bitmap,
+            replyPlayingState = if (playingState?.messageId == replyMessage.messageId) playingState else null,
+            playOnClick = play,
+            onClear = clear
+        )
     }
 }
 
 @Composable
 private fun FabsLayout(
-    state: DialogUiState = testDialogUiState,
-    viewModel: ConversationViewModel?
+    inputState: InputState.State = InputState.State.INITIAL,
+    setPhotoPath: (String) -> Unit,
+    fabPressed: () -> Unit,
+    resetInputState: () -> Unit,
+    startRecording: () -> Unit,
+    navigateToSendMedia: (Uri?) -> Unit
 ) {
     val context = LocalContext.current
-    val navController = LocalNavController.current
     val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
-        navigateToSendMediaFragment(viewModel = viewModel, context = context, uri = uri, navController = navController)
+        navigateToSendMedia(uri)
     }
     val takePicture = rememberLauncherForActivityResult(TakePictureFromCamera()) {
-        navigateToSendMediaFragment(
-            viewModel = viewModel,
-            context = context,
-            path = viewModel!!.currentState.photoPath,
-            navController = navController
-        )
+        navigateToSendMedia(null)
     }
     val readPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         if (it) fileChooser.launch(Unit)
@@ -256,29 +250,30 @@ private fun FabsLayout(
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         if (it) {
             val photoFile = context.createTempImageFile()
-            viewModel?.updateState { copy(photoPath = photoFile.path) }
+            setPhotoPath(photoFile.path)
             takePicture.launch(photoFile)
         }
     }
     val microphonePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (it) viewModel?.startRecording()
+        if (it) startRecording()
     }
-
     InputFabs(
-        state = state,
-        onClick = {
-            fabOnClick(context, state.inputState, viewModel)
+        inputState = inputState,
+        onClick = fabPressed,
+        onVoice = remember {
+            { microphonePermission.launch(RECORD_AUDIO) }
         },
-        onVoice = {
-            microphonePermission.launch(RECORD_AUDIO)
+        onCamera = remember {
+            {
+                resetInputState()
+                cameraPermission.launch(CAMERA)
+            }
         },
-        onCamera = {
-            viewModel?.updateState { copy(inputState = InputStates.INITIAL) }
-            cameraPermission.launch(CAMERA)
-        },
-        onGallery = {
-            viewModel?.updateState { copy(inputState = InputStates.INITIAL) }
-            readPermission.launch(READ_EXTERNAL_STORAGE)
+        onGallery = remember {
+            {
+                resetInputState()
+                readPermission.launch(READ_EXTERNAL_STORAGE)
+            }
         }
     )
 }
@@ -286,30 +281,43 @@ private fun FabsLayout(
 @ExperimentalMaterialApi
 @Composable
 private fun MessagesList(
-    pagingDataFlow: Flow<PagingData<Any>>? = null,
-    state: DialogUiState = testDialogUiState,
-    viewModel: ConversationViewModel? = null
+    messagesFlow: ImmutableFlow<PagingData<Any>> = ImmutableFlow(flowOf(PagingData.from(listOf(testMessage)))),
+    selectedMessages: ImmutableList<Message>,
+    playingState: PlayingState?,
+    play: (String?, String?) -> Unit,
+    messageDisplayed: (Message) -> Unit,
+    selectMessage: (Message) -> Unit,
+    setReplyMessage: (Message) -> Unit
 ) {
-    if (pagingDataFlow != null) {
-        val lazyPagingItems = pagingDataFlow.collectAsLazyPagingItems()
-        val listState = rememberLazyListState()
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            state = listState,
-            reverseLayout = true,
-        ) {
-            items(count = lazyPagingItems.itemCount) { index ->
-                lazyPagingItems[index]?.let {
+    val lazyPagingItems = messagesFlow.collectAsLazyPagingItems()
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        reverseLayout = true,
+    ) {
+        items(
+            count = lazyPagingItems.itemCount,
+            key = {
+                lazyPagingItems[it]?.let {
                     when (it) {
-                        is Message -> ShowMessage(
-                            message = it,
-                            selected = state.selectedMessages.contains(it),
-                            isScrolling = listState.isScrollInProgress,
-                            playingState = state.playingState,
-                            viewModel = viewModel
-                        )
-                        is DateDelimiter -> DateDelimiterCompose(it)
+                        is Message -> it.id
+                        is DateDelimiter -> it.time
+                        else -> Unit
                     }
+                } ?: Unit
+            }
+        ) { index ->
+            lazyPagingItems[index]?.let {
+                when (it) {
+                    is Message -> ShowMessage(
+                        message = it,
+                        selected = selectedMessages.contains(it),
+                        playingState = playingState,
+                        play = play,
+                        messageDisplayed = messageDisplayed,
+                        selectMessage = selectMessage,
+                        setReplyMessage = setReplyMessage,
+                    )
+                    is DateDelimiter -> DateDelimiterCompose(it)
                 }
             }
         }
@@ -321,14 +329,16 @@ private fun MessagesList(
 private fun ShowMessage(
     message: Message = testMessage,
     selected: Boolean = false,
-    isScrolling: Boolean = false,
     playingState: PlayingState?,
-    viewModel: ConversationViewModel?
+    play: (String?, String?) -> Unit,
+    messageDisplayed: (Message) -> Unit,
+    selectMessage: (Message) -> Unit,
+    setReplyMessage: (Message) -> Unit
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
     LaunchedEffect(message.id) {
-        viewModel?.messageDisplayed(message)
+        messageDisplayed(message)
     }
     var loading by remember { mutableStateOf(true) }
     val bitmap = remember { mutableStateOf<Bitmap?>(null) }
@@ -338,7 +348,6 @@ private fun ShowMessage(
     if (messageThumbnail != null || replyMessageThumbnail != null) {
         LaunchedEffect(message) {
             withContext(Dispatchers.IO) {
-                if (isScrolling) delay(300)
                 messageThumbnail?.let { bitmap.value = getBitmapFromGallery(it, context, 1) }
                 replyMessageThumbnail?.let { replyBitmap.value = getBitmapFromGallery(it, context, 8) }
                 loading = false
@@ -366,39 +375,13 @@ private fun ShowMessage(
                 message.image != null -> imageOnClick(message, navController)
             }
         },
-        onSelect = {
-            viewModel?.selectMessage(message)
-        },
-        onSwipe = {
-            viewModel?.updateState { copy(replyMessage = message) }
-        },
-        playOnClick = { audioFile: String?, messageId: String? ->
-            if (playingState?.paused != false) {
-                viewModel?.startPlaying(audioFile, messageId)
-            } else {
-                viewModel?.pausePlaying()
-            }
-        }
+        onSelect = { selectMessage(message) },
+        onSwipe = { setReplyMessage(message) },
+        playOnClick = play
     )
 }
 
 private fun Message.getThumbnail() = image ?: video?.let { videoThumbnail(it) }
-
-private fun fabOnClick(context: Context, inputState: InputStates, viewModel: ConversationViewModel?) {
-    when (inputState) {
-        InputStates.INITIAL -> viewModel?.updateState { copy(inputState = InputStates.FAB_EXPAND) }
-        InputStates.FAB_EXPAND -> viewModel?.updateState { copy(inputState = InputStates.INITIAL) }
-        InputStates.TEXT_ENTERED -> {
-            viewModel?.sendMessage(SendMessageData(text = viewModel.currentState.text))
-            playMessageSound(context)
-        }
-        InputStates.VOICE_RECORDED -> {
-            viewModel?.sendMessage(SendMessageData(audio = viewModel.currentState.audioFile))
-            playMessageSound(context)
-        }
-        InputStates.VOICE_RECORDING -> viewModel?.stopRecording()
-    }
-}
 
 private fun videoOnClick(message: Message, context: Context, navController: NavController?) {
     if (message.received == 1 || message.isMine) {
@@ -410,23 +393,6 @@ private fun videoOnClick(message: Message, context: Context, navController: NavC
 private fun imageOnClick(message: Message, navController: NavController?) {
     if (message.received == 1 || message.isMine)
         navController?.navigate("image?name=${message.image}")
-}
-
-private fun navigateToUserFragment(viewModel: ConversationViewModel?, navController: NavController?) {
-    val userId = viewModel?.currentState?.conversation?.user?.id
-    if (userId != null) navController?.navigate("user/$userId")
-}
-
-private fun navigateToSendMediaFragment(
-    context: Context,
-    viewModel: ConversationViewModel?,
-    uri: Uri? = null,
-    path: String? = null,
-    navController: NavController?
-) {
-    val isVideo = context.isVideo(uri)
-    viewModel?.resizeMedia(uri, path, isVideo)
-    navController?.navigate("media")
 }
 
 @SuppressLint("SimpleDateFormat")

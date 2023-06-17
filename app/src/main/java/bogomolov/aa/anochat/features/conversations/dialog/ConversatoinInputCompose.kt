@@ -29,13 +29,12 @@ import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.paging.PagingData
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.conversations.list.testConversation
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -43,7 +42,7 @@ import java.util.*
 
 @Composable
 fun ConversationInput(
-    state: DialogUiState = testDialogUiState,
+    inputState: InputState = testDialogUiState.inputState,
     playingState: PlayingState? = testPlayingState,
     playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> },
     onTextChanged: (String) -> Unit = {},
@@ -52,11 +51,12 @@ fun ConversationInput(
 ) {
     Row(
         modifier = Modifier
+            .padding(end = 64.dp)
             .fillMaxWidth()
             .heightIn(min = 60.dp)
     ) {
-        when (state.inputState) {
-            InputStates.INITIAL, InputStates.TEXT_ENTERED, InputStates.FAB_EXPAND -> {
+        when (inputState.state) {
+            InputState.State.INITIAL, InputState.State.TEXT_ENTERED, InputState.State.FAB_EXPAND -> {
                 Surface(
                     modifier = Modifier.padding(start = 4.dp),
                     shape = RoundedCornerShape(25.dp),
@@ -74,7 +74,7 @@ fun ConversationInput(
                     )
                      */
                     TextField(
-                        value = state.text,
+                        value = inputState.text,
                         onValueChange = { onTextChanged(it) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -93,7 +93,7 @@ fun ConversationInput(
                     )
                 }
             }
-            InputStates.VOICE_RECORDING -> {
+            InputState.State.VOICE_RECORDING -> {
                 Icon(
                     imageVector = Icons.Filled.Mic,
                     contentDescription = null,
@@ -103,7 +103,7 @@ fun ConversationInput(
                         .align(CenterVertically)
                 )
                 Text(text = stringResource(id = R.string.audio_message), modifier = Modifier.align(CenterVertically))
-                Text(text = " " + state.audioLengthText, modifier = Modifier.align(CenterVertically))
+                Text(text = " " + inputState.audioLengthText, modifier = Modifier.align(CenterVertically))
                 Icon(
                     imageVector = Icons.Filled.Circle,
                     tint = Color.Red,
@@ -114,14 +114,12 @@ fun ConversationInput(
                         .align(CenterVertically)
                 )
             }
-            InputStates.VOICE_RECORDED -> {
+            InputState.State.VOICE_RECORDED -> {
                 PlayAudio(
                     state = playingState,
-                    audio = state.audioFile,
+                    audio = inputState.audioFile,
                     playOnClick = playOnClick,
-                    onClear = {
-                        onClear()
-                    }
+                    onClear = onClear
                 )
             }
         }
@@ -131,7 +129,7 @@ fun ConversationInput(
 
 @Composable
 fun InputFabs(
-    state: DialogUiState = testDialogUiState,
+    inputState: InputState.State = InputState.State.INITIAL,
     onClick: () -> Unit = {},
     onVoice: () -> Unit = {},
     onCamera: () -> Unit = {},
@@ -146,7 +144,7 @@ fun InputFabs(
     ) {
         val offsetY = remember { Animatable(0f) }
         val coroutineScope = rememberCoroutineScope()
-        if (!(state.inputState == InputStates.INITIAL || state.inputState == InputStates.FAB_EXPAND))
+        if (!(inputState == InputState.State.INITIAL || inputState == InputState.State.FAB_EXPAND))
             coroutineScope.launch { offsetY.snapTo(0f) }
         if (offsetY.value > 0) {
             val fabSpace = 32
@@ -194,8 +192,8 @@ fun InputFabs(
             }
         }
         FloatingActionButton(onClick = {
-            when (state.inputState) {
-                InputStates.INITIAL -> {
+            when (inputState) {
+                InputState.State.INITIAL -> {
                     coroutineScope.launch {
                         offsetY.animateTo(
                             targetValue = 1f,
@@ -204,7 +202,7 @@ fun InputFabs(
                         onClick()
                     }
                 }
-                InputStates.FAB_EXPAND -> {
+                InputState.State.FAB_EXPAND -> {
                     coroutineScope.launch {
                         offsetY.animateTo(
                             targetValue = 0f,
@@ -217,11 +215,11 @@ fun InputFabs(
             }
         }) {
             Icon(
-                imageVector = when (state.inputState) {
-                    InputStates.INITIAL -> Icons.Filled.Add
-                    InputStates.TEXT_ENTERED, InputStates.VOICE_RECORDED -> Icons.Filled.PlayArrow
-                    InputStates.FAB_EXPAND -> Icons.Filled.Clear
-                    InputStates.VOICE_RECORDING -> Icons.Filled.Stop
+                imageVector = when (inputState) {
+                    InputState.State.INITIAL -> Icons.Filled.Add
+                    InputState.State.TEXT_ENTERED, InputState.State.VOICE_RECORDED -> Icons.Filled.PlayArrow
+                    InputState.State.FAB_EXPAND -> Icons.Filled.Clear
+                    InputState.State.VOICE_RECORDING -> Icons.Filled.Stop
                 },
                 contentDescription = ""
             )
@@ -232,54 +230,52 @@ fun InputFabs(
 @Preview
 @Composable
 fun UserNameLayout(
-    state: DialogUiState = testDialogUiState,
+    userStatus: UserStatus = testDialogUiState.userStatus,
+    conversation: Conversation = testDialogUiState.conversation!!,
     onClick: () -> Unit = {},
 ) {
-    val conversation = state.conversation
-    if (conversation != null) {
-        Row(modifier = Modifier
-            .clickable {
-                onClick()
-            }) {
-            val imageBitmap =
-                state.conversation.user.photo?.let {
-                    getBitmapFromGallery(
-                        getMiniPhotoFileName(it),
-                        LocalContext.current,
-                        1
-                    )?.asImageBitmap()
-                }
-            val imageModifier = Modifier
-                .clip(CircleShape)
-                .width(50.dp)
-                .height(50.dp)
-            if (imageBitmap != null) {
-                Image(
-                    modifier = imageModifier,
-                    bitmap = imageBitmap,
-                    contentScale = ContentScale.FillWidth,
-                    contentDescription = ""
-                )
-            } else {
-                Icon(
-                    painterResource(id = R.drawable.user_icon),
-                    modifier = imageModifier,
-                    contentDescription = ""
-                )
+    Row(modifier = Modifier
+        .clickable {
+            onClick()
+        }) {
+        val imageBitmap =
+            conversation.user.photo?.let {
+                getBitmapFromGallery(
+                    getMiniPhotoFileName(it),
+                    LocalContext.current,
+                    1
+                )?.asImageBitmap()
             }
-            Column(Modifier.padding(start = 16.dp)) {
-                Text(text = conversation.user.name, fontSize = 18.sp, fontWeight = Bold, color = Color.White)
-                Text(
-                    modifier = Modifier.padding(top = 4.dp),
-                    text = state.userStatus.print(LocalContext.current), fontSize = 12.sp, color = Color.White
-                )
-            }
+        val imageModifier = Modifier
+            .clip(CircleShape)
+            .width(50.dp)
+            .height(50.dp)
+        if (imageBitmap != null) {
+            Image(
+                modifier = imageModifier,
+                bitmap = imageBitmap,
+                contentScale = ContentScale.FillWidth,
+                contentDescription = ""
+            )
+        } else {
+            Icon(
+                painterResource(id = R.drawable.user_icon),
+                modifier = imageModifier,
+                contentDescription = ""
+            )
+        }
+        Column(Modifier.padding(start = 16.dp)) {
+            Text(text = conversation.user.name, fontSize = 18.sp, fontWeight = Bold, color = Color.White)
+            Text(
+                modifier = Modifier.padding(top = 4.dp),
+                text = userStatus.print(LocalContext.current), fontSize = 12.sp, color = Color.White
+            )
         }
     }
 }
 
 private fun UserStatus.print(context: Context) =
-    when(this){
+    when (this) {
         is UserStatus.Empty -> ""
         is UserStatus.Online -> context.getString(R.string.status_online)
         is UserStatus.Typing -> context.getString(R.string.status_typing)
@@ -291,12 +287,12 @@ private fun timeToString(lastTimeOnline: Long): String {
     return SimpleDateFormat("dd.MM.yyyy HH:mm").format(Date(lastTimeOnline))
 }
 
-val testDialogUiState = DialogUiState(
-    inputState = InputStates.INITIAL,
+val testDialogUiState = DialogState(
+    inputState = InputState(
+        audioLengthText = "0:15",
+        text = "Text"
+    ),
+    replyMessage = Message(text = "text"),
     conversation = testConversation,
     userStatus = UserStatus.Online,
-    audioLengthText = "0:15",
-    text = "Text",
-    replyMessage = Message(text = "text"),
-    pagingDataFlow = flowOf(PagingData.from(listOf(testMessage)))
 )

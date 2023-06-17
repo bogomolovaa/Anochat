@@ -14,6 +14,7 @@ import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
+import androidx.compose.runtime.Immutable
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.*
@@ -22,10 +23,8 @@ private const val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstu
 private const val GALLERY_FOLDER = "Anochat"
 private const val TAG = "FileUtils"
 
-data class BitmapWithName(val name: String, val bitmap: Bitmap?){
-    var processed: Boolean = true
-    var progress = MutableStateFlow(0)
-}
+@Immutable
+data class BitmapWithName(val name: String, val bitmap: Bitmap?)
 
 fun getMiniPhotoFileName(fileName: String) = File(fileName).nameWithoutExtension + "_mini.jpg"
 

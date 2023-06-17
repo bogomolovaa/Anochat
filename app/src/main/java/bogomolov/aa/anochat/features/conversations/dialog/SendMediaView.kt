@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -18,7 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.*
@@ -35,6 +33,13 @@ fun SendMediaView() {
                 Toast.makeText(context, context.getText(R.string.too_large_file), Toast.LENGTH_LONG).show()
                 navController.popBackStack()
             }
+            is MessageSubmitted -> {
+                playMessageSound(context)
+                navController.popBackStack()
+            }
+            is VideoIsProcessing -> {
+                Toast.makeText(context, context.getText(R.string.video_is_processing), Toast.LENGTH_LONG).show()
+            }
         }
     }
     val state = viewModel.state.collectAsState()
@@ -42,9 +47,8 @@ fun SendMediaView() {
 }
 
 @Composable
-private fun Content(state: DialogUiState, viewModel: ConversationViewModel) {
+private fun Content(state: DialogState, viewModel: ConversationViewModel) {
     val navController = LocalNavController.current
-    val context = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -59,7 +63,9 @@ private fun Content(state: DialogUiState, viewModel: ConversationViewModel) {
             )
         },
         content = {
-            Column(modifier = Modifier.fillMaxWidth().padding(it)) {
+            Column(modifier = Modifier
+                .fillMaxWidth()
+                .padding(it)) {
                 val showLoading = state.isVideo && state.progress < 0.98
                 if (showLoading)
                     LinearProgressIndicator(
@@ -97,7 +103,7 @@ private fun Content(state: DialogUiState, viewModel: ConversationViewModel) {
                             colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.White),
                             trailingIcon = {
                                 IconButton(onClick = {
-                                    submit(viewModel, context, state.resized, state.isVideo, text, navController)
+                                    viewModel.submitMedia()
                                 }) {
                                     Icon(Icons.Filled.PlayArrow, contentDescription = "")
                                 }
@@ -108,29 +114,4 @@ private fun Content(state: DialogUiState, viewModel: ConversationViewModel) {
             }
         }
     )
-}
-
-private fun submit(
-    viewModel: ConversationViewModel,
-    context: Context,
-    resized: BitmapWithName,
-    isVideo: Boolean,
-    text: String,
-    navController: NavController?
-) {
-    if (resized.processed) {
-        if (isVideo) {
-            viewModel.sendMessage(
-                SendMessageData(video = nameToVideo(resized.name), text = text)
-            )
-        } else {
-            viewModel.sendMessage(
-                SendMessageData(image = nameToImage(resized.name), text = text)
-            )
-        }
-        playMessageSound(context)
-        navController?.popBackStack()
-    } else {
-        Toast.makeText(context, "Video is processing", Toast.LENGTH_LONG).show()
-    }
 }

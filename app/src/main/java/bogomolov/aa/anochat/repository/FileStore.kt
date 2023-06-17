@@ -42,7 +42,7 @@ interface FileStore {
         toGallery: Boolean
     ): BitmapWithName?
 
-    suspend fun resizeVideo(uri: Uri): BitmapWithName?
+    suspend fun resizeVideo(uri: Uri, onProgress: (Int, Boolean) -> Unit): BitmapWithName?
     suspend fun createVideoThumbnail(videoName: String)
 }
 
@@ -79,7 +79,7 @@ class FileStoreImpl @Inject constructor(
 
     override fun fileExists(fileName: String) = File(getFilePath(context, fileName)).exists()
 
-    override suspend fun resizeVideo(uri: Uri): BitmapWithName? =
+    override suspend fun resizeVideo(uri: Uri, onProgress: (Int, Boolean) -> Unit): BitmapWithName? =
         withContext(Dispatchers.IO) {
             val size = (getRealSizeFromUri(context, uri)?.toFloat() ?: 0f) / 1024 / 1024
             if (size > 200) throw FileTooBigException()
@@ -89,7 +89,7 @@ class FileStoreImpl @Inject constructor(
             saveUriToFile(uri, originalVideoFile)
             createVideoThumbnail(originalVideoFile)?.let {
                 saveImageToPath(it, nameToImage(videoName))
-                val result = BitmapWithName(videoName, it).apply { processed = false }
+                val result = BitmapWithName(videoName, it)
                 resizerScope.launch {
                     val videoLength = getVideoDuration(uri)
                     if (videoLength > 0) {
@@ -97,11 +97,11 @@ class FileStoreImpl @Inject constructor(
                         Config.enableStatisticsCallback { statistics ->
                             if (!isActive) cancelCompression()
                             val progress = statistics.time.toFloat() / videoLength
-                            result.progress.tryEmit((100 * progress).toInt())
+                            onProgress((100 * progress).toInt(), false)
                         }
                         compressVideo(originalVideoFile.absolutePath, videoFile.absolutePath)
                         originalVideoFile.delete()
-                        result.processed = true
+                        onProgress(100, true)
                     }
                 }
                 result
