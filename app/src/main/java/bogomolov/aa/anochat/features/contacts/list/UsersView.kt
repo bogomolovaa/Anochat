@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -50,16 +51,15 @@ fun UsersView(uri: String? = null) {
         viewModel.loadContacts(listOf())
     }
     EventHandler(viewModel.events) {
-        if (it is NavigateConversationEvent) navController?.navigateToConversation(
-            it.conversationId,
-            uri
-        )
+        if (it is NavigateConversationEvent) navController?.navigateToConversation(it.conversationId, uri)
     }
 
     val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel) {
-        navController?.popBackStack()
-    }
+    Content(
+        state = state.value,
+        viewModel = viewModel,
+        doBack = remember { { navController?.popBackStack() } }
+    )
 }
 
 @Preview
@@ -79,7 +79,7 @@ private fun Content(
                             Text(stringResource(id = R.string.contacts))
                             Spacer(Modifier.weight(1f))
                             IconButton(
-                                onClick = { viewModel?.search() }) {
+                                onClick = remember { { viewModel?.search() } }) {
                                 Icon(
                                     imageVector = Icons.Filled.Search,
                                     contentDescription = "Search"
@@ -92,7 +92,7 @@ private fun Content(
                                     .focusRequester(focusRequester),
                                 value = state.search.text,
                                 placeholder = { Text(stringResource(id = R.string.search_phone_placeholder)) },
-                                onValueChange = { viewModel?.search(it) },
+                                onValueChange = remember { { viewModel?.search(it) } },
                                 singleLine = true,
                                 colors = TextFieldDefaults.textFieldColors(
                                     cursorColor = Color.White,
@@ -100,10 +100,10 @@ private fun Content(
                                     focusedIndicatorColor = Color.Transparent,
                                     unfocusedIndicatorColor = Color.Transparent,
                                     disabledIndicatorColor = Color.Transparent
-                                ),
+                                )
                             )
                             IconButton(
-                                onClick = { viewModel?.search(null) }) {
+                                onClick = remember { { viewModel?.search(null) } }) {
                                 Icon(
                                     imageVector = Icons.Filled.Clear,
                                     contentDescription = "Clear"
@@ -116,7 +116,7 @@ private fun Content(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { doBack() }) {
+                    IconButton(onClick = doBack) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -128,16 +128,22 @@ private fun Content(
                     .padding(padding)
                     .fillMaxWidth()
             ) {
-                if (state.loading) LinearProgressIndicator(
-                    modifier = Modifier
-                        .padding(top = 4.dp)
-                        .fillMaxWidth()
-                )
-                LazyColumn(
-                    modifier = Modifier.padding(top = if (!state.loading) 8.dp else 0.dp)
-                ) {
-                    items(count = state.users?.size ?: 0) {
-                        state.users?.get(it)?.let { UserRow(it, viewModel) }
+                if (state.loading)
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                            .fillMaxWidth()
+                    )
+                state.users?.let { users ->
+                    LazyColumn(
+                        modifier = Modifier.padding(top = if (!state.loading) 8.dp else 0.dp)
+                    ) {
+                        items(count = users.size) {
+                            UserRow(
+                                user = users[it],
+                                createConversation = remember { { viewModel?.createConversation(it) } }
+                            )
+                        }
                     }
                 }
             }
@@ -149,12 +155,13 @@ private fun Content(
 @Composable
 private fun UserRow(
     user: User = testContactsUiState.users!!.first(),
-    viewModel: UsersViewModel? = null
+    createConversation: (User) -> Unit = {}
 ) {
+    val context = LocalContext.current
     Card(
         backgroundColor = Color.Black.copy(alpha = 0.0f),
         elevation = 0.dp,
-        modifier = Modifier.clickable(onClick = { viewModel?.createConversation(user) })
+        modifier = Modifier.clickable(onClick = { createConversation(user) })
     ) {
         Row(
             modifier = Modifier
@@ -162,26 +169,28 @@ private fun UserRow(
                 .padding(12.dp)
 
         ) {
-            val imageBitmap =
+            var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+            LaunchedEffect(user.id) {
                 user.photo?.let {
-                    getBitmapFromGallery(
+                    imageBitmap = getBitmapFromGallery(
                         getMiniPhotoFileName(it),
-                        LocalContext.current,
+                        context,
                         1
                     )?.asImageBitmap()
                 }
+            }
             val imageModifier = Modifier
                 .clip(CircleShape)
                 .width(60.dp)
                 .height(60.dp)
-            if (imageBitmap != null) {
+            imageBitmap?.let {
                 Image(
                     modifier = imageModifier,
-                    bitmap = imageBitmap,
+                    bitmap = it,
                     contentScale = ContentScale.FillWidth,
                     contentDescription = ""
                 )
-            } else {
+            } ?: run {
                 Icon(
                     painterResource(id = R.drawable.user_icon),
                     modifier = imageModifier,

@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private const val MAX_SCALE = 5f
 private const val MIN_SCALE = 1f
@@ -38,7 +40,9 @@ fun ImageView(imageName: String) {
     val context = LocalContext.current
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(0) {
-        bitmap = getBitmapFromGallery(imageName, context, 1)
+        withContext(Dispatchers.IO) {
+            bitmap = getBitmapFromGallery(imageName, context, 1)
+        }
     }
 
     var controlsVisible by remember { mutableStateOf(true) }
@@ -131,9 +135,7 @@ fun ImageView(imageName: String) {
             ) {
                 Icon(
                     modifier = Modifier
-                        .clickable {
-                            navController?.popBackStack()
-                        },
+                        .clickable { navController?.popBackStack() },
                     imageVector = Icons.Filled.ArrowBack,
                     tint = Color.White,
                     contentDescription = "Back"
@@ -141,9 +143,7 @@ fun ImageView(imageName: String) {
                 Icon(
                     modifier = Modifier
                         .size(32.dp)
-                        .clickable {
-                            share(imageName, context)
-                        },
+                        .clickable { share(imageName, context) },
                     imageVector = Icons.Filled.Share,
                     tint = Color.White,
                     contentDescription = "Share"

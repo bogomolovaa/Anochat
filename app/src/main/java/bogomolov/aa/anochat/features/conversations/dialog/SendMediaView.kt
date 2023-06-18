@@ -42,30 +42,31 @@ fun SendMediaView() {
             }
         }
     }
+    val submit: () -> Unit = remember { { viewModel.submitMedia() } }
     val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel)
+    Content(state.value, submit)
 }
 
 @Composable
-private fun Content(state: DialogState, viewModel: ConversationViewModel) {
+private fun Content(state: DialogState, submit: () -> Unit) {
     val navController = LocalNavController.current
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = if (state.isVideo) R.string.send_media_video else R.string.send_media_image)) },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController?.popBackStack()
-                    }) {
+                    IconButton(onClick = remember { { navController?.popBackStack() } }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
             )
         },
         content = {
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .padding(it)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(it)
+            ) {
                 val showLoading = state.isVideo && state.progress < 0.98
                 if (showLoading)
                     LinearProgressIndicator(
@@ -81,35 +82,31 @@ private fun Content(state: DialogState, viewModel: ConversationViewModel) {
                         .padding(top = if (showLoading) 16.dp else 0.dp),
                     contentAlignment = Alignment.BottomCenter
                 ) {
-                    if (state.resized != null) {
-                        if (state.resized.bitmap != null) {
-                            Image(
-                                bitmap = state.resized.bitmap.asImageBitmap(),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 60.dp),
-                                contentScale = ContentScale.FillWidth,
-                                contentDescription = ""
-                            )
-                        }
-                        var text by remember { mutableStateOf("") }
-                        TextField(
-                            value = text,
-                            onValueChange = { text = it },
-                            placeholder = { Text(text = stringResource(id = R.string.enter_message)) },
+                    state.resized?.bitmap?.let {
+                        Image(
+                            bitmap = it.asImageBitmap(),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(60.dp),
-                            colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.White),
-                            trailingIcon = {
-                                IconButton(onClick = {
-                                    viewModel.submitMedia()
-                                }) {
-                                    Icon(Icons.Filled.PlayArrow, contentDescription = "")
-                                }
-                            }
+                                .padding(bottom = 60.dp),
+                            contentScale = ContentScale.FillWidth,
+                            contentDescription = ""
                         )
                     }
+                    var text by remember { mutableStateOf("") }
+                    TextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        placeholder = { Text(text = stringResource(id = R.string.enter_message)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp),
+                        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.White),
+                        trailingIcon = {
+                            IconButton(onClick = submit) {
+                                Icon(Icons.Filled.PlayArrow, contentDescription = "")
+                            }
+                        }
+                    )
                 }
             }
         }

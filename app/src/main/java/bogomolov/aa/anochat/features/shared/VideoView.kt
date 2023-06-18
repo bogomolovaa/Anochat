@@ -15,20 +15,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import bogomolov.aa.anochat.features.main.LocalNavController
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.StyledPlayerView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun VideoView(uri: Uri) {
     val context = LocalContext.current
-    val window = remember { mutableStateOf(0) }
-    val position = remember { mutableStateOf(0L) }
-    val autoPlay = remember { mutableStateOf(true) }
+    var window by remember { mutableStateOf(0) }
+    var position by remember { mutableStateOf(0L) }
+    var autoPlay by remember { mutableStateOf(true) }
     var player by remember { mutableStateOf<SimpleExoPlayer?>(null) }
     val navController = LocalNavController.current
     LaunchedEffect(0) {
@@ -37,16 +38,16 @@ fun VideoView(uri: Uri) {
         player = SimpleExoPlayer.Builder(context).build().apply {
             setMediaItem(mediaItem)
             playWhenReady = true
-            seekTo(window.value, position.value)
+            seekTo(window, position)
             prepare()
         }
     }
     val lifecycleOwner = LocalLifecycleOwner.current
 
     fun updateState() {
-        autoPlay.value = player?.playWhenReady ?: false
-        window.value = player?.currentWindowIndex ?: 0
-        position.value = 0L.coerceAtLeast(player?.contentPosition ?: 0L)
+        autoPlay = player?.playWhenReady ?: false
+        window = player?.currentWindowIndex ?: 0
+        position = 0L.coerceAtLeast(player?.contentPosition ?: 0L)
     }
 
     val playerView = remember {
@@ -59,15 +60,14 @@ fun VideoView(uri: Uri) {
             setShowShuffleButton(false)
             findViewById<View>(com.google.android.exoplayer2.ui.R.id.exo_settings).visibility = View.GONE
         }
-        lifecycleOwner.lifecycle.addObserver(object : LifecycleObserver {
-            @OnLifecycleEvent(Lifecycle.Event.ON_START)
-            fun onStart() {
+        lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
+
+            override fun onStart(owner: LifecycleOwner) {
                 playerView.onResume()
-                player?.playWhenReady = autoPlay.value
+                player?.playWhenReady = autoPlay
             }
 
-            @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-            fun onStop() {
+            override fun onStop(owner: LifecycleOwner) {
                 updateState()
                 playerView.onPause()
                 player?.playWhenReady = false
@@ -104,9 +104,7 @@ fun VideoView(uri: Uri) {
         ) {
             Icon(
                 modifier = Modifier
-                    .clickable {
-                        navController?.popBackStack()
-                    },
+                    .clickable(onClick = remember { { navController?.popBackStack() } }),
                 imageVector = Icons.Filled.ArrowBack,
                 tint = Color.White,
                 contentDescription = "Back"

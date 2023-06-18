@@ -35,6 +35,7 @@ import androidx.lifecycle.*
 import androidx.navigation.NavController
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.LocalNavController
@@ -296,14 +297,12 @@ private fun MessagesList(
     ) {
         items(
             count = lazyPagingItems.itemCount,
-            key = {
-                lazyPagingItems[it]?.let {
-                    when (it) {
-                        is Message -> it.id
-                        is DateDelimiter -> it.time
-                        else -> Unit
-                    }
-                } ?: Unit
+            key = lazyPagingItems.itemKey {
+                when (it) {
+                    is Message -> it.id
+                    is DateDelimiter -> it.time
+                    else -> Unit
+                }
             }
         ) { index ->
             lazyPagingItems[index]?.let {
@@ -351,12 +350,6 @@ private fun ShowMessage(
                 messageThumbnail?.let { bitmap.value = getBitmapFromGallery(it, context, 1) }
                 replyMessageThumbnail?.let { replyBitmap.value = getBitmapFromGallery(it, context, 8) }
                 loading = false
-            }
-        }
-        DisposableEffect(message.id) {
-            onDispose {
-                bitmap.value = null
-                replyBitmap.value = null
             }
         }
     }

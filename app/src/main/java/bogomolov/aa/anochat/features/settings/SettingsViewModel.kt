@@ -1,5 +1,6 @@
 package bogomolov.aa.anochat.features.settings
 
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import bogomolov.aa.anochat.domain.UserUseCases
@@ -12,16 +13,17 @@ import bogomolov.aa.anochat.features.shared.mvi.Event
 import bogomolov.aa.anochat.repository.FileStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.io.FileOutputStream
 import javax.inject.Inject
+import kotlin.math.max
+import kotlin.math.min
 
 enum class SettingEditType { EDIT_USERNAME, EDIT_STATUS }
 
 data class SettingsUiState(
     val user: User? = null,
     val settings: Settings = Settings(),
-    val miniatureState: MiniatureState? = null,
-    val settingEditType: SettingEditType? = null,
-    val settingText: String = ""
+    val miniatureState: MiniatureState? = null
 )
 
 data class MiniatureState(
@@ -47,6 +49,7 @@ data class MaskImage(
 )
 
 object MiniatureCreatedEvent : Event
+object PhotoResizedEvent : Event
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -59,13 +62,38 @@ class SettingsViewModel @Inject constructor(
         initSettings()
     }
 
-    fun createMiniature(uri: Uri) {
+    fun resizePhoto(uri: Uri) {
         viewModelScope.launch(dispatcher) {
-            val miniature = fileStore.resizeImage(uri = uri, toGallery = false)
-            if (miniature != null) {
-                setState { copy(miniatureState = MiniatureState(miniature)) }
-                addEvent(MiniatureCreatedEvent)
+            fileStore.resizeImage(uri = uri, toGallery = false)?.let {
+                setState { copy(miniatureState = MiniatureState(it)) }
+                addEvent(PhotoResizedEvent)
             }
+        }
+    }
+
+    fun createMiniature(miniPhotoPath: String) {
+        viewModelScope.launch(dispatcher) {
+            currentState.miniatureState?.let { state ->
+                val maskWidth = state.maskImage.width * state.maskImage.scaleFactor
+                val maskHeight = state.maskImage.height * state.maskImage.scaleFactor
+                val x = (state.maskX / state.initialImageScale).toInt()
+                val y = (state.maskY / state.initialImageScale).toInt()
+                val width = (maskWidth / state.initialImageScale).toInt()
+                val height = (maskHeight / state.initialImageScale).toInt()
+
+                val miniature = state.miniature
+                val bitmap = miniature.bitmap!!
+                val miniBitmap = Bitmap.createBitmap(
+                    bitmap,
+                    max(x, 0),
+                    max(y, 0),
+                    min(bitmap.width - Math.max(x, 0), width),
+                    min(bitmap.height - Math.max(y, 0), height)
+                )
+                miniBitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(miniPhotoPath))
+                updateUser { copy(photo = state.miniature.name) }
+            }
+            addEvent(MiniatureCreatedEvent)
         }
     }
 
@@ -78,7 +106,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun changeSettings(change: Settings.() -> Settings) {
+    fun updateSettings(change: Settings.() -> Settings) {
         viewModelScope.launch {
             val settings = currentState.settings.change()
             setState { copy(settings = settings) }
@@ -93,6 +121,93 @@ class SettingsViewModel @Inject constructor(
                 userUseCases.updateMyUser(it)
             }
         }
+    }
+
+    fun initDimensions(
+        measuredWidth: Int,
+        measuredHeight: Int,
+        windowWidth: Int
+    ) {
+        if (currentState.miniatureState?.imageWidth == 0)
+            updateState {
+                copy(
+                    miniatureState = miniatureState?.initMiniatureState(measuredWidth, measuredHeight)
+                        ?.checkBounds(scale = windowWidth.toFloat() / miniatureState.maskImage.width)
+                )
+            }
+    }
+
+    private fun MiniatureState.initMiniatureState(
+        measuredWidth: Int,
+        measuredHeight: Int,
+    ): MiniatureState {
+        val maskImageWidth = maskImage.width
+        val maskImageHeight = maskImage.height
+        val bitmap = miniature.bitmap!!
+        val koef1 = bitmap.width.toFloat() / bitmap.height.toFloat()
+        val koef2 = measuredWidth.toFloat() / measuredHeight.toFloat()
+        val imageWidth: Int
+        val imageHeight: Int
+        val initialImageScale: Float
+        if (koef1 >= koef2) {
+            imageWidth = measuredWidth
+            imageHeight = (measuredWidth / koef1).toInt()
+            initialImageScale = measuredWidth.toFloat() / bitmap.width.toFloat()
+        } else {
+            imageWidth = (koef1 * measuredHeight).toInt()
+            imageHeight = measuredHeight
+            initialImageScale = measuredHeight.toFloat() / bitmap.height.toFloat()
+        }
+        val maxScaleX = imageWidth.toFloat() / maskImageWidth
+        val maxScaleY = imageHeight.toFloat() / maskImageHeight
+        val maxScale = min(maxScaleX, maxScaleY)
+        return copy(
+            imageWidth = imageWidth,
+            imageHeight = imageHeight,
+            initialImageScale = initialImageScale,
+            maxScale = maxScale,
+        )
+    }
+
+    fun checkBounds(offset: Boolean, x: Int, y: Int, zoom: Float) {
+        updateState {
+            copy(
+                miniatureState = miniatureState?.checkBounds(
+                    offset = if (offset) Pair(x, y) else null,
+                    scale = miniatureState.maskImage.scaleFactor * zoom,
+                )
+            )
+        }
+    }
+
+    private fun MiniatureState.checkBounds(
+        offset: Pair<Int, Int>? = null,
+        scale: Float? = null
+    ): MiniatureState {
+        val scaleFactor = scale ?: maskImage.scaleFactor
+        var left = maskImage.left
+        var top = maskImage.top
+        offset?.let {
+            left += it.first
+            top += it.second
+        }
+        val maskImageWidth = maskImage.width * scaleFactor
+        val maskImageHeight = maskImage.height * scaleFactor
+        top = top.coerceAtLeast(0)
+        left = left.coerceAtLeast(0)
+        top = top.coerceAtMost((imageHeight - maskImageHeight).toInt())
+        left = left.coerceAtMost((imageWidth - maskImageWidth).toInt())
+        val maskX = left
+        val maskY = top
+        return copy(
+            maskX = maskX,
+            maskY = maskY,
+            maskImage = maskImage.copy(
+                scaleFactor = max(0.5f, min(scaleFactor, maxScale)),
+                left = left,
+                top = top
+            )
+        )
     }
 }
 

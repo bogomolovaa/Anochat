@@ -1,7 +1,5 @@
 package bogomolov.aa.anochat.features.settings
 
-import android.content.Context
-import android.graphics.Bitmap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -12,14 +10,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -29,20 +28,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
+import bogomolov.aa.anochat.features.shared.EventHandler
 import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.getFilePath
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
-import java.io.FileOutputStream
-import kotlin.math.max
-import kotlin.math.min
 
 @Composable
 fun MiniatureView() {
     val navController = LocalNavController.current
     val viewModel = hiltViewModel<SettingsViewModel>(navController!!.getBackStackEntry("settingsRoute"))
+    EventHandler(viewModel.events) {
+        if (it is MiniatureCreatedEvent) navController.popBackStack()
+    }
     val state = viewModel.state.collectAsState()
     Content(state.value, viewModel)
 }
@@ -54,19 +53,36 @@ private fun Content(settingsState: SettingsUiState = testSettingsUiState, viewMo
     val density = LocalDensity.current.density
     val context = LocalContext.current
     val navController = LocalNavController.current
+    val initDimensions: (LayoutCoordinates) -> Unit = remember {
+        {
+            viewModel?.initDimensions(
+                measuredWidth = it.size.width,
+                measuredHeight = it.size.height,
+                windowWidth = it.parentCoordinates?.size?.width ?: 0
+            )
+        }
+    }
+    val checkBounds: (offset: Boolean, x: Int, y: Int, zoom: Float) -> Unit = remember {
+        { offset: Boolean, x: Int, y: Int, zoom: Float ->
+            viewModel?.checkBounds(offset, x, y, zoom)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.set_avatar)) },
                 navigationIcon = {
-                    IconButton(onClick = { navController?.popBackStack() }) {
+                    IconButton(onClick = remember { { navController?.popBackStack() } }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { createMiniature(context, viewModel!!, navController) }) {
+            FloatingActionButton(onClick = remember {
+                { viewModel?.createMiniature(getFilePath(context, getMiniPhotoFileName(state.miniature.name))) }
+            }) {
                 Icon(
                     painterResource(id = R.drawable.ok_icon),
                     contentDescription = "",
@@ -76,36 +92,41 @@ private fun Content(settingsState: SettingsUiState = testSettingsUiState, viewMo
         },
         content = {
             Box(
-                modifier = Modifier.padding(it).fillMaxWidth()
+                modifier = Modifier
+                    .padding(it)
+                    .fillMaxWidth()
             ) {
-                val imageBitmap = state.miniature.bitmap?.asImageBitmap()
-                if (imageBitmap != null) {
+                state.miniature.bitmap?.asImageBitmap()?.let {
                     Image(
                         modifier = Modifier
                             .fillMaxWidth()
                             .onGloballyPositioned {
-                                if (state.imageWidth == 0)
-                                    initDimensions(
-                                        it.size.width,
-                                        it.size.height,
-                                        it.parentCoordinates?.size?.width ?: 0,
-                                        viewModel!!
-                                    )
+                                initDimensions(it)
                             }
-                            .pointerInput(Unit) { detectMaskTransformGestures(false, viewModel!!) },
-                        bitmap = imageBitmap,
+                            .pointerInput(Unit) {
+                                detectTransformGestures(
+                                    onGesture = { _, pan, gestureZoom, _ ->
+                                        checkBounds(false, pan.x.toInt(), pan.y.toInt(), gestureZoom)
+                                    }
+                                )
+                            },
+                        bitmap = it,
                         contentScale = ContentScale.FillWidth,
                         contentDescription = ""
                     )
                 }
-                SelectorShape(state = state, density, viewModel!!)
+                SelectorShape(state = state, density, checkBounds)
             }
         }
     )
 }
 
 @Composable
-private fun SelectorShape(state: MiniatureState, density: Float, viewModel: SettingsViewModel) {
+private fun SelectorShape(
+    state: MiniatureState,
+    density: Float,
+    checkBounds: (offset: Boolean, x: Int, y: Int, zoom: Float) -> Unit
+) {
     Box(contentAlignment = Alignment.TopStart, modifier = Modifier.fillMaxSize()) {
         Surface(
             shape = CircleShape,
@@ -117,128 +138,13 @@ private fun SelectorShape(state: MiniatureState, density: Float, viewModel: Sett
                     height = (state.maskImage.height * state.maskImage.scaleFactor / density).dp
                 )
                 .offset { IntOffset(state.maskImage.left, state.maskImage.top) }
-                .pointerInput(Unit) { detectMaskTransformGestures(true, viewModel) }
+                .pointerInput(Unit) {
+                    detectTransformGestures(
+                        onGesture = { _, pan, gestureZoom, _ ->
+                            checkBounds(true, pan.x.toInt(), pan.y.toInt(), gestureZoom)
+                        }
+                    )
+                }
         ) {}
-    }
-}
-
-private suspend fun PointerInputScope.detectMaskTransformGestures(offset: Boolean, viewModel: SettingsViewModel) {
-    detectTransformGestures(
-        onGesture = { _, pan, gestureZoom, gestureRotate ->
-            checkBounds(
-                offset = if (offset) Pair(pan.x.toInt(), pan.y.toInt()) else null,
-                scale = viewModel.currentState.miniatureState!!.maskImage.scaleFactor * gestureZoom,
-                viewModel = viewModel
-            )
-        }
-    )
-}
-
-private fun createMiniature(context: Context, viewModel: SettingsViewModel, navController: NavController?) {
-    val state = viewModel.currentState.miniatureState!!
-    val maskWidth = state.maskImage.width * state.maskImage.scaleFactor
-    val maskHeight = state.maskImage.height * state.maskImage.scaleFactor
-    val x = (state.maskX / state.initialImageScale).toInt()
-    val y = (state.maskY / state.initialImageScale).toInt()
-    val width = (maskWidth / state.initialImageScale).toInt()
-    val height = (maskHeight / state.initialImageScale).toInt()
-
-    val miniature = state.miniature
-    val bitmap = miniature.bitmap!!
-    val miniBitmap = Bitmap.createBitmap(
-        bitmap,
-        max(x, 0),
-        max(y, 0),
-        min(bitmap.width - Math.max(x, 0), width),
-        min(bitmap.height - Math.max(y, 0), height)
-    )
-    val miniPhotoPath =
-        getFilePath(context, getMiniPhotoFileName(miniature.name))
-    miniBitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(miniPhotoPath))
-
-    viewModel.updateUser { copy(photo = viewModel.currentState.miniatureState?.miniature?.name) }
-    navController?.popBackStack()
-}
-
-private fun initDimensions(
-    measuredWidth: Int,
-    measuredHeight: Int,
-    windowWidth: Int,
-    viewModel: SettingsViewModel
-) {
-    val state = viewModel.currentState.miniatureState!!
-    val maskImageWidth = state.maskImage.width
-    val maskImageHeight = state.maskImage.height
-
-    val bitmap = state.miniature.bitmap!!
-    val koef1 = bitmap.width.toFloat() / bitmap.height.toFloat()
-    val koef2 =
-        measuredWidth.toFloat() / measuredHeight.toFloat()
-    val imageWidth: Int
-    val imageHeight: Int
-    val initialImageScale: Float
-    if (koef1 >= koef2) {
-        imageWidth = measuredWidth
-        imageHeight = (measuredWidth / koef1).toInt()
-        initialImageScale = measuredWidth.toFloat() / bitmap.width.toFloat()
-    } else {
-        imageWidth = (koef1 * measuredHeight).toInt()
-        imageHeight = measuredHeight
-        initialImageScale = measuredHeight.toFloat() / bitmap.height.toFloat()
-    }
-
-    val maxScaleX = imageWidth.toFloat() / maskImageWidth
-    val maxScaleY = imageHeight.toFloat() / maskImageHeight
-    val maxScale = min(maxScaleX, maxScaleY)
-    val scaleFactor = windowWidth.toFloat() / maskImageWidth
-    viewModel.updateStateBlocking {
-        copy(
-            miniatureState = miniatureState?.copy(
-                imageWidth = imageWidth,
-                imageHeight = imageHeight,
-                initialImageScale = initialImageScale,
-                maxScale = maxScale,
-            )
-        )
-    }
-    checkBounds(scale = scaleFactor, viewModel = viewModel)
-}
-
-private fun checkBounds(
-    offset: Pair<Int, Int>? = null,
-    scale: Float? = null,
-    viewModel: SettingsViewModel
-) {
-    val scaleFactor = scale ?: viewModel.currentState.miniatureState!!.maskImage.scaleFactor
-    val state = viewModel.currentState.miniatureState!!
-
-    var left = state.maskImage.left
-    var top = state.maskImage.top
-    if (offset != null) {
-        left += offset.first
-        top += offset.second
-    }
-    val maskImageWidth = state.maskImage.width * scaleFactor
-    val maskImageHeight = state.maskImage.height * scaleFactor
-    if (top < 0) top = 0
-    if (left < 0) left = 0
-    if (left + maskImageWidth > state.imageWidth)
-        left = (state.imageWidth - maskImageWidth).toInt()
-    if (top + maskImageHeight > state.imageHeight)
-        top = (state.imageHeight - maskImageHeight).toInt()
-    val maskX = left
-    val maskY = top
-    viewModel.updateState {
-        copy(
-            miniatureState = miniatureState?.copy(
-                maskX = maskX,
-                maskY = maskY,
-                maskImage = miniatureState.maskImage.copy(
-                    scaleFactor = max(0.5f, min(scaleFactor, state.maxScale)),
-                    left = left,
-                    top = top
-                )
-            )
-        )
     }
 }

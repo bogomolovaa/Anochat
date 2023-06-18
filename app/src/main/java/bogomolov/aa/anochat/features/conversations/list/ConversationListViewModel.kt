@@ -8,14 +8,15 @@ import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.shared.AuthRepository
+import bogomolov.aa.anochat.features.shared.ImmutableFlow
+import bogomolov.aa.anochat.features.shared.asImmutableFlow
 import bogomolov.aa.anochat.features.shared.mvi.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ConversationsUiState(
-    val pagingDataFlow: Flow<PagingData<Conversation>>? = null
+    val pagingDataFlow: ImmutableFlow<PagingData<Conversation>>? = null
 )
 
 @HiltViewModel
@@ -32,7 +33,7 @@ class ConversationListViewModel
     private fun initConversations() {
         viewModelScope.launch {
             val flow = conversationUseCases.loadConversationsDataSource().cachedIn(viewModelScope)
-            setState { copy(pagingDataFlow = flow) }
+            setState { copy(pagingDataFlow = flow.asImmutableFlow()) }
         }
     }
 

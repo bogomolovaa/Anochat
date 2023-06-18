@@ -16,13 +16,13 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -35,8 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
+import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.EventHandler
+import bogomolov.aa.anochat.features.shared.Settings
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import kotlinx.coroutines.launch
@@ -46,6 +48,9 @@ import kotlinx.coroutines.launch
 fun SettingsView() {
     val navController = LocalNavController.current
     val viewModel = hiltViewModel<SettingsViewModel>(navController!!.getBackStackEntry("settingsRoute"))
+    EventHandler(viewModel.events) {
+        if (it is PhotoResizedEvent) navController.navigate("miniature")
+    }
     val state = viewModel.state.collectAsState()
     Content(state.value, viewModel)
 }
@@ -54,239 +59,279 @@ fun SettingsView() {
 @Preview
 @Composable
 private fun Content(state: SettingsUiState = testSettingsUiState, viewModel: SettingsViewModel? = null) {
-    val context = LocalContext.current
     val navController = LocalNavController.current
     val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
-        uri?.let { viewModel?.createMiniature(it) }
+        uri?.let { viewModel?.resizePhoto(it) }
     }
     val readPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         fileChooser.launch(Unit)
     }
     val writePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    viewModel?.events?.let {
-        EventHandler(viewModel.events) {
-            if (it is MiniatureCreatedEvent) navController?.navigate("miniature")
-        }
-    }
     val bottomSheetState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
+    val collapse: () -> Unit = remember { { coroutineScope.launch { bottomSheetState.bottomSheetState.collapse() } } }
+    val expand: () -> Unit = remember { { coroutineScope.launch { bottomSheetState.bottomSheetState.expand() } } }
+    val settingsText = rememberSaveable { mutableStateOf("") }
+    val settingsEditType = rememberSaveable { mutableStateOf<SettingEditType?>(null) }
+    val updateSettings: (Settings.() -> Settings) -> Unit = remember { { viewModel?.updateSettings(it) } }
+    val updateUser: (User.() -> User) -> Unit = remember { { viewModel?.updateUser(it) } }
     BottomSheetScaffold(
         sheetPeekHeight = 0.dp,
         scaffoldState = bottomSheetState,
         sheetContent = {
-            if (state.settingEditType != null) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                ) {
-                    TextField(
-                        modifier = Modifier.padding(start = 16.dp, top = 16.dp),
-                        value = state.settingText,
-                        onValueChange = { viewModel?.updateState { copy(settingText = it) } },
-                        label = {
-                            Text(
-                                text = stringResource(
-                                    when (state.settingEditType) {
-                                        SettingEditType.EDIT_USERNAME -> R.string.enter_new_name
-                                        SettingEditType.EDIT_STATUS -> R.string.enter_new_status
-                                    }
-                                )
-                            )
-                        },
-                        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent)
-                    )
-                }
-                Row(
-                    Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Button(
-                        modifier = Modifier.padding(16.dp),
-                        onClick = {
-                            if (state.settingText.isNotEmpty())
-                                when (state.settingEditType) {
-                                    SettingEditType.EDIT_USERNAME -> viewModel?.updateUser { copy(name = state.settingText) }
-                                    SettingEditType.EDIT_STATUS -> viewModel?.updateUser { copy(status = state.settingText) }
-                                }
-                            viewModel?.updateState { copy(settingEditType = null) }
-                            coroutineScope.launch {
-                                bottomSheetState.bottomSheetState.collapse()
-                            }
-                            when (state.settingEditType) {
-                                SettingEditType.EDIT_USERNAME -> state.user?.name
-                                SettingEditType.EDIT_STATUS -> state.user?.status
-                            }
-                        }) {
-                        Text(text = stringResource(id = R.string.save))
-                    }
-                    Button(
-                        modifier = Modifier.padding(16.dp),
-                        onClick = {
-                            viewModel?.updateState { copy(settingEditType = null) }
-                            coroutineScope.launch {
-                                bottomSheetState.bottomSheetState.collapse()
-                            }
-                        }) {
-                        Text(text = stringResource(id = R.string.cancel))
-                    }
-                }
-            }
+            BottomSheetContent(
+                settingsText = settingsText,
+                settingsEditType = settingsEditType,
+                collapse = collapse,
+                updateUser = updateUser
+            )
         },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.settings)) },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController?.popBackStack()
-                    }) {
+                    IconButton(
+                        onClick = remember { { navController?.popBackStack() } }
+                    ) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
-        },
-        content = {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (state.user == null) LinearProgressIndicator(
+        }
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (state.user == null)
+                LinearProgressIndicator(
                     modifier = Modifier
                         .padding(top = 4.dp)
                         .fillMaxWidth()
                 )
-                Row(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Box(contentAlignment = Alignment.TopEnd) {
-                        val imageBitmap = state.user?.photo?.let {
-                            getBitmapFromGallery(
-                                getMiniPhotoFileName(it),
-                                LocalContext.current,
-                                1
-                            )?.asImageBitmap()
-                        }
-                        val imageModifier = Modifier
-                            .clip(CircleShape)
-                            .width(100.dp)
-                            .height(100.dp)
-                        if (imageBitmap != null) {
-                            Image(
-                                modifier = imageModifier,
-                                bitmap = imageBitmap,
-                                contentScale = ContentScale.FillWidth,
-                                contentDescription = ""
-                            )
-                        } else {
-                            Icon(
-                                painterResource(id = R.drawable.user_icon),
-                                modifier = imageModifier,
-                                contentDescription = ""
-                            )
-                        }
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = "",
-                            modifier = Modifier.clickable {
-                                if (state.user != null) readPermission.launch(READ_EXTERNAL_STORAGE)
-                            }
-                        )
+            Row(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                UserPhotoCompose(
+                    user = state.user,
+                    askReadPermission = remember { { readPermission.launch(READ_EXTERNAL_STORAGE) } }
+                )
+                UserInfoCompose(
+                    user = state.user,
+                    expand = { type, text ->
+                        settingsText.value = text
+                        settingsEditType.value = type
+                        expand()
                     }
-                    Column(
-                        modifier = Modifier.padding(start = 16.dp)
-                    ) {
-                        Text(state.user?.phone ?: "", fontSize = 16.sp)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                state.user?.name ?: "",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Icon(
-                                imageVector = Icons.Filled.Edit,
-                                contentDescription = "",
-                                modifier = Modifier.clickable {
-                                    viewModel?.updateState {
-                                        copy(
-                                            settingText = state.user?.name ?: "",
-                                            settingEditType = SettingEditType.EDIT_USERNAME
-                                        )
-                                    }
-                                    coroutineScope.launch {
-                                        bottomSheetState.bottomSheetState.expand()
-                                    }
-                                }
-                            )
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                state.user?.status ?: "",
-                                fontSize = 16.sp,
-                            )
-                            Icon(
-                                imageVector = Icons.Filled.Edit,
-                                contentDescription = "",
-                                modifier = Modifier.clickable {
-                                    viewModel?.updateState {
-                                        copy(
-                                            settingText = state.user?.status ?: "",
-                                            settingEditType = SettingEditType.EDIT_STATUS
-                                        )
-                                    }
-                                    coroutineScope.launch {
-                                        bottomSheetState.bottomSheetState.expand()
-                                    }
-                                }
-                            )
-                        }
-                    }
+                )
+            }
+            SettingsCompose(
+                settings = state.settings,
+                askWritePermission = remember { { writePermission.launch(WRITE_EXTERNAL_STORAGE) } },
+                updateSettings = updateSettings
+            )
+        }
+    }
+}
+
+@Composable
+private fun UserInfoCompose(
+    user: User? = null,
+    expand: (SettingEditType, String) -> Unit
+) {
+    Column(
+        modifier = Modifier.padding(start = 16.dp)
+    ) {
+        Text(
+            text = user?.phone ?: "",
+            fontSize = 16.sp
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = user?.name ?: "",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Icon(
+                imageVector = Icons.Filled.Edit,
+                contentDescription = "",
+                modifier = Modifier.clickable {
+                    user?.let { expand(SettingEditType.EDIT_USERNAME, it.name) }
                 }
-                Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .fillMaxWidth()
-                ) {
-                    SettingRow(
-                        nameRes = R.string.notifications,
-                        checked = state.settings.notifications,
-                        paddingTop = 0.dp
-                    ) { viewModel?.changeSettings { copy(notifications = it) } }
-                    SettingRow(
-                        nameRes = R.string.sound,
-                        checked = state.settings.sound
-                    ) { viewModel?.changeSettings { copy(sound = it) } }
-                    SettingRow(
-                        nameRes = R.string.vibration,
-                        checked = state.settings.vibration
-                    ) { viewModel?.changeSettings { copy(vibration = it) } }
-                    SettingRow(
-                        nameRes = R.string.save_to_gallery,
-                        checked = state.settings.gallery
-                    ) {
-                        viewModel?.changeSettings {
-                            writePermission.launch(WRITE_EXTERNAL_STORAGE)
-                            copy(gallery = it)
-                        }
-                    }
-                    Text(
-                        text = stringResource(id = R.string.privacy_policy),
-                        modifier = Modifier
-                            .padding(top = 32.dp)
-                            .clickable { openPrivacyPolicy(context) }
-                    )
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                user?.status ?: "",
+                fontSize = 16.sp,
+            )
+            Icon(
+                imageVector = Icons.Filled.Edit,
+                contentDescription = "",
+                modifier = Modifier.clickable {
+                    user?.status?.let { expand(SettingEditType.EDIT_STATUS, it) }
                 }
+            )
+        }
+    }
+}
+
+@Composable
+private fun UserPhotoCompose(
+    user: User? = null,
+    askReadPermission: () -> Unit
+) {
+    val context = LocalContext.current
+    Box(contentAlignment = Alignment.TopEnd) {
+        var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+        LaunchedEffect(user?.photo) {
+            user?.photo?.let {
+                imageBitmap = getBitmapFromGallery(
+                    getMiniPhotoFileName(it),
+                    context,
+                    1
+                )?.asImageBitmap()
             }
         }
-    )
+        val imageModifier = Modifier
+            .clip(CircleShape)
+            .width(100.dp)
+            .height(100.dp)
+        imageBitmap?.let {
+            Image(
+                modifier = imageModifier,
+                bitmap = it,
+                contentScale = ContentScale.FillWidth,
+                contentDescription = ""
+            )
+        } ?: run {
+            Icon(
+                painterResource(id = R.drawable.user_icon),
+                modifier = imageModifier,
+                contentDescription = ""
+            )
+        }
+        Icon(
+            imageVector = Icons.Filled.Edit,
+            contentDescription = "",
+            modifier = Modifier.clickable(
+                onClick = { if (user != null) askReadPermission() }
+            )
+        )
+    }
+}
+
+@Composable
+private fun SettingsCompose(
+    settings: Settings,
+    askWritePermission: () -> Unit,
+    updateSettings: (Settings.() -> Settings) -> Unit
+) {
+    val context = LocalContext.current
+    Column(
+        modifier = Modifier
+            .padding(24.dp)
+            .fillMaxWidth()
+    ) {
+        SettingRow(
+            nameRes = R.string.notifications,
+            checked = settings.notifications,
+            paddingTop = 0.dp
+        ) { updateSettings { copy(notifications = it) } }
+        SettingRow(
+            nameRes = R.string.sound,
+            checked = settings.sound
+        ) { updateSettings { copy(sound = it) } }
+        SettingRow(
+            nameRes = R.string.vibration,
+            checked = settings.vibration
+        ) { updateSettings { copy(vibration = it) } }
+        SettingRow(
+            nameRes = R.string.save_to_gallery,
+            checked = settings.gallery
+        ) {
+            askWritePermission()
+            updateSettings { copy(gallery = it) }
+        }
+        Text(
+            text = stringResource(id = R.string.privacy_policy),
+            modifier = Modifier
+                .padding(top = 32.dp)
+                .clickable { openPrivacyPolicy(context) }
+        )
+    }
+}
+
+@Composable
+private fun BottomSheetContent(
+    settingsText: MutableState<String> = mutableStateOf(""),
+    settingsEditType: MutableState<SettingEditType?> = mutableStateOf(SettingEditType.EDIT_STATUS),
+    collapse: () -> Unit,
+    updateUser: (User.() -> User) -> Unit
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+    ) {
+        TextField(
+            modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+            value = settingsText.value,
+            onValueChange = { settingsText.value = it },
+            label = {
+                settingsEditType.value?.let {
+                    Text(
+                        text = stringResource(
+                            when (it) {
+                                SettingEditType.EDIT_USERNAME -> R.string.enter_new_name
+                                SettingEditType.EDIT_STATUS -> R.string.enter_new_status
+                            }
+                        )
+                    )
+                }
+            },
+            colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent)
+        )
+    }
+    Row(
+        Modifier
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.End
+    ) {
+        Button(
+            modifier = Modifier.padding(16.dp),
+            onClick = {
+                settingsEditType.value?.let {
+                    if (settingsText.value.isNotEmpty())
+                        when (it) {
+                            SettingEditType.EDIT_USERNAME -> updateUser { copy(name = settingsText.value) }
+                            SettingEditType.EDIT_STATUS -> updateUser { copy(status = settingsText.value) }
+                        }
+                }
+                settingsEditType.value = null
+                collapse()
+            }
+        ) {
+            Text(text = stringResource(id = R.string.save))
+        }
+        Button(
+            modifier = Modifier.padding(16.dp),
+            onClick = {
+                settingsEditType.value = null
+                collapse()
+            }
+        ) {
+            Text(text = stringResource(id = R.string.cancel))
+        }
+    }
 }
 
 @Composable
