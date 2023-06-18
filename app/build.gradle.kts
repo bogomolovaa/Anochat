@@ -23,8 +23,8 @@ android {
         applicationId = "bogomolov.aa.anochat"
         minSdk = 21
         targetSdk = 30
-        versionCode = 75
-        versionName = "2023.6.41"
+        versionCode = 76
+        versionName = "2023.6.42"
         multiDexEnabled = true
         javaCompileOptions {
             annotationProcessorOptions {
