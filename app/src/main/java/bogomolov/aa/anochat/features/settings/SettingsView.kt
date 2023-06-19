@@ -191,42 +191,46 @@ private fun UserPhotoCompose(
     askReadPermission: () -> Unit
 ) {
     val context = LocalContext.current
-    Box(contentAlignment = Alignment.TopEnd) {
-        var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-        LaunchedEffect(user?.photo) {
-            user?.photo?.let {
-                imageBitmap = getBitmapFromGallery(
-                    getMiniPhotoFileName(it),
-                    context,
-                    1
-                )?.asImageBitmap()
-            }
-        }
-        val imageModifier = Modifier
-            .clip(CircleShape)
+    Box(
+        modifier = Modifier
             .width(100.dp)
-            .height(100.dp)
-        imageBitmap?.let {
-            Image(
-                modifier = imageModifier,
-                bitmap = it,
-                contentScale = ContentScale.FillWidth,
-                contentDescription = ""
-            )
-        } ?: run {
+            .height(100.dp),
+        contentAlignment = Alignment.TopEnd
+    ) {
+        user?.let {
+            val imageModifier = Modifier.clip(CircleShape)
+            it.photo?.let {
+                var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+                LaunchedEffect(it) {
+                    imageBitmap = getBitmapFromGallery(
+                        getMiniPhotoFileName(it),
+                        context,
+                        1
+                    )?.asImageBitmap()
+                }
+                imageBitmap?.let {
+                    Image(
+                        modifier = imageModifier,
+                        bitmap = it,
+                        contentScale = ContentScale.FillWidth,
+                        contentDescription = ""
+                    )
+                }
+            } ?: run {
+                Icon(
+                    painterResource(id = R.drawable.user_icon),
+                    modifier = imageModifier,
+                    contentDescription = ""
+                )
+            }
             Icon(
-                painterResource(id = R.drawable.user_icon),
-                modifier = imageModifier,
-                contentDescription = ""
+                imageVector = Icons.Filled.Edit,
+                contentDescription = "",
+                modifier = Modifier.clickable(
+                    onClick = { askReadPermission() }
+                )
             )
         }
-        Icon(
-            imageVector = Icons.Filled.Edit,
-            contentDescription = "",
-            modifier = Modifier.clickable(
-                onClick = { if (user != null) askReadPermission() }
-            )
-        )
     }
 }
 

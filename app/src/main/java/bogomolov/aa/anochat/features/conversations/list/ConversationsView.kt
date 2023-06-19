@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.main.LocalNavController
@@ -112,7 +113,10 @@ private fun Content(
                         .padding(top = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(count = lazyPagingItems.itemCount, key = { lazyPagingItems[it]?.id ?: Unit }) { index ->
+                    items(
+                        count = lazyPagingItems.itemCount,
+                        key = lazyPagingItems.itemKey { it.id }
+                    ) { index ->
                         lazyPagingItems[index]?.let {
                             ConversationCard(
                                 conversation = it,

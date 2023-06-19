@@ -33,10 +33,16 @@ class UserViewViewModel @Inject constructor(
     }
 }
 
-val testUserUiState = UserUiState(
-    user = User(
+val testUser by lazy {
+    User(
         name = "Alexander1",
         phone = "12334567",
         status = "Status"
     )
-)
+}
+
+val testUserUiState by lazy {
+    UserUiState(
+        user = testUser
+    )
+}

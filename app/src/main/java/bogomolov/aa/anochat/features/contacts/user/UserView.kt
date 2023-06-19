@@ -76,35 +76,37 @@ private fun Content(
                     .padding(padding)
                     .fillMaxWidth()
                     .fillMaxHeight()
-                .verticalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState())
             ) {
-                state.user?.photo?.let {
-                    val photo = nameToImage(it)
-                    var photoBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-                    LaunchedEffect(0) {
-                        withContext(Dispatchers.IO) {
-                            photoBitmap = getBitmap(photo, context)?.asImageBitmap()
+                state.user?.let {
+                    if (it.photo != null) {
+                        val photo = nameToImage(it.photo)
+                        var photoBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+                        LaunchedEffect(0) {
+                            withContext(Dispatchers.IO) {
+                                photoBitmap = getBitmap(photo, context)?.asImageBitmap()
+                            }
                         }
-                    }
-                    photoBitmap?.let {
-                        Image(
-                            bitmap = it,
-                            contentDescription = "user image",
-                            contentScale = ContentScale.Crop,
+                        photoBitmap?.let {
+                            Image(
+                                bitmap = it,
+                                contentDescription = "user image",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(350.dp)
+                                    .clickable(onClick = { navigate(photo) })
+                            )
+                        }
+                    } else {
+                        Icon(
+                            painterResource(id = R.drawable.user_icon),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(350.dp)
-                                .clickable(onClick = { navigate(photo) })
+                                .height(300.dp),
+                            contentDescription = ""
                         )
                     }
-                } ?: run {
-                    Icon(
-                        painterResource(id = R.drawable.user_icon),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(300.dp),
-                        contentDescription = ""
-                    )
                 }
                 viewModel?.pagingFlow?.let {
                     ImagesRow(
