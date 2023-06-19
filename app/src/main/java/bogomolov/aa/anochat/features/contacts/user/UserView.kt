@@ -26,10 +26,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
-import bogomolov.aa.anochat.features.shared.ImmutableFlow
-import bogomolov.aa.anochat.features.shared.getBitmap
-import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
-import bogomolov.aa.anochat.features.shared.nameToImage
+import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -40,8 +37,7 @@ fun UserView(userId: Long) {
     LaunchedEffect(0) {
         viewModel.initUser(userId)
     }
-    val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel)
+    collectState(viewModel.state) { Content(it, viewModel) }
 }
 
 @Preview

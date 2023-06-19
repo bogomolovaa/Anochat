@@ -32,14 +32,13 @@ import kotlinx.coroutines.withContext
 
 private const val MAX_SCALE = 5f
 private const val MIN_SCALE = 1f
-private const val TAG = "ImageView"
 
 @Composable
 fun ImageView(imageName: String) {
     val navController = LocalNavController.current
     val context = LocalContext.current
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-    LaunchedEffect(0) {
+    LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             bitmap = getBitmapFromGallery(imageName, context, 1)
         }

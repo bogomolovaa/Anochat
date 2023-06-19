@@ -127,7 +127,7 @@ class MainActivity : AppCompatActivity() {
                         }
                         composable(
                             "image?name={name}",
-                            arguments = listOf(                                navArgument("name") { nullable = true }                                )
+                            arguments = listOf(navArgument("name") { nullable = true })
                         ) {
                             val image = it.arguments?.getString("name")!!
                             ImageView(image)

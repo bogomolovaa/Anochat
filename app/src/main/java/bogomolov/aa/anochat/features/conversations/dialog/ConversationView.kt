@@ -41,6 +41,7 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -80,15 +81,20 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
         }
     }
     val lifecycleOwner = LocalLifecycleOwner.current
-    lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
-        override fun onPause(owner: LifecycleOwner) {
-            keyboardController?.hide()
-            if (viewModel.currentState.inputState.state == InputState.State.FAB_EXPAND)
-                viewModel.resetInputState()
+    DisposableEffect(lifecycleOwner){
+        val observer = object : DefaultLifecycleObserver {
+            override fun onPause(owner: LifecycleOwner) {
+                keyboardController?.hide()
+                if (viewModel.currentState.inputState.state == InputState.State.FAB_EXPAND)
+                    viewModel.resetInputState()
+            }
         }
-    })
-    val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel, navigateToSendMedia)
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+    collectState(viewModel.state) { Content(it, viewModel, navigateToSendMedia) }
 }
 
 @Preview

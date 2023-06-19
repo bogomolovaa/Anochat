@@ -27,6 +27,7 @@ import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.ErrorType
 import bogomolov.aa.anochat.features.shared.EventHandler
 import bogomolov.aa.anochat.features.shared.LightColorPalette
+import bogomolov.aa.anochat.features.shared.collectState
 
 @Composable
 fun SignInView(getActivity: (() -> Activity)?) {
@@ -35,12 +36,7 @@ fun SignInView(getActivity: (() -> Activity)?) {
     EventHandler(viewModel.events) {
         if (it is NavigateToConversationList) navController?.navigate("conversations")
     }
-    val state = viewModel.state.collectAsState()
-    Content(
-        state = state.value,
-        viewModel = viewModel,
-        getActivity = getActivity
-    )
+    collectState(viewModel.state) { Content(it, viewModel, getActivity) }
 }
 
 @Preview

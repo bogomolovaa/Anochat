@@ -37,6 +37,7 @@ import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.EventHandler
+import bogomolov.aa.anochat.features.shared.collectState
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import java.net.URLEncoder
@@ -53,13 +54,13 @@ fun UsersView(uri: String? = null) {
     EventHandler(viewModel.events) {
         if (it is NavigateConversationEvent) navController?.navigateToConversation(it.conversationId, uri)
     }
-
-    val state = viewModel.state.collectAsState()
-    Content(
-        state = state.value,
-        viewModel = viewModel,
-        doBack = remember { { navController?.popBackStack() } }
-    )
+    collectState(viewModel.state) {
+        Content(
+            state = it,
+            viewModel = viewModel,
+            doBack = remember { { navController?.popBackStack() } }
+        )
+    }
 }
 
 @Preview

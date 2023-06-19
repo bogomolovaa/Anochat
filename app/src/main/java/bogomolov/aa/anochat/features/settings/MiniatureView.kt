@@ -30,25 +30,25 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
-import bogomolov.aa.anochat.features.shared.EventHandler
-import bogomolov.aa.anochat.features.shared.LightColorPalette
-import bogomolov.aa.anochat.features.shared.getFilePath
-import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
+import bogomolov.aa.anochat.features.shared.*
 
 @Composable
 fun MiniatureView() {
     val navController = LocalNavController.current
-    val viewModel = hiltViewModel<SettingsViewModel>(navController!!.getBackStackEntry("settingsRoute"))
+    val backStackEntry = remember { navController!!.getBackStackEntry("settingsRoute") }
+    val viewModel = hiltViewModel<SettingsViewModel>(backStackEntry)
     EventHandler(viewModel.events) {
-        if (it is MiniatureCreatedEvent) navController.popBackStack()
+        if (it is MiniatureCreatedEvent) navController?.popBackStack()
     }
-    val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel)
+    collectState(viewModel.state) { Content(it, viewModel) }
 }
 
 @Preview
 @Composable
-private fun Content(settingsState: SettingsUiState = testSettingsUiState, viewModel: SettingsViewModel? = null) {
+private fun Content(
+    settingsState: SettingsUiState = testSettingsUiState,
+    viewModel: SettingsViewModel? = null
+) {
     val state = settingsState.miniatureState!!
     val density = LocalDensity.current.density
     val context = LocalContext.current

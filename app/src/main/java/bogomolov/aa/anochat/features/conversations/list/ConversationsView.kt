@@ -36,6 +36,7 @@ import androidx.paging.compose.itemKey
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.main.LocalNavController
+import bogomolov.aa.anochat.features.shared.collectState
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import kotlinx.coroutines.Dispatchers
@@ -45,8 +46,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ConversationsView() {
     val viewModel = hiltViewModel<ConversationListViewModel>()
-    val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel)
+    collectState(viewModel.state) { Content(it, viewModel) }
 }
 
 @Preview

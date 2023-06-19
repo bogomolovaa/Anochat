@@ -32,9 +32,8 @@ fun VideoView(uri: Uri) {
     var autoPlay by remember { mutableStateOf(true) }
     var player by remember { mutableStateOf<SimpleExoPlayer?>(null) }
     val navController = LocalNavController.current
-    LaunchedEffect(0) {
+    LaunchedEffect(Unit) {
         val mediaItem = MediaItem.fromUri(uri)
-
         player = SimpleExoPlayer.Builder(context).build().apply {
             setMediaItem(mediaItem)
             playWhenReady = true
@@ -60,7 +59,11 @@ fun VideoView(uri: Uri) {
             setShowShuffleButton(false)
             findViewById<View>(com.google.android.exoplayer2.ui.R.id.exo_settings).visibility = View.GONE
         }
-        lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
+        playerView
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = object : DefaultLifecycleObserver {
 
             override fun onStart(owner: LifecycleOwner) {
                 playerView.onResume()
@@ -72,12 +75,10 @@ fun VideoView(uri: Uri) {
                 playerView.onPause()
                 player?.playWhenReady = false
             }
-        })
-        playerView
-    }
-
-    DisposableEffect(Unit) {
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
             player?.release()
         }
     }

@@ -24,18 +24,18 @@ import bogomolov.aa.anochat.features.shared.*
 @Composable
 fun SendMediaView() {
     val navController = LocalNavController.current
-    val viewModel =
-        hiltViewModel<ConversationViewModel>(navController!!.getBackStackEntry("conversationRoute"))
+    val backStackEntry = remember { navController!!.getBackStackEntry("conversationRoute") }
+    val viewModel = hiltViewModel<ConversationViewModel>(backStackEntry)
     val context = LocalContext.current
     EventHandler(viewModel.events) {
         when (it) {
             is FileTooBig -> {
                 Toast.makeText(context, context.getText(R.string.too_large_file), Toast.LENGTH_LONG).show()
-                navController.popBackStack()
+                navController?.popBackStack()
             }
             is MessageSubmitted -> {
                 playMessageSound(context)
-                navController.popBackStack()
+                navController?.popBackStack()
             }
             is VideoIsProcessing -> {
                 Toast.makeText(context, context.getText(R.string.video_is_processing), Toast.LENGTH_LONG).show()
@@ -43,8 +43,7 @@ fun SendMediaView() {
         }
     }
     val submit: () -> Unit = remember { { viewModel.submitMedia() } }
-    val state = viewModel.state.collectAsState()
-    Content(state.value, submit)
+    collectState(viewModel.state) { Content(it, submit) }
 }
 
 @Composable

@@ -37,28 +37,28 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.main.LocalNavController
-import bogomolov.aa.anochat.features.shared.EventHandler
-import bogomolov.aa.anochat.features.shared.Settings
-import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
-import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
+import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.launch
 
 @ExperimentalMaterialApi
 @Composable
 fun SettingsView() {
     val navController = LocalNavController.current
-    val viewModel = hiltViewModel<SettingsViewModel>(navController!!.getBackStackEntry("settingsRoute"))
+    val backStackEntry = remember { navController!!.getBackStackEntry("settingsRoute") }
+    val viewModel = hiltViewModel<SettingsViewModel>(backStackEntry)
     EventHandler(viewModel.events) {
-        if (it is PhotoResizedEvent) navController.navigate("miniature")
+        if (it is PhotoResizedEvent) navController?.navigate("miniature")
     }
-    val state = viewModel.state.collectAsState()
-    Content(state.value, viewModel)
+    collectState(viewModel.state) { Content(it, viewModel) }
 }
 
 @ExperimentalMaterialApi
 @Preview
 @Composable
-private fun Content(state: SettingsUiState = testSettingsUiState, viewModel: SettingsViewModel? = null) {
+private fun Content(
+    state: SettingsUiState = testSettingsUiState,
+    viewModel: SettingsViewModel? = null
+) {
     val navController = LocalNavController.current
     val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
         uri?.let { viewModel?.resizePhoto(it) }
