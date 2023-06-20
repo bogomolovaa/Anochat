@@ -13,6 +13,8 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -71,16 +73,18 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
         if (uri != null && viewModel.uri != uri) navigateToSendMedia(uri)
         viewModel.uri = uri
     }
+    val lazyListState = rememberLazyListState()
     viewModel.events.collectEvents {
         when (it) {
             is OnMessageSent -> {
                 keyboardController?.hide()
                 playMessageSound(context)
+                while (lazyListState.firstVisibleItemIndex != 0) lazyListState.animateScrollToItem(0)
             }
         }
     }
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner){
+    DisposableEffect(lifecycleOwner) {
         val observer = object : DefaultLifecycleObserver {
             override fun onPause(owner: LifecycleOwner) {
                 keyboardController?.hide()
@@ -93,7 +97,7 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-    viewModel.state.collectState { Content(it, viewModel, navigateToSendMedia) }
+    viewModel.state.collectState { Content(it, lazyListState, viewModel, navigateToSendMedia) }
 }
 
 @Preview
@@ -101,6 +105,7 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
 @Composable
 private fun Content(
     state: DialogState = testDialogUiState,
+    lazyListState: LazyListState = rememberLazyListState(),
     viewModel: ConversationViewModel? = null,
     navigateToSendMedia: (Uri?) -> Unit = { }
 ) {
@@ -162,15 +167,16 @@ private fun Content(
                         .padding(start = 4.dp, end = 4.dp),
                     contentAlignment = Alignment.BottomStart
                 ) {
-                    viewModel?.messagesFlow?.let {
+                    state.messagesFlow?.let {
                         MessagesList(
                             messagesFlow = it,
+                            lazyListState = lazyListState,
                             selectedMessages = state.selectedMessages,
                             playingState = state.playingState,
                             play = play,
-                            messageDisplayed = remember { { viewModel.messageDisplayed(it) } },
-                            selectMessage = remember { { viewModel.selectMessage(it) } },
-                            setReplyMessage = remember { { viewModel.setReplyMessage(it) } }
+                            messageDisplayed = remember { { viewModel?.messageDisplayed(it) } },
+                            selectMessage = remember { { viewModel?.selectMessage(it) } },
+                            setReplyMessage = remember { { viewModel?.setReplyMessage(it) } }
                         )
                     }
                     state.replyMessage?.let {
@@ -288,6 +294,7 @@ private fun FabsLayout(
 @Composable
 private fun MessagesList(
     messagesFlow: ImmutableFlow<PagingData<Any>> = ImmutableFlow(flowOf(PagingData.from(listOf(testMessage)))),
+    lazyListState: LazyListState = rememberLazyListState(),
     selectedMessages: ImmutableList<Message>,
     playingState: PlayingState?,
     play: (String?, String?) -> Unit,
@@ -298,6 +305,7 @@ private fun MessagesList(
     val lazyPagingItems = messagesFlow.collectAsLazyPagingItems()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
+        state = lazyListState,
         reverseLayout = true,
     ) {
         items(

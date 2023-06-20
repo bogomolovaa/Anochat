@@ -39,6 +39,7 @@ data class DialogState(
     val selectedMessages: ImmutableList<Message> = ImmutableList(listOf()),
     val inputState: InputState = InputState(),
     val replyMessage: Message? = null,
+    val messagesFlow: ImmutableFlow<PagingData<Any>>? = null,
 
     val resized: BitmapWithName? = null,
     val isVideo: Boolean = false,
@@ -98,7 +99,6 @@ class ConversationViewModel @Inject constructor(
     private var conversationInitialized = false
     private var typingJob: Job? = null
     var uri: Uri? = null
-    var messagesFlow: ImmutableFlow<PagingData<Any>>? = null
 
     override fun onCleared() {
         currentState.conversation?.id?.let {
@@ -332,12 +332,13 @@ class ConversationViewModel @Inject constructor(
     }
 
     private fun subscribeToMessages(conversationId: Long) {
-        messagesFlow = messageUseCases.loadMessagesDataSource(conversationId)
+        val pagingDataFlow = messageUseCases.loadMessagesDataSource(conversationId)
             .cachedIn(viewModelScope).map {
                 it.insertSeparators { m1, m2 ->
                     insertDateSeparators(m1, m2, localeProvider.locale)?.let { DateDelimiter(it) }
                 }
             }.asImmutableFlow()
+        updateState { copy(messagesFlow = pagingDataFlow.asImmutableFlow()) }
     }
 
     private suspend fun subscribeToOnlineStatus(uid: String) {
