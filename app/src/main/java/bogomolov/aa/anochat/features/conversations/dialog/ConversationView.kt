@@ -41,7 +41,6 @@ import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -72,7 +71,7 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
         if (uri != null && viewModel.uri != uri) navigateToSendMedia(uri)
         viewModel.uri = uri
     }
-    EventHandler(viewModel.events) {
+    viewModel.events.collectEvents {
         when (it) {
             is OnMessageSent -> {
                 keyboardController?.hide()
@@ -94,7 +93,7 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-    collectState(viewModel.state) { Content(it, viewModel, navigateToSendMedia) }
+    viewModel.state.collectState { Content(it, viewModel, navigateToSendMedia) }
 }
 
 @Preview

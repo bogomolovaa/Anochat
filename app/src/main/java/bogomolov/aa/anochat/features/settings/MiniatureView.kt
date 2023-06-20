@@ -9,7 +9,6 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,10 +36,10 @@ fun MiniatureView() {
     val navController = LocalNavController.current
     val backStackEntry = remember { navController!!.getBackStackEntry("settingsRoute") }
     val viewModel = hiltViewModel<SettingsViewModel>(backStackEntry)
-    EventHandler(viewModel.events) {
+    viewModel.events.collectEvents {
         if (it is MiniatureCreatedEvent) navController?.popBackStack()
     }
-    collectState(viewModel.state) { Content(it, viewModel) }
+    viewModel.state.collectState { Content(it, viewModel) }
 }
 
 @Preview

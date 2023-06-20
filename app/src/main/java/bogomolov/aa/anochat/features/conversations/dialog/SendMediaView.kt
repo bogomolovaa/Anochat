@@ -27,7 +27,7 @@ fun SendMediaView() {
     val backStackEntry = remember { navController!!.getBackStackEntry("conversationRoute") }
     val viewModel = hiltViewModel<ConversationViewModel>(backStackEntry)
     val context = LocalContext.current
-    EventHandler(viewModel.events) {
+    viewModel.events.collectEvents {
         when (it) {
             is FileTooBig -> {
                 Toast.makeText(context, context.getText(R.string.too_large_file), Toast.LENGTH_LONG).show()
@@ -43,7 +43,7 @@ fun SendMediaView() {
         }
     }
     val submit: () -> Unit = remember { { viewModel.submitMedia() } }
-    collectState(viewModel.state) { Content(it, submit) }
+    viewModel.state.collectState { Content(it, submit) }
 }
 
 @Composable

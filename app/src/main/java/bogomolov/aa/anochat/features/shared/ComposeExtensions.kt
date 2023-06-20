@@ -4,14 +4,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
-fun <T> EventHandler(uiEvents: Flow<T>, eventCollector: suspend (T) -> Unit) {
+fun <T> Flow<T>.collectEvents(eventCollector: suspend (T) -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
-    val uiEventsLifecycleAware = remember(uiEvents, lifecycleOwner) {
-        uiEvents.flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+    val uiEventsLifecycleAware = remember(this, lifecycleOwner) {
+        this.flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
     }
     LaunchedEffect(uiEventsLifecycleAware, eventCollector) {
         uiEventsLifecycleAware.collect(eventCollector)
@@ -19,8 +20,8 @@ fun <T> EventHandler(uiEvents: Flow<T>, eventCollector: suspend (T) -> Unit) {
 }
 
 @Composable
-fun <T : Any> collectState(flow: StateFlow<T>, content: @Composable (T) -> Unit) {
-    content(flow.collectAsState().value)
+fun <T> StateFlow<T>.collectState(content: @Composable (T) -> Unit) {
+    content(collectAsStateWithLifecycle().value)
 }
 
 @Immutable

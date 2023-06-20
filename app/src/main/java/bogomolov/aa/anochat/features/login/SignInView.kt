@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -24,19 +23,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
-import bogomolov.aa.anochat.features.shared.ErrorType
-import bogomolov.aa.anochat.features.shared.EventHandler
-import bogomolov.aa.anochat.features.shared.LightColorPalette
-import bogomolov.aa.anochat.features.shared.collectState
+import bogomolov.aa.anochat.features.shared.*
 
 @Composable
 fun SignInView(getActivity: (() -> Activity)?) {
     val navController = LocalNavController.current
     val viewModel = hiltViewModel<SignInViewModel>()
-    EventHandler(viewModel.events) {
+    viewModel.events.collectEvents {
         if (it is NavigateToConversationList) navController?.navigate("conversations")
     }
-    collectState(viewModel.state) { Content(it, viewModel, getActivity) }
+    viewModel.state.collectState { Content(it, viewModel, getActivity) }
 }
 
 @Preview

@@ -37,7 +37,7 @@ fun UserView(userId: Long) {
     LaunchedEffect(0) {
         viewModel.initUser(userId)
     }
-    collectState(viewModel.state) { Content(it, viewModel) }
+    viewModel.state.collectState { Content(it, viewModel) }
 }
 
 @Preview

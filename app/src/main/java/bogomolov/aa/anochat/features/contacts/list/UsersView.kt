@@ -36,25 +36,21 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.main.LocalNavController
-import bogomolov.aa.anochat.features.shared.EventHandler
-import bogomolov.aa.anochat.features.shared.collectState
-import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
-import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
+import bogomolov.aa.anochat.features.shared.*
 import java.net.URLEncoder
 
 @Composable
-fun UsersView(uri: String? = null) {
-    val viewModel = hiltViewModel<UsersViewModel>()
+fun UsersView(uri: String? = null, viewModel: UsersViewModel = hiltViewModel<UsersViewModel>()) {
     val navController = LocalNavController.current
     val context = LocalContext.current
     LaunchedEffect(0) {
         //viewModel.loadContacts(getContactsPhones(context))
         viewModel.loadContacts(listOf())
     }
-    EventHandler(viewModel.events) {
+    viewModel.events.collectEvents {
         if (it is NavigateConversationEvent) navController?.navigateToConversation(it.conversationId, uri)
     }
-    collectState(viewModel.state) {
+    viewModel.state.collectState {
         Content(
             state = it,
             viewModel = viewModel,

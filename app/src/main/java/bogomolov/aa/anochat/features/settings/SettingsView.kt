@@ -46,10 +46,11 @@ fun SettingsView() {
     val navController = LocalNavController.current
     val backStackEntry = remember { navController!!.getBackStackEntry("settingsRoute") }
     val viewModel = hiltViewModel<SettingsViewModel>(backStackEntry)
-    EventHandler(viewModel.events) {
+    viewModel.events.collectEvents {
         if (it is PhotoResizedEvent) navController?.navigate("miniature")
     }
-    collectState(viewModel.state) { Content(it, viewModel) }
+    println("TEST SettingsView")
+    viewModel.state.collectState { Content(it, viewModel) }
 }
 
 @ExperimentalMaterialApi

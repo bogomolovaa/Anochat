@@ -46,7 +46,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ConversationsView() {
     val viewModel = hiltViewModel<ConversationListViewModel>()
-    collectState(viewModel.state) { Content(it, viewModel) }
+    viewModel.state.collectState { Content(it, viewModel) }
 }
 
 @Preview
