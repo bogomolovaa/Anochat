@@ -27,9 +27,50 @@ import bogomolov.aa.anochat.features.shared.VideoView
 
 val LocalNavController = staticCompositionLocalOf<NavHostController?> { null }
 
+sealed class Route(val base: String, private val params: String = "") {
+    protected val URI = "anochat://anochat/"
+
+    val route: String
+        get() = base + params
+    val navGraphRoute: String
+        get() = "${base}Route"
+
+    object Conversations : Route("conversations")
+    object Media : Route("media")
+    object Settings : Route("settings")
+    object Miniature : Route("miniature")
+    object Login : Route("login")
+
+    object Conversation : Route("conversation/{id}", "?uri={uri}") {
+        fun route(id: Long, uri: String? = null) = "conversation".let {
+            if (uri != null) "$it/$id&uri=$uri" else "$it/$id"
+        }
+
+        fun deeplink(id: Long) = "${URI}${route(id)}"
+        val deeplink: String
+            get() = "${URI}${Conversation.base}"
+    }
+
+    object User : Route("user/{id}") {
+        fun route(id: Long) = "user/$id"
+    }
+
+    object Users : Route("users", "?uri={uri}") {
+        fun route(uri: String? = null) = "$base?uri=$uri"
+    }
+
+    object Image : Route("image", "?name={name}") {
+        fun route(name: String) = "$base?name=$name"
+    }
+
+    object Video : Route("video", "?uri={uri}") {
+        fun route(video: String) = "$base?uri=$video"
+    }
+}
+
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun NavGraph(getActivity: (() -> Activity)?, onInit: (NavController)->Unit) {
+fun NavGraph(getActivity: (() -> Activity)?, onInit: (NavController) -> Unit) {
     val navController = rememberNavController()
     CompositionLocalProvider(LocalNavController provides navController) {
         LaunchedEffect(0) {
@@ -38,58 +79,46 @@ fun NavGraph(getActivity: (() -> Activity)?, onInit: (NavController)->Unit) {
         MaterialTheme(
             colors = LightColorPalette
         ) {
-            NavHost(navController = navController, startDestination = "conversations") {
-                composable("conversations") { ConversationsView() }
-                composable(
-                    "deepLink/{id}",
-                    deepLinks = listOf(navDeepLink {
-                        uriPattern = "anochat://anochat/conversation/{id}"
-                    }),
-                ) {
-                    val id = it.arguments?.getString("id")?.toLong()!!
-                    navController.navigate("conversation?id=$id") { popUpTo("conversations") }
-                }
-                navigation(startDestination = "conversation", route = "conversationRoute") {
+            NavHost(navController = navController, startDestination = Route.Conversations.route) {
+                composable(Route.Conversations.route) { ConversationsView() }
+                navigation(startDestination = Route.Conversation.route, route = Route.Conversation.navGraphRoute) {
                     composable(
-                        "conversation?id={id}&uri={uri}",
-                        arguments = listOf(
-                            navArgument("id") { nullable = true },
-                            navArgument("uri") { nullable = true }
-                        )
+                        Route.Conversation.route,
+                        arguments = listOf(navArgument("uri") { nullable = true }),
+                        deepLinks = listOf(navDeepLink {
+                            uriPattern = Route.Conversation.deeplink
+                        })
                     ) {
                         val conversationId = it.arguments?.getString("id")?.toLong()!!
                         val uri = it.arguments?.getString("uri")?.toUri()
                         ConversationView(conversationId, uri)
                     }
-                    composable("media") { SendMediaView() }
+                    composable(Route.Media.route) { SendMediaView() }
                 }
-                navigation(startDestination = "settings", route = "settingsRoute") {
-                    composable("settings") { SettingsView() }
-                    composable("miniature") { MiniatureView() }
+                navigation(startDestination = Route.Settings.route, route = Route.Settings.navGraphRoute) {
+                    composable(Route.Settings.route) { SettingsView() }
+                    composable(Route.Miniature.route) { MiniatureView() }
                 }
-                composable("user/{id}") {
+                composable(Route.User.route) {
                     val userId = it.arguments?.getString("id")?.toLong()!!
                     UserView(userId)
                 }
                 composable(
-                    "users?uri={uri}",
+                    Route.Users.route,
                     arguments = listOf(navArgument("uri") { nullable = true })
                 ) {
                     val uri = it.arguments?.getString("uri")
                     UsersView(uri)
                 }
-                composable(
-                    "image?name={name}",
-                    arguments = listOf(navArgument("name") { nullable = true })
-                ) {
+                composable(Route.Image.route) {
                     val image = it.arguments?.getString("name")!!
                     ImageView(image)
                 }
-                composable("video?uri={uri}") {
+                composable(Route.Video.route) {
                     val uri = it.arguments?.getString("uri")?.toUri()!!
                     VideoView(uri)
                 }
-                composable("login") { SignInView(getActivity) }
+                composable(Route.Login.route) { SignInView(getActivity) }
             }
         }
     }

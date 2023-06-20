@@ -37,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.main.LocalNavController
+import bogomolov.aa.anochat.features.main.Route
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.launch
 
@@ -44,12 +45,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsView() {
     val navController = LocalNavController.current
-    val backStackEntry = remember { navController!!.getBackStackEntry("settingsRoute") }
+    val backStackEntry = remember { navController!!.getBackStackEntry(Route.Settings.navGraphRoute) }
     val viewModel = hiltViewModel<SettingsViewModel>(backStackEntry)
     viewModel.events.collectEvents {
-        if (it is PhotoResizedEvent) navController?.navigate("miniature")
+        if (it is PhotoResizedEvent) navController?.navigate(Route.Miniature.route)
     }
-    println("TEST SettingsView")
     viewModel.state.collectState { Content(it, viewModel) }
 }
 

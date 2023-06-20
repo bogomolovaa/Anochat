@@ -15,6 +15,7 @@ import bogomolov.aa.anochat.domain.ConversationUseCases
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.main.MainActivity
+import bogomolov.aa.anochat.features.main.Route
 import bogomolov.aa.anochat.features.shared.*
 import com.google.firebase.messaging.FirebaseMessagingService
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +54,7 @@ open class NotificationsService @Inject constructor(
             BitmapFactory.decodeResource(context.resources, R.drawable.user_icon)
         val deepLinkIntent = Intent(
             Intent.ACTION_VIEW,
-            "anochat://anochat/conversation/${message.conversationId}".toUri(),
+            Route.Conversation.deeplink(message.conversationId).toUri(),
             context,
             MainActivity::class.java
         )

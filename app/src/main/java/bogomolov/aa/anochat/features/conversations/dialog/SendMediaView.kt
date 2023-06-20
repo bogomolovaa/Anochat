@@ -19,12 +19,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
+import bogomolov.aa.anochat.features.main.Route
 import bogomolov.aa.anochat.features.shared.*
 
 @Composable
 fun SendMediaView() {
     val navController = LocalNavController.current
-    val backStackEntry = remember { navController!!.getBackStackEntry("conversationRoute") }
+    val backStackEntry = remember { navController!!.getBackStackEntry(Route.Conversation.navGraphRoute) }
     val viewModel = hiltViewModel<ConversationViewModel>(backStackEntry)
     val context = LocalContext.current
     viewModel.events.collectEvents {

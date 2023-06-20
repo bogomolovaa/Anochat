@@ -36,6 +36,7 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.main.LocalNavController
+import bogomolov.aa.anochat.features.main.Route
 import bogomolov.aa.anochat.features.shared.*
 import java.net.URLEncoder
 
@@ -209,11 +210,7 @@ private fun UserRow(
 }
 
 private fun NavController.navigateToConversation(conversationId: Long, uri: String?) {
-    navigate(
-        "conversation?id=$conversationId" + if (uri != null) "&uri=${
-            URLEncoder.encode(uri.toString(), "utf-8")
-        }" else ""
-    )
+    navigate(Route.Conversation.route(conversationId, URLEncoder.encode(uri.toString(), "utf-8")))
 }
 
 private fun getContactsPhones(context: Context): List<String> {

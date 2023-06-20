@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
     private fun onSendAction(navController: NavController, intent: Intent?) {
         if (intent?.action == Intent.ACTION_SEND) {
             (intent.getParcelableExtra<Parcelable>(Intent.EXTRA_STREAM) as? Uri)?.let { uri ->
-                navController.navigate("users?uri=${URLEncoder.encode(uri.toString(), "utf-8")}")
+                navController.navigate(Route.Users.route(uri = URLEncoder.encode(uri.toString(), "utf-8")))
             }
         }
     }
@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun navigateToSignIn(navController: NavController) {
         onPostResume()
-        navController.navigate("login") { popUpTo("login") { inclusive = false } }
+        navController.navigate(Route.Login.route) { popUpTo(Route.Login.route) }
     }
 
     private fun startWorkManager() {

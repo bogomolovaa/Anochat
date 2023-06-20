@@ -36,6 +36,7 @@ import androidx.paging.compose.itemKey
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.main.LocalNavController
+import bogomolov.aa.anochat.features.main.Route
 import bogomolov.aa.anochat.features.shared.collectState
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
@@ -58,10 +59,10 @@ private fun Content(
     var showMenu by remember { mutableStateOf(false) }
     val navController = LocalNavController.current
     val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (it) navController?.navigate("users")
+        if (it) navController?.navigate(Route.Users.route)
     }
     val deleteConversation: (Long) -> Unit = remember { { viewModel?.deleteConversations(setOf(it)) } }
-    val navigateConversation: (Long) -> Unit = remember { { navController?.navigate("conversation?id=$it") } }
+    val navigateConversation: (Long) -> Unit = remember { { navController?.navigate(Route.Conversation.route(it)) } }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -75,7 +76,7 @@ private fun Content(
                         onDismissRequest = { showMenu = false }
                     ) {
                         DropdownMenuItem(
-                            onClick = remember { { navController?.navigate("settings") } }
+                            onClick = remember { { navController?.navigate(Route.Settings.route) } }
                         ) {
                             Text(stringResource(id = R.string.settings))
                         }
@@ -83,7 +84,7 @@ private fun Content(
                             onClick = remember {
                                 {
                                     viewModel?.signOut()
-                                    navController?.navigate("login")
+                                    navController?.navigate(Route.Login.route)
                                 }
                             }
                         ) {

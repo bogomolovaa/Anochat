@@ -41,6 +41,7 @@ import androidx.paging.compose.itemKey
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.LocalNavController
+import bogomolov.aa.anochat.features.main.Route
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
@@ -57,7 +58,7 @@ private const val TAG = "ConversationView"
 @Composable
 fun ConversationView(conversationId: Long, uri: Uri? = null) {
     val navController = LocalNavController.current
-    val route = remember { navController!!.getBackStackEntry("conversationRoute") }
+    val route = remember { navController!!.getBackStackEntry(Route.Conversation.navGraphRoute) }
     val viewModel = hiltViewModel<ConversationViewModel>(route)
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
@@ -65,7 +66,7 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
         {
             val isVideo = context.isVideo(it)
             viewModel.resizeMedia(it, isVideo)
-            navController?.navigate("media")
+            navController?.navigate(Route.Media.route)
         }
     }
     LaunchedEffect(0) {
@@ -122,7 +123,7 @@ private fun Content(
                             UserNameLayout(
                                 userStatus = state.userStatus,
                                 conversation = it,
-                                onClick = remember { { navController?.navigate("user/${it.user.id}") } }
+                                onClick = remember { { navController?.navigate(Route.User.route(it.user.id)) } }
                             )
                         }
                         if (state.selectedMessages.isNotEmpty()) {
@@ -396,15 +397,13 @@ private fun ShowMessage(
 private fun Message.getThumbnail() = image ?: video?.let { videoThumbnail(it) }
 
 private fun videoOnClick(message: Message, context: Context, navController: NavController?) {
-    if (message.received == 1 || message.isMine) {
-        val uriWithSource = getUriWithSource(message.video!!, context)
-        if (uriWithSource.uri != null) navController?.navigate("video?uri=${uriWithSource.uri}")
-    }
+    if (message.received == 1 || message.isMine)
+        getUriWithSource(message.video!!, context).uri?.let { navController?.navigate(Route.Video.route(it.toString())) }
 }
 
 private fun imageOnClick(message: Message, navController: NavController?) {
     if (message.received == 1 || message.isMine)
-        navController?.navigate("image?name=${message.image}")
+        message.image?.let { navController?.navigate(Route.Image.route(it)) }
 }
 
 @SuppressLint("SimpleDateFormat")

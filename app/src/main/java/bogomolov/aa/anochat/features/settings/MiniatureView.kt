@@ -29,12 +29,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
+import bogomolov.aa.anochat.features.main.Route
 import bogomolov.aa.anochat.features.shared.*
 
 @Composable
 fun MiniatureView() {
     val navController = LocalNavController.current
-    val backStackEntry = remember { navController!!.getBackStackEntry("settingsRoute") }
+    val backStackEntry = remember { navController!!.getBackStackEntry(Route.Settings.navGraphRoute) }
     val viewModel = hiltViewModel<SettingsViewModel>(backStackEntry)
     viewModel.events.collectEvents {
         if (it is MiniatureCreatedEvent) navController?.popBackStack()

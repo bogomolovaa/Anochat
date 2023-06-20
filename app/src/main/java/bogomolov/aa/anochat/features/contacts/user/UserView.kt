@@ -26,6 +26,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
+import bogomolov.aa.anochat.features.main.Route
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -48,7 +49,7 @@ private fun Content(
 ) {
     val navController = LocalNavController.current
     val context = LocalContext.current
-    val navigate: (String) -> Unit = remember { { navController?.navigate("image?name=$it") } }
+    val navigate: (String) -> Unit = remember { { navController?.navigate(Route.Image.route(it)) } }
     Scaffold(
         topBar = {
             TopAppBar(

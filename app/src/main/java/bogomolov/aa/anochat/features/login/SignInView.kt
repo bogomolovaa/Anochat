@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
+import bogomolov.aa.anochat.features.main.Route
 import bogomolov.aa.anochat.features.shared.*
 
 @Composable
@@ -30,7 +31,7 @@ fun SignInView(getActivity: (() -> Activity)?) {
     val navController = LocalNavController.current
     val viewModel = hiltViewModel<SignInViewModel>()
     viewModel.events.collectEvents {
-        if (it is NavigateToConversationList) navController?.navigate("conversations")
+        if (it is NavigateToConversationList) navController?.navigate(Route.Conversations.route)
     }
     viewModel.state.collectState { Content(it, viewModel, getActivity) }
 }
