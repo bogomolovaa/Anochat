@@ -115,7 +115,13 @@ class ConversationViewModel @Inject constructor(
                     updateState { copy(progress = progress.toFloat() / 100, resizingFinished = finished) }
                 }
                 else fileStore.resizeImage(mediaUri, currentState.inputState.photoPath, toGallery = (mediaUri == null))
-                updateState { copy(resized = resized, isVideo = isVideo) }
+                updateState {
+                    copy(
+                        resized = resized,
+                        isVideo = isVideo,
+                        resizingFinished = if (isVideo) resizingFinished else true
+                    )
+                }
             } catch (e: FileTooBigException) {
                 addEvent(FileTooBig)
             }

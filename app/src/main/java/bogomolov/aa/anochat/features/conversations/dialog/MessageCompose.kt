@@ -205,6 +205,7 @@ fun MessageCompose(
                 .background(colorResource(if (selected) R.color.selected_message_color else android.R.color.transparent))
                 .padding(4.dp)
         ) {
+            val coroutineScope = rememberCoroutineScope()
             Card(modifier = Modifier
                 .widthIn(min = 120.dp, max = 258.dp)
                 .align(if (message.isMine) Alignment.End else Alignment.Start)
@@ -214,18 +215,16 @@ fun MessageCompose(
                     })
                 }
                 .pointerInput(message.messageId) {
-                    coroutineScope {
-                        detectHorizontalDragGestures { change, dragAmount ->
-                            if (dragAmount > 40) {
-                                onSwipe()
-                                launch {
-                                    offsetX.animateTo(
-                                        targetValue = windowWidth.toFloat(),
-                                        initialVelocity = 0f,
-                                        animationSpec = tween(durationMillis = 500, easing = LinearEasing)
-                                    )
-                                    offsetX.snapTo(0f)
-                                }
+                    detectHorizontalDragGestures { change, dragAmount ->
+                        if (dragAmount > 40) {
+                            onSwipe()
+                            coroutineScope.launch {
+                                offsetX.animateTo(
+                                    targetValue = windowWidth.toFloat(),
+                                    initialVelocity = 0f,
+                                    animationSpec = tween(durationMillis = 500, easing = LinearEasing)
+                                )
+                                offsetX.snapTo(0f)
                             }
                         }
                     }

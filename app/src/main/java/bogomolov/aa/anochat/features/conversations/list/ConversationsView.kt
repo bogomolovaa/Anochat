@@ -171,7 +171,12 @@ private fun ConversationCard(
 
         val isNew = conversation.lastMessage?.isMine == false && conversation.lastMessage.viewed == 0
         Row(modifier = Modifier.fillMaxWidth()) {
-            Box(contentAlignment = Alignment.TopEnd) {
+            Box(
+                Modifier
+                    .width(60.dp)
+                    .height(60.dp),
+                contentAlignment = Alignment.TopEnd
+            ) {
                 var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
                 LaunchedEffect(conversation.id) {
                     withContext(Dispatchers.IO) {
@@ -180,18 +185,17 @@ private fun ConversationCard(
                         }
                     }
                 }
-                val imageModifier = Modifier
-                    .clip(CircleShape)
-                    .width(60.dp)
-                    .height(60.dp)
-                imageBitmap?.let {
-                    Image(
-                        modifier = imageModifier,
-                        bitmap = it,
-                        contentScale = ContentScale.FillWidth,
-                        contentDescription = ""
-                    )
-                } ?: run {
+                val imageModifier = Modifier.clip(CircleShape)
+                if (conversation.user.photo != null) {
+                    imageBitmap?.let {
+                        Image(
+                            modifier = imageModifier,
+                            bitmap = it,
+                            contentScale = ContentScale.FillWidth,
+                            contentDescription = ""
+                        )
+                    }
+                } else {
                     Icon(
                         painterResource(id = R.drawable.user_icon),
                         modifier = imageModifier,

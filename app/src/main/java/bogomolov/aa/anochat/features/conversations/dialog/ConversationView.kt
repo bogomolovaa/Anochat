@@ -110,6 +110,7 @@ private fun Content(
     navigateToSendMedia: (Uri?) -> Unit = { }
 ) {
     val navController = LocalNavController.current
+    val context = LocalContext.current
     val play: (String?, String?) -> Unit =
         remember { { audioFile, messageId -> viewModel?.play(audioFile, messageId) } }
     Scaffold(
@@ -176,7 +177,15 @@ private fun Content(
                             play = play,
                             messageDisplayed = remember { { viewModel?.messageDisplayed(it) } },
                             selectMessage = remember { { viewModel?.selectMessage(it) } },
-                            setReplyMessage = remember { { viewModel?.setReplyMessage(it) } }
+                            setReplyMessage = remember { { viewModel?.setReplyMessage(it) } },
+                            messageOnClick = remember {
+                                {
+                                    when {
+                                        it.video != null -> videoOnClick(it, context, navController)
+                                        it.image != null -> imageOnClick(it, navController)
+                                    }
+                                }
+                            }
                         )
                     }
                     state.replyMessage?.let {
@@ -300,7 +309,8 @@ private fun MessagesList(
     play: (String?, String?) -> Unit,
     messageDisplayed: (Message) -> Unit,
     selectMessage: (Message) -> Unit,
-    setReplyMessage: (Message) -> Unit
+    setReplyMessage: (Message) -> Unit,
+    messageOnClick: (Message) -> Unit
 ) {
     val lazyPagingItems = messagesFlow.collectAsLazyPagingItems()
     LazyColumn(
@@ -328,6 +338,7 @@ private fun MessagesList(
                         messageDisplayed = messageDisplayed,
                         selectMessage = selectMessage,
                         setReplyMessage = setReplyMessage,
+                        onClick = messageOnClick
                     )
                     is DateDelimiter -> DateDelimiterCompose(it)
                 }
@@ -345,10 +356,10 @@ private fun ShowMessage(
     play: (String?, String?) -> Unit,
     messageDisplayed: (Message) -> Unit,
     selectMessage: (Message) -> Unit,
-    setReplyMessage: (Message) -> Unit
+    setReplyMessage: (Message) -> Unit,
+    onClick: (Message) -> Unit
 ) {
     val context = LocalContext.current
-    val navController = LocalNavController.current
     LaunchedEffect(message.id) {
         messageDisplayed(message)
     }
@@ -375,12 +386,7 @@ private fun ShowMessage(
         loadingBitmaps = loading,
         bitmap = bitmap,
         replyBitmap = replyBitmap,
-        onClick = {
-            when {
-                message.video != null -> videoOnClick(message, context, navController)
-                message.image != null -> imageOnClick(message, navController)
-            }
-        },
+        onClick = { onClick(message) },
         onSelect = { selectMessage(message) },
         onSwipe = { setReplyMessage(message) },
         playOnClick = play

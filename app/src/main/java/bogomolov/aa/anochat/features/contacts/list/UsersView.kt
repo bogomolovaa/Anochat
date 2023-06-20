@@ -166,33 +166,37 @@ private fun UserRow(
                 .padding(12.dp)
 
         ) {
-            var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-            LaunchedEffect(user.id) {
-                user.photo?.let {
-                    imageBitmap = getBitmapFromGallery(
-                        getMiniPhotoFileName(it),
-                        context,
-                        1
-                    )?.asImageBitmap()
+            Box(
+                Modifier
+                    .clip(CircleShape)
+                    .width(60.dp)
+                    .height(60.dp)
+            ) {
+
+                var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+                LaunchedEffect(user.id) {
+                    user.photo?.let {
+                        imageBitmap = getBitmapFromGallery(
+                            getMiniPhotoFileName(it),
+                            context,
+                            1
+                        )?.asImageBitmap()
+                    }
                 }
-            }
-            val imageModifier = Modifier
-                .clip(CircleShape)
-                .width(60.dp)
-                .height(60.dp)
-            imageBitmap?.let {
-                Image(
-                    modifier = imageModifier,
-                    bitmap = it,
-                    contentScale = ContentScale.FillWidth,
-                    contentDescription = ""
-                )
-            } ?: run {
-                Icon(
-                    painterResource(id = R.drawable.user_icon),
-                    modifier = imageModifier,
-                    contentDescription = ""
-                )
+                if (user.photo != null) {
+                    imageBitmap?.let {
+                        Image(
+                            bitmap = it,
+                            contentScale = ContentScale.FillWidth,
+                            contentDescription = ""
+                        )
+                    }
+                } else {
+                    Icon(
+                        painterResource(id = R.drawable.user_icon),
+                        contentDescription = ""
+                    )
+                }
             }
             Column(modifier = Modifier.padding(start = 12.dp)) {
                 Text(user.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
