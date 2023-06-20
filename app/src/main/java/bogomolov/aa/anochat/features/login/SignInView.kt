@@ -78,7 +78,7 @@ private fun Content(
                     val phoneErrorMessage = phoneInputErrorMessage(state, context)
                     TextField(
                         value = state.phoneNumber ?: "",
-                        onValueChange = remember { { viewModel?.updateState { copy(phoneNumber = it) } } },
+                        onValueChange = remember { { viewModel?.setPhone(it) } },
                         modifier = Modifier
                             .padding(16.dp)
                             .fillMaxWidth(),
@@ -100,7 +100,7 @@ private fun Content(
                         val codeErrorMessage = codeInputErrorMessage(state, context)
                         TextField(
                             value = state.code ?: "",
-                            onValueChange = remember { { viewModel?.updateState { copy(code = it) } } },
+                            onValueChange = remember { { viewModel?.setCode(it) } },
                             modifier = Modifier
                                 .padding(16.dp)
                                 .fillMaxWidth()

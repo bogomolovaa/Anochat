@@ -65,7 +65,7 @@ class SettingsViewModel @Inject constructor(
     fun resizePhoto(uri: Uri) {
         viewModelScope.launch(dispatcher) {
             fileStore.resizeImage(uri = uri, toGallery = false)?.let {
-                setState { copy(miniatureState = MiniatureState(it)) }
+                updateState { copy(miniatureState = MiniatureState(it)) }
                 addEvent(PhotoResizedEvent)
             }
         }
@@ -100,16 +100,16 @@ class SettingsViewModel @Inject constructor(
     private fun initSettings() {
         viewModelScope.launch {
             val settings = authRepository.getSettings()
-            setState { copy(settings = settings) }
+            updateState { copy(settings = settings) }
             val user = userUseCases.getMyUser()
-            setState { copy(user = user) }
+            updateState { copy(user = user) }
         }
     }
 
     fun updateSettings(change: Settings.() -> Settings) {
         viewModelScope.launch {
             val settings = currentState.settings.change()
-            setState { copy(settings = settings) }
+            updateState { copy(settings = settings) }
             authRepository.updateSettings(settings)
         }
     }
@@ -117,7 +117,7 @@ class SettingsViewModel @Inject constructor(
     fun updateUser(change: User.() -> User) {
         viewModelScope.launch {
             currentState.user?.change()?.let {
-                setState { copy(user = it) }
+                updateState { copy(user = it) }
                 userUseCases.updateMyUser(it)
             }
         }

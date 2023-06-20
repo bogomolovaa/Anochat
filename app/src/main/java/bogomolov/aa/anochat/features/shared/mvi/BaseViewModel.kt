@@ -9,14 +9,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 interface Event
 
 abstract class BaseViewModel<S : Any>(
-    val initialState: S,
+    initialState: S,
     var dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
@@ -28,27 +27,13 @@ abstract class BaseViewModel<S : Any>(
     private val mutex = Mutex()
     val currentState get() = state.value
 
-    fun updateState(reduce: S.() -> S) {
-        viewModelScope.launch(dispatcher) {
-            setState(reduce)
-        }
-    }
-
-    fun updateStateBlocking(reduce: S.() -> S) = runBlocking {
-        setState(reduce)
-    }
-
     protected suspend fun addEvent(event: Event) {
         _events.send(event)
     }
 
-    protected fun setState(reduce: S.() -> S) {
+    protected fun updateState(reduce: S.() -> S) {
         viewModelScope.launch(dispatcher) {
-            setStateInternal(reduce)
+            mutex.withLock { _state.value = _state.value.reduce() }
         }
-    }
-
-    private suspend fun setStateInternal(reduce: S.() -> S) {
-        mutex.withLock { _state.value = _state.value.reduce() }
     }
 }

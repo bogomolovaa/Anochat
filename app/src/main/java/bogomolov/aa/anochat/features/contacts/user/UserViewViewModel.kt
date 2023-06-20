@@ -28,7 +28,7 @@ class UserViewViewModel @Inject constructor(
             val flow = userUseCases.getImagesDataSource(id).cachedIn(viewModelScope)
             val user = userUseCases.getUser(id)
             pagingFlow = flow.asImmutableFlow()
-            setState { copy(user = user) }
+            updateState { copy(user = user) }
         }
     }
 }

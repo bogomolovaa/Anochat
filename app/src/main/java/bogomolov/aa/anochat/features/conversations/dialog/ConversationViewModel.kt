@@ -110,12 +110,12 @@ class ConversationViewModel @Inject constructor(
     fun resizeMedia(mediaUri: Uri?, isVideo: Boolean) {
         viewModelScope.launch {
             try {
-                setState { copy(resized = null, isVideo = isVideo) }
+                updateState { copy(resized = null, isVideo = isVideo) }
                 val resized = if (isVideo) fileStore.resizeVideo(mediaUri!!) { progress, finished ->
-                    setState { copy(progress = progress.toFloat() / 100, resizingFinished = finished) }
+                    updateState { copy(progress = progress.toFloat() / 100, resizingFinished = finished) }
                 }
                 else fileStore.resizeImage(mediaUri, currentState.inputState.photoPath, toGallery = (mediaUri == null))
-                setState { copy(resized = resized, isVideo = isVideo) }
+                updateState { copy(resized = resized, isVideo = isVideo) }
             } catch (e: FileTooBigException) {
                 addEvent(FileTooBig)
             }
@@ -133,11 +133,11 @@ class ConversationViewModel @Inject constructor(
     fun textChanged(enteredText: String) {
         viewModelScope.launch {
             if (enteredText.isNotEmpty()) {
-                setState {
+                updateState {
                     copy(inputState = inputState.copy(state = InputState.State.TEXT_ENTERED, text = enteredText))
                 }
             } else {
-                setState { copy(inputState = inputState.copy(state = InputState.State.INITIAL, text = "")) }
+                updateState { copy(inputState = inputState.copy(state = InputState.State.INITIAL, text = "")) }
             }
             currentState.conversation?.user?.uid?.let {
                 if (typingJob == null) messageUseCases.startTypingTo(it)
@@ -160,7 +160,7 @@ class ConversationViewModel @Inject constructor(
     }
 
     fun clearReplyMessage() {
-        setState { copy(replyMessage = null) }
+        updateState { copy(replyMessage = null) }
     }
 
     private fun startPlaying(audioFile: String? = null, messageId: String? = null) {
@@ -172,11 +172,11 @@ class ConversationViewModel @Inject constructor(
                     while (true) {
                         delay(1000)
                         val time = System.currentTimeMillis() - startTime + tempElapsed
-                        setState { copy(playingState = playingState?.copy(elapsed = time)) }
+                        updateState { copy(playingState = playingState?.copy(elapsed = time)) }
                         if (!isActive) break
                     }
                 }
-                setState { copy(playingState = playingState?.copy(paused = false)) }
+                updateState { copy(playingState = playingState?.copy(paused = false)) }
             }
         }
     }
@@ -185,11 +185,11 @@ class ConversationViewModel @Inject constructor(
         if (audioFile != null) {
             val duration = audioPlayer.initPlayer(audioFile) {
                 playJob?.cancel()
-                setState { copy(playingState = null) }
+                updateState { copy(playingState = null) }
             }
             val newPlayingState =
                 PlayingState(audioFile = audioFile, duration = duration, messageId = messageId)
-            setState { copy(playingState = newPlayingState) }
+            updateState { copy(playingState = newPlayingState) }
         }
     }
 
@@ -198,7 +198,7 @@ class ConversationViewModel @Inject constructor(
             tempElapsed += System.currentTimeMillis() - startTime
             playJob?.cancel()
             val playingState = currentState.playingState?.copy(paused = true)
-            setState { copy(playingState = playingState) }
+            updateState { copy(playingState = playingState) }
         }
     }
 
@@ -206,7 +206,7 @@ class ConversationViewModel @Inject constructor(
         recordingJob?.cancel()
         recordingJob = viewModelScope.launch(dispatcher) {
             val audioFile = audioPlayer.startRecording()
-            setState {
+            updateState {
                 copy(
                     inputState = inputState.copy(
                         state = InputState.State.VOICE_RECORDING,
@@ -218,7 +218,7 @@ class ConversationViewModel @Inject constructor(
             while (true) {
                 val time = System.currentTimeMillis() - startTime
                 val timeString = SimpleDateFormat("mm:ss").format(Date(time))
-                setState { copy(inputState = inputState.copy(audioLengthText = timeString)) }
+                updateState { copy(inputState = inputState.copy(audioLengthText = timeString)) }
                 delay(1000)
             }
         }
@@ -228,7 +228,7 @@ class ConversationViewModel @Inject constructor(
         viewModelScope.launch(dispatcher) {
             audioPlayer.stopRecording()
             recordingJob?.cancel()
-            setState { copy(inputState = inputState.copy(state = InputState.State.VOICE_RECORDED)) }
+            updateState { copy(inputState = inputState.copy(state = InputState.State.VOICE_RECORDED)) }
         }
     }
 
@@ -245,7 +245,7 @@ class ConversationViewModel @Inject constructor(
                     image = data.image,
                     video = data.video
                 )
-                setState { copy(inputState = InputState(), replyMessage = null) }
+                updateState { copy(inputState = InputState(), replyMessage = null) }
                 messageUseCases.sendMessage(message, it.user.uid)
                 addEvent(OnMessageSent)
             }
@@ -272,17 +272,17 @@ class ConversationViewModel @Inject constructor(
     }
 
     fun setPhotoPath(photoPath: String) {
-        setState { copy(inputState = inputState.copy(photoPath = photoPath)) }
+        updateState { copy(inputState = inputState.copy(photoPath = photoPath)) }
     }
 
     fun setReplyMessage(message: Message) {
-        setState { copy(replyMessage = message) }
+        updateState { copy(replyMessage = message) }
     }
 
     fun fabPressed() {
         when (currentState.inputState.state) {
-            InputState.State.INITIAL -> setState { copy(inputState = inputState.copy(state = InputState.State.FAB_EXPAND)) }
-            InputState.State.FAB_EXPAND -> setState { copy(inputState = inputState.copy(state = InputState.State.INITIAL)) }
+            InputState.State.INITIAL -> updateState { copy(inputState = inputState.copy(state = InputState.State.FAB_EXPAND)) }
+            InputState.State.FAB_EXPAND -> updateState { copy(inputState = inputState.copy(state = InputState.State.INITIAL)) }
             InputState.State.TEXT_ENTERED -> sendMessage(SendMessageData(text = currentState.inputState.text))
             InputState.State.VOICE_RECORDED -> sendMessage(SendMessageData(audio = currentState.inputState.audioFile))
             InputState.State.VOICE_RECORDING -> stopRecording()
@@ -290,7 +290,7 @@ class ConversationViewModel @Inject constructor(
     }
 
     fun resetInputState() {
-        setState { copy(inputState = inputState.copy(state = InputState.State.INITIAL, audioFile = null)) }
+        updateState { copy(inputState = inputState.copy(state = InputState.State.INITIAL, audioFile = null)) }
     }
 
     fun deleteMessages() {
@@ -301,11 +301,11 @@ class ConversationViewModel @Inject constructor(
     }
 
     fun clearMessages() {
-        setState { copy(selectedMessages = ImmutableList(listOf())) }
+        updateState { copy(selectedMessages = ImmutableList(listOf())) }
     }
 
     fun selectMessage(message: Message) {
-        setState {
+        updateState {
             copy(selectedMessages = selectedMessages.toMutableList().apply {
                 if (!contains(message)) {
                     add(message)
@@ -322,7 +322,7 @@ class ConversationViewModel @Inject constructor(
                 conversationInitialized = true
                 subscribeToMessages(conversationId)
                 conversationUseCases.getConversation(conversationId)?.let {
-                    setState { copy(conversation = it) }
+                    updateState { copy(conversation = it) }
                     launch {
                         subscribeToOnlineStatus(it.user.uid)
                     }
@@ -348,7 +348,7 @@ class ConversationViewModel @Inject constructor(
             val lastSeenTime = it.third
             val status = if (typing) UserStatus.Typing
             else if (online) UserStatus.Online else UserStatus.LastSeen(lastSeenTime)
-            setState { copy(userStatus = status) }
+            updateState { copy(userStatus = status) }
         }
     }
 }

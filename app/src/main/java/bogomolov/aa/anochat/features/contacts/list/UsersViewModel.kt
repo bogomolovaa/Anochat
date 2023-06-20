@@ -36,7 +36,7 @@ class UsersViewModel
         viewModelScope.launch {
             //usersList = userUseCases.getUsersByPhones(phones)
             usersList = userUseCases.getAllUsers()
-            setState { copy(users = usersList) }
+            updateState { copy(users = usersList) }
             //usersList = userUseCases.updateUsersByPhones(phones)
             //setState { copy(loading = false, users = usersList) }
         }
@@ -47,12 +47,12 @@ class UsersViewModel
             query?.let {
                 viewModelScope.launch {
                     if (isValidPhone(query)) {
-                        setState { copy(search = search?.copy(text = query), loading = true) }
+                        updateState { copy(search = search?.copy(text = query), loading = true) }
                         val searchedUsers = userUseCases.searchByPhone(query)
-                        setState { copy(loading = false, users = searchedUsers) }
+                        updateState { copy(loading = false, users = searchedUsers) }
                     } else {
                         val searchedUsers = usersList?.filter { it.name.startsWith(query) }
-                        setState { copy(search = search?.copy(text = query), users = searchedUsers) }
+                        updateState { copy(search = search?.copy(text = query), users = searchedUsers) }
                     }
                 }
             } ?: kotlin.run {
@@ -65,10 +65,10 @@ class UsersViewModel
 
     fun createConversation(user: User) {
         viewModelScope.launch {
-            setState { copy(loading = true) }
+            updateState { copy(loading = true) }
             val conversationId = conversationUserCases.startConversation(user.uid)
             addEvent(NavigateConversationEvent(conversationId))
-            setState { copy(loading = false) }
+            updateState { copy(loading = false) }
         }
     }
 }

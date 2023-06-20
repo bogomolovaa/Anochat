@@ -33,7 +33,7 @@ class ConversationListViewModel
     private fun initConversations() {
         viewModelScope.launch {
             val flow = conversationUseCases.loadConversationsDataSource().cachedIn(viewModelScope)
-            setState { copy(pagingDataFlow = flow.asImmutableFlow()) }
+            updateState { copy(pagingDataFlow = flow.asImmutableFlow()) }
         }
     }
 

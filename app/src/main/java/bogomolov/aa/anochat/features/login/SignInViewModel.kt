@@ -60,14 +60,22 @@ class SignInViewModel @Inject constructor(
         }
     }
 
+    fun setPhone(phoneNumber: String?){
+        updateState { copy(phoneNumber = phoneNumber) }
+    }
+
+    fun setCode(code: String?){
+        updateState { copy(code = code) }
+    }
+
     fun submitPhoneNumber(getActivity: () -> Activity) {
         viewModelScope.launch {
             val number = currentState.phoneNumber ?: ""
             if (number.isNotEmpty() && isValidPhone(number)) {
-                setState { copy(phoneNumber = number, state = LoginState.PHONE_SUBMITTED) }
+                updateState { copy(phoneNumber = number, state = LoginState.PHONE_SUBMITTED) }
                 authRepository.sendPhoneNumber(number, getActivity, phoneVerification)
             } else {
-                setState { copy(phoneNumber = number, error = SignInError(ErrorType.WRONG_PHONE)) }
+                updateState { copy(phoneNumber = number, error = SignInError(ErrorType.WRONG_PHONE)) }
             }
         }
     }
@@ -78,7 +86,7 @@ class SignInViewModel @Inject constructor(
             if (code.isNotEmpty()) {
                 authRepository.verifySmsCode(currentState.phoneNumber!!, code, phoneVerification)
             } else {
-                setState { copy(error = SignInError(ErrorType.EMPTY_CODE)) }
+                updateState { copy(error = SignInError(ErrorType.EMPTY_CODE)) }
             }
         }
     }
