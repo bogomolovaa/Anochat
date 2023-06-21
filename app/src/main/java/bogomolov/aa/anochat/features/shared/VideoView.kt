@@ -1,6 +1,5 @@
 package bogomolov.aa.anochat.features.shared
 
-import android.net.Uri
 import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,11 +20,9 @@ import bogomolov.aa.anochat.features.main.LocalNavController
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.StyledPlayerView
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 @Composable
-fun VideoView(uri: Uri) {
+fun VideoView(uri: String) {
     val context = LocalContext.current
     var window by remember { mutableStateOf(0) }
     var position by remember { mutableStateOf(0L) }

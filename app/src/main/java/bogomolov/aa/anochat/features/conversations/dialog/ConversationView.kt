@@ -32,6 +32,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.*
 import androidx.navigation.NavController
@@ -56,7 +57,7 @@ private const val TAG = "ConversationView"
 @ExperimentalComposeUiApi
 @ExperimentalMaterialApi
 @Composable
-fun ConversationView(conversationId: Long, uri: Uri? = null) {
+fun ConversationView(conversationId: Long, uri: String? = null) {
     val navController = LocalNavController.current
     val route = remember { navController!!.getBackStackEntry(Route.Conversation.navGraphRoute) }
     val viewModel = hiltViewModel<ConversationViewModel>(route)
@@ -71,7 +72,7 @@ fun ConversationView(conversationId: Long, uri: Uri? = null) {
     }
     LaunchedEffect(0) {
         viewModel.initConversation(conversationId)
-        if (uri != null && viewModel.uri != uri) navigateToSendMedia(uri)
+        if (uri != null && viewModel.uri != uri) navigateToSendMedia(uri.toUri())
         viewModel.uri = uri
     }
     val lazyListState = rememberLazyListState()

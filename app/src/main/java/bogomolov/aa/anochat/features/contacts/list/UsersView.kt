@@ -41,7 +41,8 @@ import bogomolov.aa.anochat.features.shared.*
 import java.net.URLEncoder
 
 @Composable
-fun UsersView(uri: String? = null, viewModel: UsersViewModel = hiltViewModel<UsersViewModel>()) {
+fun UsersView(uri: String? = null) {
+    val viewModel = hiltViewModel<UsersViewModel>()
     val navController = LocalNavController.current
     val context = LocalContext.current
     LaunchedEffect(0) {

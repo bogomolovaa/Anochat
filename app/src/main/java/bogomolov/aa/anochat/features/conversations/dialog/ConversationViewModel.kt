@@ -98,7 +98,7 @@ class ConversationViewModel @Inject constructor(
     private var tempElapsed = 0L
     private var conversationInitialized = false
     private var typingJob: Job? = null
-    var uri: Uri? = null
+    var uri: String? = null
 
     override fun onCleared() {
         currentState.conversation?.id?.let {
