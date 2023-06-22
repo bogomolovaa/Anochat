@@ -3,8 +3,10 @@ package bogomolov.aa.anochat.features.main
 import android.app.NotificationManager
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
@@ -44,6 +46,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         startWorkManager()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+            window.attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
@@ -112,7 +118,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setFullScreen(enabled: Boolean) {
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
         }.apply {
             WindowInsetsCompat.Type.systemBars().let { if (enabled) hide(it) else show(it) }
         }
