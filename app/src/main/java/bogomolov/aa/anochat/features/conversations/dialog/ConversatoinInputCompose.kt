@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +46,7 @@ import java.util.*
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ConversationInput(
+    modifier: Modifier = Modifier,
     inputState: InputState = testDialogUiState.inputState,
     playingState: PlayingState? = testPlayingState,
     emojiKeyboardOpened: MutableState<Boolean> = mutableStateOf(false),
@@ -55,9 +57,7 @@ fun ConversationInput(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     Row(
-        modifier = Modifier
-            .padding(end = 64.dp)
-            .fillMaxWidth()
+        modifier = modifier
             .heightIn(min = 60.dp)
     ) {
         when (inputState.state) {
@@ -73,7 +73,10 @@ fun ConversationInput(
                         leadingIcon = {
                             Icon(
                                 modifier = Modifier
-                                    .clickable {
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) {
                                         emojiKeyboardOpened.value = !emojiKeyboardOpened.value || isKeyboardOpened
                                         if (emojiKeyboardOpened.value) keyboardController?.hide()
                                     },
@@ -133,6 +136,7 @@ fun ConversationInput(
 
 @Composable
 fun InputFabs(
+    modifier: Modifier = Modifier,
     inputState: InputState.State = InputState.State.INITIAL,
     onClick: () -> Unit = {},
     onVoice: () -> Unit = {},
@@ -140,7 +144,7 @@ fun InputFabs(
     onGallery: () -> Unit = {}
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .width(64.dp)
             .height(300.dp)
             .padding(start = 4.dp, end = 4.dp, bottom = 4.dp),

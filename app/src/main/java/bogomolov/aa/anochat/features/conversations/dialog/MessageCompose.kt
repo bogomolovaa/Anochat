@@ -322,7 +322,7 @@ fun MessageCompose(
                             modifier = Modifier
                                 .padding(start = 4.dp, top = 2.dp, end = 4.dp, bottom = 1.dp)
                                 .combinedClickable(
-                                    interactionSource = MutableInteractionSource(),
+                                    interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     onClick = {
                                         annotatedString

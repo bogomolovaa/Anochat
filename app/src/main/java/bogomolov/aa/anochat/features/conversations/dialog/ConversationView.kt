@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +33,8 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.emoji2.emojipicker.EmojiPickerView
@@ -65,6 +68,13 @@ fun ConversationView(conversationId: Long, uri: String? = null) {
     val viewModel = hiltViewModel<ConversationViewModel>(route)
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
+    val emojiKeyboardOpened = remember { mutableStateOf(false) }
+    val keyboardState by keyboardAsState {
+        if (it) emojiKeyboardOpened.value = false
+    }
+    BackHandler(enabled = emojiKeyboardOpened.value) {
+        emojiKeyboardOpened.value = false
+    }
     val navigateToSendMedia: (Uri?) -> Unit = remember {
         {
             val isVideo = context.isVideo(it)
@@ -77,18 +87,7 @@ fun ConversationView(conversationId: Long, uri: String? = null) {
         if (uri != null && viewModel.uri != uri) navigateToSendMedia(uri.toUri())
         viewModel.uri = uri
     }
-    val emojiKeyboardOpened = remember { mutableStateOf(false) }
     val lazyListState = rememberLazyListState()
-    viewModel.events.collectEvents {
-        when (it) {
-            is OnMessageSent -> {
-                keyboardController?.hide()
-                emojiKeyboardOpened.value = false
-                playMessageSound(context)
-                while (lazyListState.firstVisibleItemIndex != 0) lazyListState.animateScrollToItem(0)
-            }
-        }
-    }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = object : DefaultLifecycleObserver {
@@ -103,7 +102,26 @@ fun ConversationView(conversationId: Long, uri: String? = null) {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-    viewModel.state.collectState { Content(it, lazyListState, emojiKeyboardOpened, viewModel, navigateToSendMedia) }
+    viewModel.events.collectEvents {
+        when (it) {
+            is OnMessageSent -> {
+                keyboardController?.hide()
+                emojiKeyboardOpened.value = false
+                playMessageSound(context)
+                while (lazyListState.firstVisibleItemIndex != 0) lazyListState.animateScrollToItem(0)
+            }
+        }
+    }
+    viewModel.state.collectState {
+        Content(
+            state = it,
+            lazyListState = lazyListState,
+            keyboardState = keyboardState,
+            emojiKeyboardOpened = emojiKeyboardOpened,
+            viewModel = viewModel,
+            navigateToSendMedia = navigateToSendMedia
+        )
+    }
 }
 
 @Preview
@@ -112,6 +130,7 @@ fun ConversationView(conversationId: Long, uri: String? = null) {
 private fun Content(
     state: DialogState = testDialogUiState,
     lazyListState: LazyListState = rememberLazyListState(),
+    keyboardState: KeyboardState = KeyboardState(),
     emojiKeyboardOpened: MutableState<Boolean> = mutableStateOf(false),
     viewModel: ConversationViewModel? = null,
     navigateToSendMedia: (Uri?) -> Unit = { }
@@ -160,77 +179,81 @@ private fun Content(
             )
         }
     ) { padding ->
-        val keyboardState by keyboardAsState()
-        Column(
-            modifier = Modifier
+        val emojiKeyboardVisible = emojiKeyboardOpened.value && !keyboardState.opened
+        ConstraintLayout(
+            Modifier
                 .padding(padding)
-                .fillMaxSize(),
+                .fillMaxSize()
         ) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.BottomEnd
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Box(
-                        Modifier
-                            .weight(1f)
-                            .padding(start = 4.dp, end = 4.dp),
-                        contentAlignment = Alignment.BottomStart
-                    ) {
-                        state.messagesFlow?.let {
-                            MessagesList(
-                                messagesFlow = it,
-                                lazyListState = lazyListState,
-                                selectedMessages = state.selectedMessages,
-                                playingState = state.playingState,
-                                play = play,
-                                messageDisplayed = remember { { viewModel?.messageDisplayed(it) } },
-                                selectMessage = remember { { viewModel?.selectMessage(it) } },
-                                setReplyMessage = remember { { viewModel?.setReplyMessage(it) } },
-                                messageOnClick = remember {
-                                    {
-                                        when {
-                                            it.video != null -> videoOnClick(it, context, navController)
-                                            it.image != null -> imageOnClick(it, navController)
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                        state.replyMessage?.let {
-                            ReplyLayout(
-                                replyMessage = it,
-                                playingState = state.playingState,
-                                play = play,
-                                clear = remember { { viewModel?.clearReplyMessage() } }
-                            )
+            val (messages, reply, input, fab, emojiKeyboard) = createRefs()
+            state.messagesFlow?.let {
+                MessagesList(
+                    modifier = Modifier.constrainAs(messages) {
+                        top.linkTo(parent.top)
+                        bottom.linkTo(input.top)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                        width = Dimension.fillToConstraints
+                        height = Dimension.fillToConstraints
+                    },
+                    messagesFlow = it,
+                    lazyListState = lazyListState,
+                    selectedMessages = state.selectedMessages,
+                    playingState = state.playingState,
+                    play = play,
+                    messageDisplayed = remember { { viewModel?.messageDisplayed(it) } },
+                    selectMessage = remember { { viewModel?.selectMessage(it) } },
+                    setReplyMessage = remember { { viewModel?.setReplyMessage(it) } },
+                    messageOnClick = remember {
+                        {
+                            when {
+                                it.video != null -> videoOnClick(it, context, navController)
+                                it.image != null -> imageOnClick(it, navController)
+                            }
                         }
                     }
-                    ConversationInput(
-                        inputState = state.inputState,
-                        playingState = state.playingState,
-                        emojiKeyboardOpened = emojiKeyboardOpened,
-                        isKeyboardOpened = keyboardState.opened,
-                        playOnClick = remember { { audioFile, messageId -> viewModel?.play(audioFile, messageId) } },
-                        onTextChanged = remember { { viewModel?.textChanged(it) } },
-                        onClear = remember { { viewModel?.resetInputState() } }
-                    )
-                }
-                FabsLayout(
-                    inputState = state.inputState.state,
-                    setPhotoPath = remember { { viewModel?.setPhotoPath(it) } },
-                    fabPressed = remember { { viewModel?.fabPressed() } },
-                    resetInputState = remember { { viewModel?.resetInputState() } },
-                    startRecording = remember { { viewModel?.startRecording() } },
-                    navigateToSendMedia = navigateToSendMedia
                 )
             }
-            if (emojiKeyboardOpened.value && !keyboardState.opened)
+            state.replyMessage?.let {
+                ReplyLayout(
+                    modifier = Modifier.constrainAs(reply) {
+                        bottom.linkTo(input.top)
+                        start.linkTo(parent.start)
+                    },
+                    replyMessage = it,
+                    playingState = state.playingState,
+                    play = play,
+                    clear = remember { { viewModel?.clearReplyMessage() } }
+                )
+            }
+            ConversationInput(
+                modifier = Modifier.constrainAs(input) {
+                    bottom.linkTo(if (emojiKeyboardVisible) emojiKeyboard.top else parent.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(fab.start)
+                    width = Dimension.fillToConstraints
+                },
+                inputState = state.inputState,
+                playingState = state.playingState,
+                emojiKeyboardOpened = emojiKeyboardOpened,
+                isKeyboardOpened = keyboardState.opened,
+                playOnClick = remember { { audioFile, messageId -> viewModel?.play(audioFile, messageId) } },
+                onTextChanged = remember { { viewModel?.textChanged(it) } },
+                onClear = remember { { viewModel?.resetInputState() } }
+            )
+            FabsLayout(
+                modifier = Modifier.constrainAs(fab) {
+                    bottom.linkTo(if (emojiKeyboardVisible) emojiKeyboard.top else parent.bottom)
+                    end.linkTo(parent.end)
+                },
+                inputState = state.inputState.state,
+                setPhotoPath = remember { { viewModel?.setPhotoPath(it) } },
+                fabPressed = remember { { viewModel?.fabPressed() } },
+                resetInputState = remember { { viewModel?.resetInputState() } },
+                startRecording = remember { { viewModel?.startRecording() } },
+                navigateToSendMedia = navigateToSendMedia
+            )
+            if (emojiKeyboardVisible)
                 AndroidView(
                     factory = { context ->
                         EmojiPickerView(context).apply {
@@ -240,7 +263,12 @@ private fun Content(
                         }
                     },
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .constrainAs(emojiKeyboard) {
+                            bottom.linkTo(parent.bottom)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                            width = Dimension.fillToConstraints
+                        }
                         .heightIn(max = keyboardState.height.dp),
                 )
         }
@@ -249,6 +277,7 @@ private fun Content(
 
 @Composable
 private fun ReplyLayout(
+    modifier: Modifier = Modifier,
     replyMessage: Message,
     playingState: PlayingState?,
     play: (String?, String?) -> Unit,
@@ -264,7 +293,7 @@ private fun ReplyLayout(
             }
         }
     Card(
-        modifier = Modifier.padding(bottom = 4.dp),
+        modifier = modifier.padding(bottom = 4.dp),
         shape = RoundedCornerShape(6.dp),
         elevation = 1.dp,
         backgroundColor = colorResource(id = R.color.time_message_color)
@@ -281,6 +310,7 @@ private fun ReplyLayout(
 
 @Composable
 private fun FabsLayout(
+    modifier: Modifier = Modifier,
     inputState: InputState.State = InputState.State.INITIAL,
     setPhotoPath: (String) -> Unit,
     fabPressed: () -> Unit,
@@ -309,6 +339,7 @@ private fun FabsLayout(
         if (it) startRecording()
     }
     InputFabs(
+        modifier = modifier,
         inputState = inputState,
         onClick = fabPressed,
         onVoice = remember {
@@ -332,6 +363,7 @@ private fun FabsLayout(
 @ExperimentalMaterialApi
 @Composable
 private fun MessagesList(
+    modifier: Modifier = Modifier,
     messagesFlow: ImmutableFlow<PagingData<Any>> = ImmutableFlow(flowOf(PagingData.from(listOf(testMessage)))),
     lazyListState: LazyListState = rememberLazyListState(),
     selectedMessages: ImmutableList<Message>,
@@ -344,7 +376,7 @@ private fun MessagesList(
 ) {
     val lazyPagingItems = messagesFlow.collectAsLazyPagingItems()
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
         state = lazyListState,
         reverseLayout = true,
     ) {

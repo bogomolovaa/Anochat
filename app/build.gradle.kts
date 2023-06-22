@@ -140,6 +140,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.6.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0-alpha01")
     implementation("com.google.accompanist:accompanist-navigation-animation:0.31.3-beta")
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
 
     testImplementation("junit:junit:4.13.2")

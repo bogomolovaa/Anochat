@@ -39,7 +39,7 @@ data class KeyboardState(
 )
 
 @Composable
-fun keyboardAsState(): State<KeyboardState> {
+fun keyboardAsState(onChange: (Boolean) -> Unit = {}): State<KeyboardState> {
     val keyboardState = remember { mutableStateOf(KeyboardState()) }
     val view = LocalView.current
     val density = LocalDensity.current.density
@@ -47,6 +47,7 @@ fun keyboardAsState(): State<KeyboardState> {
         var height = KeyboardState().height
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val opened = insets.isVisible(WindowInsetsCompat.Type.ime())
+            if (opened != keyboardState.value.opened) onChange(opened)
             val keyboardHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
             val navbarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
             val newHeight = ((keyboardHeight - navbarHeight) / density).toInt()
