@@ -70,6 +70,7 @@ private fun Content(
 ) {
     val focusRequester = remember { FocusRequester() }
     Scaffold(
+        modifier = InsetsModifier,
         topBar = {
             TopAppBar(
                 title = {

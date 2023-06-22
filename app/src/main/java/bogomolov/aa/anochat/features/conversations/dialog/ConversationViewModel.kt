@@ -136,6 +136,11 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
+
+    fun appendText(symbol: String) {
+        textChanged(currentState.inputState.text + symbol)
+    }
+
     fun textChanged(enteredText: String) {
         viewModelScope.launch {
             if (enteredText.isNotEmpty()) {

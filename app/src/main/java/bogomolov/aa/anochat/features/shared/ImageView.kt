@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
@@ -132,17 +133,11 @@ fun ImageView(imageName: String) {
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    modifier = Modifier
-                        .clickable { navController?.popBackStack() },
-                    imageVector = Icons.Filled.ArrowBack,
-                    tint = Color.White,
-                    contentDescription = "Back"
-                )
+                BackButton(onClick = remember { { navController?.popBackStack() } })
                 Icon(
                     modifier = Modifier
                         .size(32.dp)
-                        .clickable { share(imageName, context) },
+                        .clickable(onClick = remember { { share(imageName, context) } }),
                     imageVector = Icons.Filled.Share,
                     tint = Color.White,
                     contentDescription = "Share"
@@ -160,5 +155,20 @@ private fun share(imageName: String, context: Context) {
         if (!uriWithSource.fromGallery) intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val title = context.resources.getString(R.string.share_image)
         context.startActivity(Intent.createChooser(intent, title))
+    }
+}
+
+@Composable
+fun BackButton(onClick: () -> Unit) {
+    IconButton(
+        modifier = Modifier
+            .size(32.dp),
+        onClick = onClick
+    ) {
+        Icon(
+            imageVector = Icons.Filled.ArrowBack,
+            tint = Color.White,
+            contentDescription = "Back"
+        )
     }
 }

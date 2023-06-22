@@ -9,8 +9,9 @@ import android.os.Parcelable
 import android.view.View
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.emoji.bundled.BundledEmojiCompatConfig
-import androidx.emoji.text.EmojiCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavController
 import androidx.work.*
 import bogomolov.aa.anochat.AnochatAplication
@@ -18,8 +19,6 @@ import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.features.contacts.UpdateWorker
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.repository.Firebase
-import com.vanniktech.emoji.EmojiManager
-import com.vanniktech.emoji.ios.IosEmojiProvider
 import dagger.hilt.android.AndroidEntryPoint
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
@@ -46,8 +45,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //emojiSupport()
         startWorkManager()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             NavGraph({ this@MainActivity }) {
@@ -83,8 +82,8 @@ class MainActivity : AppCompatActivity() {
     private fun addSignInListener(navController: NavController) {
         navController.addOnDestinationChangedListener { controller, destination, _ ->
             when (destination.route) {
-                "image?name={name}", "video?uri={uri}" -> setFullScreen()
-                else -> removeFullScreen()
+                "image?name={name}", "video?uri={uri}" -> setFullScreen(true)
+                else -> setFullScreen(false)
             }
             if (destination.route != "login" && !authRepository.isSignedIn())
                 navigateToSignIn(controller)
@@ -113,26 +112,11 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun emojiSupport() {
-        val config = BundledEmojiCompatConfig(applicationContext)
-        EmojiCompat.init(config)
-        EmojiManager.install(IosEmojiProvider())
-    }
-
-    private fun setFullScreen() {
-        window.apply {
-            decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_FULLSCREEN)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) setDecorFitsSystemWindows(true)
+    private fun setFullScreen(enabled: Boolean) {
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }.apply {
+            WindowInsetsCompat.Type.systemBars().let { if (enabled) hide(it) else show(it) }
         }
-    }
-
-    private fun removeFullScreen() {
-        window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
     }
 }

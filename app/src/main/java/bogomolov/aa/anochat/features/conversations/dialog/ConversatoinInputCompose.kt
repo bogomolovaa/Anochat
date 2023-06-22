@@ -12,17 +12,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.outlined.ArrowDropDown
+import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment.Companion.BottomCenter
 import androidx.compose.ui.Alignment.Companion.CenterVertically
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
@@ -40,15 +42,18 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ConversationInput(
     inputState: InputState = testDialogUiState.inputState,
     playingState: PlayingState? = testPlayingState,
+    emojiKeyboardOpened: MutableState<Boolean> = mutableStateOf(false),
+    isKeyboardOpened: Boolean = false,
     playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> },
     onTextChanged: (String) -> Unit = {},
-    onClear: () -> Unit = {},
-    emojiOnClick: () -> Unit = {}
+    onClear: () -> Unit = {}
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
     Row(
         modifier = Modifier
             .padding(end = 64.dp)
@@ -62,23 +67,23 @@ fun ConversationInput(
                     shape = RoundedCornerShape(25.dp),
                     color = Color.White
                 ) {
-                    /*
-                    Icon(
-                        modifier = Modifier
-                            .padding(start = 8.dp, top = 15.dp)
-                            .clickable {
-                                emojiOnClick()
-                            },
-                        imageVector = Icons.Outlined.EmojiEmotions,
-                        contentDescription = null
-                    )
-                     */
                     TextField(
                         value = inputState.text,
                         onValueChange = { onTextChanged(it) },
+                        leadingIcon = {
+                            Icon(
+                                modifier = Modifier
+                                    .clickable {
+                                        emojiKeyboardOpened.value = !emojiKeyboardOpened.value || isKeyboardOpened
+                                        if (emojiKeyboardOpened.value) keyboardController?.hide()
+                                    },
+                                imageVector = if (!emojiKeyboardOpened.value || isKeyboardOpened) Icons.Outlined.EmojiEmotions else Icons.Outlined.ArrowDropDown,
+                                contentDescription = null
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 12.dp),
+                            .padding(start = 4.dp),
                         maxLines = 5,
                         placeholder = {
                             Text(stringResource(id = R.string.enter_message))
@@ -124,7 +129,6 @@ fun ConversationInput(
             }
         }
     }
-
 }
 
 @Composable

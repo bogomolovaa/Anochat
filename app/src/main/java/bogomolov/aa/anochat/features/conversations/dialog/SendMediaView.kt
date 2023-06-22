@@ -51,6 +51,7 @@ fun SendMediaView() {
 private fun Content(state: DialogState, submit: () -> Unit) {
     val navController = LocalNavController.current
     Scaffold(
+        modifier = InsetsModifier,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = if (state.isVideo) R.string.send_media_video else R.string.send_media_image)) },

@@ -100,13 +100,7 @@ fun VideoView(uri: String) {
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(
-                modifier = Modifier
-                    .clickable(onClick = remember { { navController?.popBackStack() } }),
-                imageVector = Icons.Filled.ArrowBack,
-                tint = Color.White,
-                contentDescription = "Back"
-            )
+            BackButton(onClick = remember { { navController?.popBackStack() } })
         }
     }
 }

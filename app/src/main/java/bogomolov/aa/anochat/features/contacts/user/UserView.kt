@@ -51,6 +51,7 @@ private fun Content(
     val context = LocalContext.current
     val navigate: (String) -> Unit = remember { { navController?.navigate(Route.Image.route(it)) } }
     Scaffold(
+        modifier = InsetsModifier,
         topBar = {
             TopAppBar(
                 title = { Text(state.user?.name ?: "") },

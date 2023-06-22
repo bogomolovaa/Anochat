@@ -77,6 +77,7 @@ private fun Content(
     val updateSettings: (Settings.() -> Settings) -> Unit = remember { { viewModel?.updateSettings(it) } }
     val updateUser: (User.() -> User) -> Unit = remember { { viewModel?.updateUser(it) } }
     BottomSheetScaffold(
+        modifier = InsetsModifier,
         sheetPeekHeight = 0.dp,
         scaffoldState = bottomSheetState,
         sheetContent = {

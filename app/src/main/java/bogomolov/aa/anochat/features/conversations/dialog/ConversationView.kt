@@ -31,8 +31,10 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import androidx.emoji2.emojipicker.EmojiPickerView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.*
 import androidx.navigation.NavController
@@ -75,11 +77,13 @@ fun ConversationView(conversationId: Long, uri: String? = null) {
         if (uri != null && viewModel.uri != uri) navigateToSendMedia(uri.toUri())
         viewModel.uri = uri
     }
+    val emojiKeyboardOpened = remember { mutableStateOf(false) }
     val lazyListState = rememberLazyListState()
     viewModel.events.collectEvents {
         when (it) {
             is OnMessageSent -> {
                 keyboardController?.hide()
+                emojiKeyboardOpened.value = false
                 playMessageSound(context)
                 while (lazyListState.firstVisibleItemIndex != 0) lazyListState.animateScrollToItem(0)
             }
@@ -99,7 +103,7 @@ fun ConversationView(conversationId: Long, uri: String? = null) {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-    viewModel.state.collectState { Content(it, lazyListState, viewModel, navigateToSendMedia) }
+    viewModel.state.collectState { Content(it, lazyListState, emojiKeyboardOpened, viewModel, navigateToSendMedia) }
 }
 
 @Preview
@@ -108,6 +112,7 @@ fun ConversationView(conversationId: Long, uri: String? = null) {
 private fun Content(
     state: DialogState = testDialogUiState,
     lazyListState: LazyListState = rememberLazyListState(),
+    emojiKeyboardOpened: MutableState<Boolean> = mutableStateOf(false),
     viewModel: ConversationViewModel? = null,
     navigateToSendMedia: (Uri?) -> Unit = { }
 ) {
@@ -116,6 +121,7 @@ private fun Content(
     val play: (String?, String?) -> Unit =
         remember { { audioFile, messageId -> viewModel?.play(audioFile, messageId) } }
     Scaffold(
+        modifier = InsetsModifier,
         topBar = {
             TopAppBar(
                 title = {
@@ -154,67 +160,89 @@ private fun Content(
             )
         }
     ) { padding ->
-        Box(
-            Modifier
+        val keyboardState by keyboardAsState()
+        Column(
+            modifier = Modifier
                 .padding(padding)
                 .fillMaxSize(),
-            contentAlignment = Alignment.BottomEnd
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Bottom
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.BottomEnd
             ) {
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .padding(start = 4.dp, end = 4.dp),
-                    contentAlignment = Alignment.BottomStart
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Bottom
                 ) {
-                    state.messagesFlow?.let {
-                        MessagesList(
-                            messagesFlow = it,
-                            lazyListState = lazyListState,
-                            selectedMessages = state.selectedMessages,
-                            playingState = state.playingState,
-                            play = play,
-                            messageDisplayed = remember { { viewModel?.messageDisplayed(it) } },
-                            selectMessage = remember { { viewModel?.selectMessage(it) } },
-                            setReplyMessage = remember { { viewModel?.setReplyMessage(it) } },
-                            messageOnClick = remember {
-                                {
-                                    when {
-                                        it.video != null -> videoOnClick(it, context, navController)
-                                        it.image != null -> imageOnClick(it, navController)
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .padding(start = 4.dp, end = 4.dp),
+                        contentAlignment = Alignment.BottomStart
+                    ) {
+                        state.messagesFlow?.let {
+                            MessagesList(
+                                messagesFlow = it,
+                                lazyListState = lazyListState,
+                                selectedMessages = state.selectedMessages,
+                                playingState = state.playingState,
+                                play = play,
+                                messageDisplayed = remember { { viewModel?.messageDisplayed(it) } },
+                                selectMessage = remember { { viewModel?.selectMessage(it) } },
+                                setReplyMessage = remember { { viewModel?.setReplyMessage(it) } },
+                                messageOnClick = remember {
+                                    {
+                                        when {
+                                            it.video != null -> videoOnClick(it, context, navController)
+                                            it.image != null -> imageOnClick(it, navController)
+                                        }
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
+                        state.replyMessage?.let {
+                            ReplyLayout(
+                                replyMessage = it,
+                                playingState = state.playingState,
+                                play = play,
+                                clear = remember { { viewModel?.clearReplyMessage() } }
+                            )
+                        }
                     }
-                    state.replyMessage?.let {
-                        ReplyLayout(
-                            replyMessage = it,
-                            playingState = state.playingState,
-                            play = play,
-                            clear = remember { { viewModel?.clearReplyMessage() } }
-                        )
-                    }
+                    ConversationInput(
+                        inputState = state.inputState,
+                        playingState = state.playingState,
+                        emojiKeyboardOpened = emojiKeyboardOpened,
+                        isKeyboardOpened = keyboardState.opened,
+                        playOnClick = remember { { audioFile, messageId -> viewModel?.play(audioFile, messageId) } },
+                        onTextChanged = remember { { viewModel?.textChanged(it) } },
+                        onClear = remember { { viewModel?.resetInputState() } }
+                    )
                 }
-                ConversationInput(
-                    inputState = state.inputState,
-                    playingState = state.playingState,
-                    playOnClick = remember { { audioFile, messageId -> viewModel?.play(audioFile, messageId) } },
-                    onTextChanged = remember { { viewModel?.textChanged(it) } },
-                    onClear = remember { { viewModel?.resetInputState() } }
+                FabsLayout(
+                    inputState = state.inputState.state,
+                    setPhotoPath = remember { { viewModel?.setPhotoPath(it) } },
+                    fabPressed = remember { { viewModel?.fabPressed() } },
+                    resetInputState = remember { { viewModel?.resetInputState() } },
+                    startRecording = remember { { viewModel?.startRecording() } },
+                    navigateToSendMedia = navigateToSendMedia
                 )
             }
-            FabsLayout(
-                inputState = state.inputState.state,
-                setPhotoPath = remember { { viewModel?.setPhotoPath(it) } },
-                fabPressed = remember { { viewModel?.fabPressed() } },
-                resetInputState = remember { { viewModel?.resetInputState() } },
-                startRecording = remember { { viewModel?.startRecording() } },
-                navigateToSendMedia = navigateToSendMedia
-            )
+            if (emojiKeyboardOpened.value && !keyboardState.opened)
+                AndroidView(
+                    factory = { context ->
+                        EmojiPickerView(context).apply {
+                            setOnEmojiPickedListener {
+                                viewModel?.appendText(it.emoji)
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = keyboardState.height.dp),
+                )
         }
     }
 }
@@ -399,7 +427,10 @@ private fun Message.getThumbnail() = image ?: video?.let { videoThumbnail(it) }
 
 private fun videoOnClick(message: Message, context: Context, navController: NavController?) {
     if (message.received == 1 || message.isMine)
-        getUriWithSource(message.video!!, context).uri?.let { navController?.navigate(Route.Video.route(it.toString())) }
+        getUriWithSource(
+            message.video!!,
+            context
+        ).uri?.let { navController?.navigate(Route.Video.route(it.toString())) }
 }
 
 private fun imageOnClick(message: Message, navController: NavController?) {
@@ -456,17 +487,6 @@ private fun Context.isVideo(mediaUri: Uri?) =
     } ?: false
 
 /*
-        //todo: setEmojiSizeRes
-        if (text.length in 1..2 && Character.isSurrogate(text[0])) {
-            binding.messageText.setEmojiSizeRes(R.dimen.message_one_emoji_size)
-        } else {
-            binding.messageText.setEmojiSizeRes(R.dimen.message_emoji_size)
-        }
-
-        //todo: messages menu
-        data.actionsMap[R.id.delete_messages_action] = { _, items ->
-            viewModel.deleteMessages(items.map { it.message.id }.toSet())
-        }
         data.actionsMap[R.id.reply_message_action] = { _, items ->
             if (items.isNotEmpty()) {
                 val message = items.last()

@@ -69,6 +69,7 @@ private fun Content(
     }
 
     Scaffold(
+        modifier = InsetsModifier,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.set_avatar)) },

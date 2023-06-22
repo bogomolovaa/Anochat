@@ -110,8 +110,8 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx:20.2.1")
     implementation("com.google.firebase:firebase-crashlytics-ktx:18.3.7")
 
-    implementation("com.vanniktech:emoji-ios:0.6.0")
     implementation("com.arthenica:mobile-ffmpeg-min-gpl:4.4.LTS")
+    implementation("androidx.emoji2:emoji2-emojipicker:1.4.0-beta05")
 
     implementation("androidx.hilt:hilt-navigation-fragment:1.0.0")
     implementation("androidx.hilt:hilt-work:1.0.0")

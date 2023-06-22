@@ -46,6 +46,7 @@ private fun Content(
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
     Scaffold(
+        modifier = InsetsModifier,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.sign_in)) }

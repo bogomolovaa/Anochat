@@ -37,6 +37,7 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.main.Route
+import bogomolov.aa.anochat.features.shared.InsetsModifier
 import bogomolov.aa.anochat.features.shared.collectState
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
 import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
@@ -64,6 +65,7 @@ private fun Content(
     val deleteConversation: (Long) -> Unit = remember { { viewModel?.deleteConversations(setOf(it)) } }
     val navigateConversation: (Long) -> Unit = remember { { navController?.navigate(Route.Conversation.route(it)) } }
     Scaffold(
+        modifier = InsetsModifier,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.app_name)) },
