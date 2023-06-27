@@ -7,8 +7,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.WindowManager
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -17,6 +17,7 @@ import androidx.work.*
 import bogomolov.aa.anochat.AnochatAplication
 import bogomolov.aa.anochat.domain.UserUseCases
 import bogomolov.aa.anochat.features.contacts.UpdateWorker
+import bogomolov.aa.anochat.features.main.theme.AppTheme
 import bogomolov.aa.anochat.features.shared.AuthRepository
 import bogomolov.aa.anochat.repository.Firebase
 import dagger.hilt.android.AndroidEntryPoint
@@ -25,7 +26,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
     @Inject
     internal lateinit var authRepository: AuthRepository
@@ -53,10 +54,12 @@ class MainActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
-            NavGraph({ this@MainActivity }) {
-                addSignInListener(it)
-                onSendAction(it, intent)
-                this@MainActivity.navController = it
+            AppTheme {
+                NavGraph({ this@MainActivity }) {
+                    addSignInListener(it)
+                    onSendAction(it, intent)
+                    this@MainActivity.navController = it
+                }
             }
         }
     }

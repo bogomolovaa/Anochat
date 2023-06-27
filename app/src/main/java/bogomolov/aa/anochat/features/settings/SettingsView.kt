@@ -12,7 +12,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
@@ -38,10 +38,11 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.main.Route
+import bogomolov.aa.anochat.features.main.theme.MyTopAppBar
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.launch
 
-@ExperimentalMaterialApi
+@ExperimentalMaterial3Api
 @Composable
 fun SettingsView() {
     val navController = LocalNavController.current
@@ -53,7 +54,7 @@ fun SettingsView() {
     viewModel.state.collectState { Content(it, viewModel) }
 }
 
-@ExperimentalMaterialApi
+@ExperimentalMaterial3Api
 @Preview
 @Composable
 private fun Content(
@@ -68,9 +69,9 @@ private fun Content(
         fileChooser.launch(Unit)
     }
     val writePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    val bottomSheetState = rememberBottomSheetScaffoldState()
+    val bottomSheetState = rememberBottomSheetScaffoldState(bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false))
     val coroutineScope = rememberCoroutineScope()
-    val collapse: () -> Unit = remember { { coroutineScope.launch { bottomSheetState.bottomSheetState.collapse() } } }
+    val collapse: () -> Unit = remember { { coroutineScope.launch { bottomSheetState.bottomSheetState.hide() } } }
     val expand: () -> Unit = remember { { coroutineScope.launch { bottomSheetState.bottomSheetState.expand() } } }
     val settingsText = rememberSaveable { mutableStateOf("") }
     val settingsEditType = rememberSaveable { mutableStateOf<SettingEditType?>(null) }
@@ -89,7 +90,7 @@ private fun Content(
             )
         },
         topBar = {
-            TopAppBar(
+            MyTopAppBar(
                 title = { Text(stringResource(id = R.string.settings)) },
                 navigationIcon = {
                     IconButton(
@@ -99,10 +100,14 @@ private fun Content(
                     }
                 }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+        sheetContainerColor = MaterialTheme.colorScheme.primaryContainer
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .padding(top = it.calculateTopPadding())
+                .fillMaxSize()
         ) {
             if (state.user == null)
                 LinearProgressIndicator(
@@ -145,7 +150,7 @@ private fun UserInfoCompose(
     ) {
         Text(
             text = user?.phone ?: "",
-            fontSize = 16.sp
+            fontSize = MaterialTheme.typography.titleMedium.fontSize
         )
         Row(
             modifier = Modifier
@@ -155,7 +160,7 @@ private fun UserInfoCompose(
         ) {
             Text(
                 text = user?.name ?: "",
-                fontSize = 20.sp,
+                fontSize = MaterialTheme.typography.titleLarge.fontSize,
                 fontWeight = FontWeight.Bold,
             )
             Icon(
@@ -174,7 +179,7 @@ private fun UserInfoCompose(
         ) {
             Text(
                 user?.status ?: "",
-                fontSize = 16.sp,
+                fontSize = MaterialTheme.typography.titleMedium.fontSize,
             )
             Icon(
                 imageVector = Icons.Filled.Edit,
@@ -284,58 +289,64 @@ private fun BottomSheetContent(
     collapse: () -> Unit,
     updateUser: (User.() -> User) -> Unit
 ) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-    ) {
-        TextField(
-            modifier = Modifier.padding(start = 16.dp, top = 16.dp),
-            value = settingsText.value,
-            onValueChange = { settingsText.value = it },
-            label = {
-                settingsEditType.value?.let {
-                    Text(
-                        text = stringResource(
-                            when (it) {
-                                SettingEditType.EDIT_USERNAME -> R.string.enter_new_name
-                                SettingEditType.EDIT_STATUS -> R.string.enter_new_status
-                            }
+    Column(Modifier.navigationBarsPadding().imePadding()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+        ) {
+            TextField(
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+                value = settingsText.value,
+                onValueChange = { settingsText.value = it },
+                label = {
+                    settingsEditType.value?.let {
+                        Text(
+                            text = stringResource(
+                                when (it) {
+                                    SettingEditType.EDIT_USERNAME -> R.string.enter_new_name
+                                    SettingEditType.EDIT_STATUS -> R.string.enter_new_status
+                                }
+                            )
                         )
-                    )
-                }
-            },
-            colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent)
-        )
-    }
-    Row(
-        Modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.End
-    ) {
-        Button(
-            modifier = Modifier.padding(16.dp),
-            onClick = {
-                settingsEditType.value?.let {
-                    if (settingsText.value.isNotEmpty())
-                        when (it) {
-                            SettingEditType.EDIT_USERNAME -> updateUser { copy(name = settingsText.value) }
-                            SettingEditType.EDIT_STATUS -> updateUser { copy(status = settingsText.value) }
-                        }
-                }
-                settingsEditType.value = null
-                collapse()
-            }
-        ) {
-            Text(text = stringResource(id = R.string.save))
+                    }
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent
+                )
+            )
         }
-        Button(
-            modifier = Modifier.padding(16.dp),
-            onClick = {
-                settingsEditType.value = null
-                collapse()
-            }
+        Row(
+            Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
         ) {
-            Text(text = stringResource(id = R.string.cancel))
+            Button(
+                modifier = Modifier.padding(16.dp),
+                onClick = {
+                    settingsEditType.value?.let {
+                        if (settingsText.value.isNotEmpty())
+                            when (it) {
+                                SettingEditType.EDIT_USERNAME -> updateUser { copy(name = settingsText.value) }
+                                SettingEditType.EDIT_STATUS -> updateUser { copy(status = settingsText.value) }
+                            }
+                    }
+                    settingsEditType.value = null
+                    collapse()
+                }
+            ) {
+                Text(text = stringResource(id = R.string.save))
+            }
+            Button(
+                modifier = Modifier.padding(16.dp),
+                onClick = {
+                    settingsEditType.value = null
+                    collapse()
+                }
+            ) {
+                Text(text = stringResource(id = R.string.cancel))
+            }
         }
     }
 }

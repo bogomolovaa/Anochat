@@ -2,11 +2,8 @@ package bogomolov.aa.anochat.features.login
 
 import android.app.Activity
 import android.content.Context
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
@@ -24,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.main.Route
+import bogomolov.aa.anochat.features.main.theme.MyTopAppBar
 import bogomolov.aa.anochat.features.shared.*
 
 @Composable
@@ -36,6 +34,7 @@ fun SignInView(getActivity: (() -> Activity)?) {
     viewModel.state.collectState { Content(it, viewModel, getActivity) }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun Content(
@@ -46,9 +45,9 @@ private fun Content(
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
     Scaffold(
-        modifier = InsetsModifier,
+        modifier = Modifier.imePadding(),
         topBar = {
-            TopAppBar(
+            MyTopAppBar(
                 title = { Text(stringResource(id = R.string.sign_in)) }
             )
         },
@@ -91,12 +90,15 @@ private fun Content(
                             } else {
                                 Text(
                                     text = stringResource(id = R.string.phone_number),
-                                    color = LightColorPalette.secondary
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             }
                         },
                         isError = phoneErrorMessage != null,
-                        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent)
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        )
                     )
                     if (state.state.ordinal >= LoginState.VERIFICATION_ID_RECEIVED.ordinal) {
                         val codeErrorMessage = codeInputErrorMessage(state, context)
@@ -114,12 +116,15 @@ private fun Content(
                                 } else {
                                     Text(
                                         stringResource(id = R.string.verification_code),
-                                        color = LightColorPalette.secondary
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             },
                             isError = codeErrorMessage != null,
-                            colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent)
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent
+                            )
                         )
                         SideEffect {
                             focusRequester.requestFocus()

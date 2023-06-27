@@ -1,14 +1,17 @@
 package bogomolov.aa.anochat.features.main
 
 import android.app.Activity
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.navArgument
@@ -22,7 +25,6 @@ import bogomolov.aa.anochat.features.login.SignInView
 import bogomolov.aa.anochat.features.settings.MiniatureView
 import bogomolov.aa.anochat.features.settings.SettingsView
 import bogomolov.aa.anochat.features.shared.ImageView
-import bogomolov.aa.anochat.features.shared.LightColorPalette
 import bogomolov.aa.anochat.features.shared.VideoView
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
@@ -72,7 +74,7 @@ sealed class Route(val base: String, private val params: String = "") {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun NavGraph(getActivity: (() -> Activity)?, onInit: (NavController) -> Unit) {
     val navController = rememberAnimatedNavController()
@@ -82,69 +84,65 @@ fun NavGraph(getActivity: (() -> Activity)?, onInit: (NavController) -> Unit) {
         LaunchedEffect(0) {
             onInit(navController)
         }
-        MaterialTheme(
-            colors = LightColorPalette
-        ) {
-            AnimatedNavHost(
-                navController = navController,
-                startDestination = Route.Conversations.route,
-                enterTransition = { defaultEnterTransition },
-                exitTransition = { defaultExitTransition }) {
-                composable(Route.Conversations.route) { ConversationsView() }
-                navigation(startDestination = Route.Conversation.route, route = Route.Conversation.navGraphRoute) {
-                    composable(
-                        Route.Conversation.route,
-                        arguments = listOf(navArgument("uri") { nullable = true }),
-                        deepLinks = listOf(navDeepLink {
-                            uriPattern = Route.Conversation.deeplink
-                        }),
-                        enterTransition = {
-                            if (initialState.destination.route == Route.Conversations.route) {
-                                slideIntoContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Left,
-                                    animationSpec = tween(300)
-                                )
-                            } else defaultEnterTransition
-                        },
-                        exitTransition = {
-                            if (targetState.destination.route == Route.Conversations.route) {
-                                slideOutOfContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Right,
-                                    animationSpec = tween(300)
-                                )
-                            } else defaultExitTransition
-                        }
-                    ) {
-                        val conversationId = it.arguments?.getString("id")?.toLong()!!
-                        val uri = it.arguments?.getString("uri")
-                        ConversationView(conversationId, uri)
-                    }
-                    composable(Route.Media.route) { SendMediaView() }
-                }
-                navigation(startDestination = Route.Settings.route, route = Route.Settings.navGraphRoute) {
-                    composable(Route.Settings.route) { SettingsView() }
-                    composable(Route.Miniature.route) { MiniatureView() }
-                }
-                composable(Route.User.route) {
-                    val userId = it.arguments?.getString("id")?.toLong()!!
-                    UserView(userId)
-                }
+        AnimatedNavHost(
+            navController = navController,
+            startDestination = Route.Conversations.route,
+            enterTransition = { defaultEnterTransition },
+            exitTransition = { defaultExitTransition }) {
+            composable(Route.Conversations.route) { ConversationsView() }
+            navigation(startDestination = Route.Conversation.route, route = Route.Conversation.navGraphRoute) {
                 composable(
-                    Route.Users.route,
-                    arguments = listOf(navArgument("uri") { nullable = true })
+                    Route.Conversation.route,
+                    arguments = listOf(navArgument("uri") { nullable = true }),
+                    deepLinks = listOf(navDeepLink {
+                        uriPattern = Route.Conversation.deeplink
+                    }),
+                    enterTransition = {
+                        if (initialState.destination.route == Route.Conversations.route) {
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(300)
+                            )
+                        } else defaultEnterTransition
+                    },
+                    exitTransition = {
+                        if (targetState.destination.route == Route.Conversations.route) {
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(300)
+                            )
+                        } else defaultExitTransition
+                    }
                 ) {
+                    val conversationId = it.arguments?.getString("id")?.toLong()!!
                     val uri = it.arguments?.getString("uri")
-                    UsersView(uri)
+                    ConversationView(conversationId, uri)
                 }
-                composable(Route.Image.route) {
-                    val image = it.arguments?.getString("name")!!
-                    ImageView(image)
-                }
-                composable(Route.Video.route) {
-                    it.arguments?.getString("uri")?.let { VideoView(it) }
-                }
-                composable(Route.Login.route) { SignInView(getActivity) }
+                composable(Route.Media.route) { SendMediaView() }
             }
+            navigation(startDestination = Route.Settings.route, route = Route.Settings.navGraphRoute) {
+                composable(Route.Settings.route) { SettingsView() }
+                composable(Route.Miniature.route) { MiniatureView() }
+            }
+            composable(Route.User.route) {
+                val userId = it.arguments?.getString("id")?.toLong()!!
+                UserView(userId)
+            }
+            composable(
+                Route.Users.route,
+                arguments = listOf(navArgument("uri") { nullable = true })
+            ) {
+                val uri = it.arguments?.getString("uri")
+                UsersView(uri)
+            }
+            composable(Route.Image.route) {
+                val image = it.arguments?.getString("name")!!
+                ImageView(image)
+            }
+            composable(Route.Video.route) {
+                it.arguments?.getString("uri")?.let { VideoView(it) }
+            }
+            composable(Route.Login.route) { SignInView(getActivity) }
         }
     }
 }

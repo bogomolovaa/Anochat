@@ -16,20 +16,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -43,11 +42,13 @@ import androidx.lifecycle.*
 import androidx.navigation.NavController
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.main.Route
+import bogomolov.aa.anochat.features.main.theme.MyTopAppBar
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
@@ -60,7 +61,7 @@ import java.util.*
 private const val TAG = "ConversationView"
 
 @ExperimentalComposeUiApi
-@ExperimentalMaterialApi
+@ExperimentalMaterial3Api
 @Composable
 fun ConversationView(conversationId: Long, uri: String? = null) {
     val navController = LocalNavController.current
@@ -105,10 +106,10 @@ fun ConversationView(conversationId: Long, uri: String? = null) {
     viewModel.events.collectEvents {
         when (it) {
             is OnMessageSent -> {
-                keyboardController?.hide()
-                emojiKeyboardOpened.value = false
                 playMessageSound(context)
                 while (lazyListState.firstVisibleItemIndex != 0) lazyListState.animateScrollToItem(0)
+                keyboardController?.hide()
+                emojiKeyboardOpened.value = false
             }
         }
     }
@@ -124,8 +125,7 @@ fun ConversationView(conversationId: Long, uri: String? = null) {
     }
 }
 
-@Preview
-@ExperimentalMaterialApi
+@ExperimentalMaterial3Api
 @Composable
 private fun Content(
     state: DialogState = testDialogUiState,
@@ -142,32 +142,31 @@ private fun Content(
     Scaffold(
         modifier = InsetsModifier,
         topBar = {
-            TopAppBar(
+            MyTopAppBar(
                 title = {
-                    Row {
-                        state.conversation?.let {
-                            UserNameLayout(
-                                userStatus = state.userStatus,
-                                conversation = it,
-                                onClick = remember { { navController?.navigate(Route.User.route(it.user.id)) } }
+                    state.conversation?.let {
+                        UserNameLayout(
+                            userStatus = state.userStatus,
+                            conversation = it,
+                            onClick = remember { { navController?.navigate(Route.User.route(it.user.id)) } }
+                        )
+                    }
+                },
+                actions = {
+                    if (state.selectedMessages.isNotEmpty()) {
+                        IconButton(
+                            onClick = remember { { viewModel?.deleteMessages() } }) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "Clear"
                             )
                         }
-                        if (state.selectedMessages.isNotEmpty()) {
-                            Spacer(Modifier.weight(1f))
-                            IconButton(
-                                onClick = remember { { viewModel?.deleteMessages() } }) {
-                                Icon(
-                                    imageVector = Icons.Filled.Delete,
-                                    contentDescription = "Clear"
-                                )
-                            }
-                            IconButton(
-                                onClick = remember { { viewModel?.clearMessages() } }) {
-                                Icon(
-                                    imageVector = Icons.Filled.Clear,
-                                    contentDescription = "Clear"
-                                )
-                            }
+                        IconButton(
+                            onClick = remember { { viewModel?.clearMessages() } }) {
+                            Icon(
+                                imageVector = Icons.Filled.Clear,
+                                contentDescription = "Clear"
+                            )
                         }
                     }
                 },
@@ -182,7 +181,7 @@ private fun Content(
         val emojiKeyboardVisible = emojiKeyboardOpened.value && !keyboardState.opened
         ConstraintLayout(
             Modifier
-                .padding(padding)
+                .padding(top = padding.calculateTopPadding())
                 .fillMaxSize()
         ) {
             val (messages, reply, input, fab, emojiKeyboard) = createRefs()
@@ -275,13 +274,14 @@ private fun Content(
     }
 }
 
+@Preview
 @Composable
 private fun ReplyLayout(
     modifier: Modifier = Modifier,
-    replyMessage: Message,
-    playingState: PlayingState?,
-    play: (String?, String?) -> Unit,
-    clear: () -> Unit
+    replyMessage: Message = testMessage,
+    playingState: PlayingState? = null,
+    play: (String?, String?) -> Unit = { _, _ -> },
+    clear: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val bitmap = remember { mutableStateOf<Bitmap?>(null) }
@@ -293,12 +293,13 @@ private fun ReplyLayout(
             }
         }
     Card(
-        modifier = modifier.padding(bottom = 4.dp),
-        shape = RoundedCornerShape(6.dp),
-        elevation = 1.dp,
-        backgroundColor = colorResource(id = R.color.time_message_color)
+        modifier = modifier
+            .padding(bottom = 4.dp)
+            .shadow(shape = MaterialTheme.shapes.small, spotColor = Color.Black, elevation = 2.dp),
+        shape = MaterialTheme.shapes.small
     ) {
         ReplyMessage(
+            modifier = Modifier.widthIn(min = 120.dp, max = 258.dp),
             message = replyMessage,
             bitmap = bitmap,
             replyPlayingState = if (playingState?.messageId == replyMessage.messageId) playingState else null,
@@ -360,7 +361,7 @@ private fun FabsLayout(
     )
 }
 
-@ExperimentalMaterialApi
+@ExperimentalMaterial3Api
 @Composable
 private fun MessagesList(
     modifier: Modifier = Modifier,
@@ -375,6 +376,11 @@ private fun MessagesList(
     messageOnClick: (Message) -> Unit
 ) {
     val lazyPagingItems = messagesFlow.collectAsLazyPagingItems()
+    LaunchedEffect(messagesFlow) {
+        snapshotFlow { lazyPagingItems.itemCount }.collect {
+            if (lazyListState.firstVisibleItemIndex == 0) lazyListState.animateScrollToItem(0)
+        }
+    }
     LazyColumn(
         modifier = modifier,
         state = lazyListState,
@@ -388,7 +394,8 @@ private fun MessagesList(
                     is DateDelimiter -> it.time
                     else -> Unit
                 }
-            }
+            },
+            contentType = lazyPagingItems.itemContentType { if (it is Message) 0 else 1 }
         ) { index ->
             lazyPagingItems[index]?.let {
                 when (it) {
@@ -409,7 +416,7 @@ private fun MessagesList(
     }
 }
 
-@ExperimentalMaterialApi
+@ExperimentalMaterial3Api
 @Composable
 private fun ShowMessage(
     message: Message = testMessage,

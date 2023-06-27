@@ -5,7 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
@@ -30,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.main.Route
+import bogomolov.aa.anochat.features.main.theme.MyTopAppBar
 import bogomolov.aa.anochat.features.shared.*
 
 @Composable
@@ -43,6 +44,7 @@ fun MiniatureView() {
     viewModel.state.collectState { Content(it, viewModel) }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun Content(
@@ -69,9 +71,8 @@ private fun Content(
     }
 
     Scaffold(
-        modifier = InsetsModifier,
         topBar = {
-            TopAppBar(
+            MyTopAppBar(
                 title = { Text(stringResource(id = R.string.set_avatar)) },
                 navigationIcon = {
                     IconButton(onClick = remember { { navController?.popBackStack() } }) {
@@ -131,7 +132,7 @@ private fun SelectorShape(
     Box(contentAlignment = Alignment.TopStart, modifier = Modifier.fillMaxSize()) {
         Surface(
             shape = CircleShape,
-            border = BorderStroke(3.dp, LightColorPalette.primary),
+            border = BorderStroke(3.dp, MaterialTheme.colorScheme.primary),
             color = Color(0x00FFFFFF),
             modifier = Modifier
                 .size(

@@ -10,14 +10,14 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
@@ -37,8 +37,8 @@ import androidx.compose.ui.unit.sp
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.AttachmentStatus
 import bogomolov.aa.anochat.domain.entity.Message
-import bogomolov.aa.anochat.features.shared.LightColorPalette
-import kotlinx.coroutines.coroutineScope
+import bogomolov.aa.anochat.features.main.theme.REPORT_MESSAGE_COLOR0
+import bogomolov.aa.anochat.features.main.theme.REPORT_MESSAGE_COLOR1
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -46,6 +46,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ReplyMessage(
+    modifier: Modifier = Modifier,
     message: Message,
     bitmap: MutableState<Bitmap?> = mutableStateOf(null),
     replyPlayingState: PlayingState?,
@@ -53,38 +54,47 @@ fun ReplyMessage(
     onClear: (() -> Unit)? = null
 ) {
     Row(
-        modifier = Modifier
-            .background(color = colorResource(id = R.color.time_message_color))
-            .height(48.dp)
+        modifier = modifier
+            .background(color = MaterialTheme.colorScheme.surfaceVariant)
+            .height(48.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Surface(
-            modifier = Modifier
-                .width(4.dp)
-                .fillMaxHeight(), color = colorResource(R.color.colorAccent)
-        ) { }
-        if (message.audio != null) {
-            PlayAudio(replyPlayingState, message.audio, message.messageId, playOnClick)
-        } else {
-            if (message.text.isNotEmpty()) Text(
-                text = message.text,
-                style = TextStyle(fontSize = 14.sp),
+        Row {
+            Surface(
                 modifier = Modifier
-                    .padding(start = 4.dp, top = 6.dp, bottom = 6.dp, end = 4.dp)
-                    .widthIn(max = 300.dp),
-                maxLines = 2
-            )
-            bitmap.value?.let {
-                Image(
-                    modifier = Modifier.heightIn(max = 48.dp), bitmap = it.asImageBitmap(), contentDescription = null
-                )
+                    .width(4.dp)
+                    .fillMaxHeight(), color = MaterialTheme.colorScheme.secondary
+            ) { }
+            if (message.audio != null) {
+                PlayAudio(replyPlayingState, message.audio, message.messageId, playOnClick)
+            } else {
+                if (message.text.isNotEmpty())
+                    Text(
+                        text = message.text,
+                        style = TextStyle(fontSize = MaterialTheme.typography.bodyMedium.fontSize),
+                        modifier = Modifier
+                            .padding(start = 4.dp, top = 6.dp, bottom = 6.dp, end = 4.dp)
+                            .widthIn(max = 300.dp),
+                        maxLines = 2
+                    )
+                bitmap.value?.let {
+                    Image(
+                        modifier = Modifier.heightIn(max = 48.dp),
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = null
+                    )
+                }
             }
         }
-        if (onClear != null) Icon(imageVector = Icons.Filled.Clear,
-            contentDescription = null,
-            tint = Color.Red,
-            modifier = Modifier
-                .size(20.dp)
-                .clickable { onClear() })
+        if (onClear != null)
+            Icon(
+                imageVector = Icons.Filled.Clear,
+                contentDescription = null,
+                tint = Color.Red,
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable { onClear() }
+            )
     }
 
 }
@@ -102,7 +112,7 @@ fun PlayAudio(
     ) {
         Icon(imageVector = if (audio == null) Icons.Filled.ErrorOutline else if (state?.paused != false) Icons.Filled.PlayArrow else Icons.Filled.Pause,
             contentDescription = null,
-            tint = if (audio == null) Color.Red else Color.Black,
+            tint = if (audio == null) Color.Red else LocalContentColor.current,
             modifier = Modifier
                 .padding(start = 12.dp, top = 10.dp, bottom = 10.dp)
                 .size(36.dp)
@@ -159,16 +169,14 @@ fun DateDelimiterCompose(delimiter: DateDelimiter) {
         Card(
             modifier = Modifier
                 .padding(top = 8.dp, bottom = 4.dp)
-                .align(CenterHorizontally),
-            shape = RoundedCornerShape(6.dp),
-            elevation = 1.dp,
-            backgroundColor = colorResource(id = R.color.time_message_color)
+                .align(CenterHorizontally)
+                .shadow(shape = MaterialTheme.shapes.small, spotColor = Color.Black, elevation = 2.dp),
+            shape = MaterialTheme.shapes.small,
         ) {
             Text(
                 text = delimiter.time,
                 modifier = Modifier.padding(6.dp),
-                color = Color.DarkGray,
-                fontSize = 12.sp
+                fontSize = MaterialTheme.typography.bodyMedium.fontSize
             )
         }
     }
@@ -176,7 +184,7 @@ fun DateDelimiterCompose(delimiter: DateDelimiter) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Preview(widthDp = 320)
-@ExperimentalMaterialApi
+@ExperimentalMaterial3Api
 @Composable
 fun MessageCompose(
     message: Message = testMessage,
@@ -202,12 +210,13 @@ fun MessageCompose(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(colorResource(if (selected) R.color.selected_message_color else android.R.color.transparent))
+                .background(if (selected) MaterialTheme.colorScheme.tertiaryContainer else colorResource(android.R.color.transparent))
                 .padding(4.dp)
         ) {
             val coroutineScope = rememberCoroutineScope()
             Card(modifier = Modifier
                 .widthIn(min = 120.dp, max = 258.dp)
+                .width(IntrinsicSize.Max)
                 .align(if (message.isMine) Alignment.End else Alignment.Start)
                 .pointerInput(message.messageId) {
                     detectTapGestures(onLongPress = {
@@ -229,17 +238,17 @@ fun MessageCompose(
                         }
                     }
                 }
-                .offset { IntOffset(offsetX.value.roundToInt(), 0) },
-                shape = RoundedCornerShape(6.dp),
-                elevation = 1.dp,
-                backgroundColor = colorResource(
-                    id = if (message.isMine) R.color.my_message_color
-                    else R.color.not_my_message_color
+                .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                .shadow(shape = MaterialTheme.shapes.small, spotColor = Color.Black, elevation = 2.dp),
+                shape = MaterialTheme.shapes.small,
+                colors = CardDefaults.cardColors(
+                    containerColor = if (message.isMine) MaterialTheme.colorScheme.secondaryContainer
+                    else MaterialTheme.colorScheme.surface
                 )
             ) {
                 Column(modifier = Modifier.padding(4.dp)) {
                     message.replyMessage?.let {
-                        ReplyMessage(it, replyBitmap, replyPlayingState, playOnClick)
+                        ReplyMessage(Modifier.fillMaxWidth(), it, replyBitmap, replyPlayingState, playOnClick)
                     }
                     if (message.audio != null) {
                         PlayAudio(playingState, message.audio, message.messageId, playOnClick)
@@ -260,7 +269,7 @@ fun MessageCompose(
                                         Box(
                                             Modifier
                                                 .size(250.dp)
-                                                .background(colorResource(id = R.color.time_message_color))
+                                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                         ) {
 
                                         }
@@ -269,7 +278,7 @@ fun MessageCompose(
                                         Box(
                                             Modifier
                                                 .size(250.dp)
-                                                .background(colorResource(id = R.color.time_message_color))
+                                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                         ) {
                                             CircularProgressIndicator(
                                                 modifier = Modifier
@@ -299,7 +308,7 @@ fun MessageCompose(
                                         Box(
                                             Modifier
                                                 .size(250.dp)
-                                                .background(colorResource(id = R.color.time_message_color))
+                                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Filled.ErrorOutline,
@@ -337,47 +346,50 @@ fun MessageCompose(
                                     }
                                 ),
                             text = annotatedString,
-                            style = TextStyle(fontSize = 16.sp),
+                            style = TextStyle(fontSize = MaterialTheme.typography.bodyLarge.fontSize),
                         )
                     }
-                    Row(
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(end = 4.dp),
-                            text = message.shortTimeString(),
-                            color = Color.Black,
-                            fontSize = 12.sp
-                        )
-                        if (message.isMine) {
-                            if (!message.sent()) Icon(
+                }
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(4.dp)
+                ) {
+                    Text(
+                        modifier = Modifier.padding(end = 4.dp),
+                        text = message.shortTimeString(),
+                        fontSize = MaterialTheme.typography.bodySmall.fontSize
+                    )
+                    if (message.isMine) {
+                        if (!message.sent())
+                            Icon(
                                 imageVector = Icons.Filled.WatchLater,
                                 modifier = Modifier.height(16.dp),
-                                tint = colorResource(id = R.color.report_message_color0),
+                                tint = REPORT_MESSAGE_COLOR0,
                                 contentDescription = null
                             )
-                            if (message.sentAndNotReceived() || message.receivedAndNotViewed()) Icon(
+                        if (message.sentAndNotReceived() || message.receivedAndNotViewed())
+                            Icon(
                                 imageVector = Icons.Filled.Done,
                                 modifier = Modifier.height(16.dp),
-                                tint = colorResource(
-                                    id = if (message.sentAndNotReceived()) R.color.report_message_color0
-                                    else R.color.report_message_color1
-                                ),
+                                tint = if (message.sentAndNotReceived()) REPORT_MESSAGE_COLOR0
+                                else REPORT_MESSAGE_COLOR1,
                                 contentDescription = null
                             )
-                            if (message.viewed()) Icon(
+                        if (message.viewed())
+                            Icon(
                                 imageVector = Icons.Filled.DoneAll,
                                 modifier = Modifier.height(16.dp),
-                                tint = colorResource(id = R.color.report_message_color1),
+                                tint = REPORT_MESSAGE_COLOR1,
                                 contentDescription = null
                             )
-                            if (message.error()) Icon(
+                        if (message.error())
+                            Icon(
                                 imageVector = Icons.Filled.ErrorOutline,
                                 modifier = Modifier.height(16.dp),
                                 tint = Color.Red,
                                 contentDescription = null
                             )
-                        }
                     }
                 }
             }
@@ -389,6 +401,7 @@ fun MessageCompose(
 @SuppressLint("SimpleDateFormat")
 private fun timeToString(time: Long?) = time?.let { SimpleDateFormat("mm:ss").format(Date(time)) } ?: "0:00"
 
+@Composable
 private fun textToAnnotatedString(text: String) = with(AnnotatedString.Builder()) {
     append(text)
     "(https|http)://[^ ]+".toRegex().findAll(text).forEach {
@@ -396,7 +409,7 @@ private fun textToAnnotatedString(text: String) = with(AnnotatedString.Builder()
         val end = it.range.last + 1
         addStyle(
             style = SpanStyle(
-                color = LightColorPalette.primary, textDecoration = TextDecoration.Underline
+                color = MaterialTheme.colorScheme.secondary, textDecoration = TextDecoration.Underline
             ), start = start, end = end
         )
         addStringAnnotation(
@@ -416,17 +429,17 @@ val testPlayingState = PlayingState(
 
 val testMessage = Message(
     id = 0L,
-    text = "some very very long text",
+    text = "some very",
     //text = "",
     time = System.currentTimeMillis(),
     isMine = false,
     image = null,
-    audio = "xxx",
+    //audio = "xxx",
     video = null,
     sent = 1,
     received = 1,
     viewed = 1,
-    //replyMessage = Message(text = "reply to message")
+    replyMessage = Message(text = "reply")
 )
 
 //playingState = testPlayingState

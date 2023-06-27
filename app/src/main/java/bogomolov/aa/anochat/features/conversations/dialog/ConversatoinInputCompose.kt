@@ -10,7 +10,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.ArrowDropDown
@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -62,10 +63,12 @@ fun ConversationInput(
     ) {
         when (inputState.state) {
             InputState.State.INITIAL, InputState.State.TEXT_ENTERED, InputState.State.FAB_EXPAND -> {
+                val shape = RoundedCornerShape(25.dp)
                 Surface(
-                    modifier = Modifier.padding(start = 4.dp),
-                    shape = RoundedCornerShape(25.dp),
-                    color = Color.White
+                    modifier = Modifier.padding(start = 4.dp)
+                        .shadow(shape = shape, spotColor = Color.Black, elevation = 2.dp),
+                    shape = shape,
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     TextField(
                         value = inputState.text,
@@ -91,8 +94,9 @@ fun ConversationInput(
                         placeholder = {
                             Text(stringResource(id = R.string.enter_message))
                         },
-                        colors = TextFieldDefaults.textFieldColors(
-                            backgroundColor = Color.Transparent,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                             disabledTextColor = Color.Transparent,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
@@ -273,10 +277,10 @@ fun UserNameLayout(
             )
         }
         Column(Modifier.padding(start = 16.dp)) {
-            Text(text = conversation.user.name, fontSize = 18.sp, fontWeight = Bold, color = Color.White)
+            Text(text = conversation.user.name, fontSize = MaterialTheme.typography.titleLarge.fontSize, fontWeight = Bold)
             Text(
                 modifier = Modifier.padding(top = 4.dp),
-                text = userStatus.print(LocalContext.current), fontSize = 12.sp, color = Color.White
+                text = userStatus.print(LocalContext.current), fontSize = MaterialTheme.typography.titleSmall.fontSize
             )
         }
     }

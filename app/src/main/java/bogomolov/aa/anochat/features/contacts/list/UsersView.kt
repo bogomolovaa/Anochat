@@ -8,7 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
@@ -37,6 +37,7 @@ import bogomolov.aa.anochat.domain.entity.User
 import bogomolov.aa.anochat.domain.entity.isValidPhone
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.main.Route
+import bogomolov.aa.anochat.features.main.theme.MyTopAppBar
 import bogomolov.aa.anochat.features.shared.*
 import java.net.URLEncoder
 
@@ -61,6 +62,7 @@ fun UsersView(uri: String? = null) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun Content(
@@ -72,7 +74,7 @@ private fun Content(
     Scaffold(
         modifier = InsetsModifier,
         topBar = {
-            TopAppBar(
+            MyTopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (state.search == null) {
@@ -94,9 +96,9 @@ private fun Content(
                                 placeholder = { Text(stringResource(id = R.string.search_phone_placeholder)) },
                                 onValueChange = remember { { viewModel?.search(it) } },
                                 singleLine = true,
-                                colors = TextFieldDefaults.textFieldColors(
-                                    cursorColor = Color.White,
-                                    backgroundColor = Color.Transparent,
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
                                     focusedIndicatorColor = Color.Transparent,
                                     unfocusedIndicatorColor = Color.Transparent,
                                     disabledIndicatorColor = Color.Transparent
@@ -125,7 +127,7 @@ private fun Content(
         content = { padding ->
             Column(
                 modifier = Modifier
-                    .padding(padding)
+                    .padding(top = padding.calculateTopPadding())
                     .fillMaxWidth()
             ) {
                 if (state.loading)
@@ -159,8 +161,7 @@ private fun UserRow(
 ) {
     val context = LocalContext.current
     Card(
-        backgroundColor = Color.Black.copy(alpha = 0.0f),
-        elevation = 0.dp,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
         modifier = Modifier.clickable(onClick = { createConversation(user) })
     ) {
         Row(
@@ -202,7 +203,7 @@ private fun UserRow(
                 }
             }
             Column(modifier = Modifier.padding(start = 12.dp)) {
-                Text(user.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(user.name, fontSize = MaterialTheme.typography.titleMedium.fontSize, fontWeight = FontWeight.Bold)
                 Text(user.phone ?: "")
                 Text(user.status ?: "")
             }

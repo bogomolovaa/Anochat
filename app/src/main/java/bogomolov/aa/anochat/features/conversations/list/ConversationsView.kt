@@ -9,7 +9,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.runtime.*
@@ -37,6 +37,8 @@ import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.Conversation
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.main.Route
+import bogomolov.aa.anochat.features.main.theme.MyTopAppBar
+import bogomolov.aa.anochat.features.main.theme.NEW_MESSAGE_COLOR
 import bogomolov.aa.anochat.features.shared.InsetsModifier
 import bogomolov.aa.anochat.features.shared.collectState
 import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
@@ -51,6 +53,7 @@ fun ConversationsView() {
     viewModel.state.collectState { Content(it, viewModel) }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun Content(
@@ -65,9 +68,8 @@ private fun Content(
     val deleteConversation: (Long) -> Unit = remember { { viewModel?.deleteConversations(setOf(it)) } }
     val navigateConversation: (Long) -> Unit = remember { { navController?.navigate(Route.Conversation.route(it)) } }
     Scaffold(
-        modifier = InsetsModifier,
         topBar = {
-            TopAppBar(
+            MyTopAppBar(
                 title = { Text(stringResource(id = R.string.app_name)) },
                 actions = {
                     IconButton(onClick = { showMenu = !showMenu }) {
@@ -78,20 +80,22 @@ private fun Content(
                         onDismissRequest = { showMenu = false }
                     ) {
                         DropdownMenuItem(
-                            onClick = remember { { navController?.navigate(Route.Settings.route) } }
-                        ) {
-                            Text(stringResource(id = R.string.settings))
-                        }
+                            onClick = remember { { navController?.navigate(Route.Settings.route) } },
+                            text = {
+                                Text(stringResource(id = R.string.settings))
+                            }
+                        )
                         DropdownMenuItem(
                             onClick = remember {
                                 {
                                     viewModel?.signOut()
                                     navController?.navigate(Route.Login.route)
                                 }
+                            },
+                            text = {
+                                Text(stringResource(id = R.string.sign_out))
                             }
-                        ) {
-                            Text(stringResource(id = R.string.sign_out))
-                        }
+                        )
                     }
                 }
             )
@@ -143,8 +147,7 @@ private fun ConversationCard(
     var showMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
     Card(
-        backgroundColor = Color.Black.copy(alpha = 0.0f),
-        elevation = 0.dp,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
         modifier = Modifier
             .fillMaxWidth()
             .pointerInput(conversation.id) {
@@ -166,10 +169,11 @@ private fun ConversationCard(
                 onClick = {
                     deleteConversation(conversation.id)
                     showMenu = false
+                },
+                text = {
+                    Text(stringResource(id = R.string.delete))
                 }
-            ) {
-                Text(stringResource(id = R.string.delete))
-            }
+            )
         }
 
         val isNew = conversation.lastMessage?.isMine == false && conversation.lastMessage.viewed == 0
@@ -206,9 +210,8 @@ private fun ConversationCard(
                     )
                 }
                 if (isNew) {
-                    val color = colorResource(R.color.green)
                     Canvas(modifier = Modifier.size(12.dp), onDraw = {
-                        drawCircle(color = color)
+                        drawCircle(color = NEW_MESSAGE_COLOR)
                     })
                 }
             }
@@ -221,17 +224,17 @@ private fun ConversationCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(conversation.user.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    conversation.lastMessage?.let { Text(text = it.timeString(), fontSize = 12.sp) }
+                    Text(conversation.user.name, fontSize = MaterialTheme.typography.titleLarge.fontSize, fontWeight = FontWeight.Bold)
+                    conversation.lastMessage?.let { Text(text = it.timeString(), fontSize = MaterialTheme.typography.bodySmall.fontSize) }
                 }
                 conversation.lastMessage?.let {
                     Text(
                         text = it.shortText(),
                         maxLines = 2,
-                        fontSize = 14.sp,
+                        fontSize = MaterialTheme.typography.bodyMedium.fontSize,
                         modifier = Modifier.padding(top = 12.dp),
                         fontWeight = if (isNew) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isNew) colorResource(R.color.green) else Color.Black
+                        color = if (isNew) NEW_MESSAGE_COLOR else Color.Unspecified
                     )
                 }
             }

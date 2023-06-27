@@ -3,7 +3,7 @@ package bogomolov.aa.anochat.features.conversations.dialog
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
@@ -20,6 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.main.Route
+import bogomolov.aa.anochat.features.main.theme.MyTopAppBar
 import bogomolov.aa.anochat.features.shared.*
 
 @Composable
@@ -47,13 +48,14 @@ fun SendMediaView() {
     viewModel.state.collectState { Content(it, submit) }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Content(state: DialogState, submit: () -> Unit) {
     val navController = LocalNavController.current
     Scaffold(
         modifier = InsetsModifier,
         topBar = {
-            TopAppBar(
+            MyTopAppBar(
                 title = { Text(stringResource(id = if (state.isVideo) R.string.send_media_video else R.string.send_media_image)) },
                 navigationIcon = {
                     IconButton(onClick = remember { { navController?.popBackStack() } }) {
@@ -66,7 +68,7 @@ private fun Content(state: DialogState, submit: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(it)
+                    .padding(top = it.calculateTopPadding())
             ) {
                 val showLoading = state.isVideo && state.progress < 0.98
                 if (showLoading)
@@ -101,7 +103,7 @@ private fun Content(state: DialogState, submit: () -> Unit) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(60.dp),
-                        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.White),
+                        colors = TextFieldDefaults.colors(unfocusedTextColor = Color.White),
                         trailingIcon = {
                             IconButton(onClick = submit) {
                                 Icon(Icons.Filled.PlayArrow, contentDescription = "")

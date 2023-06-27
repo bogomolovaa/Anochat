@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
@@ -27,6 +27,7 @@ import androidx.paging.compose.itemKey
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.main.Route
+import bogomolov.aa.anochat.features.main.theme.MyTopAppBar
 import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -41,6 +42,7 @@ fun UserView(userId: Long) {
     viewModel.state.collectState { Content(it, viewModel) }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun Content(
@@ -53,7 +55,7 @@ private fun Content(
     Scaffold(
         modifier = InsetsModifier,
         topBar = {
-            TopAppBar(
+            MyTopAppBar(
                 title = { Text(state.user?.name ?: "") },
                 navigationIcon = {
                     IconButton(onClick = remember { { navController?.popBackStack() } }) {
@@ -65,13 +67,12 @@ private fun Content(
     ) { padding ->
         Box(
             Modifier
-                .padding(padding)
+                .padding(top = padding.calculateTopPadding())
                 .fillMaxSize(),
             contentAlignment = Alignment.BottomEnd
         ) {
             Column(
                 modifier = Modifier
-                    .padding(padding)
                     .fillMaxWidth()
                     .fillMaxHeight()
                     .verticalScroll(rememberScrollState())
@@ -158,15 +159,15 @@ private fun ImageCompose(
     }
     Card(
         modifier = Modifier
-            .width(100.dp)
-            .height(100.dp)
+            .size(100.dp)
             .clickable(onClick = { navigate(image) })
     ) {
         imageBitmap.value?.let {
             Image(
+                modifier = Modifier.size(100.dp),
                 bitmap = it,
                 contentDescription = "",
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Crop
             )
         }
     }
