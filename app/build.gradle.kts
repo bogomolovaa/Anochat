@@ -21,7 +21,7 @@ android {
     buildToolsVersion = "30.0.3"
     defaultConfig {
         applicationId = "bogomolov.aa.anochat"
-        minSdk = 21
+        minSdk = 24
         targetSdk = 30
         versionCode = 84
         versionName = "2023.6.50"
@@ -43,12 +43,15 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+        }
+        getByName("debug") {
+            isMinifyEnabled = false
         }
     }
     kotlinOptions {
@@ -109,7 +112,7 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx:20.2.1")
     implementation("com.google.firebase:firebase-crashlytics-ktx:18.3.7")
 
-    implementation("com.arthenica:mobile-ffmpeg-min-gpl:4.4.LTS")
+    implementation("com.arthenica:mobile-ffmpeg-min:4.4")
     implementation("androidx.emoji2:emoji2-emojipicker:1.4.0-beta05")
 
     implementation("androidx.hilt:hilt-navigation-fragment:1.0.0")

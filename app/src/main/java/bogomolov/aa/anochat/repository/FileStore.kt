@@ -119,8 +119,8 @@ class FileStoreImpl @Inject constructor(
     }
 
     private fun compressVideo(inputPath: String, outputPath: String) {
-        //val rc = FFmpeg.execute("-i $inputPath -b 800k $outputPath")
-        val rc = FFmpeg.execute("-i $inputPath -vcodec libx264 -crf 24 $outputPath")
+        val rc = FFmpeg.execute("-i $inputPath -b:v 4000k -r 24 $outputPath")
+        //val rc = FFmpeg.execute("-i $inputPath -vcodec libx264 -crf 24 $outputPath")
 
         if (rc == RETURN_CODE_SUCCESS) {
             Log.i(Config.TAG, "Command execution completed successfully.")

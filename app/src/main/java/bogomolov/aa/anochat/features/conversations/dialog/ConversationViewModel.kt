@@ -263,11 +263,10 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun submitMedia() {
+    fun submitMedia(text: String) {
         val resized = currentState.resized
         val isVideo = currentState.isVideo
         val finished = currentState.resizingFinished
-        val text = currentState.inputState.text
         viewModelScope.launch {
             if (finished && resized != null) {
                 if (isVideo) {

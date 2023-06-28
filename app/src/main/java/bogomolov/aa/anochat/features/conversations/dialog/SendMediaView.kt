@@ -44,13 +44,13 @@ fun SendMediaView() {
             }
         }
     }
-    val submit: () -> Unit = remember { { viewModel.submitMedia() } }
+    val submit: (String) -> Unit = remember { { viewModel.submitMedia(it) } }
     viewModel.state.collectState { Content(it, submit) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Content(state: DialogState, submit: () -> Unit) {
+private fun Content(state: DialogState, submit: (String) -> Unit) {
     val navController = LocalNavController.current
     Scaffold(
         topBar = {
@@ -102,7 +102,7 @@ private fun Content(state: DialogState, submit: () -> Unit) {
                         .height(60.dp),
                     colors = TextFieldDefaults.colors(unfocusedTextColor = Color.White),
                     trailingIcon = {
-                        IconButton(onClick = submit) {
+                        IconButton(onClick = { submit(text) }) {
                             Icon(Icons.Filled.PlayArrow, contentDescription = "")
                         }
                     }

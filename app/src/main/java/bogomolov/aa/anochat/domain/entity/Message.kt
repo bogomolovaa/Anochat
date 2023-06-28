@@ -46,10 +46,13 @@ data class Message(
     fun shortTimeString(): String = SimpleDateFormat("HH:mm").format(Date(time))
 
     fun shortText(): String {
-        if (image != null) return String(Character.toChars(0x1F4F7))
-        if (audio != null) return String(Character.toChars(0x1F50A))
-        if (video != null) return String(Character.toChars(0x1F4F9))
-        return if (text.length > 30) text.take(30) + "..." else text
+        val suffix = when {
+            image != null -> " " + String(Character.toChars(0x1F4F7))
+            audio != null -> " " + String(Character.toChars(0x1F50A))
+            video != null -> " " + String(Character.toChars(0x1F4F9))
+            else -> ""
+        }
+        return (if (text.length > 30) text.take(30) + "..." else text) + suffix
     }
 
     fun hasAttachment() = getAttachment() != null
