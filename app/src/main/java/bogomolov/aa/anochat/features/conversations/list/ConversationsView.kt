@@ -39,10 +39,7 @@ import bogomolov.aa.anochat.features.main.LocalNavController
 import bogomolov.aa.anochat.features.main.Route
 import bogomolov.aa.anochat.features.main.theme.MyTopAppBar
 import bogomolov.aa.anochat.features.main.theme.NEW_MESSAGE_COLOR
-import bogomolov.aa.anochat.features.shared.InsetsModifier
-import bogomolov.aa.anochat.features.shared.collectState
-import bogomolov.aa.anochat.features.shared.getBitmapFromGallery
-import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
+import bogomolov.aa.anochat.features.shared.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -109,33 +106,30 @@ private fun Content(
                     contentDescription = ""
                 )
             }
-        },
-        content = { padding ->
-            if (state.pagingDataFlow != null) {
-                val lazyPagingItems = state.pagingDataFlow.collectAsLazyPagingItems()
-                LazyColumn(
-                    modifier = Modifier
-                        .padding(padding)
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(
-                        count = lazyPagingItems.itemCount,
-                        key = lazyPagingItems.itemKey { it.id }
-                    ) { index ->
-                        lazyPagingItems[index]?.let {
-                            ConversationCard(
-                                conversation = it,
-                                deleteConversation = deleteConversation,
-                                navigateConversation = navigateConversation
-                            )
-                        }
+        }) { padding ->
+        if (state.pagingDataFlow != null) {
+            val lazyPagingItems = state.pagingDataFlow.collectAsLazyPagingItems()
+            LazyColumn(
+                modifier = createInsetsModifier(padding)
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(
+                    count = lazyPagingItems.itemCount,
+                    key = lazyPagingItems.itemKey { it.id }
+                ) { index ->
+                    lazyPagingItems[index]?.let {
+                        ConversationCard(
+                            conversation = it,
+                            deleteConversation = deleteConversation,
+                            navigateConversation = navigateConversation
+                        )
                     }
                 }
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -224,8 +218,17 @@ private fun ConversationCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(conversation.user.name, fontSize = MaterialTheme.typography.titleLarge.fontSize, fontWeight = FontWeight.Bold)
-                    conversation.lastMessage?.let { Text(text = it.timeString(), fontSize = MaterialTheme.typography.bodySmall.fontSize) }
+                    Text(
+                        conversation.user.name,
+                        fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                        fontWeight = FontWeight.Bold
+                    )
+                    conversation.lastMessage?.let {
+                        Text(
+                            text = it.timeString(),
+                            fontSize = MaterialTheme.typography.bodySmall.fontSize
+                        )
+                    }
                 }
                 conversation.lastMessage?.let {
                     Text(

@@ -53,7 +53,6 @@ fun SendMediaView() {
 private fun Content(state: DialogState, submit: () -> Unit) {
     val navController = LocalNavController.current
     Scaffold(
-        modifier = InsetsModifier,
         topBar = {
             MyTopAppBar(
                 title = { Text(stringResource(id = if (state.isVideo) R.string.send_media_video else R.string.send_media_image)) },
@@ -63,55 +62,52 @@ private fun Content(state: DialogState, submit: () -> Unit) {
                     }
                 },
             )
-        },
-        content = {
-            Column(
+        }) {
+        Column(
+            modifier = createInsetsModifier(it)
+                .fillMaxWidth()
+        ) {
+            val showLoading = state.isVideo && state.progress < 0.98
+            if (showLoading)
+                LinearProgressIndicator(
+                    progress = state.progress,
+                    modifier = Modifier
+                        .padding(top = 6.dp)
+                        .fillMaxWidth()
+                )
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = it.calculateTopPadding())
+                    .fillMaxHeight()
+                    .padding(top = if (showLoading) 16.dp else 0.dp),
+                contentAlignment = Alignment.BottomCenter
             ) {
-                val showLoading = state.isVideo && state.progress < 0.98
-                if (showLoading)
-                    LinearProgressIndicator(
-                        progress = state.progress,
-                        modifier = Modifier
-                            .padding(top = 6.dp)
-                            .fillMaxWidth()
-                    )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight()
-                        .padding(top = if (showLoading) 16.dp else 0.dp),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    state.resized?.bitmap?.let {
-                        Image(
-                            bitmap = it.asImageBitmap(),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 60.dp),
-                            contentScale = ContentScale.FillWidth,
-                            contentDescription = ""
-                        )
-                    }
-                    var text by remember { mutableStateOf("") }
-                    TextField(
-                        value = text,
-                        onValueChange = { text = it },
-                        placeholder = { Text(text = stringResource(id = R.string.enter_message)) },
+                state.resized?.bitmap?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(60.dp),
-                        colors = TextFieldDefaults.colors(unfocusedTextColor = Color.White),
-                        trailingIcon = {
-                            IconButton(onClick = submit) {
-                                Icon(Icons.Filled.PlayArrow, contentDescription = "")
-                            }
-                        }
+                            .padding(bottom = 60.dp),
+                        contentScale = ContentScale.FillWidth,
+                        contentDescription = ""
                     )
                 }
+                var text by remember { mutableStateOf("") }
+                TextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    placeholder = { Text(text = stringResource(id = R.string.enter_message)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp),
+                    colors = TextFieldDefaults.colors(unfocusedTextColor = Color.White),
+                    trailingIcon = {
+                        IconButton(onClick = submit) {
+                            Icon(Icons.Filled.PlayArrow, contentDescription = "")
+                        }
+                    }
+                )
             }
         }
-    )
+    }
 }

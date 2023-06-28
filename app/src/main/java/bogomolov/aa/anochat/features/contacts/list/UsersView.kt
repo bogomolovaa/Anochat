@@ -72,7 +72,6 @@ private fun Content(
 ) {
     val focusRequester = remember { FocusRequester() }
     Scaffold(
-        modifier = InsetsModifier,
         topBar = {
             MyTopAppBar(
                 title = {
@@ -126,8 +125,7 @@ private fun Content(
         },
         content = { padding ->
             Column(
-                modifier = Modifier
-                    .padding(top = padding.calculateTopPadding())
+                modifier = createInsetsModifier(padding)
                     .fillMaxWidth()
             ) {
                 if (state.loading)

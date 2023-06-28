@@ -53,7 +53,6 @@ private fun Content(
     val context = LocalContext.current
     val navigate: (String) -> Unit = remember { { navController?.navigate(Route.Image.route(it)) } }
     Scaffold(
-        modifier = InsetsModifier,
         topBar = {
             MyTopAppBar(
                 title = { Text(state.user?.name ?: "") },
@@ -66,8 +65,7 @@ private fun Content(
         },
     ) { padding ->
         Box(
-            Modifier
-                .padding(top = padding.calculateTopPadding())
+            createInsetsModifier(padding)
                 .fillMaxSize(),
             contentAlignment = Alignment.BottomEnd
         ) {

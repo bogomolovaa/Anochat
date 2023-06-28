@@ -60,80 +60,77 @@ private fun Content(
                         modifier = Modifier.scale(1.5f)
                     )
             }
-        },
-        content = { padding ->
-            Box(
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxWidth()
+        }) { padding ->
+        Box(
+            modifier = createInsetsModifier(padding)
+                .fillMaxWidth()
+        ) {
+            if (state.state == LoginState.PHONE_SUBMITTED || state.state == LoginState.CODE_SUBMITTED)
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .fillMaxWidth()
+                )
+            Column(
+                modifier = Modifier.padding(top = 32.dp)
             ) {
-                if (state.state == LoginState.PHONE_SUBMITTED || state.state == LoginState.CODE_SUBMITTED)
-                    LinearProgressIndicator(
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .fillMaxWidth()
+                val phoneErrorMessage = phoneInputErrorMessage(state, context)
+                TextField(
+                    value = state.phoneNumber ?: "",
+                    onValueChange = remember { { viewModel?.setPhone(it) } },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    singleLine = true,
+                    label = {
+                        if (phoneErrorMessage != null) {
+                            Text(phoneErrorMessage)
+                        } else {
+                            Text(
+                                text = stringResource(id = R.string.phone_number),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    },
+                    isError = phoneErrorMessage != null,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
                     )
-                Column(
-                    modifier = Modifier.padding(top = 32.dp)
-                ) {
-                    val phoneErrorMessage = phoneInputErrorMessage(state, context)
+                )
+                if (state.state.ordinal >= LoginState.VERIFICATION_ID_RECEIVED.ordinal) {
+                    val codeErrorMessage = codeInputErrorMessage(state, context)
                     TextField(
-                        value = state.phoneNumber ?: "",
-                        onValueChange = remember { { viewModel?.setPhone(it) } },
+                        value = state.code ?: "",
+                        onValueChange = remember { { viewModel?.setCode(it) } },
                         modifier = Modifier
                             .padding(16.dp)
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
                         singleLine = true,
                         label = {
-                            if (phoneErrorMessage != null) {
-                                Text(phoneErrorMessage)
+                            if (codeErrorMessage != null) {
+                                Text(codeErrorMessage)
                             } else {
                                 Text(
-                                    text = stringResource(id = R.string.phone_number),
+                                    stringResource(id = R.string.verification_code),
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
                         },
-                        isError = phoneErrorMessage != null,
+                        isError = codeErrorMessage != null,
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent
                         )
                     )
-                    if (state.state.ordinal >= LoginState.VERIFICATION_ID_RECEIVED.ordinal) {
-                        val codeErrorMessage = codeInputErrorMessage(state, context)
-                        TextField(
-                            value = state.code ?: "",
-                            onValueChange = remember { { viewModel?.setCode(it) } },
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth()
-                                .focusRequester(focusRequester),
-                            singleLine = true,
-                            label = {
-                                if (codeErrorMessage != null) {
-                                    Text(codeErrorMessage)
-                                } else {
-                                    Text(
-                                        stringResource(id = R.string.verification_code),
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            },
-                            isError = codeErrorMessage != null,
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent
-                            )
-                        )
-                        SideEffect {
-                            focusRequester.requestFocus()
-                        }
+                    SideEffect {
+                        focusRequester.requestFocus()
                     }
                 }
             }
         }
-    )
+    }
 }
 
 private fun phoneInputErrorMessage(state: SignInUiState, context: Context) =

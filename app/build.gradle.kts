@@ -21,7 +21,7 @@ android {
     buildToolsVersion = "30.0.3"
     defaultConfig {
         applicationId = "bogomolov.aa.anochat"
-        minSdk = 23
+        minSdk = 21
         targetSdk = 30
         versionCode = 83
         versionName = "2023.6.49"

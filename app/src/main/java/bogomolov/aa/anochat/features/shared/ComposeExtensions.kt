@@ -31,7 +31,8 @@ fun <T> StateFlow<T>.collectState(content: @Composable (T) -> Unit) {
     content(collectAsStateWithLifecycle().value)
 }
 
-val InsetsModifier by lazy { Modifier.navigationBarsPadding().imePadding() }
+fun createInsetsModifier(padding: PaddingValues) = Modifier
+    .padding(top = padding.calculateTopPadding()).navigationBarsPadding().imePadding()
 
 data class KeyboardState(
     val opened: Boolean = false,

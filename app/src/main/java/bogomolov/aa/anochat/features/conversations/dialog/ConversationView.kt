@@ -140,7 +140,6 @@ private fun Content(
     val play: (String?, String?) -> Unit =
         remember { { audioFile, messageId -> viewModel?.play(audioFile, messageId) } }
     Scaffold(
-        modifier = InsetsModifier,
         topBar = {
             MyTopAppBar(
                 title = {
@@ -180,8 +179,7 @@ private fun Content(
     ) { padding ->
         val emojiKeyboardVisible = emojiKeyboardOpened.value && !keyboardState.opened
         ConstraintLayout(
-            Modifier
-                .padding(top = padding.calculateTopPadding())
+            createInsetsModifier(padding)
                 .fillMaxSize()
         ) {
             val (messages, reply, input, fab, emojiKeyboard) = createRefs()

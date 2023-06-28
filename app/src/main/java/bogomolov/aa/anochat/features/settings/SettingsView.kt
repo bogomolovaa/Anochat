@@ -78,7 +78,6 @@ private fun Content(
     val updateSettings: (Settings.() -> Settings) -> Unit = remember { { viewModel?.updateSettings(it) } }
     val updateUser: (User.() -> User) -> Unit = remember { { viewModel?.updateUser(it) } }
     BottomSheetScaffold(
-        modifier = InsetsModifier,
         sheetPeekHeight = 0.dp,
         scaffoldState = bottomSheetState,
         sheetContent = {
@@ -105,8 +104,7 @@ private fun Content(
         sheetContainerColor = MaterialTheme.colorScheme.primaryContainer
     ) {
         Column(
-            modifier = Modifier
-                .padding(top = it.calculateTopPadding())
+            modifier = createInsetsModifier(it)
                 .fillMaxSize()
         ) {
             if (state.user == null)
