@@ -22,10 +22,13 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -282,12 +285,12 @@ private fun ReplyLayout(
     clear: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val bitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val bitmap = remember { mutableStateOf<ImageBitmap?>(null) }
     if (replyMessage.image != null || replyMessage.video != null)
         LaunchedEffect(replyMessage.id) {
             withContext(Dispatchers.IO) {
                 val image = replyMessage.image ?: replyMessage.video?.let { videoThumbnail(it) }
-                bitmap.value = getBitmapFromGallery(image, context, 4)
+                bitmap.value = getBitmapFromGallery(image, context, 4)?.asImageBitmap()?.apply { prepareToDraw() }
             }
         }
     Card(
@@ -319,7 +322,7 @@ private fun FabsLayout(
 ) {
     val context = LocalContext.current
     val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
-        navigateToSendMedia(uri)
+        uri?.let { navigateToSendMedia(it) }
     }
     val takePicture = rememberLauncherForActivityResult(TakePictureFromCamera()) {
         navigateToSendMedia(null)
@@ -337,26 +340,33 @@ private fun FabsLayout(
     val microphonePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         if (it) startRecording()
     }
-    InputFabs(
-        modifier = modifier,
-        inputState = inputState,
-        onClick = fabPressed,
-        onVoice = remember {
-            { microphonePermission.launch(RECORD_AUDIO) }
-        },
-        onCamera = remember {
-            {
-                resetInputState()
-                cameraPermission.launch(CAMERA)
+    Box(
+        modifier = modifier
+            .width(64.dp)
+            .height(300.dp)
+            .padding(start = 4.dp, end = 4.dp, bottom = 4.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        InputFabs(
+            inputState = inputState,
+            onClick = fabPressed,
+            onVoice = remember {
+                { microphonePermission.launch(RECORD_AUDIO) }
+            },
+            onCamera = remember {
+                {
+                    resetInputState()
+                    cameraPermission.launch(CAMERA)
+                }
+            },
+            onGallery = remember {
+                {
+                    resetInputState()
+                    readPermission.launch(READ_EXTERNAL_STORAGE)
+                }
             }
-        },
-        onGallery = remember {
-            {
-                resetInputState()
-                readPermission.launch(READ_EXTERNAL_STORAGE)
-            }
-        }
-    )
+        )
+    }
 }
 
 @ExperimentalMaterial3Api
@@ -431,15 +441,19 @@ private fun ShowMessage(
         messageDisplayed(message)
     }
     var loading by remember { mutableStateOf(true) }
-    val bitmap = remember { mutableStateOf<Bitmap?>(null) }
-    val replyBitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val bitmap = remember { mutableStateOf<ImageBitmap?>(null) }
+    val replyBitmap = remember { mutableStateOf<ImageBitmap?>(null) }
     val messageThumbnail = message.getThumbnail()
     val replyMessageThumbnail = message.replyMessage?.getThumbnail()
     if (messageThumbnail != null || replyMessageThumbnail != null) {
         LaunchedEffect(message) {
             withContext(Dispatchers.IO) {
-                messageThumbnail?.let { bitmap.value = getBitmapFromGallery(it, context, 1) }
-                replyMessageThumbnail?.let { replyBitmap.value = getBitmapFromGallery(it, context, 8) }
+                messageThumbnail?.let {
+                    bitmap.value = getBitmapFromGallery(it, context, 1)?.asImageBitmap()?.apply { prepareToDraw() }
+                }
+                replyMessageThumbnail?.let {
+                    replyBitmap.value = getBitmapFromGallery(it, context, 8)?.asImageBitmap()?.apply { prepareToDraw() }
+                }
                 loading = false
             }
         }

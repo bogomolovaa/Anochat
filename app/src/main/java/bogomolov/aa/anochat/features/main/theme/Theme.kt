@@ -90,7 +90,7 @@ fun AppTheme(
     MaterialTheme(
         colorScheme = colors,
         typography = Typography(
-            titleLarge = TextStyle().copy(fontSize = 18.sp)
+            titleLarge = TextStyle(fontSize = 18.sp)
         ),
         shapes = Shapes(
             small = RoundedCornerShape(6.dp),

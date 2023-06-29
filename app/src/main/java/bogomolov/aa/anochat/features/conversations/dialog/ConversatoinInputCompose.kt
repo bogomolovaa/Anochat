@@ -26,11 +26,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import bogomolov.aa.anochat.R
@@ -42,6 +44,7 @@ import bogomolov.aa.anochat.features.shared.getMiniPhotoFileName
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -65,7 +68,8 @@ fun ConversationInput(
             InputState.State.INITIAL, InputState.State.TEXT_ENTERED, InputState.State.FAB_EXPAND -> {
                 val shape = RoundedCornerShape(25.dp)
                 Surface(
-                    modifier = Modifier.padding(start = 4.dp)
+                    modifier = Modifier
+                        .padding(start = 4.dp)
                         .shadow(shape = shape, spotColor = Color.Black, elevation = 2.dp),
                     shape = shape,
                     color = MaterialTheme.colorScheme.surface
@@ -140,102 +144,96 @@ fun ConversationInput(
 
 @Composable
 fun InputFabs(
-    modifier: Modifier = Modifier,
     inputState: InputState.State = InputState.State.INITIAL,
     onClick: () -> Unit = {},
     onVoice: () -> Unit = {},
     onCamera: () -> Unit = {},
     onGallery: () -> Unit = {}
 ) {
-    Box(
-        modifier = modifier
-            .width(64.dp)
-            .height(300.dp)
-            .padding(start = 4.dp, end = 4.dp, bottom = 4.dp),
-        contentAlignment = BottomCenter
-    ) {
-        val offsetY = remember { Animatable(0f) }
-        val coroutineScope = rememberCoroutineScope()
+    val offsetY = remember { Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(inputState) {
         if (!(inputState == InputState.State.INITIAL || inputState == InputState.State.FAB_EXPAND))
             coroutineScope.launch { offsetY.snapTo(0f) }
-        if (offsetY.value > 0) {
-            val fabSpace = 32
-            FloatingActionButton(
-                onClick = {
-                    coroutineScope.launch { offsetY.snapTo(0f) }
-                    onVoice()
-                },
-                Modifier
-                    .size(40.dp)
-                    .offset(x = 0.dp, y = (-((56 + fabSpace) * offsetY.value).toInt()).dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Mic,
-                    contentDescription = ""
-                )
-            }
-            FloatingActionButton(
-                onClick = {
-                    coroutineScope.launch { offsetY.snapTo(0f) }
-                    onCamera()
-                },
-                Modifier
-                    .size(40.dp)
-                    .offset(x = 0.dp, y = (-((56 + fabSpace + fabSpace + 40) * offsetY.value).toInt()).dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.PhotoCamera,
-                    contentDescription = ""
-                )
-            }
-            FloatingActionButton(
-                onClick = {
-                    coroutineScope.launch { offsetY.snapTo(0f) }
-                    onGallery()
-                },
-                Modifier
-                    .size(40.dp)
-                    .offset(x = 0.dp, y = (-((56 + fabSpace + 2 * (fabSpace + 40)) * offsetY.value).toInt()).dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Photo,
-                    contentDescription = ""
-                )
-            }
-        }
-        FloatingActionButton(onClick = {
-            when (inputState) {
-                InputState.State.INITIAL -> {
-                    coroutineScope.launch {
-                        offsetY.animateTo(
-                            targetValue = 1f,
-                            animationSpec = tween(durationMillis = 200)
-                        )
-                        onClick()
-                    }
-                }
-                InputState.State.FAB_EXPAND -> {
-                    coroutineScope.launch {
-                        offsetY.animateTo(
-                            targetValue = 0f,
-                            animationSpec = tween(durationMillis = 200)
-                        )
-                        onClick()
-                    }
-                }
-                else -> onClick()
-            }
-        }) {
+    }
+    val density = LocalDensity.current.density
+    if (offsetY.value > 0) {
+        val fabSpace = 32
+        FloatingActionButton(
+            onClick = {
+                coroutineScope.launch { offsetY.snapTo(0f) }
+                onVoice()
+            },
+            Modifier
+                .size(40.dp)
+                .offset { IntOffset(0, -(density * (56 + fabSpace) * offsetY.value).toInt()) }
+        ) {
             Icon(
-                imageVector = when (inputState) {
-                    InputState.State.INITIAL -> Icons.Filled.Add
-                    InputState.State.TEXT_ENTERED, InputState.State.VOICE_RECORDED -> Icons.Filled.PlayArrow
-                    InputState.State.FAB_EXPAND -> Icons.Filled.Clear
-                    InputState.State.VOICE_RECORDING -> Icons.Filled.Stop
-                },
+                imageVector = Icons.Filled.Mic,
                 contentDescription = ""
             )
         }
+        FloatingActionButton(
+            onClick = {
+                coroutineScope.launch { offsetY.snapTo(0f) }
+                onCamera()
+            },
+            Modifier
+                .size(40.dp)
+                .offset { IntOffset(0, -(density * (56 + fabSpace + fabSpace + 40) * offsetY.value).toInt()) }
+        ) {
+            Icon(
+                imageVector = Icons.Filled.PhotoCamera,
+                contentDescription = ""
+            )
+        }
+        FloatingActionButton(
+            onClick = {
+                coroutineScope.launch { offsetY.snapTo(0f) }
+                onGallery()
+            },
+            Modifier
+                .size(40.dp)
+                .offset { IntOffset(0, -(density * (56 + fabSpace + 2 * (fabSpace + 40)) * offsetY.value).toInt()) }
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Photo,
+                contentDescription = ""
+            )
+        }
+    }
+    FloatingActionButton(onClick = {
+        when (inputState) {
+            InputState.State.INITIAL -> {
+                coroutineScope.launch {
+                    offsetY.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(durationMillis = 200)
+                    )
+                    onClick()
+                }
+            }
+            InputState.State.FAB_EXPAND -> {
+                coroutineScope.launch {
+                    offsetY.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = 200)
+                    )
+                    onClick()
+                }
+            }
+            else -> onClick()
+        }
+    }) {
+        Icon(
+            imageVector = when (inputState) {
+                InputState.State.INITIAL -> Icons.Filled.Add
+                InputState.State.TEXT_ENTERED, InputState.State.VOICE_RECORDED -> Icons.Filled.PlayArrow
+                InputState.State.FAB_EXPAND -> Icons.Filled.Clear
+                InputState.State.VOICE_RECORDING -> Icons.Filled.Stop
+            },
+            contentDescription = ""
+        )
     }
 }
 
@@ -277,7 +275,11 @@ fun UserNameLayout(
             )
         }
         Column(Modifier.padding(start = 16.dp)) {
-            Text(text = conversation.user.name, fontSize = MaterialTheme.typography.titleLarge.fontSize, fontWeight = Bold)
+            Text(
+                text = conversation.user.name,
+                fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                fontWeight = Bold
+            )
             Text(
                 modifier = Modifier.padding(top = 4.dp),
                 text = userStatus.print(LocalContext.current), fontSize = MaterialTheme.typography.titleSmall.fontSize

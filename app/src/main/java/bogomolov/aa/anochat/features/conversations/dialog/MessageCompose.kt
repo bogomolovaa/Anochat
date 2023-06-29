@@ -1,7 +1,6 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -19,7 +18,7 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -33,7 +32,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import bogomolov.aa.anochat.R
 import bogomolov.aa.anochat.domain.entity.AttachmentStatus
 import bogomolov.aa.anochat.domain.entity.Message
@@ -48,7 +46,7 @@ import kotlin.math.roundToInt
 fun ReplyMessage(
     modifier: Modifier = Modifier,
     message: Message,
-    bitmap: MutableState<Bitmap?> = mutableStateOf(null),
+    bitmap: MutableState<ImageBitmap?> = mutableStateOf(null),
     replyPlayingState: PlayingState?,
     playOnClick: (audioFile: String?, messageId: String?) -> Unit = { _, _ -> },
     onClear: (() -> Unit)? = null
@@ -80,7 +78,7 @@ fun ReplyMessage(
                 bitmap.value?.let {
                     Image(
                         modifier = Modifier.heightIn(max = 48.dp),
-                        bitmap = it.asImageBitmap(),
+                        bitmap = it,
                         contentDescription = null
                     )
                 }
@@ -192,8 +190,8 @@ fun MessageCompose(
     replyPlayingState: PlayingState? = null,
     selected: Boolean = false,
     loadingBitmaps: Boolean = false,
-    bitmap: MutableState<Bitmap?> = mutableStateOf(null),
-    replyBitmap: MutableState<Bitmap?> = mutableStateOf(null),
+    bitmap: MutableState<ImageBitmap?> = mutableStateOf(null),
+    replyBitmap: MutableState<ImageBitmap?> = mutableStateOf(null),
     onClick: () -> Unit = {},
     onSelect: () -> Unit = {},
     onSwipe: () -> Unit = {},
@@ -292,7 +290,7 @@ fun MessageCompose(
                                             Image(
                                                 modifier = Modifier.size(250.dp),
                                                 contentScale = ContentScale.Crop,
-                                                bitmap = it.asImageBitmap(),
+                                                bitmap = it,
                                                 contentDescription = null
                                             )
                                         }
