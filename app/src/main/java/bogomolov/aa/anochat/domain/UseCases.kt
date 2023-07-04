@@ -1,9 +1,13 @@
 package bogomolov.aa.anochat.domain
 
+import android.content.Context
 import android.util.Log
+import androidx.work.*
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.repositories.*
+import bogomolov.aa.anochat.repository.AttachmentWorker
 import bogomolov.aa.anochat.repository.NotificationsService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -41,6 +45,7 @@ open class MessageUseCases @Inject constructor(
     private val userRep: UserRepository,
     private val keyValueStore: KeyValueStore,
     private val crypto: Crypto,
+    @ApplicationContext private val context: Context,
     private val notificationsService: NotificationsService
 ) : MessageUseCasesInRepository by messageRep {
 
@@ -91,8 +96,15 @@ open class MessageUseCases @Inject constructor(
         val secretKey = crypto.getSecretKey(uid)
         Log.d(TAG, "sendMessage $message to uid $uid secretKey $secretKey")
         if (secretKey != null) {
-            if (message.hasAttachment()) launch {
-                messageRep.sendAttachment(message, uid) { crypto.encrypt(secretKey, this) }
+            message.getAttachment()?.let { fileName ->
+                launch {
+                    val workRequest = OneTimeWorkRequestBuilder<AttachmentWorker>().setInputData(
+                        Data.Builder().putString(AttachmentWorker.UID, uid)
+                            .putString(AttachmentWorker.FILE_NAME, fileName).build()
+                    ).setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST).build()
+                    WorkManager.getInstance(context)
+                        .enqueueUniqueWork(fileName, ExistingWorkPolicy.KEEP, workRequest)
+                }
             }
             val text = crypto.encryptString(secretKey, message.text)
             messageRep.sendMessage(message.copy(id = id, text = text), uid)

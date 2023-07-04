@@ -98,13 +98,11 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
     override suspend fun sendAttachment(
-        message: Message,
+        fileName: String,
         uid: String,
         convert: ByteArray.() -> ByteArray
     ): Boolean = withContext(dispatcher) {
-        val fileName = message.getAttachment() ?: return@withContext false
-        val fromGallery = message.image != null
-        val byteArray = fileStore.getByteArray(fromGallery, fileName) ?: return@withContext false
+        val byteArray = fileStore.getByteArray(true, fileName) ?: return@withContext false
         firebase.uploadFile(fileName, uid, byteArray.convert(), isPrivate = true)
     }
 

@@ -11,7 +11,7 @@ interface MessageRepository : MessageUseCasesInRepository {
     suspend fun getMessage(messageId: String): Message?
     suspend fun sendMessage(message: Message, uid: String)
     suspend fun sendAttachment(
-        message: Message,
+        fileName: String,
         uid: String,
         convert: ByteArray.() -> ByteArray
     ): Boolean

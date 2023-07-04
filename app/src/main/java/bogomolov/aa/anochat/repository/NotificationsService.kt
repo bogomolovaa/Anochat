@@ -107,4 +107,30 @@ open class NotificationsService @Inject constructor(
         }
         notificationManager.notify(1, notificationBuilder.build())
     }
+
+    fun createAttachmentForegroundNotification(): Notification {
+        val channelId = "foreground attachment"
+        val notificationBuilder: NotificationCompat.Builder =
+            NotificationCompat.Builder(application, channelId)
+                .setContentTitle("attachment is uploading")
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setSmallIcon(R.mipmap.ic_launcher)
+
+        val notificationManager =
+            application.getSystemService(FirebaseMessagingService.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel =
+                NotificationChannel(channelId, channelId, NotificationManager.IMPORTANCE_NONE)
+            val soundAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build()
+            channel.setSound(
+                android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,
+                soundAttributes
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+        return notificationBuilder.build()
+    }
 }

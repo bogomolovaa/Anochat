@@ -71,6 +71,7 @@ class TestMessageUseCases {
             userRepository,
             keyValueStore,
             Crypto(keyValueStore),
+            mock(),
             mock()
         )
     }
