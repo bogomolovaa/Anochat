@@ -1,16 +1,16 @@
 package bogomolov.aa.anochat.repository.repositories
 
+import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.map
+import androidx.work.*
 import bogomolov.aa.anochat.domain.KeyValueStore
 import bogomolov.aa.anochat.domain.entity.Message
 import bogomolov.aa.anochat.domain.getMyUID
 import bogomolov.aa.anochat.domain.repositories.MessageRepository
-import bogomolov.aa.anochat.repository.AppDatabase
-import bogomolov.aa.anochat.repository.FileStore
-import bogomolov.aa.anochat.repository.Firebase
-import bogomolov.aa.anochat.repository.ModelEntityMapper
+import bogomolov.aa.anochat.repository.*
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -24,6 +24,7 @@ class MessageRepositoryImpl @Inject constructor(
     private val firebase: Firebase,
     private val keyValueStore: KeyValueStore,
     private val fileStore: FileStore,
+    @ApplicationContext private val context: Context,
     private val dispatcher: CoroutineDispatcher
 ) : MessageRepository {
     private val mapper = ModelEntityMapper()
@@ -95,6 +96,14 @@ class MessageRepositoryImpl @Inject constructor(
                 )
             }
         }
+    }
+
+    override fun runAttachmentUploading(fileName: String, uid: String) {
+        val workRequest = OneTimeWorkRequestBuilder<AttachmentWorker>().setInputData(
+            Data.Builder().putString(AttachmentWorker.UID, uid)
+                .putString(AttachmentWorker.FILE_NAME, fileName).build()
+        ).setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST).build()
+        WorkManager.getInstance(context).enqueueUniqueWork(fileName, ExistingWorkPolicy.KEEP, workRequest)
     }
 
     override suspend fun sendAttachment(

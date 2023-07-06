@@ -10,6 +10,7 @@ interface MessageRepository : MessageUseCasesInRepository {
     suspend fun getPendingMessages(uid: String): List<Message>
     suspend fun getMessage(messageId: String): Message?
     suspend fun sendMessage(message: Message, uid: String)
+    fun runAttachmentUploading(fileName: String, uid: String)
     suspend fun sendAttachment(
         fileName: String,
         uid: String,
