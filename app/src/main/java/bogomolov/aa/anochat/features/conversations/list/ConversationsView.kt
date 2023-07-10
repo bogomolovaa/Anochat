@@ -59,9 +59,9 @@ private fun Content(
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val navController = LocalNavController.current
-    val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (it) navController?.navigate(Route.Users.route)
-    }
+    //val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+    //    if (it) navController?.navigate(Route.Users.route)
+    //}
     val deleteConversation: (Long) -> Unit = remember { { viewModel?.deleteConversations(setOf(it)) } }
     val navigateConversation: (Long) -> Unit = remember { { navController?.navigate(Route.Conversation.route(it)) } }
     Scaffold(
@@ -99,7 +99,10 @@ private fun Content(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = remember { { contactsPermission.launch(Manifest.permission.READ_CONTACTS) } }
+                onClick = remember { {
+                    //contactsPermission.launch(Manifest.permission.READ_CONTACTS)
+                    navController?.navigate(Route.Users.route)
+                } }
             ) {
                 Icon(
                     painterResource(id = R.drawable.ic_contacts),

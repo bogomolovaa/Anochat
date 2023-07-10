@@ -144,20 +144,10 @@ class SettingsViewModel @Inject constructor(
         val maskImageWidth = maskImage.width
         val maskImageHeight = maskImage.height
         val bitmap = miniature.bitmap!!
-        val koef1 = bitmap.width.toFloat() / bitmap.height.toFloat()
-        val koef2 = measuredWidth.toFloat() / measuredHeight.toFloat()
-        val imageWidth: Int
-        val imageHeight: Int
-        val initialImageScale: Float
-        if (koef1 >= koef2) {
-            imageWidth = measuredWidth
-            imageHeight = (measuredWidth / koef1).toInt()
-            initialImageScale = measuredWidth.toFloat() / bitmap.width.toFloat()
-        } else {
-            imageWidth = (koef1 * measuredHeight).toInt()
-            imageHeight = measuredHeight
-            initialImageScale = measuredHeight.toFloat() / bitmap.height.toFloat()
-        }
+        val koef1 = measuredWidth.toFloat() / measuredHeight.toFloat()
+        val imageWidth = measuredWidth
+        val imageHeight = (measuredWidth / koef1).toInt()
+        val initialImageScale = measuredWidth.toFloat() / bitmap.width.toFloat()
         val maxScaleX = imageWidth.toFloat() / maskImageWidth
         val maxScaleY = imageHeight.toFloat() / maskImageHeight
         val maxScale = min(maxScaleX, maxScaleY)

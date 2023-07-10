@@ -92,11 +92,10 @@ private fun Content(
                 )
             }
         },
-        content = {
+        content = { padding ->
             Box(
-                modifier = Modifier
-                    .padding(it)
-                    .fillMaxWidth()
+                modifier = createInsetsModifier(padding)
+                    .fillMaxSize()
             ) {
                 state.miniature.bitmap?.asImageBitmap()?.let {
                     Image(
