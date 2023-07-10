@@ -22,7 +22,6 @@ jobs:
             else
               version_name+="1"
             fi
-            version_name+=$((array[2] + 1))
             echo "VERSION_NAME=$version_name" >> $GITHUB_ENV
             version_code=$(grep "versionCode.*" app/build.gradle.kts | awk '{print $3}' | tr -d '\n')
             version_code=$((version_code + 1))
