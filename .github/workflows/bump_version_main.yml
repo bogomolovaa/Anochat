@@ -17,6 +17,11 @@ jobs:
             full_version=$(grep -o "versionName.*" app/build.gradle.kts | awk '{ print $3 }' | tr -d \''"\')
             IFS='.' read -r -a array <<< "$full_version"
             version_name="$(date '+%Y.%-m.')"
+            if [[ $full_version = $version_name* ]] ; then
+              version_name+=$((array[2] + 1))
+            else
+              version_name+="1"
+            fi
             version_name+=$((array[2] + 1))
             echo "VERSION_NAME=$version_name" >> $GITHUB_ENV
             version_code=$(grep "versionCode.*" app/build.gradle.kts | awk '{print $3}' | tr -d '\n')
