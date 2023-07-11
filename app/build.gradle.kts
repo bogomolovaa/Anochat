@@ -17,12 +17,13 @@ val keystoreProperties = Properties()
 keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 
 android {
+    namespace = "bogomolov.aa.anochat"
     compileSdk = 33
     buildToolsVersion = "30.0.3"
     defaultConfig {
         applicationId = "bogomolov.aa.anochat"
         minSdk = 24
-        targetSdk = 30
+        targetSdk = 33
         versionCode = 92
         versionName = "2023.7.58"
         multiDexEnabled = true
@@ -55,7 +56,7 @@ android {
         }
     }
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
     buildFeatures {
         compose = true
@@ -64,8 +65,8 @@ android {
         kotlinCompilerExtensionVersion = "1.4.1"
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     lint {
         abortOnError = false
@@ -122,8 +123,8 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.44")
     kapt("com.google.dagger:hilt-android-compiler:2.44")
 
-    implementation("com.google.android.exoplayer:exoplayer-core:2.18.7")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.18.7")
+    implementation("com.google.android.exoplayer:exoplayer-core:2.19.0")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.19.0")
 
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.10")
 
