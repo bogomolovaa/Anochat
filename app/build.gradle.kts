@@ -105,6 +105,7 @@ dependencies {
     implementation("androidx.emoji:emoji-appcompat:1.1.0")
     implementation("androidx.emoji:emoji-bundled:1.1.0")
     implementation("com.google.android.material:material:1.9.0")
+    implementation("androidx.core:core-splashscreen:1.0.0")
 
     implementation("com.google.firebase:firebase-auth:22.0.0")
     implementation("com.google.firebase:firebase-database-ktx:20.2.2")
