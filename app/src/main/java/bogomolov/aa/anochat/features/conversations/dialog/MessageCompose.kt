@@ -1,6 +1,10 @@
 package bogomolov.aa.anochat.features.conversations.dialog
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.net.Uri
+import androidx.browser.customtabs.CustomTabColorSchemeParams
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -19,10 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -41,6 +46,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
+
 
 @Composable
 fun ReplyMessage(
@@ -272,6 +278,7 @@ fun MessageCompose(
 
                                         }
                                     }
+
                                     message.attachmentStatus == AttachmentStatus.LOADING -> {
                                         Box(
                                             Modifier
@@ -285,6 +292,7 @@ fun MessageCompose(
                                             )
                                         }
                                     }
+
                                     message.attachmentStatus == AttachmentStatus.LOADED && bitmap.value != null -> {
                                         bitmap.value?.let {
                                             Image(
@@ -302,6 +310,7 @@ fun MessageCompose(
                                             contentDescription = null
                                         )
                                     }
+
                                     message.attachmentStatus == AttachmentStatus.NOT_LOADED || (message.attachmentStatus == AttachmentStatus.LOADED && bitmap == null) -> {
                                         Box(
                                             Modifier
@@ -324,7 +333,9 @@ fun MessageCompose(
                     }
                     if (message.text.isNotEmpty()) Row {
                         val annotatedString = textToAnnotatedString(message.text)
-                        val uriHandler = LocalUriHandler.current
+                        val context = LocalContext.current
+                        val toolbarColor = MaterialTheme.colorScheme.primaryContainer.toArgb()
+                        val navbarColor = MaterialTheme.colorScheme.background.toArgb()
                         Text(
                             modifier = Modifier
                                 .padding(start = 4.dp, top = 2.dp, end = 4.dp, bottom = 1.dp)
@@ -335,9 +346,7 @@ fun MessageCompose(
                                         annotatedString
                                             .getStringAnnotations("URL", 0, annotatedString.length)
                                             .firstOrNull()
-                                            ?.let { stringAnnotation ->
-                                                uriHandler.openUri(stringAnnotation.item)
-                                            }
+                                            ?.let { openUrl(context, it.item, toolbarColor, navbarColor) }
                                     },
                                     onLongClick = {
                                         onSelect()
@@ -393,6 +402,20 @@ fun MessageCompose(
             }
         }
     }
+}
+
+private fun openUrl(context: Context, url: String, toolbarColor: Int, navbarColor: Int) {
+    val intent = CustomTabsIntent
+        .Builder()
+        .setDefaultColorSchemeParams(
+            CustomTabColorSchemeParams
+                .Builder()
+                .setToolbarColor(toolbarColor)
+                .setNavigationBarColor(navbarColor)
+                .build()
+        )
+        .build()
+    intent.launchUrl(context, Uri.parse(url))
 }
 
 
