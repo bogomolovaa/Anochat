@@ -103,7 +103,7 @@ class MessageRepositoryImpl @Inject constructor(
             Data.Builder().putString(AttachmentWorker.UID, uid)
                 .putString(AttachmentWorker.FILE_NAME, fileName).build()
         ).setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST).build()
-        WorkManager.getInstance(context).enqueueUniqueWork(fileName, ExistingWorkPolicy.KEEP, workRequest)
+        WorkManager.getInstance(context).enqueue(workRequest)
     }
 
     override suspend fun sendAttachment(
