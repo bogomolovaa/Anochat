@@ -10,6 +10,7 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -321,14 +322,14 @@ private fun FabsLayout(
     navigateToSendMedia: (Uri?) -> Unit
 ) {
     val context = LocalContext.current
-    val fileChooser = rememberLauncherForActivityResult(StartFileChooser()) { uri ->
+    val fileChooser = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let { navigateToSendMedia(it) }
     }
     val takePicture = rememberLauncherForActivityResult(TakePictureFromCamera()) {
         navigateToSendMedia(null)
     }
     val readPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (it) fileChooser.launch(Unit)
+        if (it) fileChooser.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
     }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         if (it) {
